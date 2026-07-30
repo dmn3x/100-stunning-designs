@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bokeh Lights</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,180,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Bokeh Lights</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+const bokeh=[];
+for(let i=0;i<40;i++){
+  bokeh.push({
+    x:Math.random()*w,y:Math.random()*h,
+    r:15+Math.random()*50,
+    hue:Math.random()*360,
+    alpha:0.02+Math.random()*0.06,
+    vx:(Math.random()-0.5)*0.2,
+    vy:(Math.random()-0.5)*0.15,
+    phase:Math.random()*Math.PI*2,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,10,20,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Background blur layer
+  for(const b of bokeh){
+    b.x+=b.vx+Math.sin(frame*0.003+b.phase)*0.1;
+    b.y+=b.vy+Math.cos(frame*0.002+b.phase)*0.05;
+    if(b.x<-b.r)b.x=w+b.r;if(b.x>w+b.r)b.x=-b.r;
+    if(b.y<-b.r)b.y=h+b.r;if(b.y>h+b.r)b.y=-b.r;
+    
+    const pulse=0.8+Math.sin(frame*0.01+b.phase)*0.2;
+    
+    // Bokeh circle
+    const g=ctx.createRadialGradient(b.x,b.y,b.r*0.7*pulse,b.x,b.y,b.r*pulse);
+    g.addColorStop(0,`hsla(${b.hue},40%,60%,${b.alpha*pulse})`);
+    g.addColorStop(0.5,`hsla(${b.hue},30%,50%,${b.alpha*0.5*pulse})`);
+    g.addColorStop(0.8,`hsla(${b.hue},20%,40%,${b.alpha*0.1*pulse})`);
+    g.addColorStop(1,'transparent');
+    ctx.fillStyle=g;
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r*pulse,0,Math.PI*2);
+    ctx.fill();
+    
+    // Edge ring
+    ctx.beginPath();
+    ctx.arc(b.x,b.y,b.r*pulse*0.85,0,Math.PI*2);
+    ctx.strokeStyle=`hsla(${b.hue},30%,65%,${b.alpha*0.3*pulse})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Small sharp bokeh in foreground
+  for(let i=0;i<15;i++){
+    const sx=w*0.1+Math.sin(frame*0.002+i*2)*w*0.4+w*0.3;
+    const sy=h*0.1+Math.cos(frame*0.003+i*1.5)*h*0.4;
+    const sr=3+Math.sin(i*3)*2;
+    const hue=(i*60+frame*0.1)%360;
+    
+    ctx.beginPath();
+    ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${hue},50%,60%,0.08)`;
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

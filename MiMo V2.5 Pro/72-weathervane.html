@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Weathervane</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#e8e0d0}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Weathervane</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+let vaneAngle=0,targetAngle=0,windAngle=0;
+
+function draw(){
+  frame++;
+  
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,h*0.7);
+  sky.addColorStop(0,'#c0d0e8');
+  sky.addColorStop(1,'#e0d8c8');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Clouds
+  for(let i=0;i<4;i++){
+    const cx2=w*0.1+i*w*0.25+Math.sin(frame*0.002+i)*20;
+    const cy2=h*0.15+Math.sin(i*2)*30;
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,30,0,Math.PI*2);
+    ctx.arc(cx2+20,cy2-10,25,0,Math.PI*2);
+    ctx.arc(cx2-15,cy2+5,20,0,Math.PI*2);
+    ctx.fillStyle='rgba(220,215,210,0.4)';
+    ctx.fill();
+  }
+  
+  // Roof
+  ctx.fillStyle='#8a7a60';
+  ctx.beginPath();
+  ctx.moveTo(w*0.3,h*0.6);
+  ctx.lineTo(w*0.5,h*0.45);
+  ctx.lineTo(w*0.7,h*0.6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle='#6a5a40';
+  ctx.fillRect(w*0.35,h*0.6,w*0.3,h*0.15);
+  
+  // Chimney
+  ctx.fillStyle='#7a6a50';
+  ctx.fillRect(w*0.6,h*0.4,w*0.04,h*0.2);
+  
+  // Pole
+  const poleX=w*0.5,poleBase=h*0.44,poleTop=h*0.25;
+  ctx.strokeStyle='rgba(80,70,50,0.5)';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(poleX,poleBase);
+  ctx.lineTo(poleX,poleTop);
+  ctx.stroke();
+  
+  // Wind simulation
+  windAngle=Math.sin(frame*0.003)*2+Math.sin(frame*0.007)*1+Math.sin(frame*0.001)*3;
+  targetAngle=windAngle;
+  vaneAngle+=(targetAngle-vaneAngle)*0.02;
+  
+  // Weathervane
+  ctx.save();
+  ctx.translate(poleX,poleTop);
+  ctx.rotate(vaneAngle);
+  
+  // Arrow shaft
+  ctx.beginPath();
+  ctx.moveTo(-40,0);
+  ctx.lineTo(50,0);
+  ctx.strokeStyle='rgba(60,50,40,0.6)';
+  ctx.lineWidth=2.5;
+  ctx.lineCap='round';
+  ctx.stroke();
+  
+  // Arrowhead
+  ctx.beginPath();
+  ctx.moveTo(50,0);
+  ctx.lineTo(40,-6);
+  ctx.lineTo(40,6);
+  ctx.closePath();
+  ctx.fillStyle='rgba(60,50,40,0.6)';
+  ctx.fill();
+  
+  // Tail fin
+  ctx.beginPath();
+  ctx.moveTo(-40,0);
+  ctx.lineTo(-50,-10);
+  ctx.lineTo(-35,0);
+  ctx.lineTo(-50,10);
+  ctx.closePath();
+  ctx.fillStyle='rgba(60,50,40,0.5)';
+  ctx.fill();
+  
+  // Rooster silhouette (decorative)
+  ctx.fillStyle='rgba(180,50,30,0.5)';
+  ctx.beginPath();
+  // Body
+  ctx.ellipse(10,-8,12,6,-0.2,0,Math.PI*2);
+  ctx.fill();
+  // Head
+  ctx.beginPath();
+  ctx.arc(20,-12,4,0,Math.PI*2);
+  ctx.fill();
+  // Beak
+  ctx.beginPath();
+  ctx.moveTo(24,-12);
+  ctx.lineTo(28,-11);
+  ctx.lineTo(24,-10);
+  ctx.fill();
+  // Comb
+  ctx.beginPath();
+  ctx.arc(19,-16,2,0,Math.PI*2);
+  ctx.fill();
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(-2,-6);
+  ctx.quadraticCurveTo(-10,-15,-15,-10);
+  ctx.quadraticCurveTo(-10,-5,-2,-4);
+  ctx.fill();
+  
+  ctx.restore();
+  
+  // Pivot point
+  ctx.beginPath();
+  ctx.arc(poleX,poleTop,4,0,Math.PI*2);
+  ctx.fillStyle='rgba(180,160,120,0.5)';
+  ctx.fill();
+  
+  // Cardinal directions on roof
+  ctx.font='bold 10px Georgia';
+  ctx.fillStyle='rgba(100,80,60,0.3)';
+  ctx.textAlign='center';
+  ctx.fillText('N',poleX,h*0.65);
+  ctx.fillText('S',poleX,h*0.75);
+  ctx.fillText('E',poleX+50,h*0.7);
+  ctx.fillText('W',poleX-50,h*0.7);
+  
+  // Wind particles
+  ctx.fillStyle='rgba(180,170,150,0.1)';
+  for(let i=0;i<15;i++){
+    const px=((frame+i*40)%w);
+    const py=h*0.1+Math.sin(i*3)*h*0.3;
+    ctx.fillRect(px,py,4+Math.random()*6,1);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

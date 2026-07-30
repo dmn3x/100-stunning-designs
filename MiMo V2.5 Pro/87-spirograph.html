@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Spirograph</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c0c14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,160,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Spirograph</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Spirograph parameters
+const patterns=[
+  {R:150,r:56,d:40,speed:0.005,hue:280},
+  {R:150,r:47,d:50,speed:0.004,hue:200},
+  {R:150,r:63,d:35,speed:0.006,hue:320},
+  {R:150,r:39,d:55,speed:0.003,hue:160},
+];
+
+// Pre-compute points
+const trailMax=2000;
+const trails=patterns.map(()=>[]);
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(12,12,20,0.03)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  
+  for(let p=0;p<patterns.length;p++){
+    const pat=patterns[p];
+    const t=frame*pat.speed;
+    
+    // Epitrochoid
+    const x=cx+(pat.R+pat.r)*Math.cos(t)-pat.d*Math.cos((pat.R+pat.r)/pat.r*t);
+    const y=cy+(pat.R+pat.r)*Math.sin(t)-pat.d*Math.sin((pat.R+pat.r)/pat.r*t);
+    
+    trails[p].push({x,y});
+    if(trails[p].length>trailMax)trails[p].shift();
+    
+    // Draw trail
+    if(trails[p].length>2){
+      ctx.beginPath();
+      ctx.moveTo(trails[p][0].x,trails[p][0].y);
+      for(let i=1;i<trails[p].length;i++){
+        ctx.lineTo(trails[p][i].x,trails[p][i].y);
+      }
+      ctx.strokeStyle=`hsla(${pat.hue},60%,55%,0.15)`;
+      ctx.lineWidth=1;
+      ctx.stroke();
+    }
+    
+    // Current point
+    ctx.beginPath();
+    ctx.arc(x,y,3,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${pat.hue},70%,65%,0.5)`;
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

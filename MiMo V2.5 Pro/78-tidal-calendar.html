@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tidal Calendar</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0e1420}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(100,160,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Tidal Calendar</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#0e1420';
+  ctx.fillRect(0,0,w,h);
+  
+  const now=new Date();
+  const daysInMonth=new Date(now.getFullYear(),now.getMonth()+1,0).getDate();
+  const today=now.getDate();
+  
+  // Grid
+  const cellW=Math.min(60,w/8);
+  const cellH=80;
+  const startX=(w-cellW*7)/2;
+  const startY=80;
+  
+  // Month header
+  const monthName=now.toLocaleDateString('en-US',{month:'long',year:'numeric'});
+  ctx.font='bold 16px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,160,200,0.4)';
+  ctx.textAlign='center';
+  ctx.fillText(monthName,w/2,40);
+  
+  // Day headers
+  const days=['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+  for(let i=0;i<7;i++){
+    ctx.font='9px "SF Mono",monospace';
+    ctx.fillStyle='rgba(100,160,200,0.2)';
+    ctx.textAlign='center';
+    ctx.fillText(days[i],startX+i*cellW+cellW/2,startY-10);
+  }
+  
+  // Day cells with tidal data
+  const firstDay=new Date(now.getFullYear(),now.getMonth(),1).getDay();
+  const offset=(firstDay+6)%7;
+  
+  for(let d=1;d<=daysInMonth;d++){
+    const col=(d+offset-1)%7;
+    const row=Math.floor((d+offset-1)/7);
+    const x=startX+col*cellW;
+    const y=startY+row*cellH;
+    
+    const isToday=d===today;
+    
+    // Cell background
+    if(isToday){
+      ctx.fillStyle='rgba(100,160,200,0.08)';
+      ctx.fillRect(x,y,cellW,cellH);
+    }
+    
+    // Day number
+    ctx.font=isToday?'bold 11px "SF Mono",monospace':'10px "SF Mono",monospace';
+    ctx.fillStyle=isToday?'rgba(100,200,255,0.5)':'rgba(100,160,200,0.2)';
+    ctx.textAlign='left';
+    ctx.fillText(d,x+5,y+15);
+    
+    // Tidal curve for this day
+    const tideH=30;
+    const tideY=y+25;
+    ctx.beginPath();
+    for(let t=0;t<cellW-10;t++){
+      const hour=t/(cellW-10)*24;
+      // Semi-diurnal tide (2 highs, 2 lows per day)
+      const tide=Math.sin(hour*Math.PI/6.2+d*0.5)*0.5+Math.sin(hour*Math.PI/12.4+d*0.3)*0.3;
+      const ty=tideY+tideH/2+tide*tideH/2;
+      if(t===0)ctx.moveTo(x+5+t,ty);else ctx.lineTo(x+5+t,ty);
+    }
+    ctx.strokeStyle=isToday?'rgba(100,200,255,0.3)':'rgba(100,160,200,0.1)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    
+    // Fill under curve
+    ctx.lineTo(x+cellW-5,tideY+tideH);
+    ctx.lineTo(x+5,tideY+tideH);
+    ctx.closePath();
+    ctx.fillStyle=isToday?'rgba(100,200,255,0.03)':'rgba(100,160,200,0.01)';
+    ctx.fill();
+    
+    // High/Low markers
+    const highs=[];
+    const lows=[];
+    for(let h2=0;h2<24;h2++){
+      const tide=Math.sin(h2*Math.PI/6.2+d*0.5)*0.5+Math.sin(h2*Math.PI/12.4+d*0.3)*0.3;
+      if(tide>0.3)highs.push(h2);
+      if(tide<-0.3)lows.push(h2);
+    }
+    
+    ctx.font='7px "SF Mono",monospace';
+    if(highs.length>0){
+      ctx.fillStyle=isToday?'rgba(100,200,150,0.3)':'rgba(100,180,140,0.1)';
+      ctx.textAlign='right';
+      ctx.fillText(`H${highs[0]}h`,x+cellW-3,y+cellH-8);
+    }
+    
+    // Cell border
+    ctx.strokeStyle='rgba(100,160,200,0.04)';
+    ctx.lineWidth=0.5;
+    ctx.strokeRect(x,y,cellW,cellH);
+  }
+  
+  // Current tide indicator
+  const currentHour=now.getHours()+now.getMinutes()/60;
+  const currentTide=Math.sin(currentHour*Math.PI/6.2+today*0.5)*0.5+Math.sin(currentHour*Math.PI/12.4+today*0.3)*0.3;
+  const tideStatus=currentTide>0?'RISING':'FALLING';
+  
+  ctx.font='10px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,200,255,0.3)';
+  ctx.textAlign='center';
+  ctx.fillText(`CURRENT TIDE: ${tideStatus}  (${currentTide>0?'+':''}${(currentTide*2).toFixed(1)}m)`,w/2,h-20);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

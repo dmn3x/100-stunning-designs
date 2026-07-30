@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sand Dunes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#c8a870}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(100,80,50,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Sand Dunes</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function noise(x){
+  return Math.sin(x*0.8)*0.5+Math.sin(x*1.7)*0.3+Math.sin(x*3.1)*0.2;
+}
+
+function draw(){
+  frame++;
+  
+  // Sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,h*0.5);
+  sky.addColorStop(0,'#d4a868');
+  sky.addColorStop(0.5,'#e8c088');
+  sky.addColorStop(1,'#e0b878');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Sun
+  const sunX=w*0.75,sunY=h*0.15;
+  const sunGlow=ctx.createRadialGradient(sunX,sunY,0,sunX,sunY,200);
+  sunGlow.addColorStop(0,'rgba(255,240,200,0.4)');
+  sunGlow.addColorStop(0.3,'rgba(255,220,150,0.15)');
+  sunGlow.addColorStop(1,'transparent');
+  ctx.fillStyle=sunGlow;
+  ctx.fillRect(0,0,w,h);
+  ctx.beginPath();
+  ctx.arc(sunX,sunY,25,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,240,200,0.6)';
+  ctx.fill();
+  
+  // Heat haze
+  ctx.fillStyle='rgba(255,240,200,0.02)';
+  for(let i=0;i<5;i++){
+    const hy=h*0.4+Math.sin(frame*0.005+i)*10;
+    ctx.fillRect(0,hy,w,20);
+  }
+  
+  // Dune layers (back to front)
+  const duneColors=[
+    {y:0.45,color:'#d8b878',shadow:'#c4a060'},
+    {y:0.5,color:'#d0a868',shadow:'#b89050'},
+    {y:0.58,color:'#c89858',shadow:'#b08040'},
+    {y:0.65,color:'#c08848',shadow:'#a87030'},
+    {y:0.72,color:'#b87838',shadow:'#a06020'},
+  ];
+  
+  for(let l=0;l<duneColors.length;l++){
+    const d=duneColors[l];
+    const windOffset=frame*0.05*(l+1)*0.1;
+    
+    // Dune shape
+    ctx.beginPath();
+    ctx.moveTo(-10,h);
+    for(let x=-10;x<=w+10;x+=3){
+      const base=h*d.y;
+      const wave1=Math.sin((x+windOffset)*0.003+l*2)*h*0.08;
+      const wave2=Math.sin((x+windOffset)*0.008+l*1.5)*h*0.03;
+      const wave3=noise((x+windOffset)*0.005+l)*h*0.02;
+      ctx.lineTo(x,base+wave1+wave2+wave3);
+    }
+    ctx.lineTo(w+10,h);
+    ctx.closePath();
+    
+    // Sand gradient
+    const sandG=ctx.createLinearGradient(0,h*d.y-h*0.1,0,h);
+    sandG.addColorStop(0,d.color);
+    sandG.addColorStop(0.3,d.shadow);
+    sandG.addColorStop(1,d.shadow);
+    ctx.fillStyle=sandG;
+    ctx.fill();
+    
+    // Wind-swept ridgeline
+    ctx.beginPath();
+    for(let x=0;x<=w;x+=3){
+      const base=h*d.y;
+      const wave1=Math.sin((x+windOffset)*0.003+l*2)*h*0.08;
+      const wave2=Math.sin((x+windOffset)*0.008+l*1.5)*h*0.03;
+      const y=base+wave1+wave2+noise((x+windOffset)*0.005+l)*h*0.02;
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`rgba(255,240,200,${0.15-l*0.02})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Sand particles (blowing)
+  ctx.fillStyle='rgba(220,180,120,0.2)';
+  for(let i=0;i<30;i++){
+    const px=((frame*2+i*50)%w);
+    const py=h*0.5+Math.sin(frame*0.02+i*3)*h*0.2;
+    ctx.fillRect(px,py,2+Math.random()*3,1);
+  }
+  
+  // Footprints (small detail)
+  ctx.fillStyle='rgba(160,120,70,0.15)';
+  for(let i=0;i<6;i++){
+    const fx=w*0.3+i*25;
+    const fy=h*0.68+Math.sin(i*0.5)*5;
+    ctx.beginPath();
+    ctx.ellipse(fx,fy,3,5,0.2+i*0.05,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Vignette
+  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.3,w/2,h/2,Math.max(w,h)*0.7);
+  vg.addColorStop(0,'transparent');
+  vg.addColorStop(1,'rgba(100,60,20,0.2)');
+  ctx.fillStyle=vg;
+  ctx.fillRect(0,0,w,h);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

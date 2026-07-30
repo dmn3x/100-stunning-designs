@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perlin Landscape</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2030}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(140,180,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Perlin Landscape</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function noise(x,y){
+  return Math.sin(x*0.8+y*0.3)*0.4+Math.cos(y*0.7+x*0.2)*0.3+Math.sin(x*1.5+y*0.9)*0.2+Math.cos(x*0.1+y*0.15)*0.3;
+}
+
+function draw(){
+  frame++;
+  
+  const sky=ctx.createLinearGradient(0,0,0,h*0.6);
+  sky.addColorStop(0,'#1a2030');
+  sky.addColorStop(0.5,'#2a3848');
+  sky.addColorStop(1,'#4a5868');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Stars
+  for(let i=0;i<50;i++){
+    ctx.beginPath();
+    ctx.arc((i*137.5)%w,(i*97.3)%h*0.3,0.5+Math.random()*0.3,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,200,220,0.1)';
+    ctx.fill();
+  }
+  
+  // Moon
+  ctx.beginPath();
+  ctx.arc(w*0.8,h*0.15,20,0,Math.PI*2);
+  ctx.fillStyle='rgba(220,220,230,0.4)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(w*0.8+6,h*0.15-3,18,0,Math.PI*2);
+  ctx.fillStyle='#1a2030';
+  ctx.fill();
+  
+  // Mountain layers
+  const layers=[
+    {y:0.4,color:'#2a3848',shadow:'#1a2838',noise:0.003,amp:80},
+    {y:0.45,color:'#3a4858',shadow:'#2a3848',noise:0.005,amp:60},
+    {y:0.52,color:'#4a5868',shadow:'#3a4858',noise:0.007,amp:50},
+    {y:0.6,color:'#5a6878',shadow:'#4a5868',noise:0.01,amp:40},
+    {y:0.7,color:'#6a7888',shadow:'#5a6878',noise:0.015,amp:30},
+  ];
+  
+  const offset=frame*0.2;
+  
+  for(const layer of layers){
+    ctx.beginPath();
+    ctx.moveTo(0,h);
+    for(let x=0;x<=w;x+=3){
+      const y=h*layer.y-noise((x+offset)*layer.noise,layer.y*10)*layer.amp;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(w,h);
+    ctx.closePath();
+    
+    const lg=ctx.createLinearGradient(0,h*layer.y-layer.amp,0,h*layer.y+50);
+    lg.addColorStop(0,layer.color);
+    lg.addColorStop(1,layer.shadow);
+    ctx.fillStyle=lg;
+    ctx.fill();
+    
+    // Snow caps on far mountains
+    if(layer.y<0.5){
+      ctx.beginPath();
+      for(let x=0;x<=w;x+=3){
+        const y=h*layer.y-noise((x+offset)*layer.noise,layer.y*10)*layer.amp;
+        if(y<h*layer.y-layer.amp*0.5){
+          ctx.moveTo(x,y);
+          ctx.lineTo(x,y+3);
+        }
+      }
+      ctx.strokeStyle='rgba(200,210,230,0.08)';
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+  }
+  
+  // Lake reflection
+  const lakeY=h*0.75;
+  ctx.fillStyle='rgba(30,50,70,0.3)';
+  ctx.fillRect(0,lakeY,w,h-lakeY);
+  
+  // Water ripples
+  ctx.strokeStyle='rgba(100,150,200,0.04)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<8;i++){
+    ctx.beginPath();
+    const y=lakeY+10+i*8;
+    for(let x=0;x<=w;x+=3){
+      const yy=y+Math.sin(x*0.01+frame*0.01+i)*2;
+      if(x===0)ctx.moveTo(x,yy);else ctx.lineTo(x,yy);
+    }
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

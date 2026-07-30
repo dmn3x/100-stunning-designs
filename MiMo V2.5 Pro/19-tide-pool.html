@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tide Pool</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#2a3a4a}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(160,200,220,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Tide Pool</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Pool shape — organic blob
+function poolRadius(angle){
+  return 0.35+Math.sin(angle*3)*0.05+Math.cos(angle*5)*0.03+Math.sin(angle*7)*0.02;
+}
+
+// Anemones
+const anemones=[];
+for(let i=0;i<6;i++){
+  const a=Math.random()*Math.PI*2;
+  const r=poolRadius(a)*0.6;
+  anemones.push({
+    angle:a,radius:r,
+    hue:320+Math.random()*40,
+    tentacles:Array.from({length:8},(_,j)=>({phase:Math.random()*Math.PI*2,len:15+Math.random()*10}))
+  });
+}
+
+// Hermit crabs
+const crabs=[];
+for(let i=0;i<3;i++){
+  crabs.push({
+    angle:Math.random()*Math.PI*2,
+    radius:poolRadius(Math.random()*Math.PI*2)*0.4+Math.random()*0.15,
+    speed:0.001+Math.random()*0.002,
+    dir:Math.random()>0.5?1:-1,
+    size:6+Math.random()*4,
+  });
+}
+
+// Small fish
+const fish=[];
+for(let i=0;i<5;i++){
+  fish.push({
+    angle:Math.random()*Math.PI*2,
+    radius:0.1+Math.random()*0.2,
+    speed:0.005+Math.random()*0.01,
+    dir:Math.random()>0.5?1:-1,
+    size:4+Math.random()*4,
+    hue:40+Math.random()*60,
+    phase:Math.random()*Math.PI*2,
+  });
+}
+
+function draw(){
+  frame++;
+  
+  // Rock background
+  const bg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
+  bg.addColorStop(0,'#3a4a5a');
+  bg.addColorStop(1,'#1a2830');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const baseR=Math.min(w,h)*0.42;
+  
+  // Rock surface texture
+  ctx.fillStyle='rgba(60,70,80,0.15)';
+  for(let i=0;i<100;i++){
+    const rx=ctx.canvas.width*0.5+Math.cos(i*3.7)*baseR*1.3;
+    const ry=cy+Math.sin(i*3.7)*baseR*1.3;
+    ctx.beginPath();
+    ctx.arc(rx,ry,3+Math.random()*8,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Pool outline (rock edge)
+  ctx.beginPath();
+  for(let a=0;a<=Math.PI*2;a+=0.02){
+    const r=poolRadius(a)*baseR;
+    const x=cx+Math.cos(a)*r;
+    const y=cy+Math.sin(a)*r;
+    if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  
+  // Rock edge
+  ctx.fillStyle='rgba(50,60,70,0.8)';
+  ctx.fill();
+  
+  // Water inside pool
+  ctx.save();
+  ctx.clip();
+  
+  // Deep water
+  const waterG=ctx.createRadialGradient(cx,cy,0,cx,cy,baseR*0.4);
+  waterG.addColorStop(0,'#1a3a5a');
+  waterG.addColorStop(0.5,'#2a4a6a');
+  waterG.addColorStop(1,'#3a5a7a');
+  ctx.fillStyle=waterG;
+  ctx.fillRect(0,0,w,h);
+  
+  // Caustic light patterns
+  for(let i=0;i<8;i++){
+    const cax=cx+Math.sin(frame*0.008+i*1.3)*baseR*0.3;
+    const cay=cy+Math.cos(frame*0.006+i*0.9)*baseR*0.3;
+    const car=30+Math.sin(frame*0.01+i)*15;
+    const caG=ctx.createRadialGradient(cax,cay,0,cax,cay,car);
+    caG.addColorStop(0,'rgba(100,180,220,0.06)');
+    caG.addColorStop(1,'transparent');
+    ctx.fillStyle=caG;
+    ctx.beginPath();
+    ctx.arc(cax,cay,car,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Pool floor — sand and rocks
+  ctx.fillStyle='rgba(180,160,120,0.15)';
+  for(let i=0;i<20;i++){
+    const sa=Math.random()*Math.PI*2;
+    const sr=Math.random()*0.8;
+    const sx=cx+Math.cos(sa)*baseR*poolRadius(sa)*sr;
+    const sy=cy+Math.sin(sa)*baseR*poolRadius(sa)*sr;
+    ctx.beginPath();
+    ctx.ellipse(sx,sy,5+Math.random()*10,3+Math.random()*5,Math.random()*Math.PI,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Anemones
+  for(const a of anemones){
+    const ax=cx+Math.cos(a.angle)*baseR*poolRadius(a.angle)*a.radius;
+    const ay=cy+Math.sin(a.angle)*baseR*poolRadius(a.angle)*a.radius;
+    
+    // Base
+    ctx.beginPath();
+    ctx.arc(ax,ay,8,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${a.hue},50%,30%,0.6)`;
+    ctx.fill();
+    
+    // Tentacles
+    for(const t of a.tentacles){
+      const ta=t.phase+frame*0.02;
+      const sway=Math.sin(ta)*0.3;
+      ctx.beginPath();
+      ctx.moveTo(ax,ay);
+      const tx=ax+Math.cos(t.phase+sway)*t.len;
+      const ty=ay+Math.sin(t.phase+sway)*t.len-5;
+      ctx.quadraticCurveTo(ax+Math.cos(t.phase)*t.len*0.5+Math.sin(frame*0.03+t.phase)*5,ay-10,tx,ty);
+      ctx.strokeStyle=`hsla(${a.hue},60%,55%,0.5)`;
+      ctx.lineWidth=1.5;
+      ctx.lineCap='round';
+      ctx.stroke();
+      
+      // Tip
+      ctx.beginPath();
+      ctx.arc(tx,ty,2,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${a.hue},70%,65%,0.6)`;
+      ctx.fill();
+    }
+  }
+  
+  // Hermit crabs
+  for(const crab of crabs){
+    crab.angle+=crab.speed*crab.dir;
+    const cax2=cx+Math.cos(crab.angle)*baseR*poolRadius(crab.angle)*crab.radius;
+    const cay2=cy+Math.sin(crab.angle)*baseR*poolRadius(crab.angle)*crab.radius;
+    
+    ctx.save();
+    ctx.translate(cax2,cay2);
+    ctx.rotate(crab.angle+Math.PI/2*crab.dir);
+    
+    // Shell
+    ctx.beginPath();
+    ctx.arc(0,0,crab.size,0,Math.PI*2);
+    ctx.fillStyle='rgba(160,120,80,0.5)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(0,0,crab.size*0.7,0,Math.PI);
+    ctx.fillStyle='rgba(140,100,60,0.5)';
+    ctx.fill();
+    
+    // Legs
+    for(let l=0;l<3;l++){
+      const la=Math.sin(frame*0.1+l)*0.3;
+      ctx.beginPath();
+      ctx.moveTo(-crab.size*0.5,l*3-3);
+      ctx.lineTo(-crab.size*1.2,l*3-3+la*5);
+      ctx.strokeStyle='rgba(140,100,60,0.4)';
+      ctx.lineWidth=1;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(crab.size*0.5,l*3-3);
+      ctx.lineTo(crab.size*1.2,l*3-3-la*5);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+  
+  // Fish
+  for(const f of fish){
+    f.angle+=f.speed*f.dir;
+    const fx2=cx+Math.cos(f.angle)*baseR*f.radius;
+    const fy2=cy+Math.sin(f.angle)*baseR*f.radius;
+    
+    ctx.save();
+    ctx.translate(fx2,fy2);
+    ctx.rotate(f.angle+Math.PI/2*f.dir);
+    
+    const tailWag=Math.sin(frame*0.1+f.phase)*0.3;
+    
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0,0,f.size,f.size*0.4,0,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${f.hue},60%,55%,0.5)`;
+    ctx.fill();
+    
+    // Tail
+    ctx.beginPath();
+    ctx.moveTo(-f.size*0.6,0);
+    ctx.lineTo(-f.size*1.3,-f.size*0.3+tailWag*f.size);
+    ctx.lineTo(-f.size*1.3,f.size*0.3+tailWag*f.size);
+    ctx.closePath();
+    ctx.fillStyle=`hsla(${f.hue},55%,50%,0.4)`;
+    ctx.fill();
+    
+    ctx.restore();
+  }
+  
+  // Water surface ripples
+  ctx.strokeStyle='rgba(100,180,220,0.05)';
+  ctx.lineWidth=1;
+  for(let i=0;i<5;i++){
+    const ripR=((frame*0.3+i*40)%200);
+    const ripA=Math.max(0,1-ripR/200)*0.1;
+    ctx.beginPath();
+    ctx.arc(cx+Math.sin(frame*0.005)*20,cy+Math.cos(frame*0.003)*15,ripR*poolRadius(frame*0.01+i),0,Math.PI*2);
+    ctx.strokeStyle=`rgba(100,180,220,${ripA})`;
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+  
+  // Rock edge highlight
+  ctx.beginPath();
+  for(let a=0;a<=Math.PI*2;a+=0.02){
+    const r=poolRadius(a)*baseR;
+    const x=cx+Math.cos(a)*r;
+    const y=cy+Math.sin(a)*r;
+    if(a===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.strokeStyle='rgba(160,180,200,0.1)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

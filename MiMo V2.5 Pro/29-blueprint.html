@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Blueprint</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2a4a}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(100,160,220,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Blueprint</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function draw(){
+  frame++;
+  
+  // Blueprint background
+  ctx.fillStyle='#1a2a4a';
+  ctx.fillRect(0,0,w,h);
+  
+  // Grid
+  const gridSize=20;
+  ctx.strokeStyle='rgba(80,140,200,0.06)';
+  ctx.lineWidth=0.5;
+  for(let x=0;x<w;x+=gridSize){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=0;y<h;y+=gridSize){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  
+  // Major grid
+  const majorGrid=gridSize*5;
+  ctx.strokeStyle='rgba(80,140,200,0.1)';
+  ctx.lineWidth=0.8;
+  for(let x=0;x<w;x+=majorGrid){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=0;y<h;y+=majorGrid){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  
+  const cx=w/2,cy=h/2;
+  const scale=Math.min(w,h)*0.35;
+  
+  // Building floor plan
+  ctx.strokeStyle='rgba(100,170,240,0.6)';
+  ctx.lineWidth=1.5;
+  
+  // Outer walls
+  const wallW=scale*1.4,wallH=scale*1.2;
+  ctx.strokeRect(cx-wallW/2,cy-wallH/2,wallW,wallH);
+  
+  // Inner walls
+  ctx.lineWidth=1;
+  ctx.strokeStyle='rgba(100,170,240,0.4)';
+  // Vertical dividers
+  ctx.beginPath();
+  ctx.moveTo(cx-wallW*0.15,cy-wallH/2);
+  ctx.lineTo(cx-wallW*0.15,cy+wallH*0.3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+wallW*0.2,cy-wallH/2);
+  ctx.lineTo(cx+wallW*0.2,cy+wallH*0.1);
+  ctx.stroke();
+  // Horizontal divider
+  ctx.beginPath();
+  ctx.moveTo(cx-wallW/2,cy+wallH*0.1);
+  ctx.lineTo(cx+wallW*0.2,cy+wallH*0.1);
+  ctx.stroke();
+  
+  // Door arcs
+  ctx.strokeStyle='rgba(100,170,240,0.25)';
+  ctx.lineWidth=0.8;
+  ctx.beginPath();
+  ctx.arc(cx-wallW*0.15,cy+wallH*0.15,25,-Math.PI/2,0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx+wallW*0.2,cy-wallH*0.15,20,Math.PI,Math.PI*1.5);
+  ctx.stroke();
+  
+  // Stairs
+  const stairX=cx+wallW*0.25,stairY=cy-wallH*0.2;
+  ctx.strokeStyle='rgba(100,170,240,0.3)';
+  ctx.lineWidth=0.6;
+  for(let i=0;i<8;i++){
+    ctx.beginPath();
+    ctx.moveTo(stairX,stairY+i*6);
+    ctx.lineTo(stairX+20,stairY+i*6);
+    ctx.stroke();
+  }
+  // Arrow
+  ctx.beginPath();
+  ctx.moveTo(stairX+10,stairY-5);
+  ctx.lineTo(stairX+10,stairY+50);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(stairX+10,stairY+50);
+  ctx.lineTo(stairX+6,stairY+44);
+  ctx.moveTo(stairX+10,stairY+50);
+  ctx.lineTo(stairX+14,stairY+44);
+  ctx.stroke();
+  
+  // Windows
+  ctx.strokeStyle='rgba(100,170,240,0.35)';
+  ctx.lineWidth=2;
+  const windows=[
+    [cx-wallW*0.35,cy-wallH/2,15],[cx+wallW*0.05,cy-wallH/2,15],
+    [cx-wallW/2,cy-wallH*0.2,15],[cx-wallW/2,cy+wallH*0.2,15],
+  ];
+  for(const[wx,wy,ws]of windows){
+    if(wx===cx-wallW/2){
+      ctx.beginPath();ctx.moveTo(wx,wy-ws/2);ctx.lineTo(wx,wy+ws/2);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(wx-3,wy-ws/2);ctx.lineTo(wx-3,wy+ws/2);ctx.stroke();
+    }else{
+      ctx.beginPath();ctx.moveTo(wx-ws/2,wy);ctx.lineTo(wx+ws/2,wy);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(wx-ws/2,wy+3);ctx.lineTo(wx+ws/2,wy+3);ctx.stroke();
+    }
+  }
+  
+  // Furniture (simplified)
+  ctx.strokeStyle='rgba(100,170,240,0.2)';
+  ctx.lineWidth=0.6;
+  // Desk
+  ctx.strokeRect(cx-wallW*0.35,cy-wallH*0.35,30,15);
+  // Chair
+  ctx.beginPath();
+  ctx.arc(cx-wallW*0.35+40,cy-wallH*0.35+7,5,0,Math.PI*2);
+  ctx.stroke();
+  // Bed
+  ctx.strokeRect(cx+wallW*0.25,cy+wallH*0.15,35,25);
+  // Sink
+  ctx.beginPath();
+  ctx.arc(cx-wallW*0.35,cy+wallH*0.25,6,0,Math.PI*2);
+  ctx.stroke();
+  
+  // Dimensions
+  ctx.font='8px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,170,240,0.3)';
+  ctx.textAlign='center';
+  
+  // Width dimension
+  const dimY=cy-wallH/2-15;
+  ctx.beginPath();
+  ctx.moveTo(cx-wallW/2,dimY);ctx.lineTo(cx+wallW/2,dimY);
+  ctx.strokeStyle='rgba(100,170,240,0.2)';ctx.lineWidth=0.5;ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx-wallW/2,dimY-3);ctx.lineTo(cx-wallW/2,dimY+3);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+wallW/2,dimY-3);ctx.lineTo(cx+wallW/2,dimY+3);ctx.stroke();
+  ctx.fillText(`${(wallW/10).toFixed(1)}m`,cx,dimY-4);
+  
+  // Height dimension
+  const dimX=cx-wallW/2-15;
+  ctx.save();
+  ctx.translate(dimX,cy);
+  ctx.rotate(-Math.PI/2);
+  ctx.beginPath();
+  ctx.moveTo(-wallH/2,0);ctx.lineTo(wallH/2,0);
+  ctx.stroke();
+  ctx.fillText(`${(wallH/10).toFixed(1)}m`,0,-4);
+  ctx.restore();
+  
+  // Title block
+  const tbW=180,tbH=60;
+  const tbX=w-tbW-20,tbY=h-tbH-20;
+  ctx.strokeStyle='rgba(100,170,240,0.3)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(tbX,tbY,tbW,tbH);
+  ctx.beginPath();
+  ctx.moveTo(tbX,tbY+20);ctx.lineTo(tbX+tbW,tbY+20);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(tbX,tbY+40);ctx.lineTo(tbX+tbW,tbY+40);ctx.stroke();
+  
+  ctx.font='bold 10px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,170,240,0.4)';
+  ctx.textAlign='left';
+  ctx.fillText('FLOOR PLAN — LEVEL 1',tbX+8,tbY+14);
+  ctx.font='8px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,170,240,0.25)';
+  ctx.fillText('Scale 1:100',tbX+8,tbY+34);
+  ctx.fillText(`Drawing No. ${String(frame%1000).padStart(4,'0')}`,tbX+8,tbY+52);
+  ctx.textAlign='right';
+  ctx.fillText('MiMo V2.5 Pro',tbX+tbW-8,tbY+52);
+  
+  // North arrow
+  const naX=40,naY=h-50;
+  ctx.strokeStyle='rgba(100,170,240,0.3)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(naX,naY+15);ctx.lineTo(naX,naY-10);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(naX,naY-10);ctx.lineTo(naX-4,naY-4);ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(naX,naY-10);ctx.lineTo(naX+4,naY-4);ctx.stroke();
+  ctx.font='8px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,170,240,0.3)';
+  ctx.textAlign='center';
+  ctx.fillText('N',naX,naY-15);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

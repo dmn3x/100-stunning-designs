@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calligraphy</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f4f0e4}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,80,60,.25);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px Georgia,serif;color:rgba(100,80,60,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Calligraphy</div>
+<div class="hint">Draw with your mouse</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,drawing=false,points=[],prevX=0,prevY=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initBG()}
+resize();addEventListener('resize',resize);
+
+function initBG(){
+  ctx.fillStyle='#f4f0e4';
+  ctx.fillRect(0,0,w,h);
+  // Paper texture
+  ctx.fillStyle='rgba(180,160,130,0.03)';
+  for(let i=0;i<300;i++){
+    ctx.fillRect(Math.random()*w,Math.random()*h,Math.random()*3,1);
+  }
+  // Ruled lines
+  ctx.strokeStyle='rgba(180,160,130,0.08)';
+  ctx.lineWidth=0.5;
+  for(let y=100;y<h-50;y+=40){
+    ctx.beginPath();
+    ctx.moveTo(60,y);
+    ctx.lineTo(w-60,y);
+    ctx.stroke();
+  }
+  // Sample calligraphy
+  drawSampleCalligraphy();
+}
+
+function drawSampleCalligraphy(){
+  // Elegant "S" curve
+  ctx.beginPath();
+  ctx.moveTo(w*0.2,h*0.3);
+  ctx.bezierCurveTo(w*0.25,h*0.15,w*0.35,h*0.15,w*0.35,h*0.3);
+  ctx.bezierCurveTo(w*0.35,h*0.45,w*0.25,h*0.45,w*0.25,h*0.55);
+  ctx.bezierCurveTo(w*0.25,h*0.65,w*0.35,h*0.65,w*0.4,h*0.55);
+  ctx.strokeStyle='rgba(30,25,20,0.4)';
+  ctx.lineWidth=3;
+  ctx.lineCap='round';
+  ctx.stroke();
+  
+  // Decorative flourishes
+  ctx.beginPath();
+  ctx.moveTo(w*0.5,h*0.4);
+  ctx.bezierCurveTo(w*0.55,h*0.3,w*0.65,h*0.35,w*0.7,h*0.4);
+  ctx.bezierCurveTo(w*0.75,h*0.45,w*0.8,h*0.35,w*0.85,h*0.3);
+  ctx.strokeStyle='rgba(30,25,20,0.25)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  
+  // Vertical stroke
+  ctx.beginPath();
+  ctx.moveTo(w*0.5,h*0.25);
+  ctx.lineTo(w*0.5,h*0.7);
+  ctx.strokeStyle='rgba(30,25,20,0.3)';
+  ctx.lineWidth=2.5;
+  ctx.stroke();
+}
+
+function drawStroke(){
+  if(points.length<2)return;
+  
+  // Draw with varying width based on speed
+  for(let i=1;i<points.length;i++){
+    const p=points[i];
+    const pp=points[i-1];
+    const dx=p.x-pp.x;
+    const dy=p.y-pp.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const speed=dist;
+    
+    // Slower = thicker (like a real brush)
+    const width=Math.max(1,8-speed*0.3);
+    const alpha=Math.min(0.5,0.2+speed*0.01);
+    
+    ctx.beginPath();
+    ctx.moveTo(pp.x,pp.y);
+    ctx.lineTo(p.x,p.y);
+    ctx.strokeStyle=`rgba(30,25,20,${alpha})`;
+    ctx.lineWidth=width;
+    ctx.lineCap='round';
+    ctx.lineJoin='round';
+    ctx.stroke();
+  }
+}
+
+c.addEventListener('mousedown',e=>{drawing=true;points=[{x:e.clientX,y:e.clientY,time:Date.now()}];prevX=e.clientX;prevY=e.clientY});
+c.addEventListener('mouseup',()=>{if(drawing)drawStroke();drawing=false;points=[]});
+c.addEventListener('mousemove',e=>{
+  if(!drawing)return;
+  const dx=e.clientX-prevX;
+  const dy=e.clientY-prevY;
+  if(Math.sqrt(dx*dx+dy*dy)>2){
+    points.push({x:e.clientX,y:e.clientY,time:Date.now()});
+    prevX=e.clientX;prevY=e.clientY;
+    // Live preview
+    if(points.length>2){
+      const p=points[points.length-1];
+      const pp=points[points.length-2];
+      const dist=Math.sqrt((p.x-pp.x)**2+(p.y-pp.y)**2);
+      const width=Math.max(1,8-dist*0.3);
+      ctx.beginPath();
+      ctx.moveTo(pp.x,pp.y);
+      ctx.lineTo(p.x,p.y);
+      ctx.strokeStyle=`rgba(30,25,20,${Math.min(0.5,0.2+dist*0.01)})`;
+      ctx.lineWidth=width;
+      ctx.lineCap='round';
+      ctx.stroke();
+    }
+  }
+});
+
+// Touch support
+c.addEventListener('touchstart',e=>{drawing=true;points=[{x:e.touches[0].clientX,y:e.touches[0].clientY,time:Date.now()}];prevX=e.touches[0].clientX;prevY=e.touches[0].clientY;e.preventDefault()},{passive:false});
+c.addEventListener('touchmove',e=>{
+  if(!drawing)return;
+  const x=e.touches[0].clientX,y=e.touches[0].clientY;
+  const dist=Math.sqrt((x-prevX)**2+(y-prevY)**2);
+  if(dist>2){
+    points.push({x,y,time:Date.now()});
+    const width=Math.max(1,8-dist*0.3);
+    ctx.beginPath();
+    ctx.moveTo(prevX,prevY);
+    ctx.lineTo(x,y);
+    ctx.strokeStyle=`rgba(30,25,20,${Math.min(0.5,0.2+dist*0.01)})`;
+    ctx.lineWidth=width;
+    ctx.lineCap='round';
+    ctx.stroke();
+    prevX=x;prevY=y;
+  }
+  e.preventDefault();
+},{passive:false});
+c.addEventListener('touchend',()=>{drawing=false;points=[]});
+
+function draw(){
+  frame++;
+  requestAnimationFrame(draw);
+}
+initBG();
+draw();
+</script>
+</body>
+</html>

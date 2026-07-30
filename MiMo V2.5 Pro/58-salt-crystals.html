@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Salt Crystals</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0e14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(160,180,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Salt Crystals</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+const crystals=[];
+for(let i=0;i<30;i++){
+  crystals.push({
+    x:Math.random()*w,y:Math.random()*h,
+    size:3+Math.random()*20,
+    rot:Math.random()*Math.PI,
+    rotSpeed:(Math.random()-0.5)*0.001,
+    type:Math.floor(Math.random()*3), // 0=cubic, 1=octahedral, 2=needle
+    hue:200+Math.random()*60,
+    alpha:0,
+    targetAlpha:0.2+Math.random()*0.3,
+  });
+}
+
+function drawCrystal(x,y,size,rot,type,hue,alpha){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(rot);
+  
+  if(type===0){
+    // Cubic crystal
+    ctx.fillStyle=`hsla(${hue},30%,70%,${alpha*0.3})`;
+    ctx.fillRect(-size/2,-size/2,size,size);
+    ctx.strokeStyle=`hsla(${hue},40%,80%,${alpha})`;
+    ctx.lineWidth=1;
+    ctx.strokeRect(-size/2,-size/2,size,size);
+    // Highlight
+    ctx.fillStyle=`hsla(${hue},20%,90%,${alpha*0.2})`;
+    ctx.fillRect(-size/2,-size/2,size*0.3,size*0.3);
+  }else if(type===1){
+    // Octahedral
+    ctx.beginPath();
+    ctx.moveTo(0,-size);
+    ctx.lineTo(size*0.6,0);
+    ctx.lineTo(0,size);
+    ctx.lineTo(-size*0.6,0);
+    ctx.closePath();
+    ctx.fillStyle=`hsla(${hue},25%,65%,${alpha*0.25})`;
+    ctx.fill();
+    ctx.strokeStyle=`hsla(${hue},35%,75%,${alpha})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }else{
+    // Needle crystal
+    ctx.beginPath();
+    ctx.moveTo(0,-size);
+    ctx.lineTo(size*0.15,0);
+    ctx.lineTo(0,size);
+    ctx.lineTo(-size*0.15,0);
+    ctx.closePath();
+    ctx.fillStyle=`hsla(${hue},20%,70%,${alpha*0.2})`;
+    ctx.fill();
+    ctx.strokeStyle=`hsla(${hue},30%,80%,${alpha*0.8})`;
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // Sparkle
+  if(alpha>0.15){
+    const sparkle=Math.sin(frame*0.02+x*0.1)*0.5+0.5;
+    if(sparkle>0.8){
+      ctx.beginPath();
+      ctx.arc(0,0,2,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,255,255,${sparkle*alpha*0.3})`;
+      ctx.fill();
+    }
+  }
+  
+  ctx.restore();
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,14,20,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Solution background
+  const solG=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.5);
+  solG.addColorStop(0,'rgba(40,60,100,0.05)');
+  solG.addColorStop(1,'transparent');
+  ctx.fillStyle=solG;
+  ctx.fillRect(0,0,w,h);
+  
+  // Grow and draw crystals
+  for(const crystal of crystals){
+    crystal.alpha=Math.min(crystal.targetAlpha,crystal.alpha+0.002);
+    crystal.rot+=crystal.rotSpeed;
+    
+    drawCrystal(crystal.x,crystal.y,crystal.size,crystal.rot,crystal.type,crystal.hue,crystal.alpha);
+    
+    // Nucleation point
+    ctx.beginPath();
+    ctx.arc(crystal.x,crystal.y,1,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${crystal.hue},30%,60%,${crystal.alpha*0.3})`;
+    ctx.fill();
+  }
+  
+  // Floating ions
+  for(let i=0;i<30;i++){
+    const ix=w*0.1+Math.sin(frame*0.002+i*1.3)*w*0.4;
+    const iy=h*0.1+Math.cos(frame*0.003+i*1.7)*h*0.4;
+    ctx.beginPath();
+    ctx.arc(ix,iy,0.5+Math.random()*0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(160,180,220,0.08)';
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

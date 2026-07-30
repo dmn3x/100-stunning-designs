@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Radio Waves</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c0814}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(160,140,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Radio Waves</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Frequency layers
+const layers=[
+  {freq:0.02,amp:0.15,speed:0.01,color:'rgba(100,60,180,0.3)',width:2},
+  {freq:0.035,amp:0.1,speed:0.015,color:'rgba(140,80,200,0.25)',width:1.5},
+  {freq:0.05,amp:0.08,speed:0.02,color:'rgba(180,100,220,0.2)',width:1},
+  {freq:0.015,amp:0.2,speed:0.008,color:'rgba(80,50,160,0.35)',width:2.5},
+  {freq:0.04,amp:0.06,speed:0.025,color:'rgba(200,120,240,0.15)',width:0.8},
+  {freq:0.025,amp:0.12,speed:0.012,color:'rgba(120,70,190,0.28)',width:1.8},
+];
+
+// Interference sources
+const sources=[];
+for(let i=0;i<4;i++){
+  sources.push({x:w*0.2+Math.random()*w*0.6,y:h*0.2+Math.random()*h*0.6,freq:0.03+Math.random()*0.04});
+}
+
+// Spectrum analyzer bars
+const spectrum=[];
+for(let i=0;i<64;i++)spectrum.push({val:0,target:0});
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(12,8,20,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Grid
+  ctx.strokeStyle='rgba(100,80,160,0.04)';
+  ctx.lineWidth=0.5;
+  const gridSize=40;
+  for(let x=0;x<w;x+=gridSize){
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+  }
+  for(let y=0;y<h;y+=gridSize){
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  
+  // Wave layers
+  for(const layer of layers){
+    ctx.beginPath();
+    for(let x=0;x<w;x+=2){
+      let y=h*0.5;
+      // Base wave
+      y+=Math.sin(x*layer.freq+frame*layer.speed)*h*layer.amp;
+      // Second harmonic
+      y+=Math.sin(x*layer.freq*2.3+frame*layer.speed*1.7)*h*layer.amp*0.3;
+      // Interference from sources
+      for(const s of sources){
+        const dx=x-s.x;
+        const dist=Math.sqrt(dx*dx);
+        if(dist<200){
+          y+=Math.sin(dist*s.freq-frame*layer.speed*2)*10*(1-dist/200);
+        }
+      }
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=layer.color;
+    ctx.lineWidth=layer.width;
+    ctx.stroke();
+  }
+  
+  // Center line
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.5);
+  ctx.lineTo(w,h*0.5);
+  ctx.strokeStyle='rgba(100,80,160,0.06)';
+  ctx.lineWidth=0.5;
+  ctx.stroke();
+  
+  // Interference source indicators
+  for(const s of sources){
+    s.x+=Math.sin(frame*0.005+s.freq*100)*0.5;
+    s.y+=Math.cos(frame*0.004+s.freq*80)*0.3;
+    
+    // Ripple
+    const rippleR=((frame*0.5)%80);
+    const rippleA=Math.max(0,1-rippleR/80)*0.15;
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,rippleR,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(160,100,220,${rippleA})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+    
+    // Point
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,3,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,140,255,0.5)';
+    ctx.fill();
+  }
+  
+  // Spectrum analyzer (bottom)
+  const specH=h*0.15;
+  const specY=h-specH-10;
+  const barW=w/spectrum.length;
+  
+  for(let i=0;i<spectrum.length;i++){
+    spectrum[i].target=Math.abs(Math.sin(frame*0.03+i*0.5))*0.8+Math.random()*0.2;
+    spectrum[i].val+=(spectrum[i].target-spectrum[i].val)*0.1;
+    
+    const bh=spectrum[i].val*specH;
+    const hue=260+i*2;
+    ctx.fillStyle=`hsla(${hue},60%,50%,0.4)`;
+    ctx.fillRect(i*barW,specY+specH-bh,barW-1,bh);
+  }
+  
+  // Frequency labels
+  ctx.font='9px "SF Mono",monospace';
+  ctx.fillStyle='rgba(160,140,200,0.15)';
+  ctx.textAlign='left';
+  ctx.fillText(`${(frame*0.01).toFixed(1)} Hz`,10,specY-5);
+  ctx.textAlign='right';
+  ctx.fillText('SPECTRUM',w-10,specY-5);
+  
+  // Amplitude markers
+  ctx.textAlign='right';
+  ctx.fillStyle='rgba(160,140,200,0.1)';
+  for(let i=0;i<5;i++){
+    const y=h*0.5-h*0.2+i*h*0.1;
+    ctx.fillText((0.2-i*0.1).toFixed(1),w-10,y);
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.strokeStyle='rgba(100,80,160,0.03)';
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadow Box</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f0e8d8}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Shadow Box</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Paper cut layers — silhouette art
+const layers=[
+  {depth:0,z:5,draw:function(x,y,s){
+    // Foreground — branches and leaves
+    ctx.fillStyle='rgba(40,30,20,0.9)';
+    // Tree trunk
+    ctx.fillRect(x+s*0.15,y-s*0.6,s*0.04,s*0.7);
+    // Branches
+    const branches=[
+      [0.17,-0.5,0.35,-0.35],[0.17,-0.45,0.05,-0.3],
+      [0.17,-0.35,0.3,-0.25],[0.17,-0.55,0.1,-0.65],
+    ];
+    for(const[a,b,c2,d]of branches){
+      ctx.beginPath();
+      ctx.moveTo(x+a*s,y+b*s);
+      ctx.lineTo(x+c2*s,y+d*s);
+      ctx.strokeStyle='rgba(40,30,20,0.9)';
+      ctx.lineWidth=3;
+      ctx.stroke();
+    }
+    // Leaves
+    for(let i=0;i<15;i++){
+      const lx=x+s*(0.08+Math.random()*0.3);
+      const ly=y-s*(0.2+Math.random()*0.5);
+      ctx.save();
+      ctx.translate(lx,ly);
+      ctx.rotate(Math.random()*Math.PI);
+      ctx.beginPath();
+      ctx.ellipse(0,0,8+Math.random()*8,3+Math.random()*3,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(40,30,20,0.85)';
+      ctx.fill();
+      ctx.restore();
+    }
+  }},
+  {depth:0.3,z:4,draw:function(x,y,s){
+    // Birds
+    ctx.strokeStyle='rgba(40,30,20,0.7)';
+    ctx.lineWidth=1.5;
+    const birds=[[0.3,-0.4],[0.4,-0.35],[0.5,-0.45],[0.35,-0.5],[0.55,-0.38]];
+    for(const[bx,by]of birds){
+      const bx2=x+bx*s,by2=y+by*s;
+      const wing=Math.sin(frame*0.03+bx*10)*0.1;
+      ctx.beginPath();
+      ctx.moveTo(bx2-8,by2+wing*20);
+      ctx.quadraticCurveTo(bx2-4,by2-5-wing*10,bx2,by2);
+      ctx.quadraticCurveTo(bx2+4,by2-5-wing*10,bx2+8,by2+wing*20);
+      ctx.stroke();
+    }
+  }},
+  {depth:0.6,z:3,draw:function(x,y,s){
+    // Clouds (layered paper)
+    ctx.fillStyle='rgba(180,170,155,0.5)';
+    ctx.beginPath();
+    ctx.ellipse(x+s*0.3,y-s*0.55,s*0.15,s*0.04,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x+s*0.65,y-s*0.5,s*0.12,s*0.03,0,0,Math.PI*2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.ellipse(x+s*0.15,y-s*0.45,s*0.1,s*0.025,0,0,Math.PI*2);
+    ctx.fill();
+  }},
+  {depth:0.9,z:2,draw:function(x,y,s){
+    // Mountains
+    ctx.fillStyle='rgba(140,130,115,0.5)';
+    ctx.beginPath();
+    ctx.moveTo(x,y-s*0.3);
+    ctx.lineTo(x+s*0.15,y-s*0.55);
+    ctx.lineTo(x+s*0.3,y-s*0.35);
+    ctx.lineTo(x+s*0.45,y-s*0.6);
+    ctx.lineTo(x+s*0.6,y-s*0.4);
+    ctx.lineTo(x+s*0.75,y-s*0.5);
+    ctx.lineTo(x+s*0.9,y-s*0.3);
+    ctx.lineTo(x+s,y-s*0.3);
+    ctx.lineTo(x+s,y);
+    ctx.lineTo(x,y);
+    ctx.closePath();
+    ctx.fill();
+  }},
+  {depth:1.2,z:1,draw:function(x,y,s){
+    // Far mountains + sun
+    ctx.fillStyle='rgba(200,190,175,0.4)';
+    ctx.beginPath();
+    ctx.moveTo(x,y-s*0.2);
+    ctx.lineTo(x+s*0.2,y-s*0.4);
+    ctx.lineTo(x+s*0.4,y-s*0.25);
+    ctx.lineTo(x+s*0.6,y-s*0.45);
+    ctx.lineTo(x+s*0.8,y-s*0.3);
+    ctx.lineTo(x+s,y-s*0.2);
+    ctx.lineTo(x+s,y);
+    ctx.lineTo(x,y);
+    ctx.closePath();
+    ctx.fill();
+    
+    // Sun
+    ctx.beginPath();
+    ctx.arc(x+s*0.7,y-s*0.5,s*0.06,0,Math.PI*2);
+    ctx.fillStyle='rgba(220,200,160,0.6)';
+    ctx.fill();
+  }},
+  {depth:1.5,z:0,draw:function(x,y,s){
+    // Background sky gradient
+    const skyG=ctx.createLinearGradient(x,y-s,x,y);
+    skyG.addColorStop(0,'rgba(220,210,190,0.6)');
+    skyG.addColorStop(1,'rgba(240,235,220,0.4)');
+    ctx.fillStyle=skyG;
+    ctx.fillRect(x,y-s,s,s);
+  }},
+];
+
+function draw(){
+  frame++;
+  
+  // Paper background
+  ctx.fillStyle='#f0e8d8';
+  ctx.fillRect(0,0,w,h);
+  
+  // Paper texture
+  ctx.fillStyle='rgba(180,160,130,0.03)';
+  for(let i=0;i<150;i++){
+    ctx.fillRect(Math.random()*w,Math.random()*h,Math.random()*4,1);
+  }
+  
+  // Shadow box frame
+  const boxS=Math.min(w,h)*0.7;
+  const boxX=(w-boxS)/2;
+  const boxY=(h-boxS*0.75)/2;
+  const boxH=boxS*0.75;
+  
+  // Frame shadow
+  ctx.fillStyle='rgba(100,80,60,0.1)';
+  ctx.fillRect(boxX+8,boxY+8,boxS,boxH);
+  
+  // Inner shadow (depth effect)
+  const innerG=ctx.createLinearGradient(boxX,boxY,boxX,boxY+boxH);
+  innerG.addColorStop(0,'rgba(60,50,40,0.15)');
+  innerG.addColorStop(0.1,'rgba(60,50,40,0)');
+  innerG.addColorStop(0.9,'rgba(60,50,40,0)');
+  innerG.addColorStop(1,'rgba(60,50,40,0.1)');
+  ctx.fillStyle=innerG;
+  ctx.fillRect(boxX,boxY,boxS,boxH);
+  
+  // Mouse parallax offset
+  const parallax=Math.sin(frame*0.005)*0.3;
+  
+  // Draw layers back to front
+  const sorted=[...layers].sort((a,b)=>b.z-a.z);
+  for(const layer of sorted){
+    const offset=parallax*layer.depth*15;
+    
+    // Shadow for this layer
+    ctx.save();
+    ctx.shadowColor='rgba(60,50,40,0.1)';
+    ctx.shadowBlur=layer.depth*5;
+    ctx.shadowOffsetX=offset*0.3;
+    ctx.shadowOffsetY=layer.depth*2;
+    
+    ctx.save();
+    ctx.translate(offset,0);
+    ctx.beginPath();
+    ctx.rect(boxX+offset,boxY,boxS,boxH);
+    ctx.clip();
+    layer.draw(boxX+offset,boxY+boxH,boxS);
+    ctx.restore();
+    ctx.restore();
+  }
+  
+  // Frame border
+  ctx.strokeStyle='rgba(100,80,60,0.4)';
+  ctx.lineWidth=6;
+  ctx.strokeRect(boxX-3,boxY-3,boxS+6,boxH+6);
+  
+  // Inner frame
+  ctx.strokeStyle='rgba(180,160,130,0.3)';
+  ctx.lineWidth=1;
+  ctx.strokeRect(boxX+2,boxY+2,boxS-4,boxH-4);
+  
+  // Frame material (wood grain)
+  ctx.strokeStyle='rgba(140,120,90,0.05)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<20;i++){
+    const gy=boxY+Math.random()*boxH;
+    ctx.beginPath();
+    ctx.moveTo(boxX-6,gy);
+    ctx.lineTo(boxX+boxS+6,gy);
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

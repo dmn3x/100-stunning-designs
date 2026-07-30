@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Theater</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f4ece0}
+.stage{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(90vw,700px);aspect-ratio:16/10;perspective:800px}
+.layer{position:absolute;inset:0;transition:transform 0.3s ease}
+.layer svg{width:100%;height:100%}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.5em;text-transform:uppercase;color:rgba(120,100,80,.3);pointer-events:none;z-index:10}
+.shadow{filter:drop-shadow(0 4px 12px rgba(80,60,40,0.15))}
+</style>
+</head>
+<body>
+<div class="label">Paper Theater — hover to explore</div>
+<div class="stage" id="stage">
+  <!-- Layer 5: Backdrop sky -->
+  <div class="layer" data-depth="0.02">
+    <svg viewBox="0 0 700 437" preserveAspectRatio="xMidYMid slice">
+      <defs>
+        <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#d4c5a9"/>
+          <stop offset="40%" stop-color="#e8dcc8"/>
+          <stop offset="100%" stop-color="#f4ece0"/>
+        </linearGradient>
+        <radialGradient id="sun" cx="0.7" cy="0.2">
+          <stop offset="0%" stop-color="#f0d890" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#f0d890" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+      <rect width="700" height="437" fill="url(#sky)"/>
+      <circle cx="490" cy="80" r="120" fill="url(#sun)"/>
+      <circle cx="490" cy="80" r="25" fill="#f0d890" opacity="0.4"/>
+      <!-- Clouds -->
+      <ellipse cx="150" cy="100" rx="80" ry="25" fill="#e8dcc8" opacity="0.5"/>
+      <ellipse cx="170" cy="90" rx="50" ry="20" fill="#ede3d0" opacity="0.4"/>
+      <ellipse cx="550" cy="130" rx="60" ry="18" fill="#e0d4be" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <!-- Layer 4: Far mountains -->
+  <div class="layer" data-depth="0.04">
+    <svg viewBox="0 0 700 437" preserveAspectRatio="xMidYMid slice">
+      <path d="M0,320 Q80,240 160,280 Q220,220 300,260 Q380,200 440,250 Q520,210 580,240 Q640,220 700,250 L700,437 L0,437Z" fill="#c4b598" opacity="0.5"/>
+      <path d="M0,340 Q100,280 200,310 Q280,260 360,300 Q440,270 520,290 Q600,260 700,290 L700,437 L0,437Z" fill="#b8a888" opacity="0.4"/>
+    </svg>
+  </div>
+
+  <!-- Layer 3: Near hills + trees -->
+  <div class="layer shadow" data-depth="0.08">
+    <svg viewBox="0 0 700 437" preserveAspectRatio="xMidYMid slice">
+      <path d="M0,360 Q100,310 200,340 Q300,300 400,330 Q500,310 600,335 Q650,320 700,340 L700,437 L0,437Z" fill="#8a9a6e"/>
+      <!-- Trees -->
+      <polygon points="120,340 130,290 140,340" fill="#6b7a50"/>
+      <polygon points="130,335 140,280 150,335" fill="#5a6940"/>
+      <polygon points="250,330 265,270 280,330" fill="#6b7a50"/>
+      <polygon points="260,325 270,265 280,325" fill="#5a6940"/>
+      <polygon points="480,325 495,260 510,325" fill="#6b7a50"/>
+      <polygon points="490,320 500,258 510,320" fill="#5a6940"/>
+      <polygon points="600,335 612,285 624,335" fill="#6b7a50"/>
+      <!-- House -->
+      <rect x="320" y="310" width="50" height="40" fill="#c4946a"/>
+      <polygon points="310,310 345,285 380,310" fill="#8a5a3a"/>
+      <rect x="338" y="330" width="14" height="20" fill="#6a4a2a"/>
+      <rect x="325" y="318" width="10" height="10" fill="#a8c8e0" opacity="0.6"/>
+    </svg>
+  </div>
+
+  <!-- Layer 2: Foreground meadow -->
+  <div class="layer shadow" data-depth="0.14">
+    <svg viewBox="0 0 700 437" preserveAspectRatio="xMidYMid slice">
+      <path d="M0,390 Q150,370 300,380 Q450,365 600,375 Q670,370 700,380 L700,437 L0,437Z" fill="#7a9a5a"/>
+      <!-- Flowers -->
+      <circle cx="80" cy="385" r="3" fill="#e88a8a" opacity="0.7"/>
+      <circle cx="180" cy="378" r="2.5" fill="#e8c84a" opacity="0.6"/>
+      <circle cx="320" cy="382" r="3" fill="#e88a8a" opacity="0.6"/>
+      <circle cx="450" cy="375" r="2" fill="#c87ae0" opacity="0.5"/>
+      <circle cx="550" cy="380" r="2.5" fill="#e8c84a" opacity="0.7"/>
+      <circle cx="630" cy="378" r="3" fill="#e88a8a" opacity="0.5"/>
+      <!-- Path -->
+      <path d="M345,437 Q350,420 355,400 Q360,390 370,385" fill="none" stroke="#b8a078" stroke-width="8" opacity="0.3"/>
+    </svg>
+  </div>
+
+  <!-- Layer 1: Theater frame (foreground) -->
+  <div class="layer" data-depth="0.22">
+    <svg viewBox="0 0 700 437" preserveAspectRatio="xMidYMid slice">
+      <!-- Curtains -->
+      <defs>
+        <linearGradient id="curtain" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8a2a2a"/>
+          <stop offset="30%" stop-color="#a03030"/>
+          <stop offset="50%" stop-color="#b83838"/>
+          <stop offset="70%" stop-color="#a03030"/>
+          <stop offset="100%" stop-color="#8a2a2a"/>
+        </linearGradient>
+      </defs>
+      <!-- Left curtain -->
+      <path d="M0,0 Q30,50 25,100 Q35,180 20,260 Q30,340 25,437 L0,437Z" fill="url(#curtain)"/>
+      <path d="M0,0 Q45,60 40,120 Q50,200 38,280 Q48,360 40,437 L25,437 Q30,340 20,260 Q35,180 25,100 Q30,50 0,0Z" fill="#6a1a1a" opacity="0.3"/>
+      <!-- Right curtain -->
+      <path d="M700,0 Q670,50 675,100 Q665,180 680,260 Q670,340 675,437 L700,437Z" fill="url(#curtain)"/>
+      <path d="M700,0 Q655,60 660,120 Q650,200 662,280 Q652,360 660,437 L675,437 Q670,340 680,260 Q665,180 675,100 Q670,50 700,0Z" fill="#6a1a1a" opacity="0.3"/>
+      <!-- Top valance -->
+      <path d="M0,0 L700,0 L700,35 Q600,55 500,35 Q400,55 300,35 Q200,55 100,35 Q50,50 0,35Z" fill="#8a2a2a"/>
+      <path d="M0,35 Q100,55 200,35 Q300,55 400,35 Q500,55 600,35 Q650,45 700,35 L700,40 Q650,50 600,40 Q500,60 400,40 Q300,60 200,40 Q100,60 0,40Z" fill="#6a1a1a" opacity="0.3"/>
+      <!-- Gold trim -->
+      <path d="M0,35 Q100,55 200,35 Q300,55 400,35 Q500,55 600,35 Q650,45 700,35" fill="none" stroke="#c8a050" stroke-width="1.5" opacity="0.5"/>
+      <!-- Tassels -->
+      <line x1="200" y1="35" x2="200" y2="60" stroke="#c8a050" stroke-width="1" opacity="0.4"/>
+      <circle cx="200" cy="62" r="3" fill="#c8a050" opacity="0.4"/>
+      <line x1="500" y1="35" x2="500" y2="60" stroke="#c8a050" stroke-width="1" opacity="0.4"/>
+      <circle cx="500" cy="62" r="3" fill="#c8a050" opacity="0.4"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+const stage=document.getElementById('stage');
+const layers=stage.querySelectorAll('.layer');
+
+stage.addEventListener('mousemove',e=>{
+  const rect=stage.getBoundingClientRect();
+  const x=(e.clientX-rect.left)/rect.width-0.5;
+  const y=(e.clientY-rect.top)/rect.height-0.5;
+  
+  layers.forEach(l=>{
+    const d=parseFloat(l.dataset.depth);
+    const tx=-x*d*100;
+    const ty=-y*d*60;
+    l.style.transform=`translate(${tx}px,${ty}px)`;
+  });
+});
+
+// Gentle idle animation
+let idleFrame=0;
+function idle(){
+  idleFrame++;
+  if(!stage.matches(':hover')){
+    const x=Math.sin(idleFrame*0.005)*0.3;
+    const y=Math.cos(idleFrame*0.003)*0.2;
+    layers.forEach(l=>{
+      const d=parseFloat(l.dataset.depth);
+      l.style.transform=`translate(${-x*d*100}px,${-y*d*60}px)`;
+    });
+  }
+  requestAnimationFrame(idle);
+}
+idle();
+</script>
+</body>
+</html>

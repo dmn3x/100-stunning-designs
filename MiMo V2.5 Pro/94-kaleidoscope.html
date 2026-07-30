@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kaleidoscope</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a12}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,180,240,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Kaleidoscope</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Moving color blobs
+const blobs=[];
+for(let i=0;i<8;i++){
+  blobs.push({
+    x:Math.random()*200,y:Math.random()*200,
+    vx:(Math.random()-0.5)*2,vy:(Math.random()-0.5)*2,
+    r:20+Math.random()*40,
+    hue:i*45,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#0a0a12';
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const R=Math.min(w,h)*0.45;
+  const segments=6;
+  
+  // Update blobs
+  for(const b of blobs){
+    b.x+=b.vx;
+    b.y+=b.vy;
+    if(b.x<0||b.x>200)b.vx*=-1;
+    if(b.y<0||b.y>200)b.vy*=-1;
+  }
+  
+  // Draw kaleidoscope
+  for(let s=0;s<segments;s++){
+    const angle=(s/segments)*Math.PI*2;
+    
+    ctx.save();
+    ctx.translate(cx,cy);
+    ctx.rotate(angle);
+    if(s%2===1)ctx.scale(1,-1);
+    
+    // Clip to segment
+    ctx.beginPath();
+    ctx.moveTo(0,0);
+    ctx.lineTo(R*Math.cos(0),R*Math.sin(0));
+    ctx.arc(0,0,R,0,Math.PI/segments);
+    ctx.closePath();
+    ctx.clip();
+    
+    // Draw blobs in segment
+    for(const b of blobs){
+      ctx.beginPath();
+      ctx.arc(b.x,b.y,b.r,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${b.hue+frame*0.3},60%,50%,0.15)`;
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+  
+  // Center circle
+  ctx.beginPath();
+  ctx.arc(cx,cy,15,0,Math.PI*2);
+  const cg=ctx.createRadialGradient(cx,cy,0,cx,cy,15);
+  cg.addColorStop(0,'rgba(200,180,255,0.2)');
+  cg.addColorStop(1,'rgba(200,180,255,0.05)');
+  ctx.fillStyle=cg;
+  ctx.fill();
+  
+  // Outer ring
+  ctx.beginPath();
+  ctx.arc(cx,cy,R,0,Math.PI*2);
+  ctx.strokeStyle='rgba(200,180,240,0.06)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  
+  // Mirror lines
+  for(let s=0;s<segments;s++){
+    const angle=(s/segments)*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(angle)*R,cy+Math.sin(angle)*R);
+    ctx.strokeStyle='rgba(200,180,240,0.03)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

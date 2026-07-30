@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tide Ebb</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2830}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,160,180,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Tide Ebb</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function draw(){
+  frame++;
+  
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,h*0.4);
+  sky.addColorStop(0,'#2a3848');
+  sky.addColorStop(1,'#4a5868');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Moon
+  ctx.beginPath();
+  ctx.arc(w*0.75,h*0.12,20,0,Math.PI*2);
+  ctx.fillStyle='rgba(220,220,230,0.5)';
+  ctx.fill();
+  // Moon reflection on water
+  ctx.fillStyle='rgba(200,200,220,0.02)';
+  for(let i=0;i<5;i++){
+    ctx.fillRect(w*0.75-5+i*2,h*0.2+i*h*0.1,10,2);
+  }
+  
+  // Beach/sand
+  const tideLevel=h*0.5+Math.sin(frame*0.005)*h*0.05;
+  
+  // Wet sand
+  ctx.fillStyle='rgba(100,90,70,0.3)';
+  ctx.fillRect(0,tideLevel,w,h-tideLevel);
+  
+  // Sand texture
+  ctx.fillStyle='rgba(140,120,90,0.08)';
+  for(let i=0;i<60;i++){
+    ctx.fillRect(Math.random()*w,tideLevel+Math.random()*(h-tideLevel),2+Math.random()*3,1);
+  }
+  
+  // Water
+  ctx.fillStyle='rgba(30,50,70,0.5)';
+  ctx.fillRect(0,0,w,tideLevel);
+  
+  // Waves
+  for(let i=0;i<5;i++){
+    ctx.beginPath();
+    const waveY=tideLevel-i*15;
+    for(let x=0;x<=w;x+=3){
+      const y=waveY+Math.sin(x*0.01+frame*0.02+i*1.5)*8+Math.sin(x*0.025+frame*0.015+i)*4;
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.lineTo(w,waveY+20);
+    ctx.lineTo(0,waveY+20);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(40,60,80,${0.15-i*0.02})`;
+    ctx.fill();
+  }
+  
+  // Foam line
+  ctx.beginPath();
+  const foamY=tideLevel+Math.sin(frame*0.005)*5;
+  for(let x=0;x<=w;x+=3){
+    const y=foamY+Math.sin(x*0.015+frame*0.02)*5;
+    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(200,210,220,0.15)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  
+  // Foam bubbles
+  for(let i=0;i<20;i++){
+    const bx=w*0.05+Math.sin(frame*0.005+i*2)*w*0.4+w*0.3;
+    const by=foamY+Math.sin(bx*0.01+frame*0.02)*5+Math.sin(i*3)*3;
+    ctx.beginPath();
+    ctx.arc(bx,by,1+Math.random()*2,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,210,220,0.1)';
+    ctx.fill();
+  }
+  
+  // Shells on beach
+  for(let i=0;i<8;i++){
+    const sx=w*0.1+i*w*0.1;
+    const sy=tideLevel+20+Math.sin(i*5)*10;
+    ctx.beginPath();
+    ctx.arc(sx,sy,3+Math.sin(i)*2,0,Math.PI);
+    ctx.fillStyle='rgba(180,160,140,0.15)';
+    ctx.fill();
+  }
+  
+  // Wet rock
+  ctx.fillStyle='rgba(60,55,50,0.4)';
+  ctx.beginPath();
+  ctx.ellipse(w*0.2,tideLevel+10,20,10,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.ellipse(w*0.65,tideLevel+15,15,8,0.2,0,Math.PI*2);
+  ctx.fill();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

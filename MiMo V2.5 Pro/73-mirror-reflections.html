@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mirror Reflections</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c0c14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,180,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Mirror Reflections</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Floating shapes
+const shapes=[];
+for(let i=0;i<12;i++){
+  shapes.push({
+    x:Math.random()*w*0.8+w*0.1,
+    y:Math.random()*h*0.4+h*0.05,
+    size:15+Math.random()*30,
+    rot:Math.random()*Math.PI,
+    rotSpeed:(Math.random()-0.5)*0.005,
+    sides:3+Math.floor(Math.random()*5),
+    hue:Math.random()*360,
+    vx:(Math.random()-0.5)*0.3,
+    vy:(Math.random()-0.5)*0.2,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#0c0c14';
+  ctx.fillRect(0,0,w,h);
+  
+  const mirrorY=h*0.55;
+  
+  // Mirror surface
+  ctx.fillStyle='rgba(20,20,30,0.8)';
+  ctx.fillRect(0,mirrorY,w,h-mirrorY);
+  
+  // Mirror edge
+  ctx.strokeStyle='rgba(160,160,200,0.1)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(0,mirrorY);
+  ctx.lineTo(w,mirrorY);
+  ctx.stroke();
+  
+  // Update shapes
+  for(const s of shapes){
+    s.x+=s.vx;
+    s.y+=s.vy;
+    s.rot+=s.rotSpeed;
+    if(s.x<s.size||s.x>w-s.size)s.vx*=-1;
+    if(s.y<s.size||s.y>mirrorY-s.size)s.vy*=-1;
+    
+    // Draw shape (above mirror)
+    drawShape(s.x,s.y,s.size,s.rot,s.sides,s.hue,1);
+    
+    // Reflection (below mirror)
+    const reflY=mirrorY+(mirrorY-s.y);
+    const distFromMirror=mirrorY-s.y;
+    const reflAlpha=0.15+0.15*(1-distFromMirror/(mirrorY));
+    
+    drawShape(s.x,reflY,s.size*0.95,-s.rot,s.sides,s.hue,reflAlpha);
+    
+    // Ripple at reflection point
+    const rippleR=((frame*0.5+s.x)%30);
+    const rippleA=Math.max(0,1-rippleR/30)*0.1;
+    ctx.beginPath();
+    ctx.ellipse(s.x,mirrorY,rippleR,rippleR*0.2,0,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(160,160,200,${rippleA})`;
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // Mirror fog
+  for(let i=0;i<5;i++){
+    const fx=w*0.2+Math.sin(frame*0.001+i*2)*w*0.3;
+    const fy=mirrorY+20+Math.cos(frame*0.0015+i)*20;
+    ctx.beginPath();
+    ctx.arc(fx,fy,40,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,100,140,0.02)';
+    ctx.fill();
+  }
+  
+  // Room ambient
+  const roomG=ctx.createRadialGradient(w/2,h*0.3,0,w/2,h*0.3,300);
+  roomG.addColorStop(0,'rgba(80,80,120,0.03)');
+  roomG.addColorStop(1,'transparent');
+  ctx.fillStyle=roomG;
+  ctx.fillRect(0,0,w,mirrorY);
+  
+  requestAnimationFrame(draw);
+}
+
+function drawShape(x,y,size,rot,sides,hue,alpha){
+  ctx.save();
+  ctx.translate(x,y);
+  ctx.rotate(rot);
+  
+  ctx.beginPath();
+  for(let i=0;i<sides;i++){
+    const a=(i/sides)*Math.PI*2;
+    const px=Math.cos(a)*size;
+    const py=Math.sin(a)*size;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.closePath();
+  
+  ctx.fillStyle=`hsla(${hue},50%,50%,${alpha*0.2})`;
+  ctx.fill();
+  ctx.strokeStyle=`hsla(${hue},60%,60%,${alpha*0.4})`;
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  
+  // Center dot
+  ctx.beginPath();
+  ctx.arc(0,0,2,0,Math.PI*2);
+  ctx.fillStyle=`hsla(${hue},60%,70%,${alpha*0.3})`;
+  ctx.fill();
+  
+  ctx.restore();
+}
+
+draw();
+</script>
+</body>
+</html>

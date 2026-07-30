@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Depth Gauge</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0e18}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(80,140,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Depth Gauge</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Depth zones
+const zones=[
+  {depth:0,name:'Sunlight Zone',color:'rgba(40,120,180,0.15)',range:'0–200m'},
+  {depth:200,name:'Twilight Zone',color:'rgba(20,60,120,0.15)',range:'200–1000m'},
+  {depth:1000,name:'Midnight Zone',color:'rgba(10,20,60,0.15)',range:'1000–4000m'},
+  {depth:4000,name:'Abyssal Zone',color:'rgba(5,10,30,0.15)',range:'4000–6000m'},
+  {depth:6000,name:'Hadal Zone',color:'rgba(2,5,15,0.15)',range:'6000–11000m'},
+];
+
+// Sea creatures at various depths
+const creatures=[
+  {depth:50,name:'Dolphin',size:30,yOff:0},
+  {depth:200,name:'Swordfish',size:25,yOff:0},
+  {depth:500,name:'Giant Squid',size:40,yOff:0},
+  {depth:1000,name:'Anglerfish',size:20,yOff:0},
+  {depth:2000,name:'Vampire Squid',size:25,yOff:0},
+  {depth:4000,name:'Dumbo Octopus',size:18,yOff:0},
+  {depth:7000,name:'Snailfish',size:15,yOff:0},
+  {depth:10000,name:'Amphipod',size:10,yOff:0},
+];
+
+const maxDepth=11000;
+
+function depthToY(depth){
+  return h*0.05+(depth/maxDepth)*h*0.9;
+}
+
+function draw(){
+  frame++;
+  
+  // Depth gradient background
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#1a4a7a');
+  bg.addColorStop(0.05,'#0e3a6a');
+  bg.addColorStop(0.15,'#082a50');
+  bg.addColorStop(0.3,'#041a38');
+  bg.addColorStop(0.5,'#021028');
+  bg.addColorStop(0.7,'#010a1e');
+  bg.addColorStop(0.85,'#00816');
+  bg.addColorStop(1,'#000408');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Zone boundaries
+  for(const zone of zones){
+    const y=depthToY(zone.depth);
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    ctx.lineTo(w,y);
+    ctx.strokeStyle='rgba(80,140,200,0.08)';
+    ctx.lineWidth=0.5;
+    ctx.setLineDash([5,10]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    
+    // Zone label
+    ctx.font='9px "SF Mono",monospace';
+    ctx.fillStyle='rgba(80,140,200,0.2)';
+    ctx.textAlign='right';
+    ctx.fillText(zone.name,w-15,y+15);
+    ctx.fillStyle='rgba(80,140,200,0.15)';
+    ctx.fillText(zone.range,w-15,y+27);
+  }
+  
+  // Depth scale (left side)
+  ctx.strokeStyle='rgba(80,140,200,0.15)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(50,depthToY(0));
+  ctx.lineTo(50,depthToY(maxDepth));
+  ctx.stroke();
+  
+  for(let d=0;d<=maxDepth;d+=500){
+    const y=depthToY(d);
+    ctx.beginPath();
+    ctx.moveTo(45,y);
+    ctx.lineTo(55,y);
+    ctx.stroke();
+    ctx.font='8px "SF Mono",monospace';
+    ctx.fillStyle='rgba(80,140,200,0.2)';
+    ctx.textAlign='right';
+    ctx.fillText(`${d}m`,42,y+3);
+  }
+  
+  // Pressure indicator (right side)
+  ctx.textAlign='left';
+  for(let d=0;d<=maxDepth;d+=2000){
+    const y=depthToY(d);
+    const pressure=d*0.1; // approximate bar
+    ctx.fillStyle='rgba(200,100,80,0.15)';
+    ctx.fillText(`${pressure.toFixed(0)} bar`,w-70,y+3);
+  }
+  
+  // Bubbles rising
+  for(let i=0;i<15;i++){
+    const bx=80+Math.sin(frame*0.005+i*2)*30;
+    const by=depthToY(((frame*0.3+i*500)%maxDepth));
+    const br=1+Math.sin(frame*0.02+i)*0.5;
+    ctx.beginPath();
+    ctx.arc(bx,by,br,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,160,220,0.1)';
+    ctx.fill();
+  }
+  
+  // Sea creatures (silhouettes)
+  for(const creature of creatures){
+    const y=depthToY(creature.depth);
+    const x=w*0.3+Math.sin(frame*0.003+creature.depth)*50;
+    const sway=Math.sin(frame*0.01+creature.depth)*0.1;
+    
+    ctx.save();
+    ctx.translate(x,y);
+    ctx.rotate(sway);
+    
+    // Simple creature silhouette
+    ctx.fillStyle='rgba(60,100,160,0.15)';
+    ctx.beginPath();
+    ctx.ellipse(0,0,creature.size,creature.size*0.4,0,0,Math.PI*2);
+    ctx.fill();
+    
+    // Eye
+    ctx.beginPath();
+    ctx.arc(creature.size*0.3,-creature.size*0.1,creature.size*0.06,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,180,255,0.15)';
+    ctx.fill();
+    
+    // Label
+    ctx.font='8px "SF Mono",monospace';
+    ctx.fillStyle='rgba(80,140,200,0.2)';
+    ctx.textAlign='left';
+    ctx.fillText(creature.name,creature.size+10,3);
+    
+    ctx.restore();
+  }
+  
+  // Submarine indicator
+  const subDepth=500+Math.sin(frame*0.002)*300;
+  const subY=depthToY(subDepth);
+  ctx.fillStyle='rgba(200,180,100,0.3)';
+  ctx.beginPath();
+  ctx.ellipse(65,subY,12,5,0,0,Math.PI*2);
+  ctx.fill();
+  ctx.font='7px "SF Mono",monospace';
+  ctx.fillStyle='rgba(200,180,100,0.25)';
+  ctx.textAlign='center';
+  ctx.fillText(`${subDepth.toFixed(0)}m`,65,subY-10);
+  
+  // Light attenuation
+  const lightY=depthToY(200);
+  const lightG=ctx.createLinearGradient(0,0,0,lightY);
+  lightG.addColorStop(0,'rgba(100,180,255,0.03)');
+  lightG.addColorStop(1,'transparent');
+  ctx.fillStyle=lightG;
+  ctx.fillRect(0,0,w,lightY);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

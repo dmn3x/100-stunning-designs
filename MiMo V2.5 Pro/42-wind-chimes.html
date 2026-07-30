@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wind Chimes</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f0e8d8}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px Georgia,serif;color:rgba(120,100,70,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Wind Chimes</div>
+<div class="hint">Click to chime</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Chime tubes
+const chimes=[
+  {x:0,length:120,freq:523,sway:0,swayV:0,damp:0.995},
+  {x:35,length:140,freq:440,sway:0,swayV:0,damp:0.996},
+  {x:65,length:110,freq:587,sway:0,swayV:0,damp:0.994},
+  {x:90,length:150,freq:392,sway:0,swayV:0,damp:0.997},
+  {x:115,length:130,freq:494,sway:0,swayV:0,damp:0.995},
+  {x:145,length:100,freq:659,sway:0,swayV:0,damp:0.993},
+  {x:170,length:160,freq:349,sway:0,swayV:0,damp:0.997},
+];
+
+// Sound ripples
+const ripples=[];
+
+c.addEventListener('click',e=>{
+  const rect=c.getBoundingClientRect();
+  const mx=e.clientX-rect.left;
+  for(const chime of chimes){
+    const cx2=w/2-90+chime.x;
+    const dist=Math.abs(mx-cx2);
+    if(dist<30){
+      chime.swayV+=(mx>cx2?1:-1)*(30-dist)*0.02;
+      ripples.push({x:cx2,y:h*0.3+chime.length,r:0,maxR:80,life:1,hue:chime.freq/10});
+    }
+  }
+});
+
+// Wind
+let wind=0;
+
+function draw(){
+  frame++;
+  
+  // Paper background
+  ctx.fillStyle='#f0e8d8';
+  ctx.fillRect(0,0,w,h);
+  
+  // Paper texture
+  ctx.fillStyle='rgba(180,160,130,0.02)';
+  for(let i=0;i<100;i++){
+    ctx.fillRect(Math.random()*w,Math.random()*h,Math.random()*4,1);
+  }
+  
+  // Wind variation
+  wind=Math.sin(frame*0.005)*2+Math.sin(frame*0.013)*1+Math.sin(frame*0.003)*3;
+  
+  const topY=h*0.15;
+  const baseX=w/2-90;
+  
+  // Top bar
+  ctx.strokeStyle='rgba(140,120,80,0.4)';
+  ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(baseX-20,topY);
+  ctx.lineTo(baseX+200,topY);
+  ctx.stroke();
+  
+  // String from bar
+  ctx.strokeStyle='rgba(140,120,80,0.2)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(baseX+90,topY);
+  ctx.lineTo(baseX+90,topY-30);
+  ctx.stroke();
+  
+  // Draw each chime
+  for(const chime of chimes){
+    // Wind force
+    chime.swayV+=wind*0.001;
+    // Spring force
+    chime.swayV-=chime.sway*0.01;
+    // Damping
+    chime.swayV*=chime.damp;
+    chime.sway+=chime.swayV;
+    chime.sway=Math.max(-0.5,Math.min(0.5,chime.sway));
+    
+    const cx2=baseX+chime.x;
+    const angle=chime.sway;
+    const endX=cx2+Math.sin(angle)*chime.length;
+    const endY=topY+Math.cos(angle)*chime.length;
+    
+    // String
+    ctx.beginPath();
+    ctx.moveTo(cx2,topY);
+    ctx.lineTo(cx2+Math.sin(angle)*15,topY+Math.cos(angle)*15);
+    ctx.strokeStyle='rgba(140,120,80,0.2)';
+    ctx.lineWidth=0.8;
+    ctx.stroke();
+    
+    // Tube
+    const tubeW=6;
+    ctx.save();
+    ctx.translate(cx2+Math.sin(angle)*15,topY+Math.cos(angle)*15);
+    ctx.rotate(angle);
+    
+    // Tube body
+    const tubeG=ctx.createLinearGradient(-tubeW/2,0,tubeW/2,0);
+    tubeG.addColorStop(0,'rgba(180,170,140,0.5)');
+    tubeG.addColorStop(0.3,'rgba(210,200,170,0.6)');
+    tubeG.addColorStop(0.5,'rgba(220,210,180,0.65)');
+    tubeG.addColorStop(0.7,'rgba(200,190,160,0.55)');
+    tubeG.addColorStop(1,'rgba(170,160,130,0.45)');
+    ctx.fillStyle=tubeG;
+    ctx.fillRect(-tubeW/2,0,tubeW,chime.length-20);
+    
+    // Tube cap
+    ctx.fillStyle='rgba(160,150,120,0.5)';
+    ctx.fillRect(-tubeW/2-1,chime.length-20,tubeW+2,3);
+    
+    // Highlight
+    ctx.fillStyle='rgba(255,250,230,0.1)';
+    ctx.fillRect(-1,0,2,chime.length-20);
+    
+    ctx.restore();
+    
+    // Clapper (swinging inside)
+    const clapperAngle=angle*1.5+Math.sin(frame*0.02)*0.1;
+    const clapperLen=chime.length*0.6;
+    const clapperX=cx2+Math.sin(angle)*15+Math.sin(clapperAngle)*5;
+    const clapperY=topY+Math.cos(angle)*15+20;
+    ctx.beginPath();
+    ctx.moveTo(cx2+Math.sin(angle)*15,topY+Math.cos(angle)*15+15);
+    ctx.lineTo(clapperX+Math.sin(clapperAngle)*clapperLen*0.3,clapperY+clapperLen*0.3);
+    ctx.strokeStyle='rgba(140,120,80,0.15)';
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+    
+    // Vibration indicator
+    if(Math.abs(chime.swayV)>0.005){
+      ctx.beginPath();
+      ctx.arc(cx2+Math.sin(angle)*chime.length*0.5,topY+Math.cos(angle)*chime.length*0.5,3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,160,80,${Math.min(0.3,Math.abs(chime.swayV)*10)})`;
+      ctx.fill();
+    }
+  }
+  
+  // Sound ripples
+  for(let i=ripples.length-1;i>=0;i--){
+    const r=ripples[i];
+    r.r+=1.5;
+    r.life-=0.015;
+    if(r.life<=0){ripples.splice(i,1);continue;}
+    
+    ctx.beginPath();
+    ctx.arc(r.x,r.y,r.r,0,Math.PI*2);
+    ctx.strokeStyle=`hsla(${r.hue},30%,50%,${r.life*0.15})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

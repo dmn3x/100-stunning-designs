@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Glass Terrarium</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2a20}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(140,180,120,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Glass Terrarium</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,mx=0.5,my=0.5;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx=e.clientX/w;my=e.clientY/h});
+
+function draw(){
+  frame++;
+  
+  // Background
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#1a2a20');
+  bg.addColorStop(1,'#0e1a12');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const jarW=Math.min(w*0.7,500);
+  const jarH=Math.min(h*0.75,550);
+  const jarX=cx-jarW/2;
+  const jarY=cy-jarH/2+20;
+  
+  // Glass jar outline
+  ctx.save();
+  ctx.beginPath();
+  // Jar shape — rounded rectangle with narrower neck
+  const neckW=jarW*0.3;
+  const neckH=jarH*0.08;
+  ctx.moveTo(jarX+jarW*0.3,jarY);
+  ctx.lineTo(jarX+jarW*0.7,jarY);
+  ctx.quadraticCurveTo(jarX+jarW,jarY,jarX+jarW,jarY+jarH*0.1);
+  ctx.lineTo(jarX+jarW,jarY+jarH*0.9);
+  ctx.quadraticCurveTo(jarX+jarW,jarY+jarH,jarX+jarW*0.85,jarY+jarH);
+  ctx.lineTo(jarX+jarW*0.15,jarY+jarH);
+  ctx.quadraticCurveTo(jarX,jarY+jarH,jarX,jarY+jarH*0.9);
+  ctx.lineTo(jarX,jarY+jarH*0.1);
+  ctx.quadraticCurveTo(jarX,jarY,jarX+jarW*0.3,jarY);
+  ctx.closePath();
+  ctx.clip();
+  
+  // Interior — dark green
+  ctx.fillStyle='#142218';
+  ctx.fillRect(jarX,jarY,jarW,jarH);
+  
+  // Soil layers
+  const soilY=jarY+jarH*0.65;
+  ctx.fillStyle='#2a1a10';
+  ctx.fillRect(jarX,soilY,jarW,jarH*0.35);
+  ctx.fillStyle='#3a2818';
+  ctx.fillRect(jarX,soilY,jarW,jarH*0.05);
+  
+  // Gravel layer
+  ctx.fillStyle='rgba(80,70,60,0.3)';
+  for(let i=0;i<30;i++){
+    const gx=jarX+Math.random()*jarW;
+    const gy=soilY-5+Math.random()*10;
+    ctx.beginPath();
+    ctx.arc(gx,gy,2+Math.random()*3,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Charcoal layer
+  ctx.fillStyle='rgba(30,25,20,0.2)';
+  ctx.fillRect(jarX,soilY-8,jarW,8);
+  
+  // Plants
+  // Fern 1 (left)
+  function drawFern(fx,fy,size,angle){
+    ctx.save();
+    ctx.translate(fx,fy);
+    ctx.rotate(angle);
+    for(let i=0;i<7;i++){
+      const a=-0.3+i*0.1;
+      const len=size*(0.7+Math.random()*0.3);
+      const sway=Math.sin(frame*0.01+i)*0.05;
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.quadraticCurveTo(Math.cos(a+sway)*len*0.5,Math.sin(a+sway)*len*0.5-10,Math.cos(a+sway)*len,Math.sin(a+sway)*len-15);
+      ctx.strokeStyle=`hsla(${140+Math.random()*20},50%,${30+Math.random()*15}%,0.7)`;
+      ctx.lineWidth=1.5;
+      ctx.stroke();
+      
+      // Leaflets
+      for(let j=0.2;j<1;j+=0.15){
+        const lx=Math.cos(a+sway)*len*j;
+        const ly=Math.sin(a+sway)*len*j-15*j;
+        const la=a+sway+Math.PI/2*(j>0.5?-1:1);
+        ctx.beginPath();
+        ctx.ellipse(lx+Math.cos(la)*4,ly+Math.sin(la)*4,5,2,la,0,Math.PI*2);
+        ctx.fillStyle=`hsla(${145+Math.random()*15},45%,${35+Math.random()*10}%,0.5)`;
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+  
+  drawFern(jarX+jarW*0.3,soilY-5,50,-0.3);
+  drawFern(jarX+jarW*0.7,soilY-5,40,0.2);
+  
+  // Succulent (center)
+  const sucX=jarX+jarW*0.5,sucY=soilY-5;
+  for(let ring=3;ring>=0;ring--){
+    const ringR=8+ring*8;
+    const count=5+ring*2;
+    for(let i=0;i<count;i++){
+      const a=(i/count)*Math.PI*2+ring*0.3+frame*0.001;
+      const lx=sucX+Math.cos(a)*ringR;
+      const ly=sucY+Math.sin(a)*ringR*0.5-5;
+      ctx.beginPath();
+      ctx.ellipse(lx,ly,6-ring*0.5,3-ring*0.3,a,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${120+ring*10},40%,${35+ring*5}%,0.6)`;
+      ctx.fill();
+    }
+  }
+  
+  // Moss patches
+  for(let i=0;i<8;i++){
+    const mx2=jarX+jarW*0.15+Math.random()*jarW*0.7;
+    const my2=soilY-3+Math.random()*5;
+    ctx.beginPath();
+    ctx.arc(mx2,my2,5+Math.random()*8,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${130+Math.random()*20},35%,28%,0.5)`;
+    ctx.fill();
+  }
+  
+  // Water droplets on glass (inside)
+  for(let i=0;i<15;i++){
+    const dx=jarX+jarW*0.1+Math.random()*jarW*0.8;
+    const dy=jarY+jarH*0.1+Math.random()*jarH*0.5;
+    const dr=2+Math.random()*4;
+    ctx.beginPath();
+    ctx.arc(dx,dy,dr,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,160,120,0.08)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(dx-dr*0.3,dy-dr*0.3,dr*0.3,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,255,200,0.1)';
+    ctx.fill();
+  }
+  
+  // Condensation
+  const condensation=ctx.createRadialGradient(cx+jarW*0.2,jarY+jarH*0.2,0,cx+jarW*0.2,jarY+jarH*0.2,100);
+  condensation.addColorStop(0,'rgba(120,180,140,0.03)');
+  condensation.addColorStop(1,'transparent');
+  ctx.fillStyle=condensation;
+  ctx.fillRect(jarX,jarY,jarW,jarH);
+  
+  ctx.restore();
+  
+  // Glass reflections
+  ctx.strokeStyle='rgba(200,230,210,0.06)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(jarX+jarW*0.15,jarY+jarH*0.1);
+  ctx.quadraticCurveTo(jarX+jarW*0.12,jarY+jarH*0.3,jarX+jarW*0.15,jarY+jarH*0.5);
+  ctx.stroke();
+  
+  ctx.strokeStyle='rgba(200,230,210,0.04)';
+  ctx.beginPath();
+  ctx.moveTo(jarX+jarW*0.85,jarY+jarH*0.2);
+  ctx.quadraticCurveTo(jarX+jarW*0.88,jarY+jarH*0.4,jarX+jarW*0.85,jarY+jarH*0.6);
+  ctx.stroke();
+  
+  // Light beam
+  const beamX=cx+jarW*0.15;
+  ctx.beginPath();
+  ctx.moveTo(beamX-jarW*0.1,jarY-50);
+  ctx.lineTo(beamX+jarW*0.1,jarY-50);
+  ctx.lineTo(beamX+jarW*0.05,jarY+jarH*0.3);
+  ctx.lineTo(beamX-jarW*0.05,jarY+jarH*0.3);
+  ctx.closePath();
+  ctx.fillStyle='rgba(200,230,180,0.02)';
+  ctx.fill();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

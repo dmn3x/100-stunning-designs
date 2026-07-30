@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Micro Seasons</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f5f0e8}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;width:100%;text-align:center;font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.5em;text-transform:uppercase;color:rgba(120,100,80,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Micro Seasons — 二十四節気</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+const seasons=[
+  {name:'立春',en:'Spring Begins',hue:120,sat:30,lum:60,icon:'🌱'},
+  {name:'雨水',en:'Rain Water',hue:200,sat:40,lum:55,icon:'🌧'},
+  {name:'啓蟄',en:'Insects Awaken',hue:100,sat:35,lum:58,icon:'🐛'},
+  {name:'春分',en:'Spring Equinox',hue:130,sat:45,lum:62,icon:'🌸'},
+  {name:'清明',en:'Pure Brightness',hue:140,sat:30,lum:68,icon:'☀'},
+  {name:'穀雨',en:'Grain Rain',hue:180,sat:35,lum:60,icon:'🌾'},
+  {name:'立夏',en:'Summer Begins',hue:50,sat:50,lum:65,icon:'🌿'},
+  {name:'小満',en:'Grain Buds',hue:60,sat:45,lum:63,icon:'🌻'},
+  {name:'芒種',en:'Grain in Ear',hue:40,sat:40,lum:60,icon:'🌾'},
+  {name:'夏至',en:'Summer Solstice',hue:45,sat:55,lum:68,icon:'☀'},
+  {name:'小暑',en:'Slight Heat',hue:30,sat:50,lum:62,icon:'🔥'},
+  {name:'大暑',en:'Great Heat',hue:15,sat:55,lum:58,icon:'🌡'},
+  {name:'立秋',en:'Autumn Begins',hue:30,sat:40,lum:55,icon:'🍂'},
+  {name:'処暑',en:'End of Heat',hue:25,sat:35,lum:58,icon:'🍁'},
+  {name:'白露',en:'White Dew',hue:200,sat:25,lum:70,icon:'💧'},
+  {name:'秋分',en:'Autumnal Equinox',hue:35,sat:40,lum:55,icon:'🍂'},
+  {name:'寒露',en:'Cold Dew',hue:210,sat:30,lum:50,icon:'🌙'},
+  {name:'霜降',en:'Frost Descends',hue:220,sat:20,lum:65,icon:'❄'},
+  {name:'立冬',en:'Winter Begins',hue:230,sat:25,lum:50,icon:'🌨'},
+  {name:'小雪',en:'Light Snow',hue:220,sat:15,lum:70,icon:'❄'},
+  {name:'大雪',en:'Heavy Snow',hue:210,sat:10,lum:75,icon:'☃'},
+  {name:'冬至',en:'Winter Solstice',hue:240,sat:20,lum:45,icon:'🌑'},
+  {name:'小寒',en:'Slight Cold',hue:230,sat:18,lum:48,icon:'🧊'},
+  {name:'大寒',en:'Great Cold',hue:225,sat:22,lum:42,icon:'❄'},
+];
+
+function draw(){
+  frame++;
+  
+  // Background
+  ctx.fillStyle='#f5f0e8';
+  ctx.fillRect(0,0,w,h);
+  
+  // Paper texture
+  ctx.fillStyle='rgba(180,160,130,0.03)';
+  for(let i=0;i<200;i++){
+    ctx.fillRect(Math.random()*w,Math.random()*h,Math.random()*3,1);
+  }
+  
+  // Circular layout — 24 segments
+  const cx=w/2,cy=h/2;
+  const outerR=Math.min(w,h)*0.42;
+  const innerR=outerR*0.55;
+  const now=new Date();
+  const dayOfYear=Math.floor((now-new Date(now.getFullYear(),0,0))/(1000*60*60*24));
+  const currentSeason=Math.floor(dayOfYear/15.2)%24;
+  
+  for(let i=0;i<24;i++){
+    const s=seasons[i];
+    const startAngle=(i/24)*Math.PI*2-Math.PI/2;
+    const endAngle=((i+1)/24)*Math.PI*2-Math.PI/2;
+    const midAngle=(startAngle+endAngle)/2;
+    const isCurrent=i===currentSeason;
+    
+    // Segment
+    ctx.beginPath();
+    ctx.arc(cx,cy,outerR,startAngle,endAngle);
+    ctx.arc(cx,cy,innerR,endAngle,startAngle,true);
+    ctx.closePath();
+    
+    const alpha=isCurrent?0.5:0.15;
+    ctx.fillStyle=`hsla(${s.hue},${s.sat}%,${s.lum}%,${alpha})`;
+    ctx.fill();
+    
+    if(isCurrent){
+      ctx.strokeStyle=`hsla(${s.hue},${s.sat}%,${s.lum-10}%,0.5)`;
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }
+    
+    // Season name (radial)
+    const labelR=(outerR+innerR)/2;
+    const lx=cx+Math.cos(midAngle)*labelR;
+    const ly=cy+Math.sin(midAngle)*labelR;
+    
+    ctx.save();
+    ctx.translate(lx,ly);
+    ctx.rotate(midAngle+Math.PI/2);
+    ctx.font=`${isCurrent?'bold ':''}${Math.min(14,outerR*0.07)}px serif`;
+    ctx.fillStyle=`rgba(60,50,40,${isCurrent?0.8:0.4})`;
+    ctx.textAlign='center';
+    ctx.fillText(s.name,0,0);
+    ctx.restore();
+    
+    // English name on outer edge
+    const elR=outerR+15;
+    const elx=cx+Math.cos(midAngle)*elR;
+    const ely=cy+Math.sin(midAngle)*elR;
+    ctx.save();
+    ctx.translate(elx,ely);
+    ctx.rotate(midAngle+Math.PI/2);
+    ctx.font=`${Math.min(8,outerR*0.04)}px "SF Mono",monospace`;
+    ctx.fillStyle=`rgba(100,90,70,${isCurrent?0.5:0.2})`;
+    ctx.textAlign='center';
+    ctx.fillText(s.en,0,0);
+    ctx.restore();
+    
+    // Dot at inner edge
+    const dotR=innerR-8;
+    const dx=cx+Math.cos(midAngle)*dotR;
+    const dy=cy+Math.sin(midAngle)*dotR;
+    ctx.beginPath();
+    ctx.arc(dx,dy,isCurrent?4:2,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${s.hue},${s.sat}%,${s.lum-10}%,${isCurrent?0.6:0.2})`;
+    ctx.fill();
+  }
+  
+  // Center — current season info
+  const cs=seasons[currentSeason];
+  ctx.textAlign='center';
+  ctx.font='bold 28px serif';
+  ctx.fillStyle='rgba(60,50,40,0.6)';
+  ctx.fillText(cs.name,cx,cy-10);
+  ctx.font='12px "SF Mono",monospace';
+  ctx.fillStyle='rgba(100,90,70,0.4)';
+  ctx.fillText(cs.en,cx,cy+15);
+  
+  // Seasonal indicator — rotating needle
+  const needleAngle=(currentSeason/24)*Math.PI*2-Math.PI/2+Math.PI/24;
+  const needleR=innerR*0.85;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(needleAngle)*needleR,cy+Math.sin(needleAngle)*needleR);
+  ctx.strokeStyle='rgba(180,60,40,0.3)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

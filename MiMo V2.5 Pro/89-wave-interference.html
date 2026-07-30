@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Interference</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(140,160,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Wave Interference</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Wave sources
+const sources=[
+  {x:0.3,y:0.5,freq:0.05,amp:1},
+  {x:0.7,y:0.5,freq:0.05,amp:1},
+  {x:0.5,y:0.3,freq:0.04,amp:0.8},
+];
+
+function draw(){
+  frame++;
+  
+  const cellSize=6;
+  const cols=Math.ceil(w/cellSize);
+  const rows=Math.ceil(h/cellSize);
+  
+  for(let row=0;row<rows;row++){
+    for(let col=0;col<cols;col++){
+      const x=col*cellSize+cellSize/2;
+      const y=row*cellSize+cellSize/2;
+      
+      let val=0;
+      for(const s of sources){
+        const dx=x-s.x*w;
+        const dy=y-s.y*h;
+        const dist=Math.sqrt(dx*dx+dy*dy);
+        val+=Math.sin(dist*s.freq-frame*0.05)*s.amp/Math.sqrt(dist*0.01+1);
+      }
+      
+      // Map to color
+      const normalized=(val+2)/4;
+      const hue=220+normalized*80;
+      const lum=15+normalized*35;
+      const alpha=0.3+normalized*0.4;
+      
+      ctx.fillStyle=`hsla(${hue},50%,${lum}%,${alpha})`;
+      ctx.fillRect(col*cellSize,row*cellSize,cellSize,cellSize);
+    }
+  }
+  
+  // Source points
+  for(const s of sources){
+    ctx.beginPath();
+    ctx.arc(s.x*w,s.y*h,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,200,255,0.3)';
+    ctx.fill();
+    
+    // Ripple rings
+    const rippleR=((frame*2)%60);
+    const rippleA=Math.max(0,1-rippleR/60)*0.15;
+    ctx.beginPath();
+    ctx.arc(s.x*w,s.y*h,rippleR,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(200,200,255,${rippleA})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

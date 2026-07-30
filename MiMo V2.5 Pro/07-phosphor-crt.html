@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phosphor CRT</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#000800}
+.terminal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:min(90vw,800px);height:min(85vh,600px);background:#000800;border:2px solid #0a3a0a;border-radius:18px;overflow:hidden;box-shadow:0 0 60px rgba(0,255,0,0.05),inset 0 0 80px rgba(0,0,0,0.5)}
+.scanline{position:absolute;top:0;left:0;width:100%;height:100%;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.15) 2px,rgba(0,0,0,0.15) 4px);pointer-events:none;z-index:5}
+.flicker{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:4;animation:flicker 0.05s infinite}
+@keyframes flicker{0%{opacity:0.97}50%{opacity:1}100%{opacity:0.98}}
+.output{position:absolute;top:1.5rem;left:1.5rem;right:1.5rem;bottom:3rem;font:14px/1.4 'Courier New',monospace;color:#33ff33;overflow:hidden;z-index:1;text-shadow:0 0 8px rgba(0,255,0,0.3)}
+.output div{opacity:0;animation:fadeIn 0.05s forwards}
+@keyframes fadeIn{to{opacity:1}}
+.cursor{display:inline-block;width:8px;height:14px;background:#33ff33;animation:blink 0.8s step-end infinite;vertical-align:bottom}
+@keyframes blink{50%{opacity:0}}
+.prompt{color:#33ff33}
+.path{color:#22aa22}
+.output .dim{color:#1a8a1a}
+.output .bright{color:#66ff66}
+.output .amber{color:#ccaa33}
+</style>
+</head>
+<body>
+<div class="terminal">
+  <div class="scanline"></div>
+  <div class="flicker"></div>
+  <div class="output" id="out"></div>
+</div>
+<script>
+const out=document.getElementById('out');
+const lines=[
+  {t:'<span class="dim">BIOS v2.4 — Memory Test... 640K OK</span>',d:200},
+  {t:'<span class="dim">Initializing phosphor display...</span>',d:400},
+  {t:'',d:150},
+  {t:'<span class="bright">╔══════════════════════════════════════╗</span>',d:80},
+  {t:'<span class="bright">║   PHOSPHOR TERMINAL v3.1             ║</span>',d:80},
+  {t:'<span class="bright">║   (c) 1983 Greenfield Systems       ║</span>',d:80},
+  {t:'<span class="bright">╚══════════════════════════════════════╝</span>',d:80},
+  {t:'',d:200},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">whoami</span>',d:300},
+  {t:'visitor',d:150},
+  {t:'',d:100},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">cat /etc/motd</span>',d:300},
+  {t:'',d:80},
+  {t:'<span class="amber">  Welcome to the phosphor display.</span>',d:100},
+  {t:'<span class="amber">  This terminal has been running</span>',d:100},
+  {t:'<span class="amber">  continuously since March 1983.</span>',d:100},
+  {t:'<span class="amber">  Uptime: 15,847 days.</span>',d:100},
+  {t:'',d:200},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">ls /sys/monitors/</span>',d:300},
+  {t:'<span class="dim">brightness  contrast  phosphor_type  burn_in_level</span>',d:150},
+  {t:'',d:100},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">cat /sys/monitors/phosphor_type</span>',d:300},
+  {t:'P31 — Zinc orthosilicate (green)',d:150},
+  {t:'',d:100},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">cat /sys/monitors/burn_in_level</span>',d:300},
+  {t:'<span class="amber">WARNING: 73% burn-in detected on rows 12-18</span>',d:200},
+  {t:'<span class="dim">Ghost image: "C:\\>DIR /W"</span>',d:200},
+  {t:'',d:200},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="bright">neofetch</span>',d:300},
+  {t:'',d:80},
+  {t:'<span class="bright">        _____        </span>  <span class="bright">Host:</span> Greenfield GF-XT',d:60},
+  {t:'<span class="bright">       /     \\       </span>  <span class="bright">CPU:</span> Intel 8088 @ 4.77MHz',d:60},
+  {t:'<span class="bright">      / () () \\      </span>  <span class="bright">RAM:</span> 640K Conventional',d:60},
+  {t:'<span class="bright">     |  ___  |      </span>  <span class="bright">Display:</span> P31 Phosphor CRT',d:60},
+  {t:'<span class="bright">      \\_____/       </span>  <span class="bright">Shell:</span> COMMAND.COM 3.1',d:60},
+  {t:'<span class="bright">     [_______]      </span>  <span class="bright">Uptime:</span> 15,847 days',d:60},
+  {t:'',d:200},
+  {t:'<span class="path">guest@phosphor:~$</span> <span class="cursor"></span>',d:0},
+];
+
+let idx=0;
+function typeLine(){
+  if(idx>=lines.length)return;
+  const {t,d}=lines[idx];
+  const div=document.createElement('div');
+  div.innerHTML=t||'&nbsp;';
+  out.appendChild(div);
+  out.scrollTop=out.scrollHeight;
+  idx++;
+  setTimeout(typeLine,d);
+}
+typeLine();
+</script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vine Growth</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#141e14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,160,80,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Vine Growth</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Vine segments
+const vines=[];
+
+function addVine(x,y,angle,maxLen,hue){
+  const segments=[];
+  let cx=x,cy=y,a=angle;
+  const len=maxLen;
+  for(let i=0;i<len;i++){
+    const segLen=5+Math.random()*5;
+    const nx=cx+Math.cos(a)*segLen;
+    const ny=cy+Math.sin(a)*segLen;
+    segments.push({x1:cx,y1:cy,x2:nx,y2:ny,w:Math.max(1,4-i*0.05)});
+    
+    // Branch
+    if(Math.random()>0.85&&i>5){
+      const branchAngle=a+(Math.random()>0.5?1:-1)*(0.5+Math.random()*0.5);
+      addVine(cx,cy,branchAngle,Math.floor(len*0.4),hue+Math.random()*20);
+    }
+    
+    cx=nx;cy=ny;
+    a+=(Math.random()-0.5)*0.3;
+    
+    // Leaf
+    if(Math.random()>0.7&&i>3){
+      segments.push({leaf:true,x:nx,y:ny,angle:a+Math.PI/2*(Math.random()>0.5?1:-1),size:4+Math.random()*6,hue:hue+10});
+    }
+  }
+  vines.push({segments,hue,growProgress:0,growSpeed:0.005+Math.random()*0.01});
+}
+
+// Start vines from bottom
+addVine(w*0.2,h,-Math.PI/2+0.2,80,120);
+addVine(w*0.5,h,-Math.PI/2,100,130);
+addVine(w*0.8,h,-Math.PI/2-0.2,70,110);
+addVine(w*0.1,h,-Math.PI/2-0.1,60,140);
+addVine(w*0.9,h,-Math.PI/2+0.1,65,115);
+
+function draw(){
+  frame++;
+  
+  // Background
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#1a2a1a');
+  bg.addColorStop(1,'#0e180e');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Wall texture
+  ctx.fillStyle='rgba(40,50,40,0.08)';
+  for(let i=0;i<80;i++){
+    ctx.fillRect(Math.random()*w,Math.random()*h,2+Math.random()*4,1);
+  }
+  
+  // Draw vines
+  for(const vine of vines){
+    vine.growProgress=Math.min(1,vine.growProgress+vine.growSpeed);
+    const visibleCount=Math.floor(vine.segments.length*vine.growProgress);
+    
+    for(let i=0;i<visibleCount;i++){
+      const seg=vine.segments[i];
+      
+      if(seg.leaf){
+        // Draw leaf
+        const leafProgress=Math.min(1,(vine.growProgress*vine.segments.length-i)/5);
+        if(leafProgress<=0)continue;
+        
+        ctx.save();
+        ctx.translate(seg.x,seg.y);
+        ctx.rotate(seg.angle+Math.sin(frame*0.01+i)*0.1);
+        ctx.scale(leafProgress,leafProgress);
+        
+        ctx.beginPath();
+        ctx.ellipse(0,0,seg.size,seg.size*0.4,0,0,Math.PI*2);
+        ctx.fillStyle=`hsla(${seg.hue},50%,35%,0.5)`;
+        ctx.fill();
+        
+        // Leaf vein
+        ctx.beginPath();
+        ctx.moveTo(-seg.size*0.8,0);
+        ctx.lineTo(seg.size*0.8,0);
+        ctx.strokeStyle=`hsla(${seg.hue},40%,45%,0.3)`;
+        ctx.lineWidth=0.5;
+        ctx.stroke();
+        
+        ctx.restore();
+      }else{
+        // Draw vine segment
+        const segProgress=Math.min(1,(vine.growProgress*vine.segments.length-i));
+        if(segProgress<=0)continue;
+        
+        const midX=seg.x1+(seg.x2-seg.x1)*segProgress;
+        const midY=seg.y1+(seg.y2-seg.y1)*segProgress;
+        
+        ctx.beginPath();
+        ctx.moveTo(seg.x1,seg.y1);
+        ctx.lineTo(midX,midY);
+        ctx.strokeStyle=`hsla(${vine.hue},40%,30%,${0.4*segProgress})`;
+        ctx.lineWidth=seg.w;
+        ctx.lineCap='round';
+        ctx.stroke();
+        
+        // Highlight
+        ctx.strokeStyle=`hsla(${vine.hue},30%,45%,${0.15*segProgress})`;
+        ctx.lineWidth=seg.w*0.3;
+        ctx.stroke();
+      }
+    }
+    
+    // Growing tip glow
+    if(vine.growProgress<1){
+      const tipIdx=Math.floor(vine.segments.length*vine.growProgress);
+      const tip=vine.segments[tipIdx];
+      if(tip&&!tip.leaf){
+        const tg=ctx.createRadialGradient(tip.x2,tip.y2,0,tip.x2,tip.y2,10);
+        tg.addColorStop(0,`hsla(${vine.hue},60%,60%,0.2)`);
+        tg.addColorStop(1,'transparent');
+        ctx.fillStyle=tg;
+        ctx.beginPath();
+        ctx.arc(tip.x2,tip.y2,10,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+  }
+  
+  // Fireflies
+  for(let i=0;i<5;i++){
+    const fx=w*0.1+Math.sin(frame*0.003+i*1.7)*w*0.4;
+    const fy=h*0.2+Math.cos(frame*0.004+i*2.3)*h*0.6;
+    const glow=0.2+Math.sin(frame*0.05+i*3)*0.3;
+    
+    const fg=ctx.createRadialGradient(fx,fy,0,fx,fy,8);
+    fg.addColorStop(0,`rgba(180,220,80,${glow*0.3})`);
+    fg.addColorStop(1,'transparent');
+    ctx.fillStyle=fg;
+    ctx.beginPath();
+    ctx.arc(fx,fy,8,0,Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(fx,fy,1,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,240,100,${glow})`;
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

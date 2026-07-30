@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Origami Crane</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f0e8d8}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Origami Crane</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function drawCrane(cx,cy,size,angle,hue){
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.rotate(angle);
+  const s=size;
+  
+  // Body (diamond)
+  ctx.beginPath();
+  ctx.moveTo(0,-s*0.3);
+  ctx.lineTo(s*0.5,0);
+  ctx.lineTo(0,s*0.3);
+  ctx.lineTo(-s*0.5,0);
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue},40%,70%,0.6)`;
+  ctx.fill();
+  ctx.strokeStyle=`hsla(${hue},30%,50%,0.3)`;
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  // Wing up
+  ctx.beginPath();
+  ctx.moveTo(0,-s*0.3);
+  ctx.lineTo(s*0.8,-s*0.8);
+  ctx.lineTo(s*0.5,0);
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue},35%,75%,0.5)`;
+  ctx.fill();
+  ctx.stroke();
+  
+  // Wing down
+  ctx.beginPath();
+  ctx.moveTo(0,-s*0.3);
+  ctx.lineTo(-s*0.8,-s*0.8);
+  ctx.lineTo(-s*0.5,0);
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue},35%,65%,0.5)`;
+  ctx.fill();
+  ctx.stroke();
+  
+  // Head/neck
+  ctx.beginPath();
+  ctx.moveTo(0,-s*0.3);
+  ctx.lineTo(s*0.1,-s*0.6);
+  ctx.lineTo(s*0.15,-s*0.55);
+  ctx.lineTo(s*0.05,-s*0.3);
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue},45%,60%,0.5)`;
+  ctx.fill();
+  
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(0,s*0.3);
+  ctx.lineTo(s*0.05,s*0.6);
+  ctx.lineTo(-s*0.05,s*0.6);
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue},35%,65%,0.5)`;
+  ctx.fill();
+  
+  // Fold lines
+  ctx.strokeStyle=`hsla(${hue},20%,50%,0.1)`;
+  ctx.lineWidth=0.5;
+  ctx.beginPath();
+  ctx.moveTo(-s*0.5,0);ctx.lineTo(s*0.5,0);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(0,-s*0.3);ctx.lineTo(0,s*0.3);
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+function draw(){
+  frame++;
+  
+  // Paper background
+  ctx.fillStyle='#f0e8d8';
+  ctx.fillRect(0,0,w,h);
+  
+  // Paper texture
+  ctx.fillStyle='rgba(180,160,130,0.02)';
+  for(let i=0;i<100;i++)ctx.fillRect(Math.random()*w,Math.random()*h,Math.random()*3,1);
+  
+  // String
+  ctx.strokeStyle='rgba(120,100,70,0.1)';
+  ctx.lineWidth=0.5;
+  ctx.beginPath();
+  ctx.moveTo(w*0.2,h*0.1);
+  for(let i=0;i<5;i++){
+    const x=w*0.2+i*w*0.15;
+    const y=h*0.1+i*h*0.15;
+    ctx.lineTo(x,y);
+  }
+  ctx.stroke();
+  
+  // Flying cranes
+  const cranes=[
+    {x:w*0.3,y:h*0.3,size:30,hue:20,speed:0.01},
+    {x:w*0.5,y:h*0.25,size:25,hue:30,speed:0.015},
+    {x:w*0.65,y:h*0.35,size:35,hue:10,speed:0.008},
+    {x:w*0.4,y:h*0.5,size:20,hue:40,speed:0.012},
+    {x:w*0.75,y:h*0.45,size:28,hue:15,speed:0.01},
+  ];
+  
+  for(let i=0;i<cranes.length;i++){
+    const crane=cranes[i];
+    const sway=Math.sin(frame*crane.speed+i*2)*20;
+    const bob=Math.cos(frame*crane.speed*1.5+i)*10;
+    const wingFlap=Math.sin(frame*0.03+i)*0.2;
+    
+    drawCrane(crane.x+sway,crane.y+bob,crane.size,wingFlap,crane.hue);
+  }
+  
+  // Falling paper cranes (smaller)
+  for(let i=0;i<8;i++){
+    const x=w*0.1+i*w*0.1+Math.sin(frame*0.005+i*3)*30;
+    const y=(frame*0.3+i*200)%h;
+    const rot=Math.sin(frame*0.01+i)*0.5;
+    drawCrane(x,y,10+Math.sin(i)*5,rot,0+i*30);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

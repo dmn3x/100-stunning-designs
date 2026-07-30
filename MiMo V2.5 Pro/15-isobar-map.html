@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Isobar Map</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1e2e}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(140,160,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Isobar Map</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Pressure field — noise-based
+function noise(x,y){
+  return Math.sin(x*0.01+y*0.013)*Math.cos(y*0.009-x*0.007)*0.5+
+         Math.sin(x*0.02+y*0.017)*0.3+
+         Math.cos(x*0.005-y*0.008)*0.4;
+}
+
+// Pressure centers (lows and highs)
+const centers=[
+  {x:0.3,y:0.4,type:'low',strength:1},
+  {x:0.7,y:0.3,type:'high',strength:0.8},
+  {x:0.5,y:0.7,type:'low',strength:0.6},
+  {x:0.2,y:0.8,type:'high',strength:0.5},
+  {x:0.85,y:0.65,type:'high',strength:0.7},
+];
+
+function pressure(x,y){
+  let p=0;
+  for(const c of centers){
+    const dx=x-c.x,dy=y-c.y;
+    const dist=Math.sqrt(dx*dx+dy*dy);
+    const sign=c.type==='low'?-1:1;
+    p+=sign*c.strength*Math.exp(-dist*dist*4);
+  }
+  p+=noise(x*w+frame*0.3,y*h)*0.15;
+  return p;
+}
+
+// Wind particles
+const particles=[];
+for(let i=0;i<400;i++){
+  particles.push({x:Math.random(),y:Math.random(),age:Math.random()*60,speed:0.002+Math.random()*0.003});
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(26,30,46,0.92)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Pressure heatmap (subtle)
+  const cellSize=20;
+  for(let x=0;x<w;x+=cellSize){
+    for(let y=0;y<h;y+=cellSize){
+      const p=pressure(x/w,y/h);
+      const hue=p<0?220+Math.abs(p)*30:30+p*20;
+      const alpha=Math.abs(p)*0.04;
+      ctx.fillStyle=`hsla(${hue},50%,50%,${alpha})`;
+      ctx.fillRect(x,y,cellSize,cellSize);
+    }
+  }
+  
+  // Isobars — contour lines at specific pressure values
+  const levels=[-0.6,-0.4,-0.2,0,0.2,0.4,0.6];
+  const colors=['rgba(80,120,200,0.2)','rgba(100,140,220,0.2)','rgba(130,160,230,0.15)','rgba(200,200,200,0.08)','rgba(220,180,120,0.15)','rgba(220,160,100,0.2)','rgba(200,140,80,0.2)'];
+  
+  // Simple contour via marching squares (simplified)
+  const gridRes=8;
+  const cols=Math.ceil(w/gridRes);
+  const rows=Math.ceil(h/gridRes);
+  
+  for(let l=0;l<levels.length;l++){
+    ctx.beginPath();
+    const level=levels[l];
+    
+    for(let j=0;j<rows;j++){
+      for(let i=0;i<cols;i++){
+        const x=i*gridRes,y=j*gridRes;
+        const p=pressure(x/w,y/h);
+        const pr=pressure((x+gridRes)/w,y/h);
+        const pb=pressure(x/w,(y+gridRes)/h);
+        const pbr=pressure((x+gridRes)/w,(y+gridRes)/h);
+        
+        // Simple threshold check
+        const above=(p>level?1:0)+(pr>level?1:0)+(pb>level?1:0)+(pbr>level?1:0);
+        
+        if(above>0&&above<4){
+          // Interpolate crossing points
+          if((p>level)!==(pr>level)){
+            const t=(level-p)/(pr-p);
+            ctx.moveTo(x+t*gridRes,y);
+            ctx.lineTo(x+t*gridRes+1,y);
+          }
+          if((p>level)!==(pb>level)){
+            const t=(level-p)/(pb-p);
+            ctx.moveTo(x,y+t*gridRes);
+            ctx.lineTo(x,y+t*gridRes+1);
+          }
+        }
+      }
+    }
+    ctx.strokeStyle=colors[l];
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Pressure center labels
+  for(const cent of centers){
+    const x=cent.x*w,y=cent.y*h;
+    
+    // Animate movement
+    cent.x+=Math.sin(frame*0.002+cent.y*10)*0.0001;
+    cent.y+=Math.cos(frame*0.003+cent.x*8)*0.0001;
+    cent.x=Math.max(0.1,Math.min(0.9,cent.x));
+    cent.y=Math.max(0.1,Math.min(0.9,cent.y));
+    
+    // L or H label
+    ctx.font='bold 18px Georgia';
+    ctx.textAlign='center';
+    ctx.fillStyle=cent.type==='low'?'rgba(100,140,220,0.4)':'rgba(220,160,100,0.4)';
+    ctx.fillText(cent.type==='low'?'L':'H',x,y+6);
+    
+    // Isobar count label
+    ctx.font='8px "SF Mono",monospace';
+    ctx.fillStyle='rgba(160,170,190,0.2)';
+    const hPa=cent.type==='low'?996+Math.floor(cent.strength*10):1020+Math.floor(cent.strength*8);
+    ctx.fillText(`${hPa} hPa`,x,y+20);
+  }
+  
+  // Wind particles
+  for(const p of particles){
+    const pr=pressure(p.x,p.y);
+    // Wind direction — perpendicular to pressure gradient (geostrophic approximation)
+    const dx=0.001;
+    const dpx=(pressure(p.x+dx,p.y)-pressure(p.x-dx,p.y))/(2*dx);
+    const dpy=(pressure(p.x,p.y+dx)-pressure(p.x,p.y-dx))/(2*dx);
+    const speed=p.speed*(0.5+Math.abs(pr));
+    
+    // Geostrophic wind (rotated 90 degrees from gradient)
+    p.x+=(-dpy)*speed*5;
+    p.y+=(dpx)*speed*5;
+    p.age++;
+    
+    // Wrap
+    if(p.x<0)p.x=1;if(p.x>1)p.x=0;
+    if(p.y<0)p.y=1;if(p.y>1)p.y=0;
+    if(p.age>60){p.age=0;p.x=Math.random();p.y=Math.random();}
+    
+    const px=p.x*w,py=p.y*h;
+    const alpha=0.15+Math.abs(pr)*0.2;
+    const hue=pr<0?220:30;
+    ctx.beginPath();
+    ctx.arc(px,py,1,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${hue},50%,60%,${alpha})`;
+    ctx.fill();
+    
+    // Trail
+    const trailX=px-(-dpy)*speed*5*w*3;
+    const trailY=py-(dpx)*speed*5*h*3;
+    ctx.beginPath();
+    ctx.moveTo(px,py);
+    ctx.lineTo(trailX,trailY);
+    ctx.strokeStyle=`hsla(${hue},50%,60%,${alpha*0.3})`;
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // Legend
+  ctx.font='9px "SF Mono",monospace';
+  ctx.textAlign='left';
+  ctx.fillStyle='rgba(160,170,190,0.2)';
+  ctx.fillText('ISOBAR INTERVAL: 2 hPa',20,h-20);
+  ctx.textAlign='right';
+  ctx.fillText('WIND: GEOSTROPHIC APPROXIMATION',w-20,h-20);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

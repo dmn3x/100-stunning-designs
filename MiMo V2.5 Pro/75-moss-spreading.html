@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moss Spreading</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2218}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,150,80,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Moss Spreading</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Cellular automaton — moss growth
+const cellSize=6;
+const cols=()=>Math.ceil(w/cellSize);
+const rows=()=>Math.ceil(h/cellSize);
+let grid=[];
+
+function initGrid(){
+  const c2=cols(),r=rows();
+  grid=Array.from({length:r},()=>Array(c2).fill(0));
+  // Seed points
+  for(let i=0;i<8;i++){
+    const sx=Math.floor(Math.random()*c2);
+    const sy=Math.floor(Math.random()*r);
+    grid[sy][sx]=1;
+  }
+}
+initGrid();
+
+function step(){
+  const r=rows(),c2=cols();
+  const newGrid=grid.map(row=>[...row]);
+  
+  for(let y=1;y<r-1;y++){
+    for(let x=1;x<c2-1;x++){
+      if(grid[y][x]>0){
+        // Existing moss grows
+        newGrid[y][x]=Math.min(1,grid[y][x]+0.01);
+        // Spread
+        if(Math.random()<0.05){
+          const dx=Math.floor(Math.random()*3)-1;
+          const dy=Math.floor(Math.random()*3)-1;
+          if(grid[y+dy]&&grid[y+dy][x+dx]===0){
+            newGrid[y+dy][x+dx]=0.01;
+          }
+        }
+      }
+    }
+  }
+  grid=newGrid;
+}
+
+function draw(){
+  frame++;
+  if(frame%2===0)step();
+  
+  // Background
+  const bg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
+  bg.addColorStop(0,'#1e2818');
+  bg.addColorStop(1,'#141c10');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Stone texture
+  ctx.fillStyle='rgba(50,60,45,0.08)';
+  for(let i=0;i<50;i++){
+    ctx.beginPath();
+    ctx.arc(Math.random()*w,Math.random()*h,5+Math.random()*15,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Draw moss
+  const r=rows(),c2=cols();
+  for(let y=0;y<r;y++){
+    for(let x=0;x<c2;x++){
+      const val=grid[y][x];
+      if(val<=0)continue;
+      
+      const px=x*cellSize,py=y*cellSize;
+      const hue=120+Math.sin(y*0.1+x*0.1)*20;
+      const sat=30+val*20;
+      const lum=20+val*20;
+      const alpha=val*0.6;
+      
+      ctx.fillStyle=`hsla(${hue},${sat}%,${lum}%,${alpha})`;
+      ctx.fillRect(px,py,cellSize-1,cellSize-1);
+      
+      // Texture
+      if(val>0.5){
+        ctx.fillStyle=`hsla(${hue+10},${sat-10}%,${lum+10}%,${alpha*0.3})`;
+        ctx.fillRect(px+1,py+1,cellSize-3,cellSize-3);
+      }
+    }
+  }
+  
+  // Ambient particles
+  for(let i=0;i<5;i++){
+    const px=w*0.1+Math.sin(frame*0.003+i*1.7)*w*0.4;
+    const py=h*0.1+Math.cos(frame*0.004+i*2.3)*h*0.4;
+    ctx.beginPath();
+    ctx.arc(px,py,1,0,Math.PI*2);
+    ctx.fillStyle='rgba(150,200,100,0.1)';
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

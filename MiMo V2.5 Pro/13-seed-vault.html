@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seed Vault</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0e14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(120,160,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Seed Vault</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,scrollY=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+addEventListener('wheel',e=>{scrollY+=e.deltaY*0.5;scrollY=Math.max(0,scrollY)},{passive:true});
+
+// Seed catalog data
+const seeds=[
+  {name:'Triticum aestivum',common:'Common Wheat',region:'Fertile Crescent',year:'-8000',color:'#c8a870'},
+  {name:'Oryza sativa',common:'Asian Rice',region:'Yangtze Valley',year:'-6000',color:'#a8c070'},
+  {name:'Zea mays',common:'Maize',region:'Mesoamerica',year:'-5000',color:'#d8b040'},
+  {name:'Hordeum vulgare',common:'Barley',region:'Levant',year:'-8000',color:'#b8a060'},
+  {name:'Sorghum bicolor',common:'Sorghum',region:'Sudan',year:'-4000',color:'#c09050'},
+  {name:'Glycine max',common:'Soybean',region:'East Asia',year:'-3500',color:'#90a850'},
+  {name:'Phaseolus vulgaris',common:'Common Bean',region:'Mesoamerica',year:'-5000',color:'#7a6a50'},
+  {name:'Solanum lycopersicum',common:'Tomato',region:'Andes',year:'-500',color:'#c04030'},
+  {name:'Capsicum annuum',common:'Chili Pepper',region:'Mexico',year:'-4000',color:'#b04020'},
+  {name:'Cicer arietinum',common:'Chickpea',region:'Levant',year:'-7000',color:'#c8b870'},
+  {name:'Lens culinaris',common:'Lentil',region:'Near East',year:'-7000',color:'#a89060'},
+  {name:'Vitis vinifera',common:'Grapevine',region:'Caucasus',year:'-6000',color:'#604080'},
+  {name:'Musa acuminata',common:'Banana',region:'Southeast Asia',year:'-5000',color:'#d8c840'},
+  {name:'Theobroma cacao',common:'Cacao',region:'Amazonia',year:'-1500',color:'#5a3a20'},
+  {name:'Coffea arabica',common:'Coffee',region:'Ethiopia',year:'-1000',color:'#4a3020'},
+  {name:'Triticum durum',common:'Durum Wheat',region:'Mediterranean',year:'-5000',color:'#d0b060'},
+  {name:'Secale cereale',common:'Rye',region:'Turkey',year:'-1500',color:'#a09050'},
+  {name:'Avena sativa',common:'Oat',region:'Europe',year:'-1000',color:'#b8a860'},
+  {name:'Solanum tuberosum',common:'Potato',region:'Andes',year:'-4000',color:'#8a7a50'},
+  {name:'Manihot esculenta',common:'Cassava',region:'Brazil',year:'-4000',color:'#c8a060'},
+  {name:'Ipomoea batatas',common:'Sweet Potato',region:'Central America',year:'-2500',color:'#d08040'},
+  {name:'Allium cepa',common:'Onion',region:'Central Asia',year:'-3500',color:'#c8a070'},
+  {name:'Brassica oleracea',common:'Cabbage',region:'Europe',year:'-500',color:'#508050'},
+  {name:'Cucumis sativus',common:'Cucumber',region:'India',year:'-3000',color:'#608040'},
+  {name:'Lactuca sativa',common:'Lettuce',region:'Egypt',year:'-2500',color:'#70a050'},
+];
+
+function draw(){
+  frame++;
+  
+  ctx.fillStyle='#0a0e14';
+  ctx.fillRect(0,0,w,h);
+  
+  // Grid background
+  ctx.strokeStyle='rgba(80,120,160,0.03)';
+  ctx.lineWidth=0.5;
+  for(let x=0;x<w;x+=30){
+    ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();
+  }
+  for(let y=0;y<h;y+=30){
+    ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  
+  // Tunnel perspective
+  const vpX=w/2,vpY=h*0.35;
+  const tunnelLines=12;
+  for(let i=0;i<tunnelLines;i++){
+    const angle=(i/tunnelLines)*Math.PI*2;
+    const x1=vpX+Math.cos(angle)*10;
+    const y1=vpY+Math.sin(angle)*10;
+    const x2=vpX+Math.cos(angle)*Math.max(w,h);
+    const y2=vpY+Math.sin(angle)*Math.max(w,h);
+    ctx.beginPath();
+    ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);
+    ctx.strokeStyle='rgba(80,120,160,0.04)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Seed entries — scrollable catalog
+  const entryH=90;
+  const startY=-scrollY%entryH;
+  const startIdx=Math.floor(scrollY/entryH);
+  
+  for(let i=-1;i<Math.ceil(h/entryH)+2;i++){
+    const idx=(startIdx+i+seeds.length*100)%seeds.length;
+    const seed=seeds[idx];
+    const y=startY+i*entryH;
+    
+    if(y<-entryH||y>h+entryH)continue;
+    
+    // Entry card
+    const cardX=w*0.15;
+    const cardW=w*0.7;
+    
+    ctx.fillStyle='rgba(20,30,45,0.6)';
+    ctx.fillRect(cardX,y,cardW,entryH-8);
+    ctx.strokeStyle='rgba(80,120,160,0.1)';
+    ctx.lineWidth=1;
+    ctx.strokeRect(cardX,y,cardW,entryH-8);
+    
+    // Color bar
+    ctx.fillStyle=seed.color;
+    ctx.fillRect(cardX,y,4,entryH-8);
+    
+    // Seed icon — small circle
+    ctx.beginPath();
+    ctx.arc(cardX+30,y+entryH/2-4,8,0,Math.PI*2);
+    ctx.fillStyle=seed.color+'40';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cardX+30,y+entryH/2-4,4,0,Math.PI*2);
+    ctx.fillStyle=seed.color+'80';
+    ctx.fill();
+    
+    // Text
+    ctx.font='italic 14px Georgia';
+    ctx.fillStyle='rgba(200,210,230,0.7)';
+    ctx.textAlign='left';
+    ctx.fillText(seed.name,cardX+50,y+25);
+    
+    ctx.font='11px "SF Mono",monospace';
+    ctx.fillStyle='rgba(160,180,200,0.4)';
+    ctx.fillText(seed.common,cardX+50,y+42);
+    
+    ctx.fillStyle='rgba(100,140,180,0.3)';
+    ctx.fillText(`Origin: ${seed.region}  ·  Domesticated: ${seed.year} BCE`,cardX+50,y+58);
+    
+    // Barcode effect
+    const barX=cardX+cardW-80;
+    for(let b=0;b<20;b++){
+      const bw=1+Math.floor(Math.random()*2);
+      ctx.fillStyle=`rgba(100,140,180,${0.1+Math.random()*0.1})`;
+      ctx.fillRect(barX+b*3.5,y+15,bw,40);
+    }
+    
+    // Status
+    ctx.font='9px "SF Mono",monospace';
+    ctx.fillStyle='rgba(100,200,120,0.3)';
+    ctx.textAlign='right';
+    ctx.fillText('PRESERVED',cardX+cardW-10,y+entryH-20);
+    ctx.textAlign='left';
+  }
+  
+  // Header overlay
+  const hg=ctx.createLinearGradient(0,0,0,80);
+  hg.addColorStop(0,'rgba(10,14,20,0.9)');
+  hg.addColorStop(1,'rgba(10,14,20,0)');
+  ctx.fillStyle=hg;
+  ctx.fillRect(0,0,w,80);
+  
+  // Counter
+  ctx.font='10px "SF Mono",monospace';
+  ctx.fillStyle='rgba(120,160,200,0.25)';
+  ctx.textAlign='right';
+  ctx.fillText(`SPECIMEN ${startIdx+1}–${startIdx+Math.ceil(h/entryH)} OF ${seeds.length}`,w-20,30);
+  
+  // Scroll indicator
+  const scrollPct=scrollY/(seeds.length*entryH);
+  const indicatorH=h*0.3;
+  const indicatorY=h*0.35+scrollPct*indicatorH;
+  ctx.fillStyle='rgba(120,160,200,0.1)';
+  ctx.fillRect(w-6,h*0.35,2,indicatorH);
+  ctx.fillStyle='rgba(120,160,200,0.3)';
+  ctx.fillRect(w-7,indicatorY,4,20);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

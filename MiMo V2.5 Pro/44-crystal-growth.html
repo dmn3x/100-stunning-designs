@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Crystal Growth</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(160,140,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Crystal Growth</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Crystal structures
+const crystals=[];
+function addCrystal(x,y,angle,len,hue,depth){
+  if(depth>5||len<3)return;
+  const x2=x+Math.cos(angle)*len;
+  const y2=y+Math.sin(angle)*len;
+  crystals.push({x1:x,y1:y,x2,y2,hue,len,depth,alpha:0,growing:true,targetAlpha:0.3+0.2*(1-depth/5)});
+  
+  // Branch at end
+  const spread=0.4+Math.random()*0.3;
+  addCrystal(x2,y2,angle-spread,len*0.7,hue+Math.random()*20,depth+1);
+  addCrystal(x2,y2,angle+spread,len*0.7,hue-Math.random()*20,depth+1);
+  if(Math.random()>0.5)addCrystal(x2,y2,angle,len*0.5,hue+Math.random()*10,depth+2);
+}
+
+// Seed crystals from bottom center
+addCrystal(w*0.5,h*0.9,-Math.PI/2,80,220,0);
+addCrystal(w*0.3,h*0.9,-Math.PI/2+0.2,60,260,0);
+addCrystal(w*0.7,h*0.9,-Math.PI/2-0.2,65,200,0);
+addCrystal(w*0.4,h*0.9,-Math.PI/2+0.1,50,240,0);
+addCrystal(w*0.6,h*0.9,-Math.PI/2-0.1,55,280,0);
+
+// Floating particles
+const particles=[];
+for(let i=0;i<40;i++){
+  particles.push({
+    x:Math.random()*w,y:Math.random()*h,
+    vx:(Math.random()-0.5)*0.3,vy:-(0.1+Math.random()*0.3),
+    r:0.5+Math.random()*1.5,hue:200+Math.random()*80,
+    alpha:0.1+Math.random()*0.2,
+  });
+}
+
+function draw(){
+  frame++;
+  
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#0a0a14');
+  bg.addColorStop(1,'#0e0e1c');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Floating particles
+  for(const p of particles){
+    p.x+=p.vx+Math.sin(frame*0.01+p.x*0.01)*0.1;
+    p.y+=p.vy;
+    if(p.y<-10){p.y=h+10;p.x=Math.random()*w;}
+    
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue},50%,60%,${p.alpha})`;
+    ctx.fill();
+  }
+  
+  // Growing crystals
+  let allGrown=true;
+  for(const crystal of crystals){
+    if(crystal.growing){
+      crystal.alpha=Math.min(crystal.targetAlpha,crystal.alpha+0.005);
+      if(crystal.alpha>=crystal.targetAlpha)crystal.growing=false;
+      allGrown=false;
+    }
+    
+    // Glow
+    ctx.beginPath();
+    ctx.moveTo(crystal.x1,crystal.y1);
+    ctx.lineTo(crystal.x2,crystal.y2);
+    ctx.strokeStyle=`hsla(${crystal.hue},60%,60%,${crystal.alpha*0.15})`;
+    ctx.lineWidth=crystal.len*0.15;
+    ctx.lineCap='round';
+    ctx.stroke();
+    
+    // Crystal line
+    ctx.beginPath();
+    ctx.moveTo(crystal.x1,crystal.y1);
+    ctx.lineTo(crystal.x2,crystal.y2);
+    ctx.strokeStyle=`hsla(${crystal.hue},50%,70%,${crystal.alpha})`;
+    ctx.lineWidth=Math.max(1,3-crystal.depth*0.4);
+    ctx.stroke();
+    
+    // Highlight
+    ctx.strokeStyle=`hsla(${crystal.hue},30%,85%,${crystal.alpha*0.3})`;
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // If all grown, regenerate
+  if(allGrown&&frame%200===0){
+    crystals.length=0;
+    addCrystal(w*0.5,h*0.9,-Math.PI/2,80,220+Math.random()*60,0);
+    addCrystal(w*0.3,h*0.9,-Math.PI/2+0.2,60,260+Math.random()*40,0);
+    addCrystal(w*0.7,h*0.9,-Math.PI/2-0.2,65,200+Math.random()*40,0);
+  }
+  
+  // Refraction sparkles
+  for(let i=0;i<8;i++){
+    const sx=w*0.3+Math.sin(frame*0.005+i*1.3)*w*0.2;
+    const sy=h*0.3+Math.cos(frame*0.004+i*1.7)*h*0.2;
+    const sparkle=Math.sin(frame*0.03+i*5)*0.5+0.5;
+    if(sparkle>0.7){
+      ctx.beginPath();
+      ctx.arc(sx,sy,2,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,200,255,${sparkle*0.2})`;
+      ctx.fill();
+    }
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

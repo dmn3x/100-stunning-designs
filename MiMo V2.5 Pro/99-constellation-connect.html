@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Constellation Connect</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06060c}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,200,240,.2);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px Georgia,serif;color:rgba(180,200,240,.15);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Constellation Connect</div>
+<div class="hint">Click stars to connect them</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,mx=0,my=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initStars()}
+resize();addEventListener('resize',resize);
+
+// Stars
+let stars=[];
+function initStars(){
+  stars=[];
+  for(let i=0;i<60;i++){
+    stars.push({
+      x:Math.random()*w*0.9+w*0.05,
+      y:Math.random()*h*0.9+h*0.05,
+      r:1+Math.random()*2,
+      b:Math.random(),
+      selected:false,
+    });
+  }
+}
+initStars();
+
+// Connections
+const connections=[];
+let selectedStar=null;
+
+c.addEventListener('click',e=>{
+  const clickX=e.clientX,clickY=e.clientY;
+  
+  // Find nearest star
+  let nearest=null,minDist=30;
+  for(const s of stars){
+    const dist=Math.sqrt((s.x-clickX)**2+(s.y-clickY)**2);
+    if(dist<minDist){minDist=dist;nearest=s;}
+  }
+  
+  if(nearest){
+    if(selectedStar&&selectedStar!==nearest){
+      // Check if connection exists
+      const exists=connections.some(c2=>(c2.a===selectedStar&&c2.b===nearest)||(c2.a===nearest&&c2.b===selectedStar));
+      if(!exists){
+        connections.push({a:selectedStar,b:nearest});
+      }
+      selectedStar.selected=false;
+      selectedStar=null;
+    }else{
+      if(selectedStar)selectedStar.selected=false;
+      selectedStar=nearest;
+      nearest.selected=true;
+    }
+  }else{
+    if(selectedStar){selectedStar.selected=false;selectedStar=null;}
+  }
+});
+
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(6,6,12,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Background nebula
+  for(let i=0;i<3;i++){
+    const nx=w*0.3+Math.sin(frame*0.0003+i*2)*w*0.2;
+    const ny=h*0.3+Math.cos(frame*0.0004+i*1.5)*h*0.2;
+    const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,150);
+    ng.addColorStop(0,`hsla(${240+i*40},40%,30%,0.02)`);
+    ng.addColorStop(1,'transparent');
+    ctx.fillStyle=ng;
+    ctx.fillRect(0,0,w,h);
+  }
+  
+  // Connections
+  for(const conn of connections){
+    ctx.beginPath();
+    ctx.moveTo(conn.a.x,conn.a.y);
+    ctx.lineTo(conn.b.x,conn.b.y);
+    ctx.strokeStyle='rgba(100,160,255,0.15)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    
+    // Animated pulse along line
+    const pulse=((frame*0.02)%1);
+    const px=conn.a.x+(conn.b.x-conn.a.x)*pulse;
+    const py=conn.a.y+(conn.b.y-conn.a.y)*pulse;
+    ctx.beginPath();
+    ctx.arc(px,py,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,180,255,0.3)';
+    ctx.fill();
+  }
+  
+  // Line from selected star to mouse
+  if(selectedStar){
+    ctx.beginPath();
+    ctx.moveTo(selectedStar.x,selectedStar.y);
+    ctx.lineTo(mx,my);
+    ctx.strokeStyle='rgba(100,160,255,0.08)';
+    ctx.lineWidth=1;
+    ctx.setLineDash([4,4]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  
+  // Stars
+  for(const s of stars){
+    const twinkle=0.5+Math.sin(frame*0.02+s.x*0.01)*0.5;
+    
+    // Glow
+    if(s.selected||s===selectedStar){
+      const g=ctx.createRadialGradient(s.x,s.y,0,s.x,s.y,15);
+      g.addColorStop(0,'rgba(100,180,255,0.1)');
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,15,0,Math.PI*2);
+      ctx.fill();
+    }
+    
+    ctx.beginPath();
+    ctx.arc(s.x,s.y,s.r*twinkle,0,Math.PI*2);
+    ctx.fillStyle=s.selected?'rgba(100,200,255,0.8)':`rgba(200,210,240,${0.2+s.b*0.4*twinkle})`;
+    ctx.fill();
+  }
+  
+  // Connection count
+  ctx.font='9px "SF Mono",monospace';
+  ctx.fillStyle='rgba(180,200,240,0.15)';
+  ctx.textAlign='left';
+  ctx.fillText(`CONNECTIONS: ${connections.length}`,20,h-20);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

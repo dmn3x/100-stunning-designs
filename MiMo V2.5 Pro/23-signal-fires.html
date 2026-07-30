@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Signal Fires</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,160,100,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Signal Fires</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Mountain peaks with signal fires
+const peaks=[
+  {x:0.1,y:0.65},{x:0.25,y:0.5},{x:0.4,y:0.55},
+  {x:0.55,y:0.42},{x:0.7,y:0.48},{x:0.85,y:0.55},
+  {x:0.95,y:0.6},
+];
+
+// Signal timing — sequential activation
+const signalPhase=[];
+for(let i=0;i<peaks.length;i++){
+  signalPhase.push(i*0.15);
+}
+
+function draw(){
+  frame++;
+  
+  // Night sky
+  const sky=ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,'#0a0818');
+  sky.addColorStop(0.4,'#100e1c');
+  sky.addColorStop(1,'#1a1820');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Stars
+  ctx.fillStyle='rgba(200,200,220,0.4)';
+  for(let i=0;i<100;i++){
+    const sx=(i*137.5)%w;
+    const sy=(i*97.3)%h*0.5;
+    const twinkle=0.3+Math.sin(frame*0.03+i*7)*0.7;
+    ctx.beginPath();
+    ctx.arc(sx,sy,0.5+Math.random()*0.8,0,Math.PI*2);
+    ctx.globalAlpha=twinkle*0.5;
+    ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  
+  // Mountains
+  ctx.beginPath();
+  ctx.moveTo(0,h);
+  for(let x=0;x<=w;x+=3){
+    let y=h*0.8;
+    for(const p of peaks){
+      const px=p.x*w;
+      const dist=Math.abs(x-px);
+      const peakH=(1-p.y)*h;
+      y=Math.min(y,h*0.8-Math.max(0,peakH*(1-dist/(w*0.12))));
+    }
+    // Extra noise
+    y+=Math.sin(x*0.01)*5+Math.sin(x*0.03)*2;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,h);
+  ctx.closePath();
+  ctx.fillStyle='#18141e';
+  ctx.fill();
+  
+  // Signal fire animation cycle
+  const cycleSpeed=0.003;
+  const cycleLength=peaks.length*0.15+0.3;
+  const currentCycle=(frame*cycleSpeed)%cycleLength;
+  
+  for(let i=0;i<peaks.length;i++){
+    const p=peaks[i];
+    const px=p.x*w;
+    const peakY=h*p.y-Math.sin(p.x*3)*h*0.05;
+    const fireY=peakY-5;
+    
+    // Check if this fire is active
+    const phase=signalPhase[i];
+    const isActive=currentCycle>phase&&currentCycle<phase+0.2;
+    const fade=isActive?Math.min(1,(currentCycle-phase)/0.05)*Math.min(1,(phase+0.2-currentCycle)/0.05):0;
+    
+    if(fade>0){
+      // Fire glow (large)
+      const glowR=80*fade;
+      const glow=ctx.createRadialGradient(px,fireY,0,px,fireY,glowR);
+      glow.addColorStop(0,`rgba(255,180,60,${0.15*fade})`);
+      glow.addColorStop(0.3,`rgba(255,120,20,${0.08*fade})`);
+      glow.addColorStop(1,'transparent');
+      ctx.fillStyle=glow;
+      ctx.fillRect(px-glowR,fireY-glowR,glowR*2,glowR*2);
+      
+      // Fire
+      for(let f=0;f<5;f++){
+        const fh=15+Math.random()*10;
+        const fw=5+Math.random()*3;
+        const fx=px+(Math.random()-0.5)*4;
+        const fy=fireY;
+        ctx.beginPath();
+        ctx.moveTo(fx-fw/2,fy);
+        ctx.quadraticCurveTo(fx,fy-fh,fx+fw/2,fy);
+        ctx.fillStyle=`rgba(255,${150+Math.random()*80},30,${0.4*fade})`;
+        ctx.fill();
+      }
+      
+      // Smoke
+      for(let s=0;s<3;s++){
+        const sx=px+(Math.random()-0.5)*10;
+        const sy=fireY-15-s*8;
+        ctx.beginPath();
+        ctx.arc(sx,sy,3+s*2,0,Math.PI*2);
+        ctx.fillStyle=`rgba(100,100,120,${0.05*fade})`;
+        ctx.fill();
+      }
+      
+      // Signal beam (vertical light)
+      ctx.beginPath();
+      ctx.moveTo(px-2,fireY);
+      ctx.lineTo(px+2,fireY);
+      ctx.lineTo(px+5,fireY-100);
+      ctx.lineTo(px-5,fireY-100);
+      ctx.closePath();
+      ctx.fillStyle=`rgba(255,200,100,${0.02*fade})`;
+      ctx.fill();
+      
+      // Embers
+      for(let e=0;e<3;e++){
+        const ex=px+(Math.random()-0.5)*15;
+        const ey=fireY-Math.random()*30;
+        ctx.beginPath();
+        ctx.arc(ex,ey,1,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,${200+Math.random()*55},50,${0.3*fade})`;
+        ctx.fill();
+      }
+    }
+    
+    // Fire pit (always visible)
+    ctx.beginPath();
+    ctx.arc(px,fireY+3,4,0,Math.PI*2);
+    ctx.fillStyle='rgba(60,50,40,0.5)';
+    ctx.fill();
+    
+    // Embers in pit (dim glow when inactive)
+    const dimGlow=fade>0?0:0.05+Math.sin(frame*0.02+i)*0.03;
+    if(dimGlow>0){
+      ctx.beginPath();
+      ctx.arc(px,fireY+2,3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(200,100,30,${dimGlow})`;
+      ctx.fill();
+    }
+  }
+  
+  // Signal path line
+  ctx.beginPath();
+  for(let i=0;i<peaks.length;i++){
+    const px=peaks[i].x*w;
+    const py=h*peaks[i].y;
+    if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+  }
+  ctx.strokeStyle='rgba(200,160,100,0.04)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,8]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Ground mist
+  for(let i=0;i<6;i++){
+    const mx=w*0.1+Math.sin(frame*0.001+i*2)*w*0.4;
+    const my=h*0.75+Math.cos(frame*0.0015+i)*h*0.1;
+    const mg=ctx.createRadialGradient(mx,my,0,mx,my,150);
+    mg.addColorStop(0,'rgba(80,70,100,0.03)');
+    mg.addColorStop(1,'transparent');
+    ctx.fillStyle=mg;
+    ctx.fillRect(0,0,w,h);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

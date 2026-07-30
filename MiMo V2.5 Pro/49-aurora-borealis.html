@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aurora Borealis</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06080e}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,200,160,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Aurora Borealis</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Stars
+const stars=[];
+for(let i=0;i<200;i++)stars.push({x:Math.random(),y:Math.random()*0.6,r:Math.random()+0.3,b:Math.random()});
+
+// Aurora curtains
+const curtains=5;
+
+function draw(){
+  frame++;
+  
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,'#040610');
+  sky.addColorStop(0.3,'#080e1a');
+  sky.addColorStop(0.6,'#0c1420');
+  sky.addColorStop(1,'#1a2028');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Stars
+  for(const s of stars){
+    const twinkle=0.3+Math.sin(frame*0.03+s.x*100)*0.7;
+    ctx.beginPath();
+    ctx.arc(s.x*w,s.y*h,s.r*twinkle,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,210,240,${0.2+s.b*0.5*twinkle})`;
+    ctx.fill();
+  }
+  
+  // Aurora curtains
+  for(let c2=0;c2<curtains;c2++){
+    const baseY=h*0.15+c2*h*0.08;
+    const hue=120+c2*30+Math.sin(frame*0.005)*20;
+    
+    ctx.beginPath();
+    ctx.moveTo(0,baseY);
+    
+    for(let x=0;x<=w;x+=3){
+      const wave1=Math.sin(x*0.005+frame*0.008+c2*1.5)*h*0.1;
+      const wave2=Math.sin(x*0.012+frame*0.012+c2*2)*h*0.05;
+      const wave3=Math.sin(x*0.003+frame*0.005)*h*0.08;
+      const y=baseY+wave1+wave2+wave3;
+      ctx.lineTo(x,y);
+    }
+    
+    ctx.lineTo(w,baseY+h*0.3);
+    for(let x=w;x>=0;x-=3){
+      const wave1=Math.sin(x*0.005+frame*0.008+c2*1.5+0.5)*h*0.08;
+      const wave2=Math.sin(x*0.012+frame*0.012+c2*2+0.5)*h*0.04;
+      const y=baseY+h*0.15+wave1+wave2;
+      ctx.lineTo(x,y);
+    }
+    ctx.closePath();
+    
+    const aG=ctx.createLinearGradient(0,baseY-h*0.1,0,baseY+h*0.3);
+    aG.addColorStop(0,`hsla(${hue},80%,50%,0)`);
+    aG.addColorStop(0.2,`hsla(${hue},80%,50%,${0.08-c2*0.01})`);
+    aG.addColorStop(0.5,`hsla(${hue+20},70%,45%,${0.05-c2*0.008})`);
+    aG.addColorStop(0.8,`hsla(${hue+40},60%,40%,${0.02})`);
+    aG.addColorStop(1,`hsla(${hue},50%,35%,0)`);
+    ctx.fillStyle=aG;
+    ctx.fill();
+  }
+  
+  // Vertical rays
+  for(let i=0;i<8;i++){
+    const rx=w*0.1+Math.sin(frame*0.003+i*1.5)*w*0.3;
+    const ry=h*0.1;
+    const rayH=h*0.3+Math.sin(frame*0.01+i*2)*h*0.1;
+    const hue=130+i*20;
+    
+    const rG=ctx.createLinearGradient(rx,ry,rx,ry+rayH);
+    rG.addColorStop(0,`hsla(${hue},70%,50%,${0.03+Math.sin(frame*0.02+i)*0.02})`);
+    rG.addColorStop(1,'transparent');
+    
+    ctx.beginPath();
+    ctx.moveTo(rx-3,ry);
+    ctx.lineTo(rx+3,ry);
+    ctx.lineTo(rx+1+Math.sin(frame*0.01+i)*5,ry+rayH);
+    ctx.lineTo(rx-1-Math.sin(frame*0.01+i)*5,ry+rayH);
+    ctx.closePath();
+    ctx.fillStyle=rG;
+    ctx.fill();
+  }
+  
+  // Ground silhouette
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.85);
+  for(let x=0;x<=w;x+=5){
+    const y=h*0.85-Math.sin(x*0.005)*h*0.03-Math.sin(x*0.02)*h*0.01-Math.abs(Math.sin(x*0.001))*h*0.05;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,h);
+  ctx.lineTo(0,h);
+  ctx.closePath();
+  ctx.fillStyle='#0a0e14';
+  ctx.fill();
+  
+  // Trees silhouette
+  for(let i=0;i<15;i++){
+    const tx=w*0.05+i*w*0.065;
+    const ty=h*0.83-Math.sin(tx*0.005)*h*0.03;
+    const th=20+Math.random()*30;
+    
+    ctx.beginPath();
+    ctx.moveTo(tx,ty);
+    ctx.lineTo(tx-5,ty);
+    ctx.lineTo(tx,ty-th);
+    ctx.lineTo(tx+5,ty);
+    ctx.closePath();
+    ctx.fillStyle='#0a0e14';
+    ctx.fill();
+  }
+  
+  // Snow particles
+  for(let i=0;i<20;i++){
+    const sx=(i*97.3+frame*0.3)%w;
+    const sy=(i*73.7+frame*0.2)%h*0.85;
+    ctx.beginPath();
+    ctx.arc(sx,sy,1,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,210,230,0.1)';
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

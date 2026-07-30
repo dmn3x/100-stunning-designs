@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Butterfly Scales</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0c0a12}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,140,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Butterfly Scales</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(12,10,18,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const scale=Math.min(w,h)*0.38;
+  
+  // Wing shape (butterfly wings — symmetric)
+  for(let side=-1;side<=1;side+=2){
+    // Upper wing
+    drawWing(cx,cy,scale,side,0.3,-0.3);
+    // Lower wing
+    drawWing(cx,cy,scale*0.7,side,0.25,0.3);
+  }
+  
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(cx,cy,4,scale*0.2,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(40,20,40,0.8)';
+  ctx.fill();
+  
+  // Antennae
+  ctx.strokeStyle='rgba(100,60,100,0.4)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-scale*0.18);
+  ctx.quadraticCurveTo(cx+30,cy-scale*0.4,cx+50,cy-scale*0.45);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx,cy-scale*0.18);
+  ctx.quadraticCurveTo(cx-30,cy-scale*0.4,cx-50,cy-scale*0.45);
+  ctx.stroke();
+  
+  // Vignette
+  const vg=ctx.createRadialGradient(cx,cy,scale*0.3,cx,cy,scale*1.2);
+  vg.addColorStop(0,'transparent');
+  vg.addColorStop(1,'rgba(8,6,12,0.6)');
+  ctx.fillStyle=vg;
+  ctx.fillRect(0,0,w,h);
+  
+  requestAnimationFrame(draw);
+}
+
+function drawWing(cx,cy,size,side,curveX,curveY){
+  // Wing outline
+  ctx.save();
+  ctx.translate(cx,cy);
+  ctx.scale(side,1);
+  
+  // Wing shape path
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(size*curveX,-size*0.8,size*0.9,-size*0.6,size*0.8,size*curveY);
+  ctx.bezierCurveTo(size*0.7,size*0.3,size*curveX,size*0.6,0,0);
+  ctx.closePath();
+  
+  // Clip to wing shape
+  ctx.save();
+  ctx.clip();
+  
+  // Scale pattern (rows of overlapping scales)
+  const scaleSize=8;
+  const rows=Math.ceil(size/scaleSize);
+  
+  for(let row=0;row<rows;row++){
+    const y=-size*0.6+row*scaleSize*0.8;
+    const cols=Math.ceil(size*1.2/scaleSize);
+    const offset=(row%2)*scaleSize*0.5;
+    
+    for(let col=0;col<cols;col++){
+      const x=-size*0.2+col*scaleSize+offset;
+      
+      // Check if inside wing
+      const dist=Math.sqrt(x*x+y*y);
+      if(dist>size*0.9)continue;
+      
+      const hue=(row*5+col*3+frame*0.2)%360;
+      const distFromCenter=dist/size;
+      
+      // Iridescent color shift based on angle
+      const angle=Math.atan2(y,x);
+      const iridescence=Math.sin(angle*3+frame*0.01)*0.5+0.5;
+      
+      const sat=40+iridescence*30;
+      const lum=25+iridescence*20+Math.sin(frame*0.015+row*0.3+col*0.2)*5;
+      
+      ctx.beginPath();
+      ctx.ellipse(x,y,scaleSize*0.45,scaleSize*0.35,0,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${hue+iridescence*60},${sat}%,${lum}%,0.35)`;
+      ctx.fill();
+      
+      // Scale edge highlight
+      ctx.strokeStyle=`hsla(${hue+iridescence*60},${sat+10}%,${lum+10}%,0.1)`;
+      ctx.lineWidth=0.3;
+      ctx.stroke();
+    }
+  }
+  
+  // Wing veins
+  ctx.strokeStyle='rgba(60,30,60,0.3)';
+  ctx.lineWidth=1.5;
+  // Main vein
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.lineTo(size*0.7,size*curveY*0.5);
+  ctx.stroke();
+  // Secondary veins
+  for(let v=0;v<5;v++){
+    const t=(v+1)/6;
+    ctx.beginPath();
+    ctx.moveTo(size*0.7*t,-size*0.5*t);
+    ctx.quadraticCurveTo(size*0.5*t,0,size*0.6*t,size*0.4*t);
+    ctx.strokeStyle='rgba(60,30,60,0.15)';
+    ctx.lineWidth=0.8;
+    ctx.stroke();
+  }
+  
+  // Eye spots on wing
+  const spots=[
+    {x:size*0.4,y:-size*0.2,r:size*0.12},
+    {x:size*0.5,y:size*0.1,r:size*0.08},
+  ];
+  for(const spot of spots){
+    const sg=ctx.createRadialGradient(spot.x,spot.y,0,spot.x,spot.y,spot.r);
+    sg.addColorStop(0,'rgba(200,180,255,0.3)');
+    sg.addColorStop(0.5,'rgba(100,60,150,0.2)');
+    sg.addColorStop(0.8,'rgba(60,30,80,0.15)');
+    sg.addColorStop(1,'transparent');
+    ctx.fillStyle=sg;
+    ctx.beginPath();
+    ctx.arc(spot.x,spot.y,spot.r,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  ctx.restore();
+  
+  // Wing outline
+  ctx.beginPath();
+  ctx.moveTo(0,0);
+  ctx.bezierCurveTo(size*curveX,-size*0.8,size*0.9,-size*0.6,size*0.8,size*curveY);
+  ctx.bezierCurveTo(size*0.7,size*0.3,size*curveX,size*0.6,0,0);
+  ctx.strokeStyle='rgba(120,80,140,0.15)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  ctx.restore();
+}
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fossil Excavation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#d8c8a8}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(120,100,70,.4);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:11px Georgia,serif;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Fossil Excavation</div>
+<div class="hint">Click to brush away sediment</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,brushing=false,bx=0,by=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+c.addEventListener('mousedown',()=>brushing=true);
+c.addEventListener('mouseup',()=>brushing=false);
+c.addEventListener('mousemove',e=>{bx=e.clientX;by=e.clientY;if(brushing)brush(bx,by)});
+c.addEventListener('touchstart',e=>{brushing=true;bx=e.touches[0].clientX;by=e.touches[0].clientY;brush(bx,by);e.preventDefault()},{passive:false});
+c.addEventListener('touchmove',e=>{bx=e.touches[0].clientX;by=e.touches[0].clientY;brush(bx,by);e.preventDefault()},{passive:false});
+c.addEventListener('touchend',()=>brushing=false);
+
+// Fossil bone positions (triceratops skeleton outline)
+const bones=[
+  // Spine
+  ...Array.from({length:12},(_,i)=>({x:0.3+i*0.03,y:0.48+Math.sin(i*0.3)*0.02,w:8+i*0.5,h:6,type:'vertebra'})),
+  // Ribs
+  ...Array.from({length:8},(_,i)=>({x:0.34+i*0.03,y:0.46,w:4,h:20+Math.sin(i)*5,type:'rib',angle:0.2+i*0.05})),
+  // Skull
+  {x:0.22,y:0.45,w:25,h:18,type:'skull'},
+  // Frill
+  {x:0.18,y:0.42,w:20,h:25,type:'frill'},
+  // Horns
+  {x:0.2,y:0.38,w:3,h:18,type:'horn',angle:-0.3},
+  {x:0.22,y:0.38,w:3,h:15,type:'horn',angle:0.1},
+  // Front legs
+  {x:0.32,y:0.55,w:6,h:25,type:'leg',angle:0.1},
+  {x:0.35,y:0.55,w:6,h:25,type:'leg',angle:-0.1},
+  // Back legs
+  {x:0.56,y:0.52,w:8,h:28,type:'leg',angle:0.15},
+  {x:0.59,y:0.52,w:8,h:28,type:'leg',angle:-0.1},
+  // Tail
+  ...Array.from({length:10},(_,i)=>({x:0.6+i*0.025,y:0.5+i*0.008,w:6-i*0.4,h:5-i*0.3,type:'tail'})),
+];
+
+// Excavation mask — starts fully covered
+const maskCanvas=document.createElement('canvas');
+const maskCtx=maskCanvas.getContext('2d');
+let maskReady=false;
+
+function initMask(){
+  maskCanvas.width=w;maskCanvas.height=h;
+  maskCtx.fillStyle='rgba(0,0,0,1)';
+  maskCtx.fillRect(0,0,w,h);
+  maskReady=true;
+}
+
+function brush(x,y){
+  if(!maskReady)return;
+  maskCtx.globalCompositeOperation='destination-out';
+  const r=25;
+  const g=maskCtx.createRadialGradient(x,y,0,x,y,r);
+  g.addColorStop(0,'rgba(0,0,0,1)');
+  g.addColorStop(0.7,'rgba(0,0,0,0.5)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  maskCtx.fillStyle=g;
+  maskCtx.beginPath();
+  maskCtx.arc(x,y,r,0,Math.PI*2);
+  maskCtx.fill();
+  maskCtx.globalCompositeOperation='source-over';
+}
+
+initMask();
+addEventListener('resize',()=>{initMask()});
+
+// Rock particles in sediment
+const rockParticles=[];
+for(let i=0;i<200;i++){
+  rockParticles.push({
+    x:Math.random(),y:Math.random(),
+    r:2+Math.random()*6,
+    color:`hsl(${30+Math.random()*15},${15+Math.random()*10}%,${65+Math.random()*15}%)`
+  });
+}
+
+function draw(){
+  frame++;
+  
+  // Base — excavation site (dirt background)
+  ctx.fillStyle='#c4b088';
+  ctx.fillRect(0,0,w,h);
+  
+  // Dirt texture layers
+  for(let i=0;i<5;i++){
+    const y=h*0.15+i*h*0.15;
+    ctx.fillStyle=`rgba(${160+i*8},${140+i*5},${100+i*5},0.2)`;
+    ctx.fillRect(0,y,w,h*0.15);
+  }
+  
+  // Rock particles in sediment
+  for(const rp of rockParticles){
+    ctx.beginPath();
+    ctx.arc(rp.x*w,rp.y*h,rp.r,0,Math.PI*2);
+    ctx.fillStyle=rp.color;
+    ctx.fill();
+  }
+  
+  // Grid lines (excavation grid)
+  ctx.strokeStyle='rgba(120,100,70,0.08)';
+  ctx.lineWidth=0.5;
+  const gridS=50;
+  for(let x=0;x<w;x+=gridS){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  for(let y=0;y<h;y+=gridS){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  
+  // Fossil bones
+  for(const bone of bones){
+    const bx2=bone.x*w,by2=bone.y*h;
+    ctx.save();
+    ctx.translate(bx2,by2);
+    if(bone.angle)ctx.rotate(bone.angle);
+    
+    // Bone color
+    const boneColor='rgba(180,160,130,0.7)';
+    const darkBone='rgba(140,120,90,0.6)';
+    
+    if(bone.type==='vertebra'){
+      ctx.beginPath();
+      ctx.ellipse(0,0,bone.w,bone.h,0,0,Math.PI*2);
+      ctx.fillStyle=boneColor;
+      ctx.fill();
+      ctx.beginPath();
+      ctx.ellipse(0,0,bone.w*0.5,bone.h*0.5,0,0,Math.PI*2);
+      ctx.fillStyle=darkBone;
+      ctx.fill();
+    }else if(bone.type==='rib'){
+      ctx.beginPath();
+      ctx.moveTo(0,-bone.h/2);
+      ctx.quadraticCurveTo(bone.w,0,0,bone.h/2);
+      ctx.strokeStyle=boneColor;
+      ctx.lineWidth=3;
+      ctx.stroke();
+    }else if(bone.type==='skull'){
+      ctx.beginPath();
+      ctx.ellipse(0,0,bone.w,bone.h,0,0,Math.PI*2);
+      ctx.fillStyle=boneColor;
+      ctx.fill();
+      // Eye socket
+      ctx.beginPath();
+      ctx.arc(-bone.w*0.3,-bone.h*0.1,bone.h*0.2,0,Math.PI*2);
+      ctx.fillStyle=darkBone;
+      ctx.fill();
+      // Beak
+      ctx.beginPath();
+      ctx.moveTo(-bone.w,0);
+      ctx.lineTo(-bone.w-15,-5);
+      ctx.lineTo(-bone.w-15,5);
+      ctx.closePath();
+      ctx.fillStyle=boneColor;
+      ctx.fill();
+    }else if(bone.type==='frill'){
+      ctx.beginPath();
+      ctx.arc(0,0,bone.w,0,Math.PI,true);
+      ctx.fillStyle='rgba(180,160,130,0.5)';
+      ctx.fill();
+      ctx.strokeStyle=boneColor;
+      ctx.lineWidth=2;
+      ctx.stroke();
+    }else if(bone.type==='horn'){
+      ctx.beginPath();
+      ctx.moveTo(0,0);
+      ctx.lineTo(0,-bone.h);
+      ctx.strokeStyle='rgba(200,180,150,0.7)';
+      ctx.lineWidth=bone.w;
+      ctx.lineCap='round';
+      ctx.stroke();
+    }else if(bone.type==='leg'){
+      ctx.beginPath();
+      ctx.roundRect(-bone.w/2,-bone.h/2,bone.w,bone.h,3);
+      ctx.fillStyle=boneColor;
+      ctx.fill();
+    }else if(bone.type==='tail'){
+      ctx.beginPath();
+      ctx.ellipse(0,0,bone.w,bone.h,0,0,Math.PI*2);
+      ctx.fillStyle=boneColor;
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+  
+  // Sediment overlay (mask)
+  if(maskReady){
+    ctx.drawImage(maskCanvas,0,0);
+  }
+  
+  // Brush cursor
+  if(brushing){
+    ctx.beginPath();
+    ctx.arc(bx,by,25,0,Math.PI*2);
+    ctx.strokeStyle='rgba(120,100,70,0.3)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Dust particles when brushing
+  if(brushing){
+    for(let i=0;i<3;i++){
+      const dx=bx+(Math.random()-0.5)*40;
+      const dy=by+(Math.random()-0.5)*40;
+      ctx.beginPath();
+      ctx.arc(dx,dy,1+Math.random()*2,0,Math.PI*2);
+      ctx.fillStyle='rgba(180,160,130,0.3)';
+      ctx.fill();
+    }
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

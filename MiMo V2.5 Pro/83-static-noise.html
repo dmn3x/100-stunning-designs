@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Static Noise</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(200,200,200,.15);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Static Noise</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function draw(){
+  frame++;
+  
+  const imageData=ctx.createImageData(w,h);
+  const data=imageData.data;
+  
+  for(let i=0;i<data.length;i+=4){
+    const v=Math.random()*255;
+    data[i]=v;
+    data[i+1]=v;
+    data[i+2]=v;
+    data[i+3]=255;
+  }
+  
+  ctx.putImageData(imageData,0,0);
+  
+  // Occasional signal
+  if(Math.sin(frame*0.01)>0.9){
+    const sigY=Math.random()*h;
+    ctx.fillStyle='rgba(100,200,100,0.05)';
+    ctx.fillRect(0,sigY,w,20);
+    ctx.font='12px "Courier New",monospace';
+    ctx.fillStyle='rgba(100,200,100,0.2)';
+    ctx.fillText('SIGNAL DETECTED',w*0.3,sigY+15);
+  }
+  
+  // Scanlines
+  ctx.fillStyle='rgba(0,0,0,0.05)';
+  for(let y=0;y<h;y+=4){
+    ctx.fillRect(0,y,w,1);
+  }
+  
+  // VHS tracking glitch
+  if(Math.random()>0.98){
+    const gy=Math.random()*h;
+    const gh=5+Math.random()*20;
+    ctx.fillStyle='rgba(255,255,255,0.03)';
+    ctx.fillRect(0,gy,w,gh);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(120,160,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Neural Network</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Network layers
+const layers=[4,6,8,6,4,2];
+const neurons=[];
+
+function initNetwork(){
+  neurons.length=0;
+  const layerSpacing=w/(layers.length+1);
+  for(let l=0;l<layers.length;l++){
+    const layer=[];
+    const count=layers[l];
+    const neuronSpacing=h/(count+1);
+    for(let n=0;n<count;n++){
+      layer.push({
+        x:layerSpacing*(l+1),
+        y:neuronSpacing*(n+1),
+        activation:Math.random(),
+        bias:Math.random(),
+      });
+    }
+    neurons.push(layer);
+  }
+}
+initNetwork();
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,10,20,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Update activations
+  for(let l=0;l<neurons.length;l++){
+    for(const n of neurons[l]){
+      n.activation=0.5+Math.sin(frame*0.02+n.x*0.01+n.y*0.01)*0.5;
+    }
+  }
+  
+  // Draw connections
+  for(let l=0;l<neurons.length-1;l++){
+    for(const a of neurons[l]){
+      for(const b of neurons[l+1]){
+        const weight=Math.sin(frame*0.01+a.x*0.005+b.y*0.005)*0.5+0.5;
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(100,140,200,${weight*0.08})`;
+        ctx.lineWidth=weight*1.5;
+        ctx.stroke();
+        
+        // Signal pulse
+        const pulse=((frame*0.02+l*0.5)%1);
+        const px=a.x+(b.x-a.x)*pulse;
+        const py=a.y+(b.y-a.y)*pulse;
+        if(pulse>0.2&&pulse<0.8){
+          ctx.beginPath();
+          ctx.arc(px,py,1,0,Math.PI*2);
+          ctx.fillStyle=`rgba(120,180,255,${0.3*weight})`;
+          ctx.fill();
+        }
+      }
+    }
+  }
+  
+  // Draw neurons
+  for(let l=0;l<neurons.length;l++){
+    for(const n of neurons[l]){
+      const r=6+n.activation*4;
+      
+      // Glow
+      const g=ctx.createRadialGradient(n.x,n.y,0,n.x,n.y,r*2);
+      g.addColorStop(0,`rgba(100,160,255,${n.activation*0.1})`);
+      g.addColorStop(1,'transparent');
+      ctx.fillStyle=g;
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,r*2,0,Math.PI*2);
+      ctx.fill();
+      
+      // Neuron
+      ctx.beginPath();
+      ctx.arc(n.x,n.y,r,0,Math.PI*2);
+      ctx.fillStyle=`rgba(${80+n.activation*100},${140+n.activation*80},220,${0.3+n.activation*0.3})`;
+      ctx.fill();
+      ctx.strokeStyle='rgba(120,160,220,0.2)';
+      ctx.lineWidth=1;
+      ctx.stroke();
+    }
+  }
+  
+  // Layer labels
+  const names=['Input','Hidden 1','Hidden 2','Hidden 3','Hidden 4','Output'];
+  ctx.font='8px "SF Mono",monospace';
+  ctx.fillStyle='rgba(120,160,220,0.15)';
+  ctx.textAlign='center';
+  for(let l=0;l<layers.length;l++){
+    const x=w/(layers.length+1)*(l+1);
+    ctx.fillText(names[l]||`Layer ${l}`,x,h-10);
+    ctx.fillText(`(${layers[l]})`,x,h-22);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

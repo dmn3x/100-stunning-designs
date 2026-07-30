@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Comet Flyby</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#06060c}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,200,240,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Comet Flyby</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Stars
+const stars=[];
+for(let i=0;i<300;i++)stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.5+0.2,b:Math.random()});
+
+// Comet trail particles
+const trail=[];
+
+// Comet orbit
+function cometPos(t){
+  const a=t*0.003;
+  const e=0.7; // eccentricity
+  const r=300/(1+e*Math.cos(a));
+  return{
+    x:w/2+Math.cos(a)*r*Math.min(w,h)/600,
+    y:h/2+Math.sin(a)*r*Math.min(w,h)/600*0.6,
+    angle:a,
+  };
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(6,6,12,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Stars
+  for(const s of stars){
+    const twinkle=0.5+Math.sin(frame*0.02+s.x*100)*0.5;
+    ctx.beginPath();
+    ctx.arc(s.x*w,s.y*h,s.r*twinkle,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,210,240,${0.2+s.b*0.4*twinkle})`;
+    ctx.fill();
+  }
+  
+  // Nebula (background)
+  for(let i=0;i<3;i++){
+    const nx=w*0.3+Math.sin(frame*0.0005+i*2)*w*0.2;
+    const ny=h*0.3+Math.cos(frame*0.0003+i*1.5)*h*0.2;
+    const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,200);
+    ng.addColorStop(0,`rgba(${80+i*30},${40+i*20},${120+i*20},0.02)`);
+    ng.addColorStop(1,'transparent');
+    ctx.fillStyle=ng;
+    ctx.fillRect(0,0,w,h);
+  }
+  
+  // Comet
+  const comet=cometPos(frame);
+  
+  // Add trail particles
+  for(let i=0;i<5;i++){
+    trail.push({
+      x:comet.x+(Math.random()-0.5)*4,
+      y:comet.y+(Math.random()-0.5)*4,
+      vx:-Math.cos(comet.angle)*2+Math.random()-0.5,
+      vy:-Math.sin(comet.angle)*1.2+Math.random()-0.5,
+      r:1+Math.random()*3,
+      life:80+Math.random()*40,
+      maxLife:80+Math.random()*40,
+      hue:190+Math.random()*40,
+    });
+  }
+  
+  // Update trail
+  for(let i=trail.length-1;i>=0;i--){
+    const p=trail[i];
+    p.life--;
+    if(p.life<=0){trail.splice(i,1);continue;}
+    
+    p.x+=p.vx;
+    p.y+=p.vy;
+    p.vx*=0.99;
+    p.vy*=0.99;
+    p.r*=0.995;
+    
+    const lifeRatio=p.life/p.maxLife;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue},60%,60%,${lifeRatio*0.3})`;
+    ctx.fill();
+  }
+  
+  // Comet tail (main)
+  const tailLen=150;
+  ctx.beginPath();
+  ctx.moveTo(comet.x,comet.y);
+  for(let i=0;i<tailLen;i++){
+    const t=i/tailLen;
+    const tx=comet.x-Math.cos(comet.angle)*i*2+Math.sin(frame*0.02+i*0.1)*t*15;
+    const ty=comet.y-Math.sin(comet.angle)*i*1.2+Math.cos(frame*0.03+i*0.08)*t*10;
+    ctx.lineTo(tx,ty);
+  }
+  const tailG=ctx.createLinearGradient(comet.x,comet.y,comet.x-Math.cos(comet.angle)*300,comet.y-Math.sin(comet.angle)*180);
+  tailG.addColorStop(0,'rgba(180,220,255,0.3)');
+  tailG.addColorStop(0.3,'rgba(100,160,255,0.1)');
+  tailG.addColorStop(1,'rgba(80,120,200,0)');
+  ctx.strokeStyle=tailG;
+  ctx.lineWidth=8;
+  ctx.stroke();
+  
+  // Dust tail (wider, different angle)
+  ctx.beginPath();
+  ctx.moveTo(comet.x,comet.y);
+  for(let i=0;i<tailLen*0.8;i++){
+    const t=i/(tailLen*0.8);
+    const dustAngle=comet.angle+0.15;
+    const tx=comet.x-Math.cos(dustAngle)*i*2.5+Math.sin(frame*0.015+i*0.05)*t*20;
+    const ty=comet.y-Math.sin(dustAngle)*i*1.5+Math.cos(frame*0.02+i*0.04)*t*15;
+    ctx.lineTo(tx,ty);
+  }
+  const dustG=ctx.createLinearGradient(comet.x,comet.y,comet.x-Math.cos(comet.angle+0.15)*200,comet.y);
+  dustG.addColorStop(0,'rgba(255,220,150,0.15)');
+  dustG.addColorStop(1,'rgba(255,200,100,0)');
+  ctx.strokeStyle=dustG;
+  ctx.lineWidth=15;
+  ctx.stroke();
+  
+  // Coma (glow around nucleus)
+  const coma=ctx.createRadialGradient(comet.x,comet.y,0,comet.x,comet.y,30);
+  coma.addColorStop(0,'rgba(200,230,255,0.4)');
+  coma.addColorStop(0.3,'rgba(150,200,255,0.15)');
+  coma.addColorStop(0.6,'rgba(100,160,255,0.05)');
+  coma.addColorStop(1,'transparent');
+  ctx.fillStyle=coma;
+  ctx.beginPath();
+  ctx.arc(comet.x,comet.y,30,0,Math.PI*2);
+  ctx.fill();
+  
+  // Nucleus
+  ctx.beginPath();
+  ctx.arc(comet.x,comet.y,4,0,Math.PI*2);
+  ctx.fillStyle='rgba(220,240,255,0.8)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(comet.x,comet.y,2,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.9)';
+  ctx.fill();
+  
+  // Limit trail
+  while(trail.length>400)trail.shift();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

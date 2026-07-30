@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Frosted Window</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#c0d0e0}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,120,150,.3);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px Georgia,serif;color:rgba(100,120,150,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Frosted Window</div>
+<div class="hint">Click to wipe frost</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initFrost()}
+resize();addEventListener('resize',resize);
+
+// Frost mask
+const frostCanvas=document.createElement('canvas');
+const frostCtx=frostCanvas.getContext('2d');
+
+function initFrost(){
+  frostCanvas.width=w;frostCanvas.height=h;
+  frostCtx.fillStyle='rgba(0,0,0,1)';
+  frostCtx.fillRect(0,0,w,h);
+}
+initFrost();
+
+c.addEventListener('click',e=>{
+  frostCtx.globalCompositeOperation='destination-out';
+  const g=frostCtx.createRadialGradient(e.clientX,e.clientY,0,e.clientX,e.clientY,40);
+  g.addColorStop(0,'rgba(0,0,0,1)');
+  g.addColorStop(0.7,'rgba(0,0,0,0.5)');
+  g.addColorStop(1,'rgba(0,0,0,0)');
+  frostCtx.fillStyle=g;
+  frostCtx.beginPath();
+  frostCtx.arc(e.clientX,e.clientY,40,0,Math.PI*2);
+  frostCtx.fill();
+  frostCtx.globalCompositeOperation='source-over';
+});
+
+function draw(){
+  frame++;
+  
+  // Background scene (blurred through frost)
+  const sky=ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,'#6080a0');
+  sky.addColorStop(0.5,'#80a0c0');
+  sky.addColorStop(1,'#a0c0d0');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Blurred outdoor elements
+  for(let i=0;i<5;i++){
+    ctx.beginPath();
+    ctx.arc(w*0.2+i*w*0.15,h*0.4+Math.sin(i)*50,30+Math.random()*20,0,Math.PI*2);
+    ctx.fillStyle='rgba(80,120,80,0.15)';
+    ctx.fill();
+  }
+  
+  // Light source
+  ctx.beginPath();
+  ctx.arc(w*0.7,h*0.2,40,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,240,200,0.2)';
+  ctx.fill();
+  
+  // Frost layer
+  ctx.save();
+  
+  // Frost crystals
+  for(let i=0;i<200;i++){
+    const fx=(i*137.5)%w;
+    const fy=(i*97.3)%h;
+    const size=3+Math.sin(i*7)*2;
+    
+    ctx.beginPath();
+    // 6-fold crystal
+    for(let j=0;j<6;j++){
+      const a=(j/6)*Math.PI*2+frame*0.001;
+      const ex=fx+Math.cos(a)*size;
+      const ey=fy+Math.sin(a)*size;
+      if(j===0)ctx.moveTo(ex,ey);else ctx.lineTo(ex,ey);
+    }
+    ctx.closePath();
+    ctx.fillStyle='rgba(200,215,230,0.05)';
+    ctx.fill();
+  }
+  
+  // Frost texture
+  for(let i=0;i<100;i++){
+    const fx=Math.random()*w;
+    const fy=Math.random()*h;
+    ctx.beginPath();
+    ctx.arc(fx,fy,5+Math.random()*15,0,Math.PI*2);
+    ctx.fillStyle='rgba(190,205,220,0.03)';
+    ctx.fill();
+  }
+  
+  // Apply frost mask
+  ctx.globalAlpha=0.85;
+  ctx.drawImage(frostCanvas,0,0);
+  ctx.globalAlpha=1;
+  
+  ctx.restore();
+  
+  // Condensation droplets
+  for(let i=0;i<30;i++){
+    const dx=(i*97.3+frame*0.01)%w;
+    const dy=(i*73.7)%h;
+    ctx.beginPath();
+    ctx.arc(dx,dy,2+Math.random()*3,0,Math.PI*2);
+    ctx.fillStyle='rgba(180,200,220,0.1)';
+    ctx.fill();
+    // Highlight
+    ctx.beginPath();
+    ctx.arc(dx-1,dy-1,1,0,Math.PI*2);
+    ctx.fillStyle='rgba(220,235,250,0.15)';
+    ctx.fill();
+  }
+  
+  // Window frame
+  ctx.strokeStyle='rgba(100,90,70,0.3)';
+  ctx.lineWidth=8;
+  ctx.strokeRect(0,0,w,h);
+  // Cross
+  ctx.beginPath();
+  ctx.moveTo(w/2,0);ctx.lineTo(w/2,h);
+  ctx.moveTo(0,h/2);ctx.lineTo(w,h/2);
+  ctx.lineWidth=4;
+  ctx.stroke();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

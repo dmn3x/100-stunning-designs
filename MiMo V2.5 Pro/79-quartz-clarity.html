@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quartz Clarity</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,180,240,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Quartz Clarity</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Crystal clusters
+const clusters=[];
+for(let i=0;i<8;i++){
+  const crystals=[];
+  const count=5+Math.floor(Math.random()*8);
+  for(let j=0;j<count;j++){
+    crystals.push({
+      angle:-Math.PI/2+(Math.random()-0.5)*1.2,
+      len:30+Math.random()*80,
+      width:5+Math.random()*12,
+      hue:260+Math.random()*40,
+    });
+  }
+  clusters.push({
+    x:w*0.1+Math.random()*w*0.8,
+    y:h*0.6+Math.random()*h*0.3,
+    crystals,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#0a0a14';
+  ctx.fillRect(0,0,w,h);
+  
+  // Background light beams
+  for(let i=0;i<5;i++){
+    const bx=w*0.1+i*w*0.2;
+    ctx.beginPath();
+    ctx.moveTo(bx,0);
+    ctx.lineTo(bx+30,h);
+    ctx.lineTo(bx-30,h);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(140,140,200,${0.01+Math.sin(frame*0.005+i)*0.005})`;
+    ctx.fill();
+  }
+  
+  // Draw clusters
+  for(const cluster of clusters){
+    for(const crystal of cluster.crystals){
+      const tipX=cluster.x+Math.cos(crystal.angle)*crystal.len;
+      const tipY=cluster.y+Math.sin(crystal.angle)*crystal.len;
+      const perpAngle=crystal.angle+Math.PI/2;
+      const hw=crystal.width/2;
+      
+      // Crystal body
+      ctx.beginPath();
+      ctx.moveTo(cluster.x+Math.cos(perpAngle)*hw,cluster.y+Math.sin(perpAngle)*hw);
+      ctx.lineTo(tipX+Math.cos(perpAngle)*hw*0.3,tipY+Math.sin(perpAngle)*hw*0.3);
+      ctx.lineTo(tipX-Math.cos(perpAngle)*hw*0.3,tipY-Math.sin(perpAngle)*hw*0.3);
+      ctx.lineTo(cluster.x-Math.cos(perpAngle)*hw,cluster.y-Math.sin(perpAngle)*hw);
+      ctx.closePath();
+      
+      // Transparent glass effect
+      const cg=ctx.createLinearGradient(cluster.x,cluster.y,tipX,tipY);
+      cg.addColorStop(0,`hsla(${crystal.hue},20%,60%,0.08)`);
+      cg.addColorStop(0.5,`hsla(${crystal.hue},25%,70%,0.12)`);
+      cg.addColorStop(1,`hsla(${crystal.hue},30%,80%,0.06)`);
+      ctx.fillStyle=cg;
+      ctx.fill();
+      
+      // Edge
+      ctx.strokeStyle=`hsla(${crystal.hue},30%,75%,0.15)`;
+      ctx.lineWidth=1;
+      ctx.stroke();
+      
+      // Internal refraction
+      const refX=cluster.x+(tipX-cluster.x)*0.3;
+      const refY=cluster.y+(tipY-cluster.y)*0.3;
+      ctx.beginPath();
+      ctx.moveTo(refX-hw*0.3,refY);
+      ctx.lineTo(refX+hw*0.3,refY);
+      ctx.strokeStyle=`hsla(${crystal.hue},40%,80%,0.08)`;
+      ctx.lineWidth=0.5;
+      ctx.stroke();
+    }
+  }
+  
+  // Sparkles
+  for(let i=0;i<15;i++){
+    const sparkle=Math.sin(frame*0.02+i*2.5)*0.5+0.5;
+    if(sparkle>0.6){
+      const sx=w*0.1+Math.sin(i*3.7)*w*0.4+w*0.3;
+      const sy=h*0.2+Math.cos(i*2.3)*h*0.3;
+      
+      // 4-pointed star
+      ctx.beginPath();
+      ctx.moveTo(sx,sy-3*sparkle);
+      ctx.lineTo(sx+1,sy-1);
+      ctx.lineTo(sx+3*sparkle,sy);
+      ctx.lineTo(sx+1,sy+1);
+      ctx.lineTo(sx,sy+3*sparkle);
+      ctx.lineTo(sx-1,sy+1);
+      ctx.lineTo(sx-3*sparkle,sy);
+      ctx.lineTo(sx-1,sy-1);
+      ctx.closePath();
+      ctx.fillStyle=`rgba(255,255,255,${sparkle*0.3})`;
+      ctx.fill();
+    }
+  }
+  
+  // Caustic patterns
+  for(let i=0;i<3;i++){
+    const cx2=w*0.3+Math.sin(frame*0.003+i*2)*w*0.2;
+    const cy2=h*0.5+Math.cos(frame*0.004+i*1.5)*h*0.2;
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,40,0,Math.PI*2);
+    ctx.fillStyle='rgba(140,140,220,0.01)';
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

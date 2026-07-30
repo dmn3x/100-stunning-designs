@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Airplane</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#e8e0d0}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,100,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Paper Airplane</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Paper airplane path
+let planeX=0,planeY=h*0.3,planeAngle=0;
+
+// Trail points
+const trail=[];
+
+function draw(){
+  frame++;
+  
+  // Paper background
+  ctx.fillStyle='#e8e0d0';
+  ctx.fillRect(0,0,w,h);
+  
+  // Paper lines
+  ctx.strokeStyle='rgba(180,160,130,0.05)';
+  ctx.lineWidth=0.5;
+  for(let y=0;y<h;y+=30){
+    ctx.beginPath();
+    ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+  }
+  
+  // Flight path — figure 8
+  const t=frame*0.008;
+  const cx=w/2,cy=h/2;
+  const rx=w*0.3,ry=h*0.25;
+  
+  planeX=cx+Math.sin(t)*rx;
+  planeY=cy+Math.sin(t*2)*ry*0.5;
+  planeAngle=Math.atan2(Math.cos(t*2)*ry*0.5*2,Math.cos(t)*rx);
+  
+  trail.push({x:planeX,y:planeY,angle:planeAngle});
+  while(trail.length>80)trail.shift();
+  
+  // Trail (dashed line)
+  ctx.beginPath();
+  for(let i=0;i<trail.length;i++){
+    const alpha=i/trail.length;
+    if(i===0)ctx.moveTo(trail[i].x,trail[i].y);
+    else ctx.lineTo(trail[i].x,trail[i].y);
+  }
+  ctx.strokeStyle='rgba(120,100,70,0.1)';
+  ctx.lineWidth=1;
+  ctx.setLineDash([4,6]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  
+  // Paper airplane
+  ctx.save();
+  ctx.translate(planeX,planeY);
+  ctx.rotate(planeAngle);
+  
+  const s=20;
+  // Shadow
+  ctx.fillStyle='rgba(100,80,60,0.08)';
+  ctx.beginPath();
+  ctx.moveTo(s,0);
+  ctx.lineTo(-s,-s*0.6);
+  ctx.lineTo(-s*0.3,0);
+  ctx.lineTo(-s,s*0.6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.translate(3,3);
+  
+  // Paper body
+  ctx.fillStyle='#f0e8d8';
+  ctx.beginPath();
+  ctx.moveTo(s,0);
+  ctx.lineTo(-s,-s*0.6);
+  ctx.lineTo(-s*0.3,0);
+  ctx.lineTo(-s,s*0.6);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle='rgba(120,100,70,0.3)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  // Fold line
+  ctx.beginPath();
+  ctx.moveTo(s,0);
+  ctx.lineTo(-s*0.3,0);
+  ctx.strokeStyle='rgba(120,100,70,0.15)';
+  ctx.lineWidth=0.5;
+  ctx.stroke();
+  
+  // Wing fold shadow
+  ctx.fillStyle='rgba(120,100,70,0.05)';
+  ctx.beginPath();
+  ctx.moveTo(s,0);
+  ctx.lineTo(-s,-s*0.6);
+  ctx.lineTo(-s*0.3,0);
+  ctx.closePath();
+  ctx.fill();
+  
+  ctx.restore();
+  
+  // Paper dots (confetti in the air)
+  for(let i=0;i<10;i++){
+    const px=(i*137.5+frame*0.5)%w;
+    const py=(i*97.3+frame*0.3)%h;
+    ctx.fillStyle=`hsla(${i*36},30%,60%,0.1)`;
+    ctx.fillRect(px,py,3,3);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

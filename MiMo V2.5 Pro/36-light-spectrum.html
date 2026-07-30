@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Light Spectrum</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(200,200,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Light Spectrum</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+function hslToRgb(h,s,l){
+  h/=360;s/=100;l/=100;
+  const a=s*Math.min(l,1-l);
+  const f=n=>{const k=(n+h*12)%12;return l-a*Math.max(Math.min(k-3,9-k,1),-1)};
+  return[Math.round(f(0)*255),Math.round(f(8)*255),Math.round(f(4)*255)];
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#0a0a0f';
+  ctx.fillRect(0,0,w,h);
+  
+  const cy=h*0.45;
+  const specW=w*0.8;
+  const specH=h*0.3;
+  const startX=(w-specW)/2;
+  
+  // Prism (left)
+  const prismX=startX+specW*0.15;
+  const prismY=cy;
+  const prismS=60;
+  
+  // Incoming white beam
+  ctx.beginPath();
+  ctx.moveTo(0,cy);
+  ctx.lineTo(prismX-prismS,cy);
+  const beamG=ctx.createLinearGradient(0,cy,prismX-prismS,cy);
+  beamG.addColorStop(0,'rgba(255,255,255,0)');
+  beamG.addColorStop(1,'rgba(255,255,255,0.4)');
+  ctx.strokeStyle=beamG;
+  ctx.lineWidth=3;
+  ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.08)';
+  ctx.lineWidth=12;
+  ctx.stroke();
+  
+  // Prism triangle
+  ctx.beginPath();
+  ctx.moveTo(prismX-prismS,cy-prismS);
+  ctx.lineTo(prismX-prismS,cy+prismS);
+  ctx.lineTo(prismX+prismS,cy);
+  ctx.closePath();
+  ctx.fillStyle='rgba(200,220,255,0.08)';
+  ctx.fill();
+  ctx.strokeStyle='rgba(200,220,255,0.2)';
+  ctx.lineWidth=1.5;
+  ctx.stroke();
+  
+  // Refracted spectrum beams
+  const colors=7;
+  for(let i=0;i<colors;i++){
+    const hue=i*(360/colors);
+    const t=i/(colors-1);
+    const exitX=prismX+prismS*0.5;
+    const exitY=cy+(t-0.5)*prismS*1.2;
+    const endX=startX+specW;
+    const endY=cy+(t-0.5)*specH*1.1;
+    
+    // Beam
+    ctx.beginPath();
+    ctx.moveTo(exitX,exitY);
+    ctx.lineTo(endX,endY);
+    const [r,g,b]=hslToRgb(hue,80,55);
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.2)`;
+    ctx.lineWidth=4;
+    ctx.stroke();
+    ctx.strokeStyle=`rgba(${r},${g},${b},0.05)`;
+    ctx.lineWidth=15;
+    ctx.stroke();
+  }
+  
+  // Spectrum bar (bottom)
+  const barY=h*0.75;
+  const barH=30;
+  for(let x=0;x<specW;x++){
+    const hue=(x/specW)*360;
+    const [r,g,b]=hslToRgb(hue,80,55);
+    ctx.fillStyle=`rgba(${r},${g},${b},0.5)`;
+    ctx.fillRect(startX+x,barY,1,barH);
+  }
+  
+  // Absorption lines
+  const absorptionLines=[656,486,434,410,397,389]; // Hydrogen Balmer series
+  const specStart=380,specEnd=750;
+  for(const wl of absorptionLines){
+    const x=startX+((wl-specStart)/(specEnd-specStart))*specW;
+    ctx.fillStyle='rgba(0,0,0,0.4)';
+    ctx.fillRect(x-1,barY,2,barH);
+  }
+  
+  // Wavelength labels
+  ctx.font='8px "SF Mono",monospace';
+  ctx.textAlign='center';
+  const labels=[{nm:380,t:'UV'},{nm:450,t:'450'},{nm:500,t:'500'},{nm:550,t:'550'},{nm:600,t:'600'},{nm:650,t:'650'},{nm:700,t:'700'},{nm:750,t:'IR'}];
+  for(const l of labels){
+    const x=startX+((l.nm-specStart)/(specEnd-specStart))*specW;
+    ctx.fillStyle='rgba(200,200,220,0.2)';
+    ctx.fillText(l.nm+'nm',x,barY+barH+15);
+    ctx.beginPath();
+    ctx.moveTo(x,barY+barH);
+    ctx.lineTo(x,barY+barH+5);
+    ctx.strokeStyle='rgba(200,200,220,0.1)';
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // Spectral intensity graph (top)
+  const graphY=h*0.1;
+  const graphH=h*0.15;
+  ctx.beginPath();
+  for(let x=0;x<specW;x++){
+    const hue=(x/specW)*360;
+    const nm=specStart+(x/specW)*(specEnd-specStart);
+    // Simulate blackbody-ish spectrum
+    const intensity=Math.exp(-((nm-550)/150)**2)*0.8+Math.random()*0.05;
+    const y=graphY+graphH-intensity*graphH;
+    if(x===0)ctx.moveTo(startX+x,y);else ctx.lineTo(startX+x,y);
+  }
+  ctx.strokeStyle='rgba(180,200,255,0.2)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  // Graph axes
+  ctx.strokeStyle='rgba(200,200,220,0.1)';
+  ctx.lineWidth=0.5;
+  ctx.beginPath();
+  ctx.moveTo(startX,graphY);
+  ctx.lineTo(startX,graphY+graphH);
+  ctx.lineTo(startX+specW,graphY+graphH);
+  ctx.stroke();
+  
+  ctx.font='8px "SF Mono",monospace';
+  ctx.fillStyle='rgba(200,200,220,0.15)';
+  ctx.textAlign='left';
+  ctx.fillText('Intensity',startX+5,graphY-5);
+  
+  // Scanning line
+  const scanX=startX+((frame*2)%specW);
+  ctx.beginPath();
+  ctx.moveTo(scanX,barY-5);
+  ctx.lineTo(scanX,barY+barH+5);
+  ctx.strokeStyle='rgba(255,255,255,0.1)';
+  ctx.lineWidth=1;
+  ctx.stroke();
+  
+  // Current wavelength
+  const currentNm=Math.floor(specStart+(((frame*2)%specW)/specW)*(specEnd-specStart));
+  ctx.font='11px "SF Mono",monospace';
+  ctx.fillStyle='rgba(200,200,220,0.3)';
+  ctx.textAlign='center';
+  ctx.fillText(`λ = ${currentNm} nm`,scanX,barY-12);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

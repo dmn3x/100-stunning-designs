@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cloud Atlas</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#e8e0d0}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,90,70,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Cloud Atlas</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Cloud types
+const cloudTypes=[
+  {name:'Cirrus',y:0.1,opacity:0.08,speed:0.3,size:0.5},
+  {name:'Cirrostratus',y:0.15,opacity:0.05,speed:0.2,size:1},
+  {name:'Altocumulus',y:0.3,opacity:0.12,speed:0.4,size:0.3},
+  {name:'Altostratus',y:0.35,opacity:0.07,speed:0.25,size:0.8},
+  {name:'Stratocumulus',y:0.5,opacity:0.15,speed:0.35,size:0.4},
+  {name:'Stratus',y:0.6,opacity:0.1,speed:0.15,size:0.9},
+  {name:'Cumulus',y:0.7,opacity:0.18,speed:0.3,size:0.35},
+  {name:'Cumulonimbus',y:0.75,opacity:0.2,speed:0.25,size:0.25},
+];
+
+// Cloud puffs
+const puffs=[];
+for(const ct of cloudTypes){
+  for(let i=0;i<8;i++){
+    puffs.push({
+      x:Math.random()*w*1.5,
+      y:h*ct.y+Math.random()*h*0.08,
+      r:(20+Math.random()*60)*ct.size,
+      opacity:ct.opacity*(0.5+Math.random()*0.5),
+      speed:ct.speed*(0.5+Math.random()*0.5),
+      hue:210+Math.random()*10,
+    });
+  }
+}
+
+function draw(){
+  frame++;
+  
+  // Sky gradient
+  const sky=ctx.createLinearGradient(0,0,0,h);
+  sky.addColorStop(0,'#c8d0e0');
+  sky.addColorStop(0.3,'#d8d8e0');
+  sky.addColorStop(0.6,'#e0dcd0');
+  sky.addColorStop(1,'#e8e0d0');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Draw puffs
+  for(const p of puffs){
+    p.x+=p.speed;
+    if(p.x>p.r*2) p.x=-p.r*2;
+    
+    // Multiple overlapping circles for soft cloud
+    for(let i=0;i<3;i++){
+      const ox=Math.sin(i*2.1)*p.r*0.3;
+      const oy=Math.cos(i*2.1)*p.r*0.2;
+      ctx.beginPath();
+      ctx.arc(p.x+ox,p.y+oy,p.r*(1-i*0.2),0,Math.PI*2);
+      ctx.fillStyle=`hsla(${p.hue},15%,85%,${p.opacity/(i+1)})`;
+      ctx.fill();
+    }
+  }
+  
+  // Classification grid overlay
+  ctx.strokeStyle='rgba(100,90,70,0.06)';
+  ctx.lineWidth=0.5;
+  for(const ct of cloudTypes){
+    const y=h*ct.y+h*0.04;
+    ctx.beginPath();
+    ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();
+    ctx.font='8px "SF Mono",monospace';
+    ctx.fillStyle='rgba(100,90,70,0.2)';
+    ctx.textAlign='right';
+    ctx.fillText(ct.name,w-10,y-5);
+    // Altitude
+    const alt=Math.round((1-ct.y)*12);
+    ctx.fillStyle='rgba(100,90,70,0.15)';
+    ctx.fillText(`${alt}km`,w-10,y+8);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

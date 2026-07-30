@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Milky Way</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#04040a}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,180,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Milky Way</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Stars
+const stars=[];
+for(let i=0;i<500;i++){
+  stars.push({
+    x:Math.random(),y:Math.random(),
+    r:Math.random()*1.5+0.2,
+    b:Math.random(),
+    twinkle:0.01+Math.random()*0.04,
+    hue:200+Math.random()*60,
+  });
+}
+
+// Milky Way band stars (denser)
+const bandStars=[];
+for(let i=0;i<300;i++){
+  const angle=Math.random()*Math.PI;
+  const dist=(Math.random()-0.5)*0.15;
+  bandStars.push({
+    x:0.5+Math.cos(angle)*0.4+dist,
+    y:0.5+Math.sin(angle)*0.3+dist*0.3,
+    r:Math.random()*0.8+0.2,
+    b:Math.random(),
+    hue:220+Math.random()*40,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='#04040a';
+  ctx.fillRect(0,0,w,h);
+  
+  // Milky Way glow band
+  ctx.save();
+  ctx.translate(w/2,h/2);
+  ctx.rotate(-0.3);
+  
+  for(let i=0;i<20;i++){
+    const bandW=w*0.5+i*5;
+    const bandH=h*0.08+i*2;
+    ctx.beginPath();
+    ctx.ellipse(0,0,bandW,bandH,0,0,Math.PI*2);
+    ctx.fillStyle=`rgba(100,100,160,${0.008-i*0.0003})`;
+    ctx.fill();
+  }
+  ctx.restore();
+  
+  // Band stars
+  for(const s of bandStars){
+    const sx=s.x*w,sy=s.y*h;
+    ctx.beginPath();
+    ctx.arc(sx,sy,s.r,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${s.hue},40%,70%,${0.1+s.b*0.2})`;
+    ctx.fill();
+  }
+  
+  // Regular stars
+  for(const s of stars){
+    const sx=s.x*w,sy=s.y*h;
+    const twinkle=0.3+Math.sin(frame*s.twinkle+s.x*100)*0.7;
+    
+    ctx.beginPath();
+    ctx.arc(sx,sy,s.r*twinkle,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${s.hue},30%,80%,${0.15+s.b*0.4*twinkle})`;
+    ctx.fill();
+    
+    // Bright stars get spikes
+    if(s.r>1&&s.b>0.7){
+      const spikeLen=s.r*3*twinkle;
+      ctx.strokeStyle=`rgba(200,200,255,${0.05*s.b*twinkle})`;
+      ctx.lineWidth=0.5;
+      ctx.beginPath();
+      ctx.moveTo(sx-spikeLen,sy);ctx.lineTo(sx+spikeLen,sy);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(sx,sy-spikeLen);ctx.lineTo(sx,sy+spikeLen);
+      ctx.stroke();
+    }
+  }
+  
+  // Dark dust lanes
+  for(let i=0;i<8;i++){
+    ctx.save();
+    ctx.translate(w/2,h/2);
+    ctx.rotate(-0.3);
+    ctx.beginPath();
+    ctx.ellipse(i*30-120,i*5-20,100+Math.random()*50,3+Math.random()*5,i*0.1,0,Math.PI*2);
+    ctx.fillStyle='rgba(4,4,10,0.04)';
+    ctx.fill();
+    ctx.restore();
+  }
+  
+  // Nebula color patches
+  for(let i=0;i<3;i++){
+    const nx=w*0.3+i*w*0.2;
+    const ny=h*0.3+Math.sin(i*2)*h*0.1;
+    const ng=ctx.createRadialGradient(nx,ny,0,nx,ny,50);
+    ng.addColorStop(0,`hsla(${280+i*40},40%,40%,0.02)`);
+    ng.addColorStop(1,'transparent');
+    ctx.fillStyle=ng;
+    ctx.fillRect(0,0,w,h);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

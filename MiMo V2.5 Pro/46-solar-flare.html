@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Flare</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#08060a}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(220,160,80,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Solar Flare</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Corona particles
+const corona=[];
+for(let i=0;i<200;i++){
+  const angle=Math.random()*Math.PI*2;
+  corona.push({
+    angle,
+    dist:0.3+Math.random()*0.7,
+    speed:0.001+Math.random()*0.003,
+    size:1+Math.random()*2,
+    hue:20+Math.random()*30,
+    wobble:Math.random()*Math.PI*2,
+  });
+}
+
+// Flare loops
+const loops=[];
+for(let i=0;i<5;i++){
+  loops.push({
+    angle:Math.random()*Math.PI*2,
+    height:0.15+Math.random()*0.25,
+    width:0.05+Math.random()*0.1,
+    speed:0.005+Math.random()*0.01,
+    hue:15+Math.random()*25,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(8,6,10,0.9)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const sunR=Math.min(w,h)*0.2;
+  
+  // Background stars
+  for(let i=0;i<50;i++){
+    const sx=(i*137.5)%w;
+    const sy=(i*97.3)%h;
+    ctx.beginPath();
+    ctx.arc(sx,sy,0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,200,220,0.1)';
+    ctx.fill();
+  }
+  
+  // Outer corona
+  for(let i=0;i<30;i++){
+    const r=sunR*(1.5+i*0.15);
+    ctx.beginPath();
+    ctx.arc(cx,cy,r,0,Math.PI*2);
+    ctx.strokeStyle=`rgba(255,200,80,${0.02-i*0.0005})`;
+    ctx.lineWidth=5+i*2;
+    ctx.stroke();
+  }
+  
+  // Corona streamers
+  for(const p of corona){
+    p.angle+=p.speed;
+    p.wobble+=0.02;
+    
+    const dist=sunR*(1+p.dist*2);
+    const x=cx+Math.cos(p.angle)*dist+Math.sin(p.wobble)*10;
+    const y=cy+Math.sin(p.angle)*dist+Math.cos(p.wobble)*10;
+    
+    const alpha=0.15*(1-p.dist*0.5);
+    ctx.beginPath();
+    ctx.arc(x,y,p.size,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue},80%,60%,${alpha})`;
+    ctx.fill();
+  }
+  
+  // Solar flare loops
+  for(const loop of loops){
+    loop.angle+=loop.speed;
+    
+    ctx.beginPath();
+    const steps=30;
+    for(let s=0;s<=steps;s++){
+      const t=s/steps;
+      const a=loop.angle+t*loop.width*Math.PI*2;
+      const r=sunR*(1+Math.sin(t*Math.PI)*loop.height*3);
+      const x=cx+Math.cos(a)*r;
+      const y=cy+Math.sin(a)*r;
+      if(s===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`hsla(${loop.hue},80%,55%,${0.15+Math.sin(frame*0.02)*0.05})`;
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.strokeStyle=`hsla(${loop.hue},70%,50%,0.03)`;
+    ctx.lineWidth=8;
+    ctx.stroke();
+  }
+  
+  // Sun surface — turbulent
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx,cy,sunR,0,Math.PI*2);
+  ctx.clip();
+  
+  // Granulation
+  for(let i=0;i<80;i++){
+    const gx=cx+Math.cos(i*3.7+frame*0.003)*sunR*0.8;
+    const gy=cy+Math.sin(i*2.3+frame*0.004)*sunR*0.8;
+    const gr=10+Math.sin(frame*0.01+i)*5;
+    const gg=ctx.createRadialGradient(gx,gy,0,gx,gy,gr);
+    gg.addColorStop(0,'rgba(255,220,100,0.15)');
+    gg.addColorStop(0.5,'rgba(255,180,50,0.08)');
+    gg.addColorStop(1,'rgba(255,140,20,0)');
+    ctx.fillStyle=gg;
+    ctx.beginPath();
+    ctx.arc(gx,gy,gr,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Sun base
+  const sunG=ctx.createRadialGradient(cx-sunR*0.2,cy-sunR*0.2,0,cx,cy,sunR);
+  sunG.addColorStop(0,'#ffe880');
+  sunG.addColorStop(0.3,'#ffc040');
+  sunG.addColorStop(0.6,'#ff9020');
+  sunG.addColorStop(0.9,'#e86010');
+  sunG.addColorStop(1,'#c04008');
+  ctx.fillStyle=sunG;
+  ctx.fillRect(cx-sunR,cy-sunR,sunR*2,sunR*2);
+  
+  // Sunspots
+  for(let i=0;i<3;i++){
+    const sa=i*2.1+frame*0.001;
+    const sd=sunR*0.4;
+    const sx=cx+Math.cos(sa)*sd;
+    const sy=cy+Math.sin(sa)*sd;
+    const sr=5+Math.sin(frame*0.005+i)*3;
+    ctx.beginPath();
+    ctx.arc(sx,sy,sr,0,Math.PI*2);
+    ctx.fillStyle='rgba(100,40,10,0.4)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(sx,sy,sr*0.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(60,20,5,0.5)';
+    ctx.fill();
+  }
+  
+  ctx.restore();
+  
+  // Sun glow
+  const glow=ctx.createRadialGradient(cx,cy,sunR*0.9,cx,cy,sunR*3);
+  glow.addColorStop(0,'rgba(255,200,80,0.15)');
+  glow.addColorStop(0.3,'rgba(255,150,40,0.05)');
+  glow.addColorStop(1,'transparent');
+  ctx.fillStyle=glow;
+  ctx.beginPath();
+  ctx.arc(cx,cy,sunR*3,0,Math.PI*2);
+  ctx.fill();
+  
+  // CME burst (occasional)
+  const burstPhase=Math.sin(frame*0.003)*0.5+0.5;
+  if(burstPhase>0.8){
+    const burstAngle=frame*0.01;
+    const burstLen=sunR*3*(burstPhase-0.8)*5;
+    ctx.beginPath();
+    ctx.moveTo(cx,cy);
+    ctx.lineTo(cx+Math.cos(burstAngle-0.1)*burstLen,cy+Math.sin(burstAngle-0.1)*burstLen);
+    ctx.lineTo(cx+Math.cos(burstAngle+0.1)*burstLen,cy+Math.sin(burstAngle+0.1)*burstLen);
+    ctx.closePath();
+    ctx.fillStyle=`rgba(255,200,80,${(burstPhase-0.8)*0.3})`;
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

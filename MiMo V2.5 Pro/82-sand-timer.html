@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sand Timer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a160e}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,180,130,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Sand Timer</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+const sandParticles=[];
+let topSand=100,botSand=0;
+const maxSand=100;
+
+function initSand(){
+  sandParticles.length=0;
+  topSand=100;botSand=0;
+  for(let i=0;i<maxSand;i++){
+    sandParticles.push({
+      inTop:true,
+      x:(Math.random()-0.5)*30,
+      y:-20-Math.random()*60,
+      vx:0,vy:0,
+      settled:false,
+      settleY:0,
+    });
+  }
+}
+initSand();
+
+function draw(){
+  frame++;
+  
+  const bg=ctx.createRadialGradient(w/2,h/2,0,w/2,h/2,Math.max(w,h)*0.6);
+  bg.addColorStop(0,'#1e1a14');
+  bg.addColorStop(1,'#12100c');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  const cx=w/2,cy=h/2;
+  const bulbH=Math.min(w,h)*0.3;
+  const bulbW=bulbH*0.45;
+  
+  // Frame
+  ctx.strokeStyle='rgba(180,160,120,0.3)';
+  ctx.lineWidth=3;
+  ctx.beginPath();ctx.moveTo(cx-bulbW*1.1,cy-bulbH-8);ctx.lineTo(cx+bulbW*1.1,cy-bulbH-8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx-bulbW*1.1,cy+bulbH+8);ctx.lineTo(cx+bulbW*1.1,cy+bulbH+8);ctx.stroke();
+  ctx.lineWidth=2;
+  ctx.beginPath();ctx.moveTo(cx-bulbW*1.1,cy-bulbH-8);ctx.lineTo(cx-bulbW*1.1,cy+bulbH+8);ctx.stroke();
+  ctx.beginPath();ctx.moveTo(cx+bulbW*1.1,cy-bulbH-8);ctx.lineTo(cx+bulbW*1.1,cy+bulbH+8);ctx.stroke();
+  
+  // Glass
+  ctx.strokeStyle='rgba(200,190,160,0.12)';
+  ctx.lineWidth=1.5;
+  // Top bulb
+  ctx.beginPath();
+  ctx.moveTo(cx-bulbW,cy-bulbH);
+  ctx.quadraticCurveTo(cx-bulbW,cy-5,cx-3,cy);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+bulbW,cy-bulbH);
+  ctx.quadraticCurveTo(cx+bulbW,cy-5,cx+3,cy);
+  ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy-bulbH,bulbW,0,Math.PI,true);ctx.stroke();
+  // Bottom bulb
+  ctx.beginPath();
+  ctx.moveTo(cx-3,cy);
+  ctx.quadraticCurveTo(cx-bulbW,cy+5,cx-bulbW,cy+bulbH);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx+3,cy);
+  ctx.quadraticCurveTo(cx+bulbW,cy+5,cx+bulbW,cy+bulbH);
+  ctx.stroke();
+  ctx.beginPath();ctx.arc(cx,cy+bulbH,bulbW,Math.PI,0,true);ctx.stroke();
+  
+  // Sand stream
+  let streamingCount=0;
+  for(const p of sandParticles){
+    if(p.inTop&&!p.settled){
+      // Move through neck
+      p.vy+=0.15;
+      p.y+=p.vy;
+      p.x+=(Math.random()-0.5)*0.3;
+      
+      if(p.y>0){
+        p.inTop=false;
+        p.y=5;
+        p.vy=1;
+        p.x=(Math.random()-0.5)*5;
+      }
+      streamingCount++;
+    }else if(!p.inTop&&!p.settled){
+      p.vy+=0.05;
+      p.y+=p.vy;
+      p.x+=(Math.random()-0.5)*0.2;
+      
+      const settleLevel=bulbH*0.7-botSand*0.5;
+      if(p.y>settleLevel){
+        p.settled=true;
+        p.y=settleLevel;
+      }
+    }
+    
+    // Draw
+    let px,py;
+    if(p.inTop){
+      px=cx+p.x*1.5;
+      py=cy-bulbH*0.4+p.y;
+    }else{
+      px=cx+p.x*1.5;
+      py=cy+15+p.y;
+    }
+    
+    ctx.beginPath();
+    ctx.arc(px,py,1.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(200,170,100,0.4)';
+    ctx.fill();
+  }
+  
+  // Sand stream visual
+  if(streamingCount>0){
+    ctx.beginPath();
+    ctx.moveTo(cx-1,cy-5);
+    ctx.lineTo(cx+1,cy-5);
+    ctx.lineTo(cx+2,cy+5);
+    ctx.lineTo(cx-2,cy+5);
+    ctx.closePath();
+    ctx.fillStyle='rgba(200,170,100,0.3)';
+    ctx.fill();
+  }
+  
+  // Sand levels
+  const topLevel=cy-bulbH*0.4+topSand*0.3;
+  ctx.fillStyle='rgba(200,170,100,0.1)';
+  ctx.fillRect(cx-bulbW*0.7,topLevel,bulbW*1.4,cy-topLevel);
+  
+  const botLevel=cy+bulbH*0.7-botSand*0.5;
+  ctx.fillStyle='rgba(200,170,100,0.15)';
+  ctx.fillRect(cx-bulbW*0.7,botLevel,bulbW*1.4,cy+bulbH*0.9-botLevel);
+  
+  // Update sand counts
+  topSand=sandParticles.filter(p=>p.inTop).length;
+  botSand=sandParticles.filter(p=>!p.inTop&&p.settled).length;
+  
+  // Reset when empty
+  if(topSand<5&&frame%120===0)initSand();
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

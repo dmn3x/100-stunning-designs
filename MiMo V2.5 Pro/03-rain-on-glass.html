@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rain on Glass</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a1520}
+canvas{display:block;position:fixed;top:0;left:0}
+.label{position:fixed;top:2rem;right:2rem;font:300 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(200,190,210,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Rain on Glass</div>
+<canvas id="bg"></canvas>
+<canvas id="fg"></canvas>
+<script>
+const bgC=document.getElementById('bg'),bgCtx=bgC.getContext('2d');
+const fgC=document.getElementById('fg'),fgCtx=fgC.getContext('2d');
+let w,h,frame=0;
+
+function resize(){
+  w=bgC.width=fgC.width=innerWidth;
+  h=bgC.height=fgC.height=innerHeight;
+}
+resize();addEventListener('resize',resize);
+
+// Rain drops on glass
+const drops=[];
+function addDrop(x,y){
+  drops.push({x,y||Math.random()*h,r:2+Math.random()*6,vy:0,vx:0,stuck:true,
+    children:[],age:0,maxAge:200+Math.random()*400,merged:false});
+}
+
+// Initial drops
+for(let i=0;i<80;i++) addDrop(Math.random()*w,Math.random()*h);
+
+// Streak drops (falling)
+const streaks=[];
+function addStreak(){
+  streaks.push({x:Math.random()*w,y:-10,vy:1+Math.random()*3,len:0,
+    maxLen:40+Math.random()*100,dead:false,w:0.5+Math.random()*1.5});
+}
+for(let i=0;i<20;i++){addStreak();streaks[i].y=Math.random()*h;}
+
+// Background scene (blurred city lights)
+function drawBG(){
+  // Dark base
+  bgCtx.fillStyle='#120e18';
+  bgCtx.fillRect(0,0,w,h);
+  
+  // Blurred bokeh lights
+  const lights=[
+    {x:w*0.2,y:h*0.3,r:60,c:'rgba(255,180,100,0.08)'},
+    {x:w*0.6,y:h*0.2,r:80,c:'rgba(100,150,255,0.06)'},
+    {x:w*0.8,y:h*0.5,r:50,c:'rgba(255,100,150,0.07)'},
+    {x:w*0.3,y:h*0.6,r:70,c:'rgba(255,200,100,0.05)'},
+    {x:w*0.5,y:h*0.4,r:90,c:'rgba(150,200,255,0.04)'},
+    {x:w*0.15,y:h*0.7,r:55,c:'rgba(255,150,200,0.06)'},
+    {x:w*0.7,y:h*0.8,r:65,c:'rgba(200,255,200,0.04)'},
+    {x:w*0.9,y:h*0.15,r:45,c:'rgba(255,220,150,0.07)'},
+    {x:w*0.45,y:h*0.7,r:75,c:'rgba(180,150,255,0.05)'},
+  ];
+  for(const l of lights){
+    const g=bgCtx.createRadialGradient(l.x+Math.sin(frame*0.005)*5,l.y+Math.cos(frame*0.003)*3,0,l.x,l.y,l.r);
+    g.addColorStop(0,l.c);
+    g.addColorStop(1,'transparent');
+    bgCtx.fillStyle=g;
+    bgCtx.beginPath();
+    bgCtx.arc(l.x,l.y,l.r*1.5,0,Math.PI*2);
+    bgCtx.fill();
+  }
+  
+  // Horizontal light streaks (traffic)
+  for(let i=0;i<4;i++){
+    const y=h*0.35+i*h*0.1;
+    const g=bgCtx.createLinearGradient(0,y-3,0,y+3);
+    g.addColorStop(0,'transparent');
+    g.addColorStop(0.5,`rgba(255,200,100,${0.02+Math.sin(frame*0.01+i)*0.01})`);
+    g.addColorStop(1,'transparent');
+    bgCtx.fillStyle=g;
+    bgCtx.fillRect(0,y-3,w,6);
+  }
+}
+
+function drawGlass(){
+  fgCtx.clearRect(0,0,w,h);
+  
+  // Glass tint
+  fgCtx.fillStyle='rgba(20,15,30,0.1)';
+  fgCtx.fillRect(0,0,w,h);
+  
+  // Water streaks
+  for(const s of streaks){
+    if(s.dead)continue;
+    s.y+=s.vy;
+    s.len=Math.min(s.len+s.vy*2,s.maxLen);
+    
+    const g=fgCtx.createLinearGradient(s.x,s.y-s.len,s.x,s.y);
+    g.addColorStop(0,'rgba(180,190,220,0)');
+    g.addColorStop(0.3,`rgba(180,190,220,${0.05+s.w*0.03})`);
+    g.addColorStop(1,`rgba(200,210,240,${0.08+s.w*0.04})`);
+    
+    fgCtx.beginPath();
+    fgCtx.moveTo(s.x-s.w/2,s.y-s.len);
+    fgCtx.lineTo(s.x+s.w/2,s.y-s.len);
+    fgCtx.lineTo(s.x+s.w/2+Math.sin(s.y*0.02)*0.5,s.y);
+    fgCtx.lineTo(s.x-s.w/2+Math.sin(s.y*0.02)*0.5,s.y);
+    fgCtx.fillStyle=g;
+    fgCtx.fill();
+    
+    // Head droplet
+    fgCtx.beginPath();
+    fgCtx.ellipse(s.x,s.y,s.w*1.5,s.w*2,0,0,Math.PI*2);
+    fgCtx.fillStyle=`rgba(200,215,240,${0.15+s.w*0.05})`;
+    fgCtx.fill();
+    
+    if(s.y>h+20)s.dead=true;
+  }
+  
+  // Stuck drops
+  for(const d of drops){
+    d.age++;
+    
+    // Some drops slowly slide
+    if(d.age>d.maxAge*0.7){
+      d.vy+=0.01;
+      d.y+=d.vy;
+      d.x+=Math.sin(d.y*0.01)*0.2;
+    }
+    
+    if(d.y>h+20||d.merged)continue;
+    
+    // Drop body
+    const alpha=0.15+Math.sin(d.age*0.02)*0.03;
+    
+    // Main drop
+    fgCtx.beginPath();
+    fgCtx.arc(d.x,d.y,d.r,0,Math.PI*2);
+    const g=fgCtx.createRadialGradient(d.x-d.r*0.3,d.y-d.r*0.3,0,d.x,d.y,d.r);
+    g.addColorStop(0,`rgba(220,230,255,${alpha+0.1})`);
+    g.addColorStop(0.7,`rgba(180,190,220,${alpha})`);
+    g.addColorStop(1,`rgba(150,160,200,${alpha*0.5})`);
+    fgCtx.fillStyle=g;
+    fgCtx.fill();
+    
+    // Highlight
+    fgCtx.beginPath();
+    fgCtx.arc(d.x-d.r*0.25,d.y-d.r*0.25,d.r*0.3,0,Math.PI*2);
+    fgCtx.fillStyle=`rgba(255,255,255,${alpha*0.8})`;
+    fgCtx.fill();
+    
+    // Shadow
+    fgCtx.beginPath();
+    fgCtx.ellipse(d.x,d.y+d.r+1,d.r*0.8,1,0,0,Math.PI*2);
+    fgCtx.fillStyle=`rgba(0,0,0,${alpha*0.3})`;
+    fgCtx.fill();
+  }
+  
+  // Condensation fog
+  for(let i=0;i<3;i++){
+    const fogX=w*0.3+Math.sin(frame*0.002+i*2)*w*0.3;
+    const fogY=h*0.5+Math.cos(frame*0.003+i*1.5)*h*0.3;
+    const g=fgCtx.createRadialGradient(fogX,fogY,0,fogX,fogY,150);
+    g.addColorStop(0,'rgba(180,190,210,0.02)');
+    g.addColorStop(1,'transparent');
+    fgCtx.fillStyle=g;
+    fgCtx.fillRect(0,0,w,h);
+  }
+}
+
+// Regenerate streaks
+setInterval(()=>{
+  if(streaks.filter(s=>!s.dead).length<25)addStreak();
+},200);
+
+// Regenerate drops
+setInterval(()=>{
+  if(drops.length<100)addDrop(Math.random()*w,Math.random()*h*0.3);
+},300);
+
+function draw(){
+  frame++;
+  if(frame%3===0)drawBG(); // BG every 3 frames for perf
+  drawGlass();
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

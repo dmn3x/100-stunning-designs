@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lightning</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,200,240,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Lightning</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+let flashAlpha=0;
+const bolts=[];
+
+function generateBolt(x1,y1,x2,y2,depth,maxDepth){
+  if(depth>maxDepth)return;
+  const midX=(x1+x2)/2+(Math.random()-0.5)*100/(depth+1);
+  const midY=(y1+y2)/2+(Math.random()-0.5)*30/(depth+1);
+  
+  bolts.push({x1,y1,x2:midX,y2:midY,depth,alpha:0.8/(depth+1),life:10+Math.random()*10});
+  bolts.push({x1:midX,y1:midY,x2,y2,depth,alpha:0.8/(depth+1),life:10+Math.random()*10});
+  
+  if(Math.random()>0.6)generateBolt(midX,midY,midX+(Math.random()-0.5)*100,midY+50+Math.random()*50,depth+1,maxDepth);
+}
+
+function triggerLightning(){
+  const x=w*0.2+Math.random()*w*0.6;
+  generateBolt(x,0,x+(Math.random()-0.5)*100,h*0.7,0,5);
+  flashAlpha=0.3;
+}
+
+// Auto-trigger
+setInterval(()=>{if(Math.random()>0.5)triggerLightning()},2000);
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,10,20,0.9)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Storm clouds
+  for(let i=0;i<8;i++){
+    const cx2=w*0.1+i*w*0.1;
+    const cy2=h*0.05+Math.sin(i*2)*20;
+    ctx.beginPath();
+    ctx.arc(cx2,cy2,60+Math.sin(frame*0.005+i)*10,0,Math.PI*2);
+    ctx.fillStyle='rgba(30,30,50,0.15)';
+    ctx.fill();
+  }
+  
+  // Flash
+  if(flashAlpha>0){
+    ctx.fillStyle=`rgba(200,200,255,${flashAlpha})`;
+    ctx.fillRect(0,0,w,h);
+    flashAlpha*=0.9;
+  }
+  
+  // Draw bolts
+  for(let i=bolts.length-1;i>=0;i--){
+    const bolt=bolts[i];
+    bolt.life--;
+    if(bolt.life<=0){bolts.splice(i,1);continue;}
+    
+    const alpha=bolt.alpha*(bolt.life/15);
+    
+    // Glow
+    ctx.beginPath();
+    ctx.moveTo(bolt.x1,bolt.y1);
+    ctx.lineTo(bolt.x2,bolt.y2);
+    ctx.strokeStyle=`rgba(180,180,255,${alpha*0.2})`;
+    ctx.lineWidth=8;
+    ctx.stroke();
+    
+    // Core
+    ctx.strokeStyle=`rgba(220,220,255,${alpha})`;
+    ctx.lineWidth=2;
+    ctx.stroke();
+    
+    // Bright center
+    ctx.strokeStyle=`rgba(255,255,255,${alpha*0.8})`;
+    ctx.lineWidth=0.5;
+    ctx.stroke();
+  }
+  
+  // Ground
+  ctx.fillStyle='rgba(20,20,30,0.8)';
+  ctx.fillRect(0,h*0.75,w,h*0.25);
+  
+  // Rain
+  ctx.strokeStyle='rgba(150,150,200,0.03)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<100;i++){
+    const rx=(i*37+frame*3)%w;
+    const ry=(i*73+frame*8)%h;
+    ctx.beginPath();
+    ctx.moveTo(rx,ry);
+    ctx.lineTo(rx-1,ry+8);
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

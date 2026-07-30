@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lighthouse</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#08080e}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(180,200,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Lighthouse</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Stars
+const stars=[];
+for(let i=0;i<150;i++)stars.push({x:Math.random(),y:Math.random()*0.4,r:Math.random()+0.3,b:Math.random()});
+
+// Waves
+const waves=[];
+for(let i=0;i<5;i++){
+  waves.push({y:0.7+i*0.06,amp:3+i*2,freq:0.01+i*0.003,speed:0.01+i*0.003,color:`rgba(${20+i*10},${40+i*10},${60+i*15},${0.3-i*0.04})`});
+}
+
+function draw(){
+  frame++;
+  
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,h*0.7);
+  sky.addColorStop(0,'#06060c');
+  sky.addColorStop(0.5,'#0a0a18');
+  sky.addColorStop(1,'#101428');
+  ctx.fillStyle=sky;
+  ctx.fillRect(0,0,w,h);
+  
+  // Stars
+  for(const s of stars){
+    const twinkle=0.4+Math.sin(frame*0.02+s.x*100)*0.6;
+    ctx.beginPath();
+    ctx.arc(s.x*w,s.y*h,s.r*twinkle,0,Math.PI*2);
+    ctx.fillStyle=`rgba(200,210,230,${0.3+s.b*0.4*twinkle})`;
+    ctx.fill();
+  }
+  
+  // Moon
+  const moonX=w*0.8,moonY=h*0.15,moonR=30;
+  const moonGlow=ctx.createRadialGradient(moonX,moonY,moonR*0.8,moonX,moonY,moonR*4);
+  moonGlow.addColorStop(0,'rgba(200,210,230,0.08)');
+  moonGlow.addColorStop(1,'transparent');
+  ctx.fillStyle=moonGlow;
+  ctx.beginPath();
+  ctx.arc(moonX,moonY,moonR*4,0,Math.PI*2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(moonX,moonY,moonR,0,Math.PI*2);
+  ctx.fillStyle='rgba(220,225,235,0.8)';
+  ctx.fill();
+  // Crescent shadow
+  ctx.beginPath();
+  ctx.arc(moonX+10,moonY-5,moonR*0.85,0,Math.PI*2);
+  ctx.fillStyle='#08080e';
+  ctx.fill();
+  
+  // Rocks
+  ctx.beginPath();
+  ctx.moveTo(w*0.35,h*0.7);
+  ctx.lineTo(w*0.38,h*0.55);
+  ctx.lineTo(w*0.42,h*0.5);
+  ctx.lineTo(w*0.48,h*0.48);
+  ctx.lineTo(w*0.52,h*0.48);
+  ctx.lineTo(w*0.55,h*0.5);
+  ctx.lineTo(w*0.58,h*0.55);
+  ctx.lineTo(w*0.62,h*0.7);
+  ctx.closePath();
+  ctx.fillStyle='#1a1a20';
+  ctx.fill();
+  
+  // Rock detail
+  ctx.fillStyle='rgba(30,30,40,0.5)';
+  ctx.beginPath();
+  ctx.moveTo(w*0.4,h*0.52);
+  ctx.lineTo(w*0.45,h*0.49);
+  ctx.lineTo(w*0.5,h*0.48);
+  ctx.lineTo(w*0.48,h*0.52);
+  ctx.closePath();
+  ctx.fill();
+  
+  // Lighthouse tower
+  const towerX=w*0.48,towerW=24,towerBase=h*0.48,towerTop=h*0.25;
+  
+  // Tower body
+  ctx.beginPath();
+  ctx.moveTo(towerX-towerW*0.6,towerBase);
+  ctx.lineTo(towerX-towerW*0.4,towerTop);
+  ctx.lineTo(towerX+towerW*0.4,towerTop);
+  ctx.lineTo(towerX+towerW*0.6,towerBase);
+  ctx.closePath();
+  const towerG=ctx.createLinearGradient(towerX-towerW,0,towerX+towerW,0);
+  towerG.addColorStop(0,'#c8c0b0');
+  towerG.addColorStop(0.3,'#e8e0d0');
+  towerG.addColorStop(0.5,'#f0e8d8');
+  towerG.addColorStop(0.7,'#e0d8c8');
+  towerG.addColorStop(1,'#b8b0a0');
+  ctx.fillStyle=towerG;
+  ctx.fill();
+  
+  // Red stripes
+  for(let i=0;i<3;i++){
+    const y1=towerTop+(towerBase-towerTop)*(0.15+i*0.25);
+    const y2=y1+(towerBase-towerTop)*0.12;
+    const w1=towerW*(0.4+(y1-towerTop)/(towerBase-towerTop)*0.2);
+    const w2=towerW*(0.4+(y2-towerTop)/(towerBase-towerTop)*0.2);
+    ctx.beginPath();
+    ctx.moveTo(towerX-w1,y1);
+    ctx.lineTo(towerX-w2,y2);
+    ctx.lineTo(towerX+w2,y2);
+    ctx.lineTo(towerX+w1,y1);
+    ctx.closePath();
+    ctx.fillStyle='rgba(180,40,30,0.7)';
+    ctx.fill();
+  }
+  
+  // Lantern room
+  const lanternY=towerTop;
+  ctx.fillStyle='#1a1a20';
+  ctx.fillRect(towerX-towerW*0.5,lanternY-15,towerW,15);
+  // Glass
+  ctx.fillStyle='rgba(200,200,220,0.1)';
+  ctx.fillRect(towerX-towerW*0.4,lanternY-13,towerW*0.8,11);
+  
+  // Dome
+  ctx.beginPath();
+  ctx.arc(towerX,lanternY-15,towerW*0.5,Math.PI,0);
+  ctx.fillStyle='#2a2a30';
+  ctx.fill();
+  
+  // Light beam
+  const beamAngle=frame*0.015;
+  const beamLen=Math.max(w,h)*1.5;
+  const beamX=towerX;
+  const beamY=lanternY-8;
+  
+  // Two beams (opposite directions)
+  for(let b=0;b<2;b++){
+    const angle=beamAngle+b*Math.PI;
+    const bx=beamX+Math.cos(angle)*beamLen;
+    const by=beamY+Math.sin(angle)*beamLen;
+    
+    // Beam triangle
+    ctx.beginPath();
+    ctx.moveTo(beamX,beamY);
+    const spread=0.05;
+    ctx.lineTo(beamX+Math.cos(angle-spread)*beamLen,beamY+Math.sin(angle-spread)*beamLen);
+    ctx.lineTo(beamX+Math.cos(angle+spread)*beamLen,beamY+Math.sin(angle+spread)*beamLen);
+    ctx.closePath();
+    
+    const beamG=ctx.createRadialGradient(beamX,beamY,0,beamX,beamY,beamLen);
+    beamG.addColorStop(0,'rgba(255,240,200,0.15)');
+    beamG.addColorStop(0.1,'rgba(255,240,200,0.05)');
+    beamG.addColorStop(0.5,'rgba(255,240,200,0.01)');
+    beamG.addColorStop(1,'rgba(255,240,200,0)');
+    ctx.fillStyle=beamG;
+    ctx.fill();
+  }
+  
+  // Lantern glow
+  const lanternGlow=ctx.createRadialGradient(beamX,beamY,0,beamX,beamY,40);
+  lanternGlow.addColorStop(0,'rgba(255,240,200,0.6)');
+  lanternGlow.addColorStop(0.5,'rgba(255,200,100,0.2)');
+  lanternGlow.addColorStop(1,'transparent');
+  ctx.fillStyle=lanternGlow;
+  ctx.beginPath();
+  ctx.arc(beamX,beamY,40,0,Math.PI*2);
+  ctx.fill();
+  
+  // Waves
+  for(const wave of waves){
+    ctx.beginPath();
+    ctx.moveTo(0,h*wave.y);
+    for(let x=0;x<=w;x+=3){
+      const y=h*wave.y+Math.sin(x*wave.freq+frame*wave.speed)*wave.amp+Math.sin(x*wave.freq*2.5+frame*wave.speed*1.3)*wave.amp*0.3;
+      ctx.lineTo(x,y);
+    }
+    ctx.lineTo(w,h);
+    ctx.lineTo(0,h);
+    ctx.closePath();
+    ctx.fillStyle=wave.color;
+    ctx.fill();
+  }
+  
+  // Wave foam
+  ctx.strokeStyle='rgba(180,200,220,0.08)';
+  ctx.lineWidth=1;
+  for(let i=0;i<3;i++){
+    ctx.beginPath();
+    const foamY=h*0.72+i*h*0.06;
+    for(let x=0;x<=w;x+=3){
+      const y=foamY+Math.sin(x*0.015+frame*0.015+i*2)*4;
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

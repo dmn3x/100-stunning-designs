@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moss Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2218}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(120,160,100,.3);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Moss Garden</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Stones
+const stones=[];
+for(let i=0;i<8;i++){
+  stones.push({
+    x:w*0.1+Math.random()*w*0.8,
+    y:h*0.3+Math.random()*h*0.5,
+    rx:30+Math.random()*60,
+    ry:20+Math.random()*35,
+    rot:Math.random()*Math.PI,
+    color:60+Math.random()*40
+  });
+}
+
+// Moss patches (grow over time)
+const mossPatches=[];
+function addMoss(x,y,size){
+  mossPatches.push({x,y,size,targetSize:size,age:0,growSpeed:0.02+Math.random()*0.03,
+    hue:100+Math.random()*40,sat:30+Math.random()*30,lum:25+Math.random()*20});
+}
+
+// Seed moss on stones
+for(const s of stones){
+  const count=3+Math.floor(Math.random()*5);
+  for(let i=0;i<count;i++){
+    const angle=Math.random()*Math.PI*2;
+    const dist=Math.random()*0.8;
+    addMoss(
+      s.x+Math.cos(angle)*s.rx*dist,
+      s.y+Math.sin(angle)*s.ry*dist,
+      5+Math.random()*15
+    );
+  }
+}
+
+// Some moss on ground
+for(let i=0;i<20;i++){
+  addMoss(Math.random()*w,h*0.6+Math.random()*h*0.3,8+Math.random()*20);
+}
+
+// Tiny flowers
+const flowers=[];
+for(let i=0;i<12;i++){
+  flowers.push({
+    x:Math.random()*w,y:h*0.5+Math.random()*h*0.4,
+    r:1.5+Math.random()*2,hue:Math.random()*360,
+    phase:Math.random()*Math.PI*2
+  });
+}
+
+function draw(){
+  frame++;
+  
+  // Background gradient (misty garden)
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#2a3828');
+  bg.addColorStop(0.3,'#1e2c1a');
+  bg.addColorStop(0.7,'#1a2418');
+  bg.addColorStop(1,'#141c12');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Mist
+  for(let i=0;i<4;i++){
+    const mx=w*0.2+Math.sin(frame*0.001+i*2)*w*0.3;
+    const my=h*0.3+Math.cos(frame*0.0015+i)*h*0.2;
+    const mg=ctx.createRadialGradient(mx,my,0,mx,my,200);
+    mg.addColorStop(0,'rgba(140,160,130,0.04)');
+    mg.addColorStop(1,'transparent');
+    ctx.fillStyle=mg;
+    ctx.fillRect(0,0,w,h);
+  }
+  
+  // Ground texture
+  ctx.fillStyle='rgba(60,80,50,0.15)';
+  for(let i=0;i<100;i++){
+    const gx=(i*37)%w;
+    const gy=h*0.6+((i*53)%100);
+    ctx.fillRect(gx,gy,2+Math.random()*4,1);
+  }
+  
+  // Stones
+  for(const s of stones){
+    ctx.save();
+    ctx.translate(s.x,s.y);
+    ctx.rotate(s.rot);
+    
+    // Stone shadow
+    ctx.beginPath();
+    ctx.ellipse(3,3,s.rx,s.ry,0,0,Math.PI*2);
+    ctx.fillStyle='rgba(0,0,0,0.2)';
+    ctx.fill();
+    
+    // Stone body
+    ctx.beginPath();
+    ctx.ellipse(0,0,s.rx,s.ry,0,0,Math.PI*2);
+    const sg=ctx.createRadialGradient(-s.rx*0.3,-s.ry*0.3,0,0,0,s.rx);
+    sg.addColorStop(0,`hsl(40,8%,${s.color+20}%)`);
+    sg.addColorStop(0.5,`hsl(38,6%,${s.color}%)`);
+    sg.addColorStop(1,`hsl(36,5%,${s.color-15}%)`);
+    ctx.fillStyle=sg;
+    ctx.fill();
+    
+    // Stone texture lines
+    ctx.strokeStyle=`rgba(80,70,60,0.1)`;
+    ctx.lineWidth=0.5;
+    for(let l=0;l<3;l++){
+      ctx.beginPath();
+      ctx.ellipse(l*s.rx*0.2,l*s.ry*0.15,s.rx*0.6,s.ry*0.4,l*0.3,0,Math.PI);
+      ctx.stroke();
+    }
+    
+    ctx.restore();
+  }
+  
+  // Moss patches
+  for(const m of mossPatches){
+    m.age++;
+    if(m.size<m.targetSize)m.size+=m.growSpeed;
+    
+    const pulse=1+Math.sin(frame*0.008+m.x*0.01)*0.05;
+    const r=m.size*pulse;
+    
+    // Moss blob
+    ctx.beginPath();
+    const points=8;
+    for(let i=0;i<=points;i++){
+      const a=(i/points)*Math.PI*2;
+      const wobble=1+Math.sin(frame*0.015+a*3+m.y*0.01)*0.15;
+      const px=m.x+Math.cos(a)*r*wobble;
+      const py=m.y+Math.sin(a)*r*wobble*0.7;
+      if(i===0)ctx.moveTo(px,py);else ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    
+    const mg=ctx.createRadialGradient(m.x,m.y-r*0.2,0,m.x,m.y,r);
+    mg.addColorStop(0,`hsla(${m.hue},${m.sat}%,${m.lum+10}%,0.7)`);
+    mg.addColorStop(0.5,`hsla(${m.hue},${m.sat}%,${m.lum}%,0.6)`);
+    mg.addColorStop(1,`hsla(${m.hue},${m.sat-10}%,${m.lum-5}%,0.4)`);
+    ctx.fillStyle=mg;
+    ctx.fill();
+    
+    // Tiny fronds
+    for(let f=0;f<3;f++){
+      const fa=f*2.1+m.x*0.1;
+      const fl=3+Math.sin(frame*0.02+f)*2;
+      ctx.beginPath();
+      ctx.moveTo(m.x,m.y);
+      ctx.lineTo(m.x+Math.cos(fa)*r*1.2,m.y+Math.sin(fa)*r*0.8-fl);
+      ctx.strokeStyle=`hsla(${m.hue+10},${m.sat+10}%,${m.lum+15}%,0.4)`;
+      ctx.lineWidth=0.8;
+      ctx.stroke();
+    }
+  }
+  
+  // Flowers
+  for(const f of flowers){
+    const sway=Math.sin(frame*0.015+f.phase)*3;
+    const bloom=0.7+Math.sin(frame*0.01+f.phase)*0.3;
+    
+    // Stem
+    ctx.beginPath();
+    ctx.moveTo(f.x,f.y);
+    ctx.lineTo(f.x+sway,f.y-15);
+    ctx.strokeStyle='rgba(80,120,60,0.4)';
+    ctx.lineWidth=1;
+    ctx.stroke();
+    
+    // Petals
+    for(let p=0;p<5;p++){
+      const pa=(p/5)*Math.PI*2+frame*0.002;
+      ctx.beginPath();
+      ctx.ellipse(f.x+sway+Math.cos(pa)*f.r*bloom,f.y-15+Math.sin(pa)*f.r*bloom,f.r*0.7,f.r*0.4,pa,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${f.hue},50%,60%,0.35)`;
+      ctx.fill();
+    }
+    
+    // Center
+    ctx.beginPath();
+    ctx.arc(f.x+sway,f.y-15,f.r*0.3,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${f.hue+30},60%,70%,0.5)`;
+    ctx.fill();
+  }
+  
+  // Fireflies
+  for(let i=0;i<6;i++){
+    const fx=w*0.1+Math.sin(frame*0.003+i*1.7)*w*0.4;
+    const fy=h*0.2+Math.cos(frame*0.004+i*2.3)*h*0.3;
+    const glow=0.3+Math.sin(frame*0.05+i*3)*0.3;
+    
+    const fg=ctx.createRadialGradient(fx,fy,0,fx,fy,15);
+    fg.addColorStop(0,`rgba(200,220,100,${glow*0.3})`);
+    fg.addColorStop(1,'transparent');
+    ctx.fillStyle=fg;
+    ctx.beginPath();
+    ctx.arc(fx,fy,15,0,Math.PI*2);
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.arc(fx,fy,1.5,0,Math.PI*2);
+    ctx.fillStyle=`rgba(220,240,120,${glow})`;
+    ctx.fill();
+  }
+  
+  // Vignette
+  const vg=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*0.3,w/2,h/2,Math.max(w,h)*0.7);
+  vg.addColorStop(0,'transparent');
+  vg.addColorStop(1,'rgba(10,15,8,0.5)');
+  ctx.fillStyle=vg;
+  ctx.fillRect(0,0,w,h);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

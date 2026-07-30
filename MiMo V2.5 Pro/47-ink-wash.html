@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ink Wash</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#f4f0e8}
+canvas{display:block;cursor:crosshair}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(100,80,60,.25);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px Georgia,serif;color:rgba(100,80,60,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Ink Wash</div>
+<div class="hint">Click to add brushstrokes</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,brushing=false,bx=0,by=0,prevX=0,prevY=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;initBG()}
+resize();addEventListener('resize',resize);
+
+function initBG(){
+  ctx.fillStyle='#f4f0e8';
+  ctx.fillRect(0,0,w,h);
+  // Rice paper texture
+  ctx.strokeStyle='rgba(180,160,130,0.04)';
+  ctx.lineWidth=0.5;
+  for(let i=0;i<500;i++){
+    const x=Math.random()*w,y=Math.random()*h;
+    ctx.beginPath();
+    ctx.moveTo(x,y);
+    ctx.lineTo(x+Math.random()*15,y+Math.random()*2);
+    ctx.stroke();
+  }
+  // Pre-drawn mountains (sumi-e style)
+  drawMountains();
+}
+
+function drawMountains(){
+  // Far mountain
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.5);
+  for(let x=0;x<=w;x+=3){
+    const y=h*0.5-Math.sin(x*0.003)*h*0.15-Math.sin(x*0.008)*h*0.05;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,h*0.55);
+  ctx.lineTo(0,h*0.55);
+  ctx.closePath();
+  ctx.fillStyle='rgba(60,60,70,0.08)';
+  ctx.fill();
+  
+  // Near mountain
+  ctx.beginPath();
+  ctx.moveTo(0,h*0.65);
+  for(let x=0;x<=w;x+=3){
+    const y=h*0.65-Math.sin(x*0.005+1)*h*0.1-Math.sin(x*0.012)*h*0.04;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,h*0.7);
+  ctx.lineTo(0,h*0.7);
+  ctx.closePath();
+  ctx.fillStyle='rgba(50,50,60,0.12)';
+  ctx.fill();
+  
+  // Bamboo
+  for(let b=0;b<3;b++){
+    const bx2=w*0.15+b*w*0.3;
+    ctx.strokeStyle='rgba(60,60,50,0.15)';
+    ctx.lineWidth=3;
+    for(let i=0;i<5;i++){
+      const y1=h*0.3+i*h*0.08;
+      const y2=y1+h*0.08;
+      ctx.beginPath();
+      ctx.moveTo(bx2,y1);
+      ctx.lineTo(bx2+Math.sin(i*0.3)*3,y2);
+      ctx.stroke();
+      // Node
+      ctx.beginPath();
+      ctx.ellipse(bx2+Math.sin(i*0.3)*1.5,y2,4,1,0,0,Math.PI*2);
+      ctx.fillStyle='rgba(60,60,50,0.1)';
+      ctx.fill();
+    }
+    // Leaves
+    for(let l=0;l<4;l++){
+      const ly=h*0.35+l*h*0.07;
+      ctx.beginPath();
+      ctx.ellipse(bx2+15,ly,15,3,0.3+l*0.1,0,Math.PI*2);
+      ctx.fillStyle='rgba(60,70,50,0.08)';
+      ctx.fill();
+    }
+  }
+  
+  // Water at bottom
+  ctx.fillStyle='rgba(60,60,70,0.04)';
+  ctx.fillRect(0,h*0.75,w,h*0.25);
+}
+
+function brushStroke(x,y,pressure){
+  const count=3+Math.floor(pressure*5);
+  for(let i=0;i<count;i++){
+    const ox=(Math.random()-0.5)*15*pressure;
+    const oy=(Math.random()-0.5)*8*pressure;
+    const r=2+Math.random()*8*pressure;
+    
+    ctx.beginPath();
+    ctx.arc(x+ox,y+oy,r,0,Math.PI*2);
+    ctx.fillStyle=`rgba(20,20,25,${0.02+Math.random()*0.03})`;
+    ctx.fill();
+  }
+  
+  // Core stroke
+  ctx.beginPath();
+  ctx.arc(x,y,3+pressure*8,0,Math.PI*2);
+  ctx.fillStyle=`rgba(20,20,25,${0.05+pressure*0.05})`;
+  ctx.fill();
+}
+
+c.addEventListener('mousedown',e=>{brushing=true;prevX=e.clientX;prevY=e.clientY});
+c.addEventListener('mouseup',()=>brushing=false);
+c.addEventListener('mousemove',e=>{
+  if(!brushing)return;
+  bx=e.clientX;by=e.clientY;
+  const dist=Math.sqrt((bx-prevX)**2+(by-prevY)**2);
+  const pressure=Math.min(1,dist/50);
+  const steps=Math.max(1,Math.floor(dist/5));
+  for(let i=0;i<steps;i++){
+    const t=i/steps;
+    const x=prevX+(bx-prevX)*t;
+    const y=prevY+(by-prevY)*t;
+    brushStroke(x,y,pressure);
+  }
+  prevX=bx;prevY=by;
+});
+c.addEventListener('touchstart',e=>{brushing=true;prevX=e.touches[0].clientX;prevY=e.touches[0].clientY;e.preventDefault()},{passive:false});
+c.addEventListener('touchmove',e=>{
+  if(!brushing)return;
+  bx=e.touches[0].clientX;by=e.touches[0].clientY;
+  const dist=Math.sqrt((bx-prevX)**2+(by-prevY)**2);
+  const pressure=Math.min(1,dist/50);
+  const steps=Math.max(1,Math.floor(dist/5));
+  for(let i=0;i<steps;i++){
+    const t=i/steps;
+    const x=prevX+(bx-prevX)*t;
+    const y=prevY+(by-prevY)*t;
+    brushStroke(x,y,pressure);
+  }
+  prevX=bx;prevY=by;
+  e.preventDefault();
+},{passive:false});
+c.addEventListener('touchend',()=>brushing=false);
+
+function draw(){
+  frame++;
+  requestAnimationFrame(draw);
+}
+initBG();
+draw();
+</script>
+</body>
+</html>

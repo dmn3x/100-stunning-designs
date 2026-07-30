@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rain Ripples</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#1a2030}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(140,160,200,.25);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Rain Ripples</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Ripple system
+const ripples=[];
+function addRipple(x,y){
+  ripples.push({x,y,r:0,maxR:30+Math.random()*50,speed:0.8+Math.random()*0.5,life:1});
+}
+
+// Rain drops
+const drops=[];
+function addDrop(){
+  drops.push({x:Math.random()*w,y:-10,vy:5+Math.random()*5,len:10+Math.random()*15});
+}
+
+for(let i=0;i<30;i++){addDrop();drops[i].y=Math.random()*h;}
+
+function draw(){
+  frame++;
+  
+  // Water background
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#1a2030');
+  bg.addColorStop(1,'#141820');
+  ctx.fillStyle=bg;
+  ctx.fillRect(0,0,w,h);
+  
+  // Subtle water texture
+  ctx.fillStyle='rgba(100,130,180,0.01)';
+  for(let i=0;i<50;i++){
+    const tx=Math.sin(frame*0.002+i*3)*w*0.5+w*0.5;
+    const ty=Math.cos(frame*0.003+i*2)*h*0.5+h*0.5;
+    ctx.beginPath();
+    ctx.arc(tx,ty,20+Math.sin(frame*0.01+i)*10,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  // Rain streaks
+  ctx.strokeStyle='rgba(150,170,210,0.08)';
+  ctx.lineWidth=1;
+  for(const drop of drops){
+    drop.y+=drop.vy;
+    drop.x+=Math.sin(frame*0.01)*0.3;
+    
+    ctx.beginPath();
+    ctx.moveTo(drop.x,drop.y);
+    ctx.lineTo(drop.x-1,drop.y-drop.len);
+    ctx.stroke();
+    
+    if(drop.y>h){
+      addRipple(drop.x+Math.random()*10,h*0.5+Math.random()*h*0.5);
+      drop.y=-10;
+      drop.x=Math.random()*w;
+    }
+  }
+  
+  // Ripples
+  for(let i=ripples.length-1;i>=0;i--){
+    const r=ripples[i];
+    r.r+=r.speed;
+    r.life=1-r.r/r.maxR;
+    
+    if(r.life<=0){ripples.splice(i,1);continue;}
+    
+    // Multiple rings
+    for(let ring=0;ring<3;ring++){
+      const rr=r.r-ring*5;
+      if(rr<=0)continue;
+      
+      ctx.beginPath();
+      ctx.ellipse(r.x,r.y,rr,rr*0.3,0,0,Math.PI*2);
+      ctx.strokeStyle=`rgba(150,170,210,${r.life*0.15*(1-ring*0.3)})`;
+      ctx.lineWidth=1;
+      ctx.stroke();
+    }
+  }
+  
+  // Keep drops flowing
+  if(frame%3===0)addDrop();
+  while(drops.length>80)drops.shift();
+  while(ripples.length>100)ripples.shift();
+  
+  // Reflection highlights
+  ctx.fillStyle='rgba(180,200,240,0.01)';
+  for(let i=0;i<5;i++){
+    const rx=w*0.1+Math.sin(frame*0.001+i*2)*w*0.4;
+    const ry=h*0.3+Math.cos(frame*0.0015+i*1.5)*h*0.3;
+    ctx.beginPath();
+    ctx.arc(rx,ry,50,0,Math.PI*2);
+    ctx.fill();
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

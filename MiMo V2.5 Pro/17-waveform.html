@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sound Waveform</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0f}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:2rem;font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(200,200,220,.2);pointer-events:none;z-index:10}
+.hint{position:fixed;bottom:2rem;left:50%;transform:translateX(-50%);font:10px 'SF Mono',monospace;color:rgba(200,200,220,.15);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Waveform</div>
+<div class="hint">Move mouse to change frequency</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0,mx=0.5;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx=e.clientX/w});
+
+// Audio buffer simulation
+const bufferSize=256;
+const buffer=new Float32Array(bufferSize);
+const history=[];
+const historyLen=200;
+for(let i=0;i<historyLen;i++)history.push(new Float32Array(bufferSize));
+
+function generateBuffer(){
+  const freq=20+mx*800;
+  const t=frame*0.02;
+  for(let i=0;i<bufferSize;i++){
+    const x=i/bufferSize;
+    // Composite waveform
+    buffer[i]=
+      Math.sin(x*freq*0.1+t)*0.4+
+      Math.sin(x*freq*0.2+t*1.5)*0.2+
+      Math.sin(x*freq*0.5+t*0.7)*0.15+
+      Math.sin(x*freq*0.05+t*0.3)*0.3+
+      (Math.random()-0.5)*0.05;
+    // Envelope
+    buffer[i]*=Math.sin(x*Math.PI)*0.8+0.2;
+  }
+  history.push(new Float32Array(buffer));
+  if(history.length>historyLen)history.shift();
+}
+
+function draw(){
+  frame++;
+  generateBuffer();
+  
+  ctx.fillStyle='rgba(10,10,15,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cy=h/2;
+  const amp=h*0.35;
+  
+  // Grid
+  ctx.strokeStyle='rgba(100,100,140,0.04)';
+  ctx.lineWidth=0.5;
+  for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  
+  // Center line
+  ctx.strokeStyle='rgba(100,100,140,0.08)';
+  ctx.beginPath();ctx.moveTo(0,cy);ctx.lineTo(w,cy);ctx.stroke();
+  
+  // History trail (fading)
+  for(let hi=0;hi<history.length-1;hi++){
+    const alpha=((hi/history.length)*0.15);
+    const hbuf=history[hi];
+    ctx.beginPath();
+    for(let i=0;i<bufferSize;i++){
+      const x=(i/bufferSize)*w;
+      const y=cy+hbuf[i]*amp*(hi/history.length);
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`rgba(100,140,255,${alpha})`;
+    ctx.lineWidth=1;
+    ctx.stroke();
+  }
+  
+  // Current waveform
+  ctx.beginPath();
+  for(let i=0;i<bufferSize;i++){
+    const x=(i/bufferSize)*w;
+    const y=cy+buffer[i]*amp;
+    if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(120,160,255,0.8)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  
+  // Glow
+  ctx.strokeStyle='rgba(120,160,255,0.15)';
+  ctx.lineWidth=8;
+  ctx.stroke();
+  
+  // Fill under waveform
+  ctx.beginPath();
+  ctx.moveTo(0,cy);
+  for(let i=0;i<bufferSize;i++){
+    const x=(i/bufferSize)*w;
+    const y=cy+buffer[i]*amp;
+    ctx.lineTo(x,y);
+  }
+  ctx.lineTo(w,cy);
+  ctx.closePath();
+  const fg=ctx.createLinearGradient(0,cy-amp,0,cy+amp);
+  fg.addColorStop(0,'rgba(100,140,255,0.05)');
+  fg.addColorStop(0.5,'rgba(100,140,255,0)');
+  fg.addColorStop(1,'rgba(100,140,255,0.05)');
+  ctx.fillStyle=fg;
+  ctx.fill();
+  
+  // Spectral peaks
+  const peakCount=8;
+  for(let i=0;i<peakCount;i++){
+    const freq=20+mx*800;
+    const px=w*0.1+(w*0.8)*(i/peakCount);
+    const ph=Math.abs(Math.sin(frame*0.02+i*1.3))*h*0.15;
+    
+    ctx.fillStyle='rgba(100,140,255,0.03)';
+    ctx.fillRect(px-2,cy-ph,4,ph*2);
+  }
+  
+  // Frequency label
+  const freq=20+mx*800;
+  ctx.font='11px "SF Mono",monospace';
+  ctx.fillStyle='rgba(200,200,220,0.2)';
+  ctx.textAlign='left';
+  ctx.fillText(`${freq.toFixed(0)} Hz`,20,h-20);
+  ctx.textAlign='right';
+  ctx.fillText(`${bufferSize} samples`,w-20,h-20);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

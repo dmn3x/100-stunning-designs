@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Liquid Chrome</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a0a}
+canvas{display:block}
+.info{position:fixed;top:2rem;left:2rem;font:600 .7rem/1 'SF Mono','Fira Code',monospace;letter-spacing:.3em;text-transform:uppercase;color:rgba(200,210,220,.35);pointer-events:none;z-index:10}
+.info span{display:block;margin-top:.3rem;font-weight:300;letter-spacing:.15em;color:rgba(200,210,220,.2)}
+</style>
+</head>
+<body>
+<div class="info">Liquid Chrome<span>Move to deform</span></div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,mx=-9999,my=-9999,cols,rows,grid,scale=20,frame=0;
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight;cols=Math.ceil(w/scale)+2;rows=Math.ceil(h/scale)+2;initGrid()}
+function initGrid(){grid=[];for(let j=0;j<rows;j++){grid[j]=[];for(let i=0;i<cols;i++){grid[j][i]={x:i*scale,y:j*scale,ox:i*scale,oy:j*scale,vx:0,vy:0}}}}
+resize();addEventListener('resize',resize);
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY;e.preventDefault()},{passive:false});
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,10,10,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  // Physics
+  for(let j=1;j<rows-1;j++){
+    for(let i=1;i<cols-1;i++){
+      const p=grid[j][i];
+      const dx=mx-p.x,dy=my-p.y;
+      const dist=Math.sqrt(dx*dx+dy*dy);
+      if(dist<150){
+        const f=(150-dist)/150;
+        p.vx+=dx*f*0.008;
+        p.vy+=dy*f*0.008;
+      }
+      // Spring back
+      p.vx+=(p.ox-p.x)*0.03;
+      p.vy+=(p.oy-p.y)*0.03;
+      p.vx*=0.92;
+      p.vy*=0.92;
+      p.x+=p.vx;
+      p.y+=p.vy;
+    }
+  }
+  
+  // Draw chrome mesh
+  for(let j=0;j<rows-1;j++){
+    for(let i=0;i<cols-1;i++){
+      const a=grid[j][i],b=grid[j][i+1];
+      const d=grid[j+1][i],e=grid[j+1][i+1];
+      
+      const cx=(a.x+b.x+d.x+e.x)/4;
+      const cy=(a.y+b.y+d.y+e.y)/4;
+      const distFromCenter=Math.sqrt((cx-w/2)**2+(cy-h/2)**2);
+      const maxDist=Math.sqrt((w/2)**2+(h/2)**2);
+      const norm=distFromCenter/maxDist;
+      
+      // Chrome gradient based on position and deformation
+      const deform=Math.abs(a.vx)+Math.abs(a.vy);
+      const hue=(norm*60+frame*0.3+deform*80)%360;
+      const sat=15+deform*200;
+      const lum=55+Math.sin(frame*0.02+i*0.3+j*0.2)*20+norm*15;
+      
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.lineTo(b.x,b.y);
+      ctx.lineTo(e.x,e.y);
+      ctx.lineTo(d.x,d.y);
+      ctx.closePath();
+      ctx.fillStyle=`hsl(${hue},${Math.min(sat,40)}%,${Math.min(Math.max(lum,30),80)}%)`;
+      ctx.fill();
+    }
+  }
+  
+  // Specular highlights
+  for(let j=0;j<rows;j+=2){
+    for(let i=0;i<cols;i+=2){
+      const p=grid[j][i];
+      const deform=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
+      if(deform>1.5){
+        ctx.beginPath();
+        ctx.arc(p.x,p.y,deform*0.8,0,Math.PI*2);
+        ctx.fillStyle=`rgba(255,255,255,${Math.min(deform*0.08,0.4)})`;
+        ctx.fill();
+      }
+    }
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Standing Waves</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0a14}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:600 .6rem/1 'SF Mono',monospace;letter-spacing:.35em;text-transform:uppercase;color:rgba(160,160,220,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Standing Waves</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+const modes=5;
+const modeData=[];
+for(let i=0;i<modes;i++){
+  modeData.push({
+    n:i+1,
+    amp:0.5/(i+1),
+    freq:0.02*(i+1),
+    phase:Math.random()*Math.PI*2,
+    hue:200+i*30,
+    active:true,
+  });
+}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,10,20,0.95)';
+  ctx.fillRect(0,0,w,h);
+  
+  const cy=h/2;
+  const amp=h*0.3;
+  
+  // Grid
+  ctx.strokeStyle='rgba(100,100,140,0.03)';
+  ctx.lineWidth=0.5;
+  for(let y=0;y<h;y+=30){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}
+  for(let x=0;x<w;x+=30){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke();}
+  
+  // Node points (fixed ends)
+  ctx.fillStyle='rgba(160,160,220,0.15)';
+  ctx.fillRect(0,cy-3,6,6);
+  ctx.fillRect(w-6,cy-3,6,6);
+  
+  // Draw each mode
+  for(let m=0;m<modes;m++){
+    const mode=modeData[m];
+    if(!mode.active)continue;
+    
+    const lambda=w/mode.n;
+    
+    ctx.beginPath();
+    for(let x=0;x<=w;x++){
+      const t=x/w;
+      const standing=Math.sin(mode.n*Math.PI*t)*Math.cos(frame*mode.freq+mode.phase);
+      const y=cy+standing*amp*mode.amp;
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`hsla(${mode.hue},50%,55%,${0.3-mode.amp*0.2})`;
+    ctx.lineWidth=2;
+    ctx.stroke();
+    
+    // Glow
+    ctx.strokeStyle=`hsla(${mode.hue},50%,55%,${0.05})`;
+    ctx.lineWidth=8;
+    ctx.stroke();
+    
+    // Nodes
+    for(let n=0;n<=mode.n;n++){
+      const nx=w*n/mode.n;
+      ctx.beginPath();
+      ctx.arc(nx,cy,3,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${mode.hue},40%,60%,0.2)`;
+      ctx.fill();
+    }
+    
+    // Anti-nodes (max displacement)
+    for(let n=0;n<mode.n;n++){
+      const nx=w*(n+0.5)/mode.n;
+      const standing=Math.cos(frame*mode.freq+mode.phase);
+      const ny=cy+standing*amp*mode.amp;
+      ctx.beginPath();
+      ctx.arc(nx,ny,2,0,Math.PI*2);
+      ctx.fillStyle=`hsla(${mode.hue},60%,70%,${Math.abs(standing)*0.3})`;
+      ctx.fill();
+    }
+  }
+  
+  // Superposition (combined wave)
+  ctx.beginPath();
+  for(let x=0;x<=w;x++){
+    let y=0;
+    for(const mode of modeData){
+      if(!mode.active)continue;
+      const t=x/w;
+      y+=Math.sin(mode.n*Math.PI*t)*Math.cos(frame*mode.freq+mode.phase)*mode.amp;
+    }
+    y=cy+y*amp;
+    if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='rgba(255,255,255,0.3)';
+  ctx.lineWidth=2;
+  ctx.stroke();
+  ctx.strokeStyle='rgba(255,255,255,0.05)';
+  ctx.lineWidth=10;
+  ctx.stroke();
+  
+  // Mode labels
+  ctx.font='9px "SF Mono",monospace';
+  ctx.textAlign='left';
+  for(let m=0;m<modes;m++){
+    const mode=modeData[m];
+    ctx.fillStyle=`hsla(${mode.hue},50%,55%,0.25)`;
+    ctx.fillText(`n=${mode.n}  λ=${(w/mode.n).toFixed(0)}px`,15,h-15-m*15);
+  }
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>

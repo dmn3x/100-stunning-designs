@@ -1,181 +1,154 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>100 Stunning Designs — A Side-by-Side Comparison</title>
-<meta name="description" content="An open experiment. Two AI models received the same prompt — create 100 stunning HTML files — and were judged on repetition, stamina, technical depth, and design taste. Their results live here, side by side.">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100 Stunning Designs — An AI Creative Benchmark</title>
 <style>
-  *{margin:0;padding:0;box-sizing:border-box}
-  :root{--paper:#f5efe0;--ink:#1c1206;--gold:#a05c2a;--rule:#3a2614;--soft:#7d5b22;--rule-soft:rgba(28,18,6,.16);--deep:#0c0c10;--pale:#f8f4ec;--warm:#3a1d05}
-  html{background:var(--paper)}
-  body{background:var(--paper);color:var(--ink);font-family:"Iowan Old Style","Charter","Times New Roman",serif;min-height:100vh;line-height:1.5;-webkit-font-smoothing:antialiased}
-  a{color:inherit}
-  /* ─── masthead ─── */
-  .wrap{max-width:1180px;margin:0 auto;padding:clamp(1rem,3vw,2.4rem) clamp(1rem,4vw,2.4rem) 6rem}
-  .strip{display:flex;justify-content:space-between;font-family:"Courier New",ui-monospace,monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);border-top:2px solid var(--ink);border-bottom:1px solid var(--ink);padding:.6rem 0;flex-wrap:wrap;gap:.4rem}
-  .strip strong{color:var(--ink);font-weight:400}
-  /* ─── hero ─── */
-  .hero{padding:4rem 0 3rem;display:grid;grid-template-columns:1.4fr .9fr;gap:clamp(1.5rem,4vw,4rem);align-items:end;border-bottom:1px dashed var(--ink)}
-  @media (max-width:780px){.hero{grid-template-columns:1fr}}
-  .hero h1{font-family:"Bodoni Moda","Didot",serif;font-weight:700;font-style:italic;font-size:clamp(2.6rem,8vw,6rem);line-height:.92;letter-spacing:-.02em;color:var(--ink)}
-  .hero h1 em{color:var(--gold);font-style:italic}
-  .hero h1 small{display:block;font-style:normal;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--soft);margin-top:1rem}
-  .hero .lede{font-family:"Iowan Old Style",serif;font-size:1.15rem;line-height:1.6;max-width:48ch;color:var(--ink)}
-  .hero .lede p+p{margin-top:.8rem}
-  .hero .lede .quote{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.15rem;border-left:3px solid var(--gold);padding-left:1rem;margin-top:1.2rem;color:var(--warm)}
-  /* ─── prompt block ─── */
-  .prompt{background:var(--pale);border:1px solid var(--ink);padding:clamp(1.4rem,3vw,2.4rem);margin:3rem 0;display:grid;grid-template-columns:1fr 2fr;gap:2rem;align-items:center}
-  @media (max-width:780px){.prompt{grid-template-columns:1fr}}
-  .prompt .label{font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold)}
-  .prompt blockquote{font-family:"Bodoni Moda",serif;font-style:italic;font-size:clamp(1.4rem,3vw,2rem);line-height:1.2;color:var(--ink)}
-  .prompt blockquote::before{content:"“";font-size:2.6rem;color:var(--gold);line-height:0;vertical-align:-.3em;margin-right:.1em}
-  .prompt blockquote::after{content:"”";font-size:2.6rem;color:var(--gold);line-height:0;vertical-align:-.3em;margin-left:.1em}
-  /* ─── models grid ─── */
-  .models{margin-top:3rem}
-  .models h2,.rubric h2,.picks h2,.measure h2{font-family:"Bodoni Moda",serif;font-style:italic;font-size:clamp(1.6rem,3vw,2.2rem);letter-spacing:.04em;border-bottom:1px solid var(--ink);padding-bottom:.4rem;margin-bottom:1.2rem}
-  .model-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(360px,1fr));gap:1.2rem}
-  @media (max-width:780px){.model-grid{grid-template-columns:1fr}}
-  .model{background:var(--pale);border:1px solid var(--ink);padding:1.4rem 1.6rem;display:flex;flex-direction:column;gap:.8rem;position:relative;text-decoration:none;color:inherit;transition:transform .25s,box-shadow .25s}
-  .model:hover,.model:focus-visible{transform:translateY(-3px);box-shadow:0 14px 0 -8px var(--gold);outline:none}
-  .model .head{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
-  .model .name{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.6rem;line-height:1}
-  .model .name span{font-style:normal;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);margin-left:.6rem}
-  .model .seal{font-family:"Bodoni Moda",serif;font-style:italic;font-size:.95rem;padding:.2rem .6rem;border:1px solid var(--ink);background:var(--ink);color:var(--paper)}
-  .model .brief{font-size:1rem;line-height:1.55;flex:1}
-  .model .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;border-top:1px dashed var(--rule);border-bottom:1px dashed var(--rule);padding:.6rem 0;font-family:"Courier New",monospace;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;color:var(--soft)}
-  .model .stats b{display:block;font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.3rem;color:var(--ink);letter-spacing:0;text-transform:none}
-  .model .cta{display:inline-flex;align-items:center;gap:.4rem;font-family:"Courier New",monospace;letter-spacing:.3em;text-transform:uppercase;font-size:.7rem;color:var(--ink)}
-  .model .cta::after{content:"→";transition:transform .2s}
-  .model:hover .cta::after{transform:translateX(4px)}
-  /* ─── rubric ─── */
-  .rubric{margin-top:3.5rem}
-  .rubric ol{counter-reset:r;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;list-style:none}
-  .rubric li{counter-increment:r;padding:1rem;border:1px solid var(--rule-soft);background:rgba(255,255,255,.4);position:relative}
-  .rubric li::before{content:counter(r,decimal-leading-zero);position:absolute;top:.6rem;right:.8rem;font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.6rem;color:var(--gold)}
-  .rubric li strong{font-family:"Courier New",monospace;letter-spacing:.2em;text-transform:uppercase;font-size:.78rem;color:var(--ink);display:block;margin-bottom:.3rem}
-  .rubric li p{font-size:.92rem;line-height:1.5}
-  /* ─── small picks strip ─── */
-  .picks{margin-top:3.5rem}
-  .pick-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.8rem;list-style:none}
-  .pick-list li{border:1px solid var(--rule-soft);padding:.8rem;background:rgba(255,255,255,.45);font-size:.92rem;line-height:1.45;font-style:italic;font-family:"Iowan Old Style",serif}
-  .pick-list b{font-style:normal;font-family:"Bodoni Moda",serif;letter-spacing:.02em;font-size:1.1rem;color:var(--ink);display:block;margin-bottom:.2rem}
-  .pick-list small{font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);font-style:normal;display:block;margin-top:.4rem}
-  /* ─── footer ─── */
-  footer{margin-top:4rem;border-top:6px double var(--ink);padding-top:1.4rem;display:grid;grid-template-columns:1.4fr 1fr;gap:2rem;align-items:start}
-  @media (max-width:780px){footer{grid-template-columns:1fr}}
-  footer .credit{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.2rem;color:var(--ink)}
-  footer .credit small{display:block;font-family:"Courier New",monospace;font-style:normal;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);margin-top:.4rem}
-  footer .meta{font-family:"Courier New",monospace;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--soft);text-align:right}
-  footer .meta a{border-bottom:1px solid var(--ink);text-decoration:none;padding-bottom:1px}
-  @media (max-width:780px){footer .meta{text-align:left}}
-  /* ─── tiny signature sizzle ─── */
-  .glyph{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.4rem;color:var(--gold);text-align:right;padding-top:1rem;margin-top:1rem;border-top:1px dashed var(--ink)}
-  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080c;--text:#d8d4cc;--accent:#a8a0ff;--muted:#555;--card:#101014;--border:#1a1a20;--glow:rgba(168,160,255,0.04)}
+html{background:var(--bg)}
+body{background:var(--bg);color:var(--text);font:'Inter','SF Mono','Fira Code','Courier New',monospace;min-height:100vh;-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;transition:color .2s}
+a:hover{color:#c8c0ff}
+
+.wrap{max-width:1200px;margin:0 auto;padding:clamp(1.5rem,4vw,3rem)}
+
+/* Hero */
+.hero{text-align:center;padding:4rem 0 3rem}
+.hero h1{font-size:clamp(2rem,6vw,4rem);font-weight:200;letter-spacing:.05em;line-height:1.1}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero .tagline{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:1rem}
+.hero .desc{max-width:600px;margin:1.5rem auto 0;font-size:.85rem;color:rgba(200,196,188,0.5);line-height:1.7}
+
+/* Stats bar */
+.stats{display:flex;justify-content:center;gap:3rem;padding:2rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:2rem 0;flex-wrap:wrap}
+.stat{text-align:center}
+.stat .val{font-size:1.5rem;font-weight:300;color:var(--accent)}
+.stat .label{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+
+/* Collections */
+.collections{margin-top:3rem}
+.collections h2{font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;font-weight:400}
+.collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem}
+
+.collection{background:var(--card);border:1px solid var(--border);padding:clamp(1.5rem,3vw,2rem);position:relative;overflow:hidden;transition:all .3s}
+.collection:hover{border-color:rgba(168,160,255,0.2);box-shadow:0 0 40px var(--glow)}
+.collection::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
+.collection:hover::before{opacity:0.3}
+
+.collection .badge{display:inline-block;font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--border);color:var(--muted);margin-bottom:1rem}
+.collection h3{font-size:1.2rem;font-weight:400;margin-bottom:.5rem}
+.collection .meta{font-size:.7rem;color:var(--muted);line-height:1.8}
+.collection .meta span{color:rgba(200,196,188,0.4)}
+.collection .link{display:inline-block;margin-top:1rem;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);opacity:0.6;transition:opacity .2s}
+.collection:hover .link{opacity:1}
+
+/* Methodology */
+.methodology{margin-top:4rem;padding:2rem 0;border-top:1px solid var(--border)}
+.methodology h2{font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;font-weight:400;text-align:center}
+.method-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2rem;margin-top:1.5rem}
+.method{text-align:center}
+.method .icon{font-size:1.5rem;margin-bottom:.5rem;opacity:0.4}
+.method h4{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;font-weight:400;margin-bottom:.5rem}
+.method p{font-size:.7rem;color:var(--muted);line-height:1.6}
+
+/* Footer */
+footer{text-align:center;padding:3rem 0 2rem;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(100,100,120,0.3)}
+footer a{color:rgba(100,100,120,0.4)}
+
+@media(max-width:600px){
+  .stats{gap:1.5rem}
+  .collection-grid{grid-template-columns:1fr}
+  .method-grid{grid-template-columns:1fr 1fr}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <div class="strip">
-    <span><strong>Vol. 02</strong> — issue</span>
-    <span>two models · two hundred studies</span>
-    <span>the patient edition</span>
+<div class="hero">
+  <h1>100 <em>Stunning</em> Designs</h1>
+  <div class="tagline">An Open AI Creative Benchmark</div>
+  <p class="desc">Each AI model receives the same prompt — create 100 unique, stunning HTML files with zero repetition. The results live here, side by side, judged on visual quality, technical depth, creative range, and stamina.</p>
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="val">3</div><div class="label">Collections</div></div>
+  <div class="stat"><div class="val">300</div><div class="label">Total Designs</div></div>
+  <div class="stat"><div class="val">0</div><div class="label">Dependencies</div></div>
+  <div class="stat"><div class="val">100%</div><div class="label">Self-Contained</div></div>
+</div>
+
+<div class="collections">
+  <h2>Collections</h2>
+  <div class="collection-grid">
+
+    <div class="collection">
+      <div class="badge">MiniMax M3</div>
+      <h3>Poetic Narratives</h3>
+      <div class="meta">
+        <span>Style:</span> Warm editorial, paper textures, serif typography<br>
+        <span>Themes:</span> Observatories, libraries, radios, botanical gardens<br>
+        <span>Strength:</span> Atmospheric storytelling, cohesive visual language
+      </div>
+      <a href="MiniMax M3/index.html" class="link">Explore Collection →</a>
+    </div>
+
+    <div class="collection">
+      <div class="badge">Deepseek V4 Pro</div>
+      <h3>Technical Showcase</h3>
+      <div class="meta">
+        <span>Style:</span> Dark UI, canvas animations, interactive effects<br>
+        <span>Themes:</span> Particle systems, glassmorphism, data viz, cyberpunk<br>
+        <span>Strength:</span> Technical breadth, modern web APIs, interactivity
+      </div>
+      <a href="Deepseek V4 Pro/index.html" class="link">Explore Collection →</a>
+    </div>
+
+    <div class="collection">
+      <div class="badge">MiMo V2.5 Pro</div>
+      <h3>Nature & Science</h3>
+      <div class="meta">
+        <span>Style:</span> Organic, canvas-based, scientifically inspired<br>
+        <span>Themes:</span> Ecosystems, geology, physics, astronomy, biology<br>
+        <span>Strength:</span> Natural phenomena, educational depth, visual variety
+      </div>
+      <a href="MiMo V2.5 Pro/index.html" class="link">Explore Collection →</a>
+    </div>
+
   </div>
+</div>
 
-  <section class="hero">
-    <h1>100 <em>Stunning</em><br>HTML Designs<small>an open experiment · same prompt · different hands</small></h1>
-    <div class="lede">
-      <p>Two AI models received the same instruction: <em>create 100 HTML files. Look stunning. Zero repetition. Go full creative mode.</em> No libraries. No frameworks. No code generators. Each file is hand-written, self-contained, and opens in any browser.</p>
-      <p>The tests below are not viral demos — they are <em>stamina</em> tests. They ask whether a model can hold its craft across a hundred designs without collapsing into a single aesthetic, and whether the hundredth page is still its own.</p>
-      <div class="quote">— do not move the kettle —</div>
+<div class="methodology">
+  <h2>How It Works</h2>
+  <div class="method-grid">
+    <div class="method">
+      <div class="icon">⌘</div>
+      <h4>Same Prompt</h4>
+      <p>Every model receives identical instructions: 100 HTML files, zero repetition, full creative mode.</p>
     </div>
-  </section>
-
-  <section class="prompt">
-    <div class="label">the prompt · verbatim</div>
-    <blockquote>Create 100 HTML files. Rules: look stunning, zero repetitive designs, go full creative mode.</blockquote>
-  </section>
-
-  <section class="models" id="models">
-    <h2>Models, side by side</h2>
-    <div class="model-grid">
-      <a class="model" href="Deepseek%20V4%20Pro/">
-        <div class="head">
-          <div class="name">Deepseek <em>V4 Pro</em><span>· the established hand</span></div>
-          <div class="seal">✓ Complete</div>
-        </div>
-        <p class="brief">The first entry. A hundred pages that swing from glassmorphic UIs to neon roadrunners, scroll-snap galleries to particle constellations. Loud, confident, generous with motion.</p>
-        <div class="stats">
-          <span>Designs<b>100</b></span>
-          <span>Frameworks<b>0</b></span>
-          <span>External URLs<b>0</b></span>
-        </div>
-        <span class="cta">Open gallery</span>
-      </a>
-      <a class="model" href="MiniMax%20M3/">
-        <div class="head">
-          <div class="name">MiniMax <em>M3</em><span>· the patient hand</span></div>
-          <div class="seal">✓ Complete</div>
-        </div>
-        <p class="brief">The second entry. A hundred pages that prefer almanacs to dashboards, atlases to tiles. Editorial spreads, hand-drawn diagrams, the occasional kettledrum. The hundredth page is a kettle.</p>
-        <div class="stats">
-          <span>Designs<b>100</b></span>
-          <span>Frameworks<b>0</b></span>
-          <span>External URLs<b>0</b></span>
-        </div>
-        <span class="cta">Open editorial gallery</span>
-      </a>
+    <div class="method">
+      <div class="icon">◯</div>
+      <h4>Zero Dependencies</h4>
+      <p>Each file is self-contained HTML with inline CSS and JS. No frameworks, no CDNs, no build tools.</p>
     </div>
-  </section>
-
-  <section class="rubric">
-    <h2>Five things we look for</h2>
-    <ol>
-      <li>
-        <strong>Creative range</strong>
-        <p>Can the model span brutalist grids, soft glass, psychedelic canvas, 3D geometry, and quiet monochrome — without ever reusing the same hero the day before?</p>
-      </li>
-      <li>
-        <strong>Technical depth</strong>
-        <p>Canvas 2D, SVG, CSS animations, transform 3D, vanilla physics. Real interactions, not decorative hovers.</p>
-      </li>
-      <li>
-        <strong>Design taste</strong>
-        <p>Colour harmony, hierarchy, typography, restraint — the questions most AI still gets wrong.</p>
-      </li>
-      <li>
-        <strong>Zero-dependency discipline</strong>
-        <p>Does each file work as a single <code>.html</code> open from disk? No fonts, no CDNs, no libraries.</p>
-      </li>
-      <li>
-        <strong>Stamina</strong>
-        <p>Does quality hold across all hundred? Or does the last page look like a model running on fumes?</p>
-      </li>
-    </ol>
-  </section>
-
-  <section class="picks">
-    <h2>A six-page tasting menu</h2>
-    <ul class="pick-list">
-      <li><b>Starling Parliament</b><small>MiniMax M3 · 59</small>canvas flock steering — three buttons and an opinion.</li>
-      <li><b>Particle Constellation</b><small>Deepseek V4 Pro · 01</small>cursor-as-star, an early favourite of the showdown.</li>
-      <li><b>Hotel After Rain</b><small>MiniMax M3 · 23</small>bookable (but unbookable) motel, three room keys.</li>
-      <li><b>Glassmorphism Cards</b><small>Deepseek V4 Pro · 09</small>the canonical mid-fi default, fairly won.</li>
-      <li><b>The Listening Room</b><small>MiniMax M3 · 32</small>vinyl, sleeve, bridge — please do not speak during the bridge.</li>
-      <li><b>Mandelbrot Zoom</b><small>Deepseek V4 Pro · 27</small>canvas fractal, a quiet flex.</li>
-    </ul>
-  </section>
-
-  <div class="glyph">— fin. —</div>
-
-  <footer>
-    <div class="credit">100 Stunning<small>an open comparison · curated by dmn3x · mit licensed</small></div>
-    <div class="meta">
-      <div><a href="README.md">Read the README</a></div>
-      <div style="margin-top:.4rem">no kettle was moved in the writing of this experiment</div>
+    <div class="method">
+      <div class="icon">△</div>
+      <h4>Blind Comparison</h4>
+      <p>Collections are compared on visual quality, technical depth, creative range, and consistency.</p>
     </div>
-  </footer>
+    <div class="method">
+      <div class="icon">◇</div>
+      <h4>Open Results</h4>
+      <p>Every file is here for you to explore, compare, and judge. The source is the proof.</p>
+    </div>
+  </div>
+</div>
+
+<footer>
+  An open experiment in AI creative capacity · <a href="https://github.com">View on GitHub</a>
+</footer>
 
 </div>
 </body>

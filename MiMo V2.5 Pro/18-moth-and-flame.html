@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Moth and Flame</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{width:100%;height:100%;overflow:hidden;background:#0a0608}
+canvas{display:block}
+.label{position:fixed;top:1.5rem;left:50%;transform:translateX(-50%);font:italic 300 .55rem/1 Georgia,serif;letter-spacing:.4em;text-transform:uppercase;color:rgba(200,140,80,.2);pointer-events:none;z-index:10}
+</style>
+</head>
+<body>
+<div class="label">Moth and Flame</div>
+<canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,frame=0;
+
+function resize(){w=c.width=innerWidth;h=c.height=innerHeight}
+resize();addEventListener('resize',resize);
+
+// Flame position
+const flame={x:0.5,y:0.4};
+
+// Moths
+const moths=[];
+for(let i=0;i<30;i++){
+  moths.push({
+    x:Math.random(),y:Math.random(),
+    vx:(Math.random()-0.5)*0.003,vy:(Math.random()-0.5)*0.003,
+    size:3+Math.random()*5,
+    wingPhase:Math.random()*Math.PI*2,
+    attraction:0.3+Math.random()*0.7,
+    hue:20+Math.random()*30,
+    orbitAngle:Math.random()*Math.PI*2,
+    orbitSpeed:0.01+Math.random()*0.03,
+    orbitRadius:0.05+Math.random()*0.2,
+    noisePhase:Math.random()*100,
+  });
+}
+
+// Ember particles
+const embers=[];
+function addEmber(){
+  embers.push({
+    x:flame.x*w+(Math.random()-0.5)*20,
+    y:flame.y*h,
+    vx:(Math.random()-0.5)*0.5,
+    vy:-(0.5+Math.random()*1.5),
+    life:1,decay:0.005+Math.random()*0.01,
+    size:1+Math.random()*2
+  });
+}
+
+function noise(x){return Math.sin(x*1.3)*Math.cos(x*0.7)*0.5+Math.sin(x*2.1)*0.3}
+
+function draw(){
+  frame++;
+  ctx.fillStyle='rgba(10,6,8,0.15)';
+  ctx.fillRect(0,0,w,h);
+  
+  const fx=flame.x*w,fy=flame.y*h;
+  
+  // Flame glow (background)
+  const glowR=100+Math.sin(frame*0.05)*20;
+  const glow=ctx.createRadialGradient(fx,fy-10,5,fx,fy,glowR);
+  glow.addColorStop(0,'rgba(255,180,60,0.08)');
+  glow.addColorStop(0.3,'rgba(255,100,20,0.04)');
+  glow.addColorStop(0.6,'rgba(200,40,10,0.02)');
+  glow.addColorStop(1,'transparent');
+  ctx.fillStyle=glow;
+  ctx.fillRect(0,0,w,h);
+  
+  // Flame body
+  const flameH=40+Math.sin(frame*0.08)*8;
+  // Outer flame
+  ctx.beginPath();
+  ctx.moveTo(fx,fy);
+  for(let i=0;i<=20;i++){
+    const t=i/20;
+    const baseX=fx;
+    const baseY=fy-flameH*t;
+    const sway=Math.sin(frame*0.06+t*4)*8*(1-t);
+    const width=(1-t)*15+t*2;
+    ctx.lineTo(baseX+sway+width,baseY);
+  }
+  for(let i=20;i>=0;i--){
+    const t=i/20;
+    const baseX=fx;
+    const baseY=fy-flameH*t;
+    const sway=Math.sin(frame*0.06+t*4)*8*(1-t);
+    const width=(1-t)*15+t*2;
+    ctx.lineTo(baseX+sway-width,baseY);
+  }
+  ctx.closePath();
+  const flameG=ctx.createLinearGradient(fx,fy,fx,fy-flameH);
+  flameG.addColorStop(0,'rgba(255,200,50,0.6)');
+  flameG.addColorStop(0.3,'rgba(255,140,30,0.5)');
+  flameG.addColorStop(0.7,'rgba(255,60,10,0.3)');
+  flameG.addColorStop(1,'rgba(200,30,5,0)');
+  ctx.fillStyle=flameG;
+  ctx.fill();
+  
+  // Inner flame (blue-white core)
+  ctx.beginPath();
+  ctx.moveTo(fx,fy);
+  const innerH=flameH*0.4;
+  for(let i=0;i<=10;i++){
+    const t=i/10;
+    const sway=Math.sin(frame*0.1+t*3)*3*(1-t);
+    const width=(1-t)*6;
+    ctx.lineTo(fx+sway+width,fy-innerH*t);
+  }
+  for(let i=10;i>=0;i--){
+    const t=i/10;
+    const sway=Math.sin(frame*0.1+t*3)*3*(1-t);
+    const width=(1-t)*6;
+    ctx.lineTo(fx+sway-width,fy-innerH*t);
+  }
+  ctx.closePath();
+  const innerG=ctx.createLinearGradient(fx,fy,fx,fy-innerH);
+  innerG.addColorStop(0,'rgba(200,220,255,0.4)');
+  innerG.addColorStop(0.5,'rgba(100,150,255,0.2)');
+  innerG.addColorStop(1,'transparent');
+  ctx.fillStyle=innerG;
+  ctx.fill();
+  
+  // Moths
+  for(const m of moths){
+    // Attraction to flame
+    const dx=fx-m.x*w,dy=fy-m.y*h;
+    const dist=Math.sqrt(dx*dx+dy*dy)/w;
+    const pull=m.attraction*0.0001/(dist*dist+0.01);
+    
+    m.vx+=dx*pull*0.001;
+    m.vy+=dy*pull*0.001;
+    
+    // Orbit tendency
+    m.orbitAngle+=m.orbitSpeed;
+    const orbitX=Math.cos(m.orbitAngle)*m.orbitRadius*0.001;
+    const orbitY=Math.sin(m.orbitAngle)*m.orbitRadius*0.001;
+    m.vx+=orbitX;
+    m.vy+=orbitY;
+    
+    // Noise
+    m.vx+=noise(frame*0.01+m.noisePhase)*0.0005;
+    m.vy+=noise(frame*0.01+m.noisePhase+50)*0.0005;
+    
+    // Avoid getting too close
+    if(dist<0.05){
+      m.vx-=dx*0.0001;
+      m.vy-=dy*0.0001;
+    }
+    
+    m.vx*=0.98;
+    m.vy*=0.98;
+    m.x+=m.vx;
+    m.y+=m.vy;
+    
+    // Wrap
+    if(m.x<-0.1)m.x=1.1;if(m.x>1.1)m.x=-0.1;
+    if(m.y<-0.1)m.y=1.1;if(m.y>1.1)m.y=-0.1;
+    
+    // Draw moth
+    const mx2=m.x*w,my2=m.y*h;
+    m.wingPhase+=0.15+Math.abs(m.vx+m.vy)*10;
+    const wingAngle=Math.sin(m.wingPhase)*0.8;
+    
+    const glowAmt=Math.max(0,1-dist*3);
+    
+    ctx.save();
+    ctx.translate(mx2,my2);
+    ctx.rotate(Math.atan2(m.vy,m.vx)+Math.PI/2);
+    
+    // Wings
+    ctx.beginPath();
+    ctx.ellipse(-m.size*0.6,0,m.size,m.size*0.4,-wingAngle,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${m.hue},40%,${30+glowAmt*30}%,${0.3+glowAmt*0.3})`;
+    ctx.fill();
+    
+    ctx.beginPath();
+    ctx.ellipse(m.size*0.6,0,m.size,m.size*0.4,wingAngle,0,Math.PI*2);
+    ctx.fill();
+    
+    // Body
+    ctx.beginPath();
+    ctx.ellipse(0,0,m.size*0.2,m.size*0.5,0,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${m.hue},30%,25%,0.6)`;
+    ctx.fill();
+    
+    // Flame reflection on wings
+    if(glowAmt>0.3){
+      ctx.beginPath();
+      ctx.ellipse(0,0,m.size*0.8,m.size*0.3,0,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,180,60,${glowAmt*0.15})`;
+      ctx.fill();
+    }
+    
+    ctx.restore();
+  }
+  
+  // Embers
+  if(frame%2===0)addEmber();
+  for(let i=embers.length-1;i>=0;i--){
+    const e=embers[i];
+    e.x+=e.vx+Math.sin(frame*0.02+i)*0.3;
+    e.y+=e.vy;
+    e.vy*=0.99;
+    e.life-=e.decay;
+    if(e.life<=0){embers.splice(i,1);continue;}
+    
+    ctx.beginPath();
+    ctx.arc(e.x,e.y,e.size*e.life,0,Math.PI*2);
+    ctx.fillStyle=`rgba(255,${150+Math.random()*80},50,${e.life*0.5})`;
+    ctx.fill();
+  }
+  
+  // Candle base
+  ctx.fillStyle='rgba(200,180,140,0.3)';
+  ctx.fillRect(fx-4,fy,8,60);
+  ctx.fillStyle='rgba(180,160,120,0.4)';
+  ctx.fillRect(fx-8,fy+55,16,8);
+  
+  requestAnimationFrame(draw);
+}
+draw();
+</script>
+</body>
+</html>
