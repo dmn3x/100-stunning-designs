@@ -38,7 +38,12 @@ No templates. No libraries. No CSS frameworks. Just raw HTML, CSS, and vanilla J
 
 ## How to Browse
 
-👉 **[Live Index](https://dmn3x.github.io/100-stunning-designs/)**
+👉 **[Open the editorial cover → `index.html`](./index.html)**
+
+Each model folder has its own gallery to browse all 100 designs:
+
+- 🐋 [Deepseek V4 Pro → gallery](./Deepseek%20V4%20Pro/index.html)
+- 🤖 [MiniMax M3 → editorial gallery](./MiniMax%20M3/index.html)
 
 Or clone and explore:
 
