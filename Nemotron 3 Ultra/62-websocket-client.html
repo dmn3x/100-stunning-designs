@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>62 — WebSocket Client</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.client{padding:1.5rem;overflow:auto}
+.client-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem}
+.client-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.connection{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1.5rem}
+.conn-row{display:flex;gap:1rem;align-items:center;flex-wrap:wrap;margin-bottom:.75rem}
+.conn-row label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);min-width:80px}
+.conn-row input,.conn-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.5rem;border-radius:4px;font:inherit}
+.conn-row input:focus,.conn-row select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.conn-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.status{display:flex;align-items:center;gap:.5rem;font-size:.7rem}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.status-dot.connected{background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.messages{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;height:50vh}
+.msg-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.msg-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.msg-list{flex:1;overflow:auto;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+.msg{padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:.75rem;line-height:1.5}
+.msg.in{background:rgba(88,166,255,.1);border-color:var(--accent)}
+.msg.out{background:rgba(63,185,80,.1);border-color:var(--accent2)}
+.msg-sys{background:rgba(139,148,158,.1);border-color:var(--muted);font-style:italic}
+.msg-time{color:var(--muted);font-size:.6rem;margin-bottom:.25rem}
+.msg-data{font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word}
+.send-form{padding:1rem;border-top:1px solid var(--border);display:flex;gap:.5rem}
+.send-form input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.5rem;border-radius:4px;font:inherit}
+.send-form input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.sidebar{background:var(--card);border-left:1px solid var(--border);padding:1.5rem;overflow:auto}
+.sidebar h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.preset-list{display:flex;flex-direction:column;gap:.5rem}
+.preset{padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;cursor:pointer;transition:all .1s}
+.preset:hover{border-color:var(--accent)}
+.preset-name{font-weight:500;margin-bottom:.25rem}
+.preset-url{font-size:.65rem;color:var(--muted)}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="client">
+<div class="client-header"><h2>WebSocket Client</h2></div>
+<div class="connection">
+<div class="conn-row"><label>URL</label><input type="text" id="wsUrl" placeholder="wss://echo.websocket.events" value="wss://echo.websocket.events"></div>
+<div class="conn-row"><label>Protocols</label><input type="text" id="wsProtocols" placeholder="Optional subprotocols (comma-separated)"></div>
+<div class="conn-actions"><button class="btn primary" id="connectBtn">Connect</button><button class="btn" id="disconnectBtn" disabled>Disconnect</button></div>
+<div class="status"><span class="status-dot" id="statusDot"></span><span id="statusText">Disconnected</span></div>
+</div>
+<div class="messages">
+<div class="msg-header"><h3>Messages</h3><button class="btn" id="clearMsg" style="padding:.25rem .5rem;font-size:.6rem">Clear</button></div>
+<div class="msg-list" id="msgList"></div>
+</div>
+<div class="send-form"><input type="text" id="msgInput" placeholder="Type a message... (JSON supported)" disabled><button class="btn primary" id="sendBtn" disabled>Send</button></div>
+</div>
+<aside class="sidebar">
+<h3>Quick Connect</h3>
+<div class="preset-list" id="presetList"></div>
+<h3 style="margin-top:2rem">Message Templates</h3>
+<div class="preset-list" id="templateList"></div>
+</aside>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 062 / 100 · WebSocket Client</footer>
+<script>
+const msgList=document.getElementById('msgList');
+const statusDot=document.getElementById('statusDot');
+const statusText=document.getElementById('statusText');
+let ws=null;
+const presets=[
+  {name:'Echo Test',url:'wss://echo.websocket.events'},
+  {name:'WebSocket.org Echo',url:'wss://websocket.org/echo'},
+  {name:'Pusher Test',url:'wss://ws.pusherapp.com/app/debug'},
+  {name:'Localhost',url:'ws://localhost:8080'}
+];
+const templates=[
+  {name:'Ping',data:'{"type":"ping","timestamp":'},
+  {name:'Subscribe',data:'{"action":"subscribe","channel":"updates"}'},
+  {name:'Auth',data:'{"type":"auth","token":"YOUR_TOKEN"}'},
+  {name:'Custom Event',data:'{"event":"custom","payload":{}}'}
+];
+function addMessage(data,type='in'){
+  const div=document.createElement('div');
+  div.className=`msg ${type}`;
+  const time=new Date().toLocaleTimeString();
+  const formatted=typeof data==='string'?data:JSON.stringify(data,null,2);
+  div.innerHTML=`<div class="msg-time">${time} ${type==='in'?'←':'→'}</div><div class="msg-data">${escapeHtml(formatted)}</div>`;
+  msgList.appendChild(div);
+  msgList.scrollTop=msgList.scrollHeight;
+}
+function addSystem(msg){
+  const div=document.createElement('div');
+  div.className='msg sys';
+  div.innerHTML=`<div class="msg-data">${escapeHtml(msg)}</div>`;
+  msgList.appendChild(div);
+  msgList.scrollTop=msgList.scrollHeight;
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
+function setStatus(connected){
+  statusDot.classList.toggle('connected',connected);
+  statusText.textContent=connected?'Connected':'Disconnected';
+  document.getElementById('msgInput').disabled=!connected;
+  document.getElementById('sendBtn').disabled=!connected;
+  document.getElementById('connectBtn').disabled=connected;
+  document.getElementById('disconnectBtn').disabled=!connected;
+}
+function connect(){
+  const url=document.getElementById('wsUrl').value.trim();
+  const protocols=document.getElementById('wsProtocols').value.trim().split(',').map(s=>s.trim()).filter(Boolean);
+  if(!url){alert('Enter a WebSocket URL');return;}
+  addSystem(`Connecting to ${url}...`);
+  try{
+    ws=new WebSocket(url,protocols.length?protocols:undefined);
+    ws.onopen=()=>{setStatus(true);addSystem('Connected');};
+    ws.onmessage=e=>{try{const d=JSON.parse(e.data);addMessage(d,'in');}catch{addMessage(e.data,'in');}};
+    ws.onclose=e=>{setStatus(false);addSystem(`Disconnected (code: ${e.code}, reason: ${e.reason||'none'})`);};
+    ws.onerror=e=>{addSystem('Connection error');};
+  }catch(e){addSystem(`Error: ${e.message}`);}
+}
+function disconnect(){
+  if(ws){ws.close();ws=null;}
+  setStatus(false);
+}
+function send(){
+  const input=document.getElementById('msgInput');
+  const val=input.value.trim();
+  if(!val||!ws)return;
+  try{const d=JSON.parse(val);ws.send(JSON.stringify(d));addMessage(d,'out');}catch{ws.send(val);addMessage(val,'out');}
+  input.value='';
+}
+document.getElementById('connectBtn').onclick=connect;
+document.getElementById('disconnectBtn').onclick=disconnect;
+document.getElementById('sendBtn').onclick=send;
+document.getElementById('msgInput').onkeydown=e=>{if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();send();}};
+document.getElementById('clearMsg').onclick=()=>{msgList.innerHTML='';};
+presets.forEach(p=>{const div=document.createElement('div');div.className='preset';div.innerHTML=`<div class="preset-name">${p.name}</div><div class="preset-url">${p.url}</div>`;div.onclick=()=>{document.getElementById('wsUrl').value=p.url;connect();};document.getElementById('presetList').appendChild(div);});
+templates.forEach(t=>{const div=document.createElement('div');div.className='preset';div.innerHTML=`<div class="preset-name">${t.name}</div><div class="preset-url">${t.data.slice(0,50)}...</div>`;div.onclick=()=>{document.getElementById('msgInput').value=t.data.replace('TIMESTAMP',Date.now());};document.getElementById('templateList').appendChild(div);});
+</script>
+</body>
+</html>

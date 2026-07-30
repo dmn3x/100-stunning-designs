@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>52 — API Request Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:1fr auto}}
+.builder{padding:1.5rem;overflow:auto}
+.builder-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.builder-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.btn-group{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.section-header h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.add-btn{background:none;border:1px dashed var(--muted);color:var(--muted);padding:.25rem .5rem;font:inherit;font-size:.6rem;border-radius:3px;cursor:pointer}
+.add-btn:hover{border-color:var(--accent);color:var(--accent)}
+.row{display:grid;grid-template-columns:auto 1fr auto;gap:.5rem;align-items:center;margin-bottom:.5rem}
+.row.full{grid-template-columns:1fr}
+.row label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.input{background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.4rem .5rem;border-radius:3px;font-size:.75rem}
+.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.input-small{width:80px}
+.select{background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.4rem .5rem;border-radius:3px;font-size:.75rem}
+.remove-btn{background:none;border:none;color:var(--muted);cursor:pointer;padding:.25rem;font-size:.75rem}
+.remove-btn:hover{color:var(--accent4)}
+.textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:3px;font-size:.75rem;min-height:100px;resize:vertical;font-family:'JetBrains Mono',monospace}
+.textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.auth-type{display:flex;gap:1rem;margin-bottom:1rem}
+.auth-type label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;cursor:pointer}
+.response{background:var(--card);border:1px solid var(--border);border-radius:8px;height:100%;display:flex;flex-direction:column}
+.response-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.response-header h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.response-status{font-size:1.5rem;font-weight:700}
+.response-status.success{color:var(--accent2)}
+.response-status.error{color:var(--accent4)}
+.response-status.pending{color:var(--accent3)}
+.response-tabs{display:flex;border-bottom:1px solid var(--border)}
+.response-tab{padding:.5rem 1rem;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer}
+.response-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.response-body{flex:1;overflow:auto;padding:1rem;font-size:.7rem;line-height:1.6;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word}
+.response-empty{color:var(--muted);text-align:center;padding:2rem}
+.kv-editor{display:flex;flex-direction:column;gap:.5rem}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="builder">
+<div class="builder-header"><h2>Request Builder</h2><div class="btn-group"><button class="btn" id="sendBtn">Send Request</button><button class="btn primary" id="saveBtn">Save</button><button class="btn" id="loadBtn">Load</button></div></div>
+<div class="section"><div class="section-header"><h3>Request Line</h3></div><div class="row"><label>Method</label><select class="select" id="method"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="PATCH">PATCH</option><option value="DELETE">DELETE</option><option value="HEAD">HEAD</option><option value="OPTIONS">OPTIONS</option></select></div><div class="row"><label>URL</label><input type="text" class="input" id="url" placeholder="https://api.example.com/endpoint" value="https://httpbin.org/get"></div></div>
+<div class="section"><div class="section-header"><h3>Headers</h3><button class="add-btn" id="addHeader">+ Add Header</button></div><div class="kv-editor" id="headersEditor"><div class="row"><input type="text" class="input" placeholder="Key" value="Content-Type"><input type="text" class="input" placeholder="Value" value="application/json"><button class="remove-btn">×</button></div><div class="row"><input type="text" class="input" placeholder="Key" value="Accept"><input type="text" class="input" placeholder="Value" value="application/json"><button class="remove-btn">×</button></div></div></div>
+<div class="section"><div class="section-header"><h3>Query Parameters</h3><button class="add-btn" id="addQuery">+ Add Param</button></div><div class="kv-editor" id="queryEditor"></div></div>
+<div class="section"><div class="section-header"><h3>Body</h3></div><div class="row"><label>Type</label><select class="select" id="bodyType"><option value="none">None</option><option value="json">JSON</option><option value="form">Form Data</option><option value="raw">Raw Text</option></select></div><textarea class="textarea" id="bodyInput" placeholder='{"key": "value"}'></textarea></div>
+<div class="section"><div class="section-header"><h3>Authentication</h3></div><div class="auth-type"><label><input type="radio" name="auth" value="none" checked> None</label><label><input type="radio" name="auth" value="bearer"> Bearer Token</label><label><input type="radio" name="auth" value="basic"> Basic Auth</label><label><input type="radio" name="auth" value="api-key"> API Key</label></div><div class="auth-config" id="authConfig"></div></div>
+</div>
+<div class="response">
+<div class="response-header"><h3>Response</h3><div class="response-status pending" id="responseStatus">—</div></div>
+<div class="response-tabs"><button class="response-tab active" data-tab="body">Body</button><button class="response-tab" data-tab="headers">Headers</button><button class="response-tab" data-tab="meta">Meta</button></div>
+<div class="response-body" id="responseBody"><div class="response-empty">No request sent yet</div></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 052 / 100 · API Request Builder</footer>
+<script>
+const headersEditor=document.getElementById('headersEditor');
+const queryEditor=document.getElementById('queryEditor');
+const authConfig=document.getElementById('authConfig');
+const bodyInput=document.getElementById('bodyInput');
+const bodyType=document.getElementById('bodyType');
+const responseBody=document.getElementById('responseBody');
+const responseStatus=document.getElementById('responseStatus');
+function addKVRow(editor,key='',value=''){
+  const row=document.createElement('div');
+  row.className='row';
+  row.innerHTML=`<input type="text" class="input" placeholder="Key" value="${key}"><input type="text" class="input" placeholder="Value" value="${value}"><button class="remove-btn">×</button>`;
+  row.querySelector('.remove-btn').onclick=()=>row.remove();
+  editor.appendChild(row);
+}
+document.getElementById('addHeader').onclick=()=>addKVRow(headersEditor);
+document.getElementById('addQuery').onclick=()=>addKVRow(queryEditor);
+bodyType.onchange=()=>{bodyInput.style.display=bodyType.value==='none'?'none':'block';};
+document.querySelectorAll('input[name=auth]').forEach(r=>r.onchange=renderAuth);
+function renderAuth(){
+  const type=document.querySelector('input[name=auth]:checked').value;
+  const configs={
+    none:'',
+    bearer:`<div class="row"><label>Token</label><input type="text" class="input" id="authToken" placeholder="Bearer token"></div>`,
+    basic:`<div class="row"><label>Username</label><input type="text" class="input" id="authUser" placeholder="Username"></div><div class="row"><label>Password</label><input type="password" class="input" id="authPass" placeholder="Password"></div>`,
+    'api-key':`<div class="row"><label>Key Name</label><input type="text" class="input" id="apiKeyName" placeholder="X-API-Key" value="X-API-Key"></div><div class="row"><label>Key Value</label><input type="text" class="input" id="apiKeyValue" placeholder="API key value"></div>`
+  };
+  authConfig.innerHTML=configs[type]||'';
+}
+async function sendRequest(){
+  const method=document.getElementById('method').value;
+  const url=document.getElementById('url').value;
+  if(!url){alert('Enter a URL');return;}
+  const headers={};
+  headersEditor.querySelectorAll('.row').forEach(r=>{const k=r.querySelector('input:first-child').value.trim();const v=r.querySelector('input:nth-child(2)').value;if(k)headers[k]=v;});
+  const params=new URLSearchParams();
+  queryEditor.querySelectorAll('.row').forEach(r=>{const k=r.querySelector('input:first-child').value.trim();const v=r.querySelector('input:nth-child(2)').value;if(k)params.append(k,v);});
+  const fullUrl=params.toString()?url+(url.includes('?')?'&':'?')+params.toString():url;
+  const authType=document.querySelector('input[name=auth]:checked').value;
+  if(authType==='bearer'&&document.getElementById('authToken').value)headers['Authorization']=`Bearer ${document.getElementById('authToken').value}`;
+  if(authType==='basic'&&document.getElementById('authUser').value){const u=document.getElementById('authUser').value;const p=document.getElementById('authPass').value||'';headers['Authorization']=`Basic ${btoa(u+':'+p)}`;}
+  if(authType==='api-key'&&document.getElementById('apiKeyValue').value){headers[document.getElementById('apiKeyName').value]=document.getElementById('apiKeyValue').value;}
+  const body=bodyType.value!=='none'?bodyInput.value:undefined;
+  const opts={method,headers};
+  if(body){if(bodyType.value==='json'){headers['Content-Type']='application/json';opts.body=body;}else if(bodyType.value==='form'){headers['Content-Type']='application/x-www-form-urlencoded';opts.body=body;}else opts.body=body;}
+  responseStatus.textContent='...';responseStatus.className='response-status pending';
+  responseBody.innerHTML='<div class="response-empty">Loading...</div>';
+  const start=performance.now();
+  try{
+    const res=await fetch(fullUrl,opts);
+    const elapsed=performance.now()-start;
+    const text=await res.text();
+    responseStatus.textContent=`${res.status} ${res.statusText} (${elapsed.toFixed(0)}ms)`;
+    responseStatus.className='response-status '+(res.ok?'success':'error');
+    try{responseBody.dataset.json=JSON.stringify(JSON.parse(text),null,2);}catch{responseBody.dataset.json=text;}
+    showTab('body');
+  }catch(e){
+    responseStatus.textContent=`Error: ${e.message}`;
+    responseStatus.className='response-status error';
+    responseBody.innerHTML=`<div class="response-empty" style="color:var(--accent4)">${e.message}</div>`;
+  }
+}
+function showTab(tab){
+  document.querySelectorAll('.response-tab').forEach(t=>t.classList.toggle('active',t.dataset.tab===tab));
+  if(tab==='body'){
+    const json=responseBody.dataset.json;
+    if(json){try{const parsed=JSON.parse(json);responseBody.textContent=JSON.stringify(parsed,null,2);}catch{responseBody.textContent=json;}}else{responseBody.innerHTML='<div class="response-empty">No response</div>';}
+  }else if(tab==='headers'){
+    responseBody.textContent='Response headers not captured in this demo';
+  }else if(tab==='meta'){
+    responseBody.textContent='Meta info: timing, size, etc. would appear here';
+  }
+}
+document.querySelectorAll('.response-tab').forEach(t=>t.onclick=()=>showTab(t.dataset.tab));
+document.getElementById('sendBtn').onclick=sendRequest;
+document.getElementById('saveBtn').onclick=()=>{const config={method:document.getElementById('method').value,url:document.getElementById('url').value,headers:{},params:{},bodyType:bodyType.value,body:bodyInput.value,auth:{}};headersEditor.querySelectorAll('.row').forEach(r=>{const k=r.querySelector('input:first-child').value.trim();const v=r.querySelector('input:nth-child(2)').value;if(k)config.headers[k]=v;});queryEditor.querySelectorAll('.row').forEach(r=>{const k=r.querySelector('input:first-child').value.trim();const v=r.querySelector('input:nth-child(2)').value;if(k)config.params[k]=v;});config.auth.type=document.querySelector('input[name=auth]:checked').value;if(config.auth.type==='bearer')config.auth.token=document.getElementById('authToken')?.value||'';if(config.auth.type==='basic'){config.auth.user=document.getElementById('authUser')?.value||'';config.auth.pass=document.getElementById('authPass')?.value||'';}if(config.auth.type==='api-key'){config.auth.keyName=document.getElementById('apiKeyName')?.value||'';config.auth.keyValue=document.getElementById('apiKeyValue')?.value||'';}const blob=new Blob([JSON.stringify(config,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='api-request.json';a.click();};
+document.getElementById('loadBtn').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{const c=JSON.parse(r.result);document.getElementById('method').value=c.method;document.getElementById('url').value=c.url;headersEditor.innerHTML='';Object.entries(c.headers||{}).forEach(([k,v])=>addKVRow(headersEditor,k,v));queryEditor.innerHTML='';Object.entries(c.params||{}).forEach(([k,v])=>addKVRow(queryEditor,k,v));bodyType.value=c.bodyType||'none';bodyInput.value=c.body||'';bodyInput.style.display=bodyType.value==='none'?'none':'block';document.querySelector(`input[name=auth][value="${c.auth?.type||'none'}"]`).checked=true;renderAuth();setTimeout(()=>{if(c.auth.token)document.getElementById('authToken').value=c.auth.token;if(c.auth.user)document.getElementById('authUser').value=c.auth.user;if(c.auth.pass)document.getElementById('authPass').value=c.auth.pass;if(c.auth.keyName)document.getElementById('apiKeyName').value=c.auth.keyName;if(c.auth.keyValue)document.getElementById('apiKeyValue').value=c.auth.keyValue;},0);}catch(e){alert('Invalid file');}};r.readAsText(f);};i.click();};
+renderAuth();
+</script>
+</body>
+</html>

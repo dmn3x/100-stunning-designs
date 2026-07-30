@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>42 — Animated Type Specimen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--fg:#f0f0f5;--muted:#3a3a4a;--accent:#00d4ff;--accent2:#ff6b6b;--card:#12121a}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--muted);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.main{padding:2rem;max-width:1200px;margin:0 auto}
+.specimen{font-family:var(--current-font,inherit);transition:font-family .3s}
+.text-display{font-size:clamp(3rem,8vw,8rem);font-weight:var(--weight,400);line-height:1;letter-spacing:var(--tracking,0);margin-bottom:2rem;min-height:120px;display:flex;align-items:center;justify-content:center;text-align:center}
+.text-display span{display:inline-block;transition:all .1s}
+.controls-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem;padding:1rem;background:var(--card);border:1px solid var(--muted);border-radius:4px}
+.ctrl{display:flex;flex-direction:column;gap:.25rem}
+.ctrl label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input,.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.75rem}
+.preview-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem}
+.preview-card{background:var(--card);border:1px solid var(--muted);border-radius:4px;padding:1.5rem;font-family:var(--current-font,inherit)}
+.preview-card h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.preview-card .sample{font-size:1.25rem;line-height:1.6;margin-bottom:1rem}
+.preview-card .metrics{display:flex;flex-wrap:wrap;gap:1rem;font-size:.6rem;color:var(--muted)}
+.font-selector{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem}
+.font-btn{padding:.5rem 1rem;border:1px solid var(--muted);background:var(--card);color:var(--fg);font:inherit;font-size:.7rem;cursor:pointer;border-radius:4px;transition:all .1s}
+.font-btn:hover,.font-btn.active{border-color:var(--accent);color:var(--accent)}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--muted);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:600px){.header{flex-direction:column;align-items:flex-start}.controls{width:100%}}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=JetBrains+Mono:wght@100..800&family=Space+Grotesk:wght@300..700&family=Syne:wght@400..800&family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Outfit:wght@100..900&family=DM+Sans:wght@400..700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="header"><h1>Animated <span>Type</span> Specimen</h1><div class="controls"><label>Animation <select id="animType"><option value="none">None</option><option value="wave">Wave</option><option value="stagger">Stagger</option><option value="scramble">Scramble</option><option value="morph">Morph</option></select></label><label>Speed <input type="range" id="animSpeed" min="0.5" max="3" step="0.1" value="1"><span id="speedVal">1x</span></label><label><input type="checkbox" id="loop" checked> Loop</label></div></header>
+<main class="main">
+<div class="font-selector" id="fontSelector"></div>
+<div class="specimen">
+<div class="text-display" id="textDisplay"><span>N</span><span>e</span><span>m</span><span>o</span><span>t</span><span>r</span><span>o</span><span>n</span><span> </span><span>3</span><span> </span><span>U</span><span>l</span><span>t</span><span>r</span><span>a</span></div>
+<div class="controls-row">
+<div class="ctrl"><label>Font Weight</label><input type="range" id="weight" min="100" max="900" step="100" value="400"><span id="weightVal">400</span></div>
+<div class="ctrl"><label>Letter Spacing</label><input type="range" id="tracking" min="-0.05" max="0.5" step="0.01" value="0"><span id="trackingVal">0em</span></div>
+<div class="ctrl"><label>Font Size</label><input type="range" id="fontSize" min="2" max="12" step="0.5" value="6"><span id="sizeVal">6rem</span></div>
+<div class="ctrl"><label>Line Height</label><input type="range" id="lineHeight" min="0.8" max="2" step="0.1" value="1"><span id="lhVal">1</span></div>
+</div>
+<div class="preview-grid" id="previewGrid"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 042 / 100 · Animated Type Specimen</footer>
+<script>
+const fonts=[
+  {name:'Inter',css:'Inter',weights:'100..900',category:'UI Sans'},
+  {name:'JetBrains Mono',css:'JetBrains Mono',weights:'100..800',category:'UI Mono'},
+  {name:'Space Grotesk',css:'Space Grotesk',weights:'300..700',category:'Display'},
+  {name:'Syne',css:'Syne',weights:'400..800',category:'Display Variable'},
+  {name:'Playfair Display',css:'Playfair Display',weights:'400..900',category:'Editorial Serif'},
+  {name:'Outfit',css:'Outfit',weights:'100..900',category:'Geometric Sans'},
+  {name:'DM Sans',css:'DM Sans',weights:'400..700',category:'Humanist Sans'}
+];
+let currentFont='Inter',animType='none',animSpeed=1,loop=true;
+let animFrame=0,chars=[];
+const selector=document.getElementById('fontSelector');
+const display=document.getElementById('textDisplay');
+const grid=document.getElementById('previewGrid');
+fonts.forEach((f,i)=>{const b=document.createElement('button');b.className='font-btn'+(i===0?' active':'');b.textContent=f.name;b.style.fontFamily=f.css;b.onclick=()=>{document.querySelectorAll('.font-btn').forEach(btn=>btn.classList.remove('active'));b.classList.add('active');currentFont=f.css;document.documentElement.style.setProperty('--current-font',`"${f.css}"`);display.style.fontFamily=f.css;grid.querySelectorAll('.preview-card').forEach(c=>c.style.fontFamily=f.css);};selector.appendChild(b);});
+document.documentElement.style.setProperty('--current-font','"Inter"');
+function updateDisplay(){
+  const weight=document.getElementById('weight').value;
+  const tracking=document.getElementById('tracking').value;
+  const size=document.getElementById('fontSize').value;
+  const lh=document.getElementById('lineHeight').value;
+  document.documentElement.style.setProperty('--weight',weight);
+  document.documentElement.style.setProperty('--tracking',tracking+'em');
+  display.style.fontSize=size+'rem';
+  display.style.lineHeight=lh;
+  document.getElementById('weightVal').textContent=weight;
+  document.getElementById('trackingVal').textContent=tracking+'em';
+  document.getElementById('sizeVal').textContent=size+'rem';
+  document.getElementById('lhVal').textContent=lh;
+  renderPreviews();
+}
+function renderPreviews(){
+  grid.innerHTML=fonts.map(f=>`<div class="preview-card" style="font-family:'${f.css}'"><h3>${f.name} <span style="font-weight:400;text-transform:none;letter-spacing:0">(${f.category})</span></h3><div class="sample">The quick brown fox jumps over the lazy dog. 0123456789 !@#$%^&*()</div><div class="metrics"><span>Weight: 100-900</span><span>Styles: Regular + Italic</span><span>Variable: Yes</span></div></div>`).join('');
+}
+function animate(){
+  chars=display.querySelectorAll('span');
+  if(animType==='none'){chars.forEach(c=>{c.style.transform='';c.style.color='';});return;}
+  const t=animFrame*animSpeed;
+  chars.forEach((c,i)=>{
+    const delay=i*0.1;
+    if(animType==='wave'){
+      const y=Math.sin(t+delay)*10;
+      c.style.transform=`translateY(${y}px)`;
+      const hue=(t*50+i*20)%360;
+      c.style.color=`hsl(${hue},100%,60%)`;
+    }else if(animType==='stagger'){
+      const y=Math.sin(t*2+delay*5)*15;
+      const s=1+Math.sin(t+delay)*0.1;
+      c.style.transform=`translateY(${y}px) scale(${s})`;
+    }else if(animType==='scramble'){
+      if(Math.random()<0.05*animSpeed){const r='ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';c.textContent=r[Math.floor(Math.random()*r.length)];c.style.color='var(--accent2)';setTimeout(()=>{c.textContent=c.dataset.orig;c.style.color='';},50);}
+    }else if(animType==='morph'){
+      const s=1+Math.sin(t+delay)*0.3;
+      const ws=400+Math.sin(t*2+delay)*400;
+      c.style.transform=`scale(${s})`;
+      c.style.fontVariationSettings=`'wght' ${ws}`;
+    }
+    c.dataset.orig=c.textContent;
+  });
+  animFrame+=0.016;
+  if(loop||animType!=='none')requestAnimationFrame(animate);
+}
+document.getElementById('weight').addEventListener('input',updateDisplay);
+document.getElementById('tracking').addEventListener('input',updateDisplay);
+document.getElementById('fontSize').addEventListener('input',updateDisplay);
+document.getElementById('lineHeight').addEventListener('input',updateDisplay);
+document.getElementById('animType').addEventListener('change',e=>{animType=e.target.value;if(animType!=='none'){animate();}else{chars.forEach(c=>{c.style.transform='';c.style.color='';});}});
+document.getElementById('animSpeed').addEventListener('input',e=>{animSpeed=+e.target.value;document.getElementById('speedVal').textContent=animSpeed+'x';});
+document.getElementById('loop').addEventListener('change',e=>loop=e.target.checked);
+updateDisplay();
+animate();
+</script>
+</body>
+</html>

@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>68 — Docker Compose Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{margin-bottom:1.5rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.editor-header h1{font-size:1.5rem;font-weight:300}
+.editor-header h1 span{font-weight:700;color:var(--accent)}
+.compose-input{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.compose-input label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.compose-input textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.75rem;border-radius:4px;min-height:400px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.75rem}
+.compose-input textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn-group{display:flex;gap:.5rem;margin-bottom:1rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.summary{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.summary h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.summary-item{text-align:center;padding:1rem;background:var(--bg);border-radius:4px}
+.summary-value{font-size:2rem;font-weight:700;color:var(--accent)}
+.summary-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.5rem}
+.visualizer{background:var(--card);border-left:1px solid var(--border);padding:1.5rem;overflow:auto;display:flex;flex-direction:column}
+.visualizer-header{margin-bottom:1rem}
+.visualizer-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.canvas-container{flex:1;position:relative;background:var(--bg);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.service-node{position:absolute;background:var(--card);border:2px solid var(--border);border-radius:8px;min-width:180px;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.service-header{background:var(--accent);color:var(--bg);padding:.5rem .75rem;border-radius:6px 6px 0 0;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.service-body{padding:.75rem;font-size:.7rem}
+.service-row{display:flex;justify-content:space-between;margin-bottom:.35rem}
+.service-row .label{color:var(--muted)}
+.service-row .value{color:var(--fg);font-family:'JetBrains Mono',monospace}
+.service-ports{display:flex;flex-wrap:wrap;gap:.25rem;margin-top:.5rem}
+.port-tag{font-size:.55rem;padding:.1rem .35rem;background:rgba(88,166,255,.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent)}
+.relationship{position:absolute;pointer-events:none;stroke:var(--muted);stroke-width:1.5;stroke-dasharray:3,3;z-index:1}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Editor</h2><h1>Docker Compose <span>Visualizer</span></h1></div>
+<div class="compose-input"><label>docker-compose.yml</label><textarea id="composeInput" spellcheck="false"></textarea></div>
+<div class="btn-group"><button class="btn primary" id="parseBtn">Visualize</button><button class="btn" id="loadSample">Load Sample</button><button class="btn" id="clearBtn">Clear</button></div>
+<div class="summary" id="summary" style="display:none"><h3>Summary</h3><div class="summary-grid"><div class="summary-item"><div class="summary-value" id="svcCount">0</div><div class="summary-label">Services</div></div><div class="summary-item"><div class="summary-value" id="netCount">0</div><div class="summary-label">Networks</div></div><div class="summary-item"><div class="summary-value" id="volCount">0</div><div class="summary-label">Volumes</div></div><div class="summary-item"><div class="summary-value" id="portCount">0</div><div class="summary-label">Ports</div></div></div></div>
+</div>
+<div class="visualizer">
+<div class="visualizer-header"><h3>Architecture</h3></div>
+<div class="canvas-container" id="canvas"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 068 / 100 · Docker Compose Visualizer</footer>
+<script>
+const composeInput=document.getElementById('composeInput');
+const canvas=document.getElementById('canvas');
+const summary=document.getElementById('summary');
+const sampleCompose=`version: '3.8'
+services:
+  nginx:
+    image: nginx:alpine
+    ports:
+      - "80:80"
+      - "443:443"
+    depends_on:
+      - api
+      - frontend
+    networks:
+      - frontend-net
+      - backend-net
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - API_URL=http://api:8000
+    depends_on:
+      - api
+    networks:
+      - frontend-net
+
+  api:
+    build: ./api
+    ports:
+      - "8000:8000"
+    environment:
+      - DATABASE_URL=postgres://user:pass@db:5432/app
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend-net
+
+  worker:
+    build: ./worker
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgres://user:pass@db:5432/app
+    depends_on:
+      - db
+      - redis
+    networks:
+      - backend-net
+    deploy:
+      replicas: 3
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: secret
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend-net
+
+  redis:
+    image: redis:7-alpine
+    networks:
+      - backend-net
+
+networks:
+  frontend-net:
+  backend-net:
+
+volumes:
+  pgdata:`;
+composeInput.value=sampleCompose;
+function parseCompose(){
+  try{
+    const yaml=composeInput.value;
+    const data=parseYaml(yaml);
+    if(!data.services){alert('No services found');return;}
+    renderVisualization(data);
+    summary.style.display='block';
+    document.getElementById('svcCount').textContent=Object.keys(data.services).length;
+    document.getElementById('netCount').textContent=Object.keys(data.networks||{}).length;
+    document.getElementById('volCount').textContent=Object.keys(data.volumes||{}).length;
+    let portCount=0;
+    Object.values(data.services).forEach(s=>{if(s.ports)portCount+=s.ports.length;});
+    document.getElementById('portCount').textContent=portCount;
+  }catch(e){
+    alert('Parse error: '+e.message);
+  }
+}
+function parseYaml(str){
+  // Simplified YAML parser for docker-compose subset
+  const lines=str.split('\n');
+  const root={};
+  let current=null;
+  let indentStack=[{indent:-1,obj:root}];
+  lines.forEach(line=>{
+    const trimmed=line.trim();
+    if(!trimmed||trimmed.startsWith('#'))return;
+    const indent=line.length-line.trimStart().length;
+    const keyValue=trimmed.split(':').map(s=>s.trim());
+    if(keyValue.length<2)return;
+    const key=keyValue[0];
+    const value=keyValue.slice(1).join(':').trim();
+    while(indentStack.length>0&&indentStack[indentStack.length-1].indent>=indent)indentStack.pop();
+    const parent=indentStack[indentStack.length-1].obj;
+    if(value===''||value.startsWith('{')||value.startsWith('[')){
+      parent[key]={};
+      indentStack.push({indent,obj:parent[key]});
+    }else{
+      parent[key]=parseValue(value);
+    }
+  });
+  return root;
+}
+function parseValue(v){
+  if(v==='true')return true;
+  if(v==='false')return false;
+  if(v==='null'||v==='~')return null;
+  if(/^\d+$/.test(v))return parseInt(v);
+  if(/^\d+\.\d+$/.test(v))return parseFloat(v);
+  return v.replace(/^["']|["']$/g,'');
+}
+function renderVisualization(data){
+  const services=data.services;
+  const serviceNames=Object.keys(services);
+  canvas.innerHTML='';
+  const positions={};
+  const cols=3;
+  const startX=50,startY=50,colGap=350,rowGap=280;
+  serviceNames.forEach((name,i)=>{
+    const col=i%cols;
+    const row=Math.floor(i/cols);
+    const x=startX+col*colGap;
+    const y=startY+row*rowGap;
+    positions[name]={x,y};
+    const svc=services[name];
+    const node=document.createElement('div');
+    node.className='service-node';
+    node.style.left=x+'px';
+    node.style.top=y+'px';
+    const ports=svc.ports||[];
+    node.innerHTML=`<div class="service-header">${name}</div><div class="service-body">
+      <div class="service-row"><span class="label">Image</span><span class="value">${svc.image||svc.build||'build'}</span></div>
+      ${svc.environment?`<div class="service-row"><span class="label">Env Vars</span><span class="value">${Object.keys(svc.environment).length}</span></div>`:''}
+      ${ports.length?`<div class="service-ports">${ports.map(p=>`<span class="port-tag">${p}</span>`).join('')}</div>`:''}
+    </div>`;
+    canvas.appendChild(node);
+  });
+  // Draw relationships
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.position='absolute';svg.style.top=0;svg.style.left=0;svg.style.width='100%';svg.style.height='100%';svg.style.pointerEvents='none';svg.style.zIndex=1;
+  serviceNames.forEach(name=>{
+    const svc=services[name];
+    const deps=svc.depends_on||[];
+    deps.forEach(dep=>{
+      if(positions[dep]){
+        const from=positions[name],to=positions[dep];
+        const x1=from.x+90,y1=from.y;
+        const x2=to.x+90,y2=to.y+60;
+        const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d',`M${x1},${y1} C${x1},${(y1+y2)/2} ${x2},${(y1+y2)/2} ${x2},${y2}`);
+        path.setAttribute('class','relationship');
+        path.setAttribute('marker-end','url(#arrow)');
+        svg.appendChild(path);
+      }
+    });
+  });
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<marker id="arrow" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 z" fill="var(--muted)"/></marker>`;
+  svg.prepend(defs);
+  canvas.appendChild(svg);
+}
+document.getElementById('parseBtn').onclick=parseCompose;
+document.getElementById('loadSample').onclick=()=>{composeInput.value=sampleCompose;parseCompose();};
+document.getElementById('clearBtn').onclick=()=>{composeInput.value='';canvas.innerHTML='';summary.style.display='none';};
+parseCompose();
+</script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64 — GraphQL Playground</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.endpoint-row{display:flex;gap:.5rem;align-items:center;margin-bottom:1rem}
+.endpoint-row label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.endpoint-row input{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.5rem;border-radius:4px;font:inherit}
+.endpoint-row input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.query-editor{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.query-editor textarea{width:100%;background:var(--bg);border:none;color:var(--fg);font:inherit;padding:1rem;min-height:400px;resize:none;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6}
+.query-editor textarea:focus{outline:none}
+.query-vars{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem}
+.query-vars h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.query-vars textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.75rem;border-radius:4px;min-height:100px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.75rem}
+.query-vars textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn-group{display:flex;gap:.5rem;margin-top:1rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.response{padding:1.5rem;overflow:auto}
+.response-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.response-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.response-tabs{display:flex;gap:.5rem}
+.response-tab{padding:.35rem .75rem;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer}
+.response-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.response-body{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.75rem;line-height:1.6;font-family:'JetBrains Mono',monospace;white-space:pre-wrap;word-break:break-word;min-height:400px}
+.response-body.error{color:var(--accent4)}
+.history{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem}
+.history h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.history-list{display:flex;flex-direction:column;gap:.35rem}
+.history-item{padding:.5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:.7rem;cursor:pointer}
+.history-item:hover{border-color:var(--accent)}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Query Editor</h2></div>
+<div class="endpoint-row"><label>Endpoint</label><input type="text" id="endpoint" value="https://api.github.com/graphql" placeholder="GraphQL endpoint"></div>
+<div class="query-editor"><textarea id="query" spellcheck="false" placeholder="query { viewer { login } }"></textarea></div>
+<div class="query-vars"><h3>Variables</h3><textarea id="variables" spellcheck="false" placeholder='{"key": "value"}'></textarea></div>
+<div class="btn-group"><button class="btn primary" id="executeBtn">Execute Query</button><button class="btn" id="prettifyBtn">Prettify</button><button class="btn" id="historyBtn">History</button></div>
+<div class="history"><h3>Recent Queries</h3><div class="history-list" id="historyList"></div></div>
+</div>
+<div class="response">
+<div class="response-header"><h2>Response</h2><div class="response-tabs"><button class="response-tab active" data-tab="result">Result</button><button class="response-tab" data-tab="headers">Headers</button><button class="response-tab" data-tab="tracing">Tracing</button></div></div>
+<div class="response-body" id="responseBody">{"message": "Execute a query to see results"}</div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 064 / 100 · GraphQL Playground</footer>
+<script>
+const queryEl=document.getElementById('query');
+const variablesEl=document.getElementById('variables');
+const responseBody=document.getElementById('responseBody');
+const historyList=document.getElementById('historyList');
+const endpointEl=document.getElementById('endpoint');
+const sampleQuery=`# Welcome to GraphQL Playground
+query GetUser($login: String!) {
+  user(login: $login) {
+    login
+    name
+    bio
+    avatarUrl
+    repositories(first: 5) {
+      nodes {
+        name
+        description
+        stargazerCount
+        primaryLanguage {
+          name
+          color
+        }
+      }
+    }
+    followers {
+      totalCount
+    }
+  }
+}`;
+const sampleVars=`{
+  "login": "torvalds"
+}`;
+queryEl.value=sampleQuery;
+variablesEl.value=sampleVars;
+let history=JSON.parse(localStorage.getItem('gqlHistory')||'[]');
+function renderHistory(){
+  historyList.innerHTML=history.slice(-10).reverse().map((h,i)=>`<div class="history-item" data-idx="${history.length-1-i}">${h.query.slice(0,60).replace(/\n/g,' ')}...</div>`).join('');
+  document.querySelectorAll('.history-item').forEach(el=>el.onclick=()=>{const h=history[el.dataset.idx];queryEl.value=h.query;variablesEl.value=JSON.stringify(h.vars,null,2);});
+}
+function prettify(str){
+  try{return JSON.stringify(JSON.parse(str),null,2);}catch{return str;}
+}
+async function execute(){
+  const query=queryEl.value.trim();
+  const endpoint=endpointEl.value.trim();
+  const vars=variablesEl.value.trim();
+  if(!query||!endpoint){alert('Enter query and endpoint');return;}
+  let variables={};
+  try{variables=vars?JSON.parse(vars):{};}catch(e){alert('Invalid JSON in variables');return;}
+  responseBody.textContent='Loading...';
+  responseBody.className='response-body';
+  const start=performance.now();
+  try{
+    const res=await fetch(endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query,variables})});
+    const elapsed=performance.now()-start;
+    const text=await res.text();
+    try{
+      const data=JSON.parse(text);
+      responseBody.textContent=JSON.stringify(data,null,2);
+      responseBody.className='response-body '+(data.errors?'error':'');
+    }catch{
+      responseBody.textContent=text;
+      responseBody.className='response-body error';
+    }
+    // Save to history
+    history.push({query,variables,time:Date.now()});
+    if(history.length>50)history.shift();
+    localStorage.setItem('gqlHistory',JSON.stringify(history));
+    renderHistory();
+  }catch(e){
+    responseBody.textContent=`Error: ${e.message}`;
+    responseBody.className='response-body error';
+  }
+}
+document.getElementById('executeBtn').onclick=execute;
+document.getElementById('prettifyBtn').onclick=()=>{queryEl.value=prettify(queryEl.value);};
+document.getElementById('historyBtn').onclick=()=>{document.querySelector('.history').scrollIntoView();};
+document.querySelectorAll('.response-tab').forEach(t=>t.onclick=()=>{document.querySelectorAll('.response-tab').forEach(x=>x.classList.remove('active'));t.classList.add('active');});
+renderHistory();
+</script>
+</body>
+</html>

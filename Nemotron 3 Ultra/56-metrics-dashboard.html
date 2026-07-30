@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>56 — Metrics Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.time-range{display:flex;gap:.5rem}
+.time-btn{padding:.35rem .75rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.time-btn:hover,.time-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(88,166,255,.1)}
+.main{padding:2rem;max-width:1600px;margin:0 auto}
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:1.5rem}
+.kpi{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.25rem}
+.kpi-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:.5rem}
+.kpi-title{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.kpi-trend{font-size:.7rem;font-weight:500}
+.kpi-trend.up{color:var(--accent2)}
+.kpi-trend.down{color:var(--accent4)}
+.kpi-value{font-size:clamp(1.75rem,3vw,2.5rem);font-weight:700;line-height:1}
+.kpi-spark{height:40px;width:100%;margin-top:.75rem}
+.chart-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:1.5rem}
+.chart-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.chart-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.chart-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.chart-body{padding:1rem;height:300px;position:relative}
+.chart-canvas{width:100%;height:100%}
+.legend{display:flex;flex-wrap:wrap;gap:1rem;padding:.75rem 1rem;border-top:1px solid var(--border)}
+.legend-item{display:flex;align-items:center;gap:.35rem;font-size:.65rem;color:var(--muted)}
+.legend-swatch{width:10px;height:10px;border-radius:2px}
+.table-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.table-header{padding:1rem;border-bottom:1px solid var(--border)}
+.table-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.75rem}
+th,td{padding:.75rem 1rem;text-align:left;border-bottom:1px solid var(--border)}
+th{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+tr:hover td{background:rgba(88,166,255,.05)}
+.status-badge{font-size:.6rem;padding:.15rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.status-ok{background:rgba(63,185,80,.2);color:var(--accent2)}
+.status-warn{background:rgba(210,153,34,.2);color:var(--accent3)}
+.status-crit{background:rgba(248,81,73,.2);color:var(--accent4)}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Metrics <span>Dashboard</span></h1><div class="time-range"><button class="time-btn active" data-range="1h">1H</button><button class="time-btn" data-range="6h">6H</button><button class="time-btn" data-range="24h">24H</button><button class="time-btn" data-range="7d">7D</button><button class="time-btn" data-range="30d">30D</button></div></header>
+<main class="main">
+<div class="kpi-grid">
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">Requests/sec</span><span class="kpi-trend up" id="kpiRpsTrend">+12.3%</span></div><div class="kpi-value" id="kpiRps">1,234</div><canvas class="kpi-spark" id="sparkRps"></canvas></div>
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">Latency (p95)</span><span class="kpi-trend down" id="kpiLatTrend">-5.2%</span></div><div class="kpi-value" id="kpiLat">142<small>ms</small></div><canvas class="kpi-spark" id="sparkLat"></canvas></div>
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">Error Rate</span><span class="kpi-trend down" id="kpiErrTrend">-0.03%</span></div><div class="kpi-value" id="kpiErr">0.12<small>%</small></div><canvas class="kpi-spark" id="sparkErr"></canvas></div>
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">Throughput</span><span class="kpi-trend up" id="kpiThrTrend">+8.7%</span></div><div class="kpi-value" id="kpiThr">45.3<small>MB/s</small></div><canvas class="kpi-spark" id="sparkThr"></canvas></div>
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">Active Users</span><span class="kpi-trend up" id="kpiUsrTrend">+234</span></div><div class="kpi-value" id="kpiUsr">3,421</div><canvas class="kpi-spark" id="sparkUsr"></canvas></div>
+<div class="kpi"><div class="kpi-header"><span class="kpi-title">CPU Usage</span><span class="kpi-trend warn" id="kpiCpuTrend">+3.1%</span></div><div class="kpi-value" id="kpiCpu">67<small>%</small></div><canvas class="kpi-spark" id="sparkCpu"></canvas></div>
+</div>
+<div class="chart-grid">
+<div class="chart-card"><div class="chart-header"><h3>Request Rate</h3></div><div class="chart-body"><canvas class="chart-canvas" id="chartRps"></canvas></div><div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>Total</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent2)"></span>Success</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent4)"></span>Errors</span></div></div>
+<div class="chart-card"><div class="chart-header"><h3>Latency Distribution</h3></div><div class="chart-body"><canvas class="chart-canvas" id="chartLat"></canvas></div><div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>p50</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent3)"></span>p95</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent4)"></span>p99</span></div></div>
+<div class="chart-card"><div class="chart-header"><h3>Error Breakdown</h3></div><div class="chart-body"><canvas class="chart-canvas" id="chartErr"></canvas></div><div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:var(--accent4)"></span>5xx</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent3)"></span>4xx</span><span class="legend-item"><span class="legend-swatch" style="background:var(--muted)"></span>Timeout</span></div></div>
+<div class="chart-card"><div class="chart-header"><h3>Resource Usage</h3></div><div class="chart-body"><canvas class="chart-canvas" id="chartRes"></canvas></div><div class="legend"><span class="legend-item"><span class="legend-swatch" style="background:var(--accent)"></span>CPU</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent2)"></span>Memory</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent3)"></span>Disk I/O</span><span class="legend-item"><span class="legend-swatch" style="background:var(--accent4)"></span>Network</span></div></div>
+</div>
+<div class="chart-card table-card" style="margin-top:1.5rem"><div class="table-header"><h3>Top Endpoints</h3></div><table><thead><tr><th>Endpoint</th><th>Method</th><th>Requests</th><th>Avg Latency</th><th>p95 Latency</th><th>Error Rate</th><th>Status</th></tr></thead><tbody id="endpointTable"></tbody></table></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 056 / 100 · Metrics Dashboard</footer>
+<script>
+const endpoints=[
+  {path:'/api/users',method:'GET',req:45231,avg:42,p95:120,err:0.02},
+  {path:'/api/auth/login',method:'POST',req:12453,avg:89,p95:210,err:0.15},
+  {path:'/api/products',method:'GET',req:38912,avg:35,p95:95,err:0.01},
+  {path:'/api/orders',method:'POST',req:8234,avg:156,p95:340,err:0.32},
+  {path:'/api/search',method:'GET',req:22109,avg:67,p95:180,err:0.08},
+  {path:'/api/upload',method:'POST',req:1245,avg:1240,p95:3200,err:1.24},
+  {path:'/api/webhooks',method:'POST',req:5623,avg:234,p95:560,err:0.67},
+  {path:'/api/health',method:'GET',req:145231,avg:5,p95:12,err:0.0},
+  {path:'/api/notifications',method:'GET',req:18234,avg:28,p95:75,err:0.03},
+  {path:'/api/analytics',method:'GET',req:4521,avg:567,p95:1200,err:0.45}
+];
+const sparkData={rps:[],lat:[],err:[],thr:[],usr:[],cpu:[]};
+const MAX=60;
+function drawSpark(id,data,color){
+  const canvas=document.getElementById(id),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);ctx.clearRect(0,0,w/2,h/2);
+  if(data.length<2)return;
+  ctx.strokeStyle=color;ctx.lineWidth=1.5;ctx.lineCap='round';ctx.beginPath();
+  const step=(w/2)/(MAX-1);
+  const max=Math.max(...data),min=Math.min(...data),range=max-min||1;
+  data.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-(v-min)/range);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,color+'22');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+function drawChart(id,type,data,colors){
+  const canvas=document.getElementById(id),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);ctx.clearRect(0,0,w/2,h/2);
+  const padding={top:20,right:20,bottom:40,left:50};
+  const cw=w/2-padding.left-padding.right,ch=h/2-padding.top-padding.bottom;
+  const max=Math.max(...data.flat()),min=0;
+  const xStep=cw/(data[0].length-1);
+  const yScale=ch/(max-min);
+  // Axes
+  ctx.strokeStyle='var(--border)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(padding.left,padding.top);ctx.lineTo(padding.left,padding.top+ch);ctx.lineTo(padding.left+cw,padding.top+ch);ctx.stroke();
+  // Grid lines
+  ctx.strokeStyle='var(--border)33';
+  for(let i=1;i<5;i++){
+    const y=padding.top+ch*i/5;
+    ctx.beginPath();ctx.moveTo(padding.left,y);ctx.lineTo(padding.left+cw,y);ctx.stroke();
+  }
+  // Data
+  data.forEach((series,si)=>{
+    ctx.strokeStyle=colors[si];ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+    series.forEach((v,i)=>{const x=padding.left+i*xStep,y=padding.top+ch-(v-min)*yScale;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+    ctx.stroke();
+    // Fill
+    const grad=ctx.createLinearGradient(0,padding.top,0,padding.top+ch);
+    grad.addColorStop(0,colors[si]+'33');grad.addColorStop(1,'transparent');
+    ctx.fillStyle=grad;ctx.lineTo(padding.left+cw,padding.top+ch);ctx.lineTo(padding.left,padding.top+ch);ctx.closePath();ctx.fill();
+  });
+  // Labels
+  ctx.fillStyle='var(--muted)';ctx.font='10px monospace';ctx.textAlign='center';
+  for(let i=0;i<data[0].length;i+=Math.ceil(data[0].length/6)){
+    ctx.fillText(i+'m',padding.left+i*xStep,padding.top+ch+20);
+  }
+}
+function update(){
+  const now=Date.now();
+  // Generate time series data
+  const points=30;
+  const rpsData=[],latData=[],errData=[],thrData=[],usrData=[],cpuData=[];
+  for(let i=0;i<points;i++){
+    const t=now/1000-i*10;
+    rpsData.unshift(1000+Math.sin(t/20)*300+Math.random()*200);
+    latData.unshift(100+Math.sin(t/30)*50+Math.random()*30);
+    errData.unshift(Math.max(0,Math.sin(t/40)*0.2+Math.random()*0.15));
+    thrData.unshift(30+Math.sin(t/25)*15+Math.random()*10);
+    usrData.unshift(3000+Math.sin(t/50)*500+Math.random()*200);
+    cpuData.unshift(50+Math.sin(t/35)*20+Math.random()*15);
+  }
+  [sparkData.rps,sparkData.lat,sparkData.err,sparkData.thr,sparkData.usr,sparkData.cpu].forEach(d=>{while(d.length>MAX)d.shift();});
+  sparkData.rps.push(rpsData[rpsData.length-1]);
+  sparkData.lat.push(latData[latData.length-1]);
+  sparkData.err.push(errData[errData.length-1]);
+  sparkData.thr.push(thrData[thrData.length-1]);
+  sparkData.usr.push(usrData[usrData.length-1]);
+  sparkData.cpu.push(cpuData[cpuData.length-1]);
+  // Update KPIs
+  document.getElementById('kpiRps').textContent=Math.round(rpsData[rpsData.length-1]).toLocaleString();
+  document.getElementById('kpiLat').innerHTML=`${Math.round(latData[latData.length-1])}<small>ms</small>`;
+  document.getElementById('kpiErr').innerHTML=`${errData[errData.length-1].toFixed(2)}<small>%</small>`;
+  document.getElementById('kpiThr').innerHTML=`${thrData[thrData.length-1].toFixed(1)}<small>MB/s</small>`;
+  document.getElementById('kpiUsr').textContent=Math.round(usrData[usrData.length-1]).toLocaleString();
+  document.getElementById('kpiCpu').innerHTML=`${Math.round(cpuData[cpuData.length-1])}<small>%</small>`;
+  // Draw sparks
+  drawSpark('sparkRps',sparkData.rps,'var(--accent)');
+  drawSpark('sparkLat',sparkData.lat,'var(--accent4)');
+  drawSpark('sparkErr',sparkData.err,'var(--accent4)');
+  drawSpark('sparkThr',sparkData.thr,'var(--accent3)');
+  drawSpark('sparkUsr',sparkData.usr,'var(--accent2)');
+  drawSpark('sparkCpu',sparkData.cpu,'var(--accent)');
+  // Draw charts
+  drawChart('chartRps','line',[rpsData,rpsData.map(v=>v*0.98),rpsData.map(v=>v*0.02)],['var(--accent)','var(--accent2)','var(--accent4)']);
+  drawChart('chartLat','line',[latData.map(v=>v*0.5),latData,latData.map(v=>v*1.8)],['var(--accent)','var(--accent3)','var(--accent4)']);
+  drawChart('chartErr','line',[errData.map(v=>v*0.7),errData.map(v=>v*0.2),errData.map(v=>v*0.1)],['var(--accent4)','var(--accent3)','var(--muted)']);
+  drawChart('chartRes','line',[cpuData,usrData.map(v=>v/100),thrData,thrData.map(v=>v*2)],['var(--accent)','var(--accent2)','var(--accent3)','var(--accent4)']);
+  // Update table
+  const tbody=document.getElementById('endpointTable');
+  endpoints.forEach(e=>{e.req+=Math.floor(Math.random()*10);e.avg+=Math.random()*2-1;e.p95+=Math.random()*5-2;e.err=Math.max(0,e.err+Math.random()*0.01-0.005);});
+  endpoints.sort((a,b)=>b.req-a.req);
+  tbody.innerHTML=endpoints.map(e=>`<tr><td>${e.path}</td><td><span style="font-weight:500;color:var(--accent)">${e.method}</span></td><td>${e.req.toLocaleString()}</td><td>${Math.round(e.avg)}ms</td><td>${Math.round(e.p95)}ms</td><td>${e.err.toFixed(2)}%</td><td><span class="status-badge ${e.err>1?'status-crit':e.err>0.1?'status-warn':'status-ok'}">${e.err>1?'Critical':e.err>0.1?'Warning':'OK'}</span></td></tr>`).join('');
+}
+document.querySelectorAll('.time-btn').forEach(b=>b.onclick=()=>{document.querySelectorAll('.time-btn').forEach(x=>x.classList.remove('active'));b.classList.add('active');});
+setInterval(update,2000);
+update();
+</script>
+</body>
+</html>

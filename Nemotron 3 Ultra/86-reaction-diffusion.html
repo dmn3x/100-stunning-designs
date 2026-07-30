@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Diffusion — Nemotron 3 Ultra #86</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.preset-selector { pointer-events: auto; }
+.preset-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.preset-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>REACTION DIFFUSION</h1>
+<p class="subtitle">Gray-Scott Model</p>
+</div>
+<div class="controls">
+<div class="preset-selector"><select id="presetSelect" aria-label="Select preset"></select></div>
+<button class="btn primary" id="btnReset" aria-label="Reset simulation"><span>Reset</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle simulation"><span>Pause</span></button>
+<button class="btn" id="btnFeed" aria-label="Toggle feed mode"><span>Feed: Constant</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color scheme"><span>Color: Classic</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click/drag to add chemicals • Keys: Space pause • R reset • F feed • C color • 1-6 presets</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="fParam">0.055</div><div class="stat-label">Feed (f)</div></div>
+<div class="stat"><div class="stat-value" id="kParam">0.062</div><div class="stat-label">Kill (k)</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const presets = [
+    { name: 'Coral', f: 0.055, k: 0.062, Da: 1.0, Db: 0.5 },
+    { name: 'Mitosis', f: 0.03, k: 0.065, Da: 1.0, Db: 0.5 },
+    { name: 'Fingers', f: 0.035, k: 0.06, Da: 1.0, Db: 0.5 },
+    { name: 'Chaos', f: 0.025, k: 0.055, Da: 1.0, Db: 0.5 },
+    { name: 'Worms', f: 0.078, k: 0.061, Da: 1.0, Db: 0.5 },
+    { name: 'Solos', f: 0.026, k: 0.051, Da: 1.0, Db: 0.5 },
+];
+let gridA = [], gridB = [], nextA = [], nextB = [];
+let presetIdx = 0, f = 0.055, k = 0.062, Da = 1.0, Db = 0.5;
+let paused = false, running = true, feedMode = 0, colorMode = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false };
+const cellSize = 2;
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); initGrids(); }
+function initGrids() { const cols = Math.ceil(width / dpr / cellSize); const rows = Math.ceil(height / dpr / cellSize); gridA = new Array(rows).fill(0).map(() => new Array(cols).fill(1)); gridB = new Array(rows).fill(0).map(() => new Array(cols).fill(0)); nextA = new Array(rows).fill(0).map(() => new Array(cols).fill(0)); nextB = new Array(rows).fill(0).map(() => new Array(cols).fill(0)); const cx = Math.floor(cols / 2), cy = Math.floor(rows / 2); for (let y = cy - 10; y < cy + 10; y++) { for (let x = cx - 10; x < cx + 10; x++) { if (y >= 0 && y < rows && x >= 0 && x < cols) gridB[y][x] = 1; } } }
+function laplaceA(grid, x, y) { const rows = grid.length, cols = grid[0].let sum = 0; sum += grid[y][x] * -1; if (x > 0) sum += grid[y][x-1] * 0.2; if (x < cols-1) sum += grid[y][x+1] * 0.2; if (y > 0) sum += grid[y-1][x] * 0.2; if (y < rows-1) sum += grid[y+1][x] * 0.2; if (x > 0 && y > 0) sum += grid[y-1][x-1] * 0.05; if (x < cols-1 && y > 0) sum += grid[y-1][x+1] * 0.05; if (x > 0 && y < rows-1) sum += grid[y+1][x-1] * 0.05; if (x < cols-1 && y < rows-1) sum += grid[y+1][x+1] * 0.05; return sum; }
+function laplaceB(grid, x, y) { const rows = grid.length, cols = grid[0].length; let sum = 0; sum += grid[y][x] * -1; if (x > 0) sum += grid[y][x-1] * 0.2; if (x < cols-1) sum += grid[y][x+1] * 0.2; if (y > 0) sum += grid[y-1][x] * 0.2; if (y < rows-1) sum += grid[y+1][x] * 0.2; if (x > 0 && y > 0) sum += grid[y-1][x-1] * 0.05; if (x < cols-1 && y > 0) sum += grid[y-1][x+1] * 0.05; if (x > 0 && y < rows-1) sum += grid[y+1][x-1] * 0.05; if (x < cols-1 && y < rows-1) sum += grid[y+1][x+1] * 0.05; return sum; }
+function step() { const rows = gridA.length, cols = gridA[0].length; for (let y = 0; y < rows; y++) { for (let x = 0; x < cols; x++) { const a = gridA[y][x], b = gridB[y][x]; const la = laplaceA(gridA, x, y); const lb = laplaceB(gridB, x, y); const reaction = a * b * b; nextA[y][x] = a + Da * la - reaction + f * (1 - a); nextB[y][x] = b + Db * lb + reaction - (f + k) * b; nextA[y][x] = Math.max(0, Math.min(1, nextA[y][x])); nextB[y][x] = Math.max(0, Math.min(1, nextB[y][x])); } } [gridA, nextA] = [nextA, gridA]; [gridB, nextB] = [nextB, gridB]; }
+function render() { const w = width / dpr, h = height / dpr; const rows = gridB.length, cols = gridB[0].length; const imageData = ctx.createImageData(w, h); const data = imageData.data; for (let y = 0; y < rows; y++) { for (let x = 0; x < cols; x++) { const b = gridB[y][x]; const a = gridA[y][x]; const py = y * cellSize; const px = x * cellSize; let r, g, bl; if (colorMode === 0) { r = Math.floor(255 * b); g = Math.floor(255 * (1 - b) * a); bl = Math.floor(255 * (1 - a)); } else if (colorMode === 1) { const hue = (b * 240) % 360; const sat = 80; const light = 30 + 70 * a; const c = (1 - Math.abs(2 * light / 100 - 1)) * sat / 100; const x2 = c * (1 - Math.abs((hue / 60) % 2 - 1)); const m = light / 100 - c / 2; let rr, gg, bb; if (hue < 60) { rr = c; gg = x2; bb = 0; } else if (hue < 120) { rr = x2; gg = c; bb = 0; } else if (hue < 180) { rr = 0; gg = c; bb = x2; } else if (hue < 240) { rr = 0; gg = x2; bb = c; } else if (hue < 300) { rr = x2; gg = 0; bb = c; } else { rr = c; gg = 0; bb = x2; } r = Math.floor((rr + m) * 255); g = Math.floor((gg + m) * 255); bl = Math.floor((bb + m) * 255); } else { r = Math.floor(255 * Math.pow(b, 2)); g = Math.floor(255 * Math.pow(a, 0.5)); bl = Math.floor(255 * (1 - b)); } for (let dy = 0; dy < cellSize; dy++) { for (let dx = 0; dx < cellSize; dx++) { const idx = ((py + dy) * w + (px + dx)) * 4; if (idx < data.length) { data[idx] = r; data[idx+1] = g; data[idx+2] = bl; data[idx+3] = 255; } } } } } ctx.putImageData(imageData, 0, 0); }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) { for (let i = 0; i < 4; i++) step(); if (feedMode === 1) { const rows = gridA.length, cols = gridA[0].length; const cx = Math.floor(cols / 2), cy = Math.floor(rows / 2); for (let dy = -3; dy <= 3; dy++) { for (let dx = -3; dx <= 3; dx++) { const y = cy + dy, x = cx + dx; if (y >= 0 && y < rows && x >= 0 && x < cols) { gridB[y][x] = Math.min(1, gridB[y][x] + 0.1); } } } } } render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); const select = document.getElementById('presetSelect'); presets.forEach((p, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${p.name} (f:${p.f} k:${p.k})`; select.appendChild(opt); }); loadPreset(0); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+function loadPreset(idx) { presetIdx = idx; const p = presets[idx]; f = p.f; k = p.k; Da = p.Da; Db = p.Db; initGrids(); document.getElementById('fParam').textContent = f.toFixed(3); document.getElementById('kParam').textContent = k.toFixed(3); }
+function screenToGrid(sx, sy) { return { x: Math.floor(sx / cellSize), y: Math.floor(sy / cellSize) }; }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; const g = screenToGrid(e.clientX, e.clientY); if (g.x >= 0 && g.x < gridA[0].length && g.y >= 0 && g.y < gridA.length) { gridB[g.y][g.x] = 1; gridA[g.y][g.x] = 0; } });
+window.addEventListener('mousemove', e => { if (mouse.down) { const g = screenToGrid(e.clientX, e.clientY); if (g.x >= 0 && g.x < gridA[0].length && g.y >= 0 && g.y < gridA.length) { gridB[g.y][g.x] = 1; gridA[g.y][g.x] = 0; } } });
+window.addEventListener('mouseup', () => { mouse.down = false; });
+document.getElementById('presetSelect').addEventListener('change', e => loadPreset(parseInt(e.target.value)));
+document.getElementById('btnReset').addEventListener('click', () => loadPreset(presetIdx));
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnFeed').addEventListener('click', () => { feedMode = (feedMode + 1) % 2; document.getElementById('btnFeed').querySelector('span').textContent = feedMode === 0 ? 'Feed: Constant' : 'Feed: Pulse'; });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Classic', 'Color: HSL', 'Color: Contrast']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') { loadPreset(presetIdx); } else if (e.key === 'f' || e.key === 'F') { feedMode = (feedMode + 1) % 2; document.getElementById('btnFeed').querySelector('span').textContent = feedMode === 0 ? 'Feed: Constant' : 'Feed: Pulse'; } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Classic', 'Color: HSL', 'Color: Contrast']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key >= '1' && e.key <= '6') { loadPreset(parseInt(e.key) - 1); document.getElementById('presetSelect').value = parseInt(e.key) - 1; } });
+init();
+</script>
+</body>
+</html>

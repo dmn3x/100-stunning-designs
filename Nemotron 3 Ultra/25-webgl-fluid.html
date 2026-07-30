@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>25 — WebGL Fluid Simulation</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#050510;--fg:#e8e8f0;--muted:#2a2a4a;--accent:#00ffff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">WebGL Fluid Simulation</div>
+<div class="ui subtitle">navier-stokes on gpu · click & drag</div>
+<div class="ui controls">
+<label class="ctrl">Viscosity <input type="range" id="visc" min="0" max="0.0001" step="0.00001" value="0.00001"><span class="stat" id="viscVal">0.00001</span></label>
+<label class="ctrl">Diffusion <input type="range" id="diff" min="0" max="0.1" step="0.01" value="0.01"><span class="stat" id="diffVal">0.01</span></label>
+<label class="ctrl">Force <input type="range" id="force" min="1" max="20" step="1" value="8"><span class="stat" id="forceVal">8</span></label>
+<label class="ctrl"><input type="checkbox" id="color" checked> Color</label>
+<label class="ctrl"><input type="checkbox" id="vorticity" checked> Vorticity</label>
+</div>
+<div class="ui mode">drag to splash · <kbd>Space</kbd> reset · <kbd>C</kbd> clear dye</div>
+<script>
+const canvas=document.getElementById('c');
+const gl=canvas.getContext('webgl2')||canvas.getContext('webgl');
+if(!gl){document.body.innerHTML='<div style="display:flex;align-items:center;justify-content:center;height:100%;font-family:monospace;color:#666">WebGL not supported</div>';throw 0}
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const SIM_RES=256;
+let dyeRes=1024;
+let viscosity=0.00001,diffusion=0.01,forceScale=8,useColor=true,useVorticity=true;
+let mouse={x:0,y:0,px:0,py:0,down:false};
+let frame=0;
+const vs=`#version 300 es
+in vec2 aPos;
+out vec2 vUv;
+void main(){vUv=aPos*0.5+0.5;gl_Position=vec4(aPos,0.0,1.0);}`;
+const fsDisplay=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uTexture;
+out vec4 outColor;
+void main(){outColor=texture(uTexture,vUv);}`;
+const fsSplat=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uTarget;
+uniform float uRatio;
+uniform vec3 uColor;
+uniform vec2 uPoint;
+uniform float uRadius;
+out vec4 outColor;
+void main(){
+  vec2 p=vUv-uPoint;
+  float d=length(p)*uRatio;
+  vec3 c=texture(uTarget,vUv).rgb;
+  outColor=vec4(c+uColor*smoothstep(uRadius,0.0,d),1.0);
+}`;
+const fsAdvect=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uSource;
+uniform float uDt;
+uniform float uRatio;
+out vec4 outColor;
+void main(){
+  vec2 vel=texture(uVelocity,vUv).xy;
+  vec2 uv=vUv-vel*uDt*uRatio;
+  outColor=texture(uSource,uv);
+}`;
+const fsDivergence=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uVelocity;
+uniform float uRatio;
+out vec4 outColor;
+void main(){
+  float L=texture(uVelocity,vUv-vec2(uRatio,0.0)).x;
+  float R=texture(uVelocity,vUv+vec2(uRatio,0.0)).x;
+  float B=texture(uVelocity,vUv-vec2(0.0,uRatio)).y;
+  float T=texture(uVelocity,vUv+vec2(0.0,uRatio)).y;
+  outColor=vec4(0.5*(R-L+T-B),0.0,0.0,1.0);
+}`;
+const fsPressure=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uDivergence;
+uniform float uRatio;
+out vec4 outColor;
+void main(){
+  float L=texture(uPressure,vUv-vec2(uRatio,0.0)).r;
+  float R=texture(uPressure,vUv+vec2(uRatio,0.0)).r;
+  float B=texture(uPressure,vUv-vec2(0.0,uRatio)).r;
+  float T=texture(uPressure,vUv+vec2(0.0,uRatio)).r;
+  float div=texture(uDivergence,vUv).r;
+  outColor=vec4((L+R+B+T-div)*0.25,0.0,0.0,1.0);
+}`;
+const fsGradient=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uPressure;
+uniform sampler2D uVelocity;
+uniform float uRatio;
+out vec4 outColor;
+void main(){
+  float L=texture(uPressure,vUv-vec2(uRatio,0.0)).r;
+  float R=texture(uPressure,vUv+vec2(uRatio,0.0)).r;
+  float B=texture(uPressure,vUv-vec2(0.0,uRatio)).r;
+  float T=texture(uPressure,vUv+vec2(0.0,uRatio)).r;
+  vec2 vel=texture(uVelocity,vUv).xy;
+  vel.xy-=vec2(R-L,T-B)*0.5;
+  outColor=vec4(vel,0.0,1.0);
+}`;
+const fsVorticity=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uVelocity;
+uniform sampler2D uVorticity;
+uniform float uRatio;
+uniform float uVorticityScale;
+out vec4 outColor;
+void main(){
+  float L=texture(uVorticity,vUv-vec2(uRatio,0.0)).r;
+  float R=texture(uVorticity,vUv+vec2(uRatio,0.0)).r;
+  float B=texture(uVorticity,vUv-vec2(0.0,uRatio)).r;
+  float T=texture(uVorticity,vUv+vec2(0.0,uRatio)).r;
+  vec2 curl=vec2(abs(T)-abs(B),abs(R)-abs(L));
+  float len=length(curl)+1e-5;
+  vec2 force=curl/len*uVorticityScale;
+  vec2 vel=texture(uVelocity,vUv).xy;
+  outColor=vec4(vel+force,0.0,1.0);
+}`;
+const fsCurl=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uVelocity;
+uniform float uRatio;
+out vec4 outColor;
+void main(){
+  float L=texture(uVelocity,vUv-vec2(uRatio,0.0)).y;
+  float R=texture(uVelocity,vUv+vec2(uRatio,0.0)).y;
+  float B=texture(uVelocity,vUv-vec2(0.0,uRatio)).x;
+  float T=texture(uVelocity,vUv+vec2(0.0,uRatio)).x;
+  outColor=vec4(R-L-(T-B),0.0,0.0,1.0);
+}`;
+const fsDiffuse=`#version 300 es
+precision highp float;
+in vec2 vUv;
+uniform sampler2D uSource;
+uniform sampler2D uDest;
+uniform float uRatio;
+uniform float uFactor;
+out vec4 outColor;
+void main(){
+  float L=texture(uDest,vUv-vec2(uRatio,0.0)).r;
+  float R=texture(uDest,vUv+vec2(uRatio,0.0)).r;
+  float B=texture(uDest,vUv-vec2(0.0,uRatio)).r;
+  float T=texture(uDest,vUv+vec2(0.0,uRatio)).r;
+  float C=texture(uDest,vUv).r;
+  float S=texture(uSource,vUv).r;
+  outColor=vec4((S+uFactor*(L+R+B+T))/(1.0+4.0*uFactor),0.0,0.0,1.0);
+}`;
+function compileShader(type,src){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,src);
+  gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw gl.getShaderInfoLog(s);
+  return s;
+}
+function createProgram(vsSrc,fsSrc){
+  const p=gl.createProgram();
+  gl.attachShader(p,compileShader(gl.VERTEX_SHADER,vsSrc));
+  gl.attachShader(p,compileShader(gl.FRAGMENT_SHADER,fsSrc));
+  gl.linkProgram(p);
+  if(!gl.getProgramParameter(p,gl.LINK_STATUS))throw gl.getProgramInfoLog(p);
+  return p;
+}
+const quad={pos:gl.createBuffer()};
+gl.bindBuffer(gl.ARRAY_BUFFER,quad.pos);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]),gl.STATIC_DRAW);
+const progDisplay=createProgram(vs,fsDisplay);
+const progSplat=createProgram(vs,fsSplat);
+const progAdvect=createProgram(vs,fsAdvect);
+const progDiv=createProgram(vs,fsDivergence);
+const progPress=createProgram(vs,fsPressure);
+const progGrad=createProgram(vs,fsGradient);
+const progVort=createProgram(vs,fsVorticity);
+const progCurl=createProgram(vs,fsCurl);
+const progDiffuse=createProgram(vs,fsDiffuse);
+const attPos=gl.getAttribLocation(progDisplay,'aPos');
+function createFBO(w,h){
+  const tex=gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D,tex);
+  gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA16F,w,h,0,gl.RGBA,gl.FLOAT,null);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+  const fbo=gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER,fbo);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER,gl.COLOR_ATTACHMENT0,gl.TEXTURE_2D,tex,0);
+  return {fbo,tex,w,h};
+}
+let vel0=createFBO(SIM_RES,SIM_RES),vel1=createFBO(SIM_RES,SIM_RES);
+let divFBO=createFBO(SIM_RES,SIM_RES);
+let press0=createFBO(SIM_RES,SIM_RES),press1=createFBO(SIM_RES,SIM_RES);
+let curlFBO=createFBO(SIM_RES,SIM_RES);
+let dye0=createFBO(dyeRes,dyeRes),dye1=createFBO(dyeRes,dyeRes);
+function bindFBO(fbo){gl.bindFramebuffer(gl.FRAMEBUFFER,fbo.fbo);gl.viewport(0,0,fbo.w,fbo.h);}
+function drawQuad(prog,uniforms={}){
+  gl.useProgram(prog);
+  gl.enableVertexAttribArray(attPos);
+  gl.bindBuffer(gl.ARRAY_BUFFER,quad.pos);
+  gl.vertexAttribPointer(attPos,2,gl.FLOAT,false,0,0);
+  for(const [k,v] of Object.entries(uniforms)){
+    const loc=gl.getUniformLocation(prog,k);
+    if(loc)gl.uniform1f(loc,v);
+  }
+  gl.drawArrays(gl.TRIANGLES,0,6);
+}
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+}
+function splat(x,y,dx,dy){
+  const ratio=SIM_RES/Math.max(W,H);
+  bindFBO(vel1);
+  drawQuad(progSplat,{
+    uTarget:0,uRatio:ratio,uColor:[dx*forceScale,dy*forceScale,0],uPoint:[x/W,y/H],uRadius:0.05
+  });
+  [vel0,vel1]=[vel1,vel0];
+  const dyeRatio=dyeRes/Math.max(W,H);
+  const color=useColor?[Math.random(),Math.random(),Math.random()]:[1,1,1];
+  bindFBO(dye1);
+  drawQuad(progSplat,{uTarget:0,uRatio:dyeRatio,uColor:color,uPoint:[x/W,y/H],uRadius:0.1});
+  [dye0,dye1]=[dye1,dye0];
+}
+function step(){
+  const dt=1/60,ratio=1/SIM_RES;
+  if(useVorticity){
+    bindFBO(curlFBO);drawQuad(progCurl,{uVelocity:0,uRatio:ratio},vel0.tex);
+    bindFBO(vel1);drawQuad(progVort,{uVelocity:0,uVorticity:0,uRatio:ratio,uVorticityScale:viscosity*100},vel0.tex,curlFBO.tex);
+    [vel0,vel1]=[vel1,vel0];
+  }
+  bindFBO(divFBO);drawQuad(progDiv,{uVelocity:0,uRatio:ratio},vel0.tex);
+  for(let i=0;i<20;i++){
+    bindFBO(press1);drawQuad(progPress,{uPressure:0,uDivergence:0,uRatio:ratio},press0.tex,divFBO.tex);
+    [press0,press1]=[press1,press0];
+  }
+  bindFBO(vel1);drawQuad(progGrad,{uPressure:0,uVelocity:0,uRatio:ratio},press0.tex,vel0.tex);
+  [vel0,vel1]=[vel1,vel0];
+  const diffFactor=diffusion*dt*ratio*ratio;
+  bindFBO(vel1);drawQuad(progDiffuse,{uSource:0,uDest:0,uRatio:ratio,uFactor:diffFactor},vel0.tex,vel0.tex);
+  [vel0,vel1]=[vel1,vel0];
+  bindFBO(dye1);drawQuad(progAdvect,{uVelocity:0,uSource:0,uDt:dt,uRatio:dyeRes/Math.max(W,H)},vel0.tex,dye0.tex);
+  [dye0,dye1]=[dye1,dye0];
+}
+function render(){
+  gl.viewport(0,0,W,H);
+  gl.clearColor(0.02,0.02,0.06,1);
+  gl.clear(gl.COLOR_BUFFER_BIT);
+  gl.useProgram(progDisplay);
+  gl.enableVertexAttribArray(attPos);
+  gl.bindBuffer(gl.ARRAY_BUFFER,quad.pos);
+  gl.vertexAttribPointer(attPos,2,gl.FLOAT,false,0,0);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,dye0.tex);
+  gl.drawArrays(gl.TRIANGLES,0,6);
+}
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('mousedown',e=>{mouse.down=true;mouse.px=e.clientX;mouse.py=e.clientY;});
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;mouse.px=t.clientX;mouse.py=t.clientY;},{passive:false});
+window.addEventListener('touchstart',e=>{mouse.down=true;const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;mouse.px=t.clientX;mouse.py=t.clientY;},{passive:false});
+window.addEventListener('touchend',()=>mouse.down=false);
+document.getElementById('visc').addEventListener('input',e=>{viscosity=+e.target.value;document.getElementById('viscVal').textContent=viscosity.toFixed(5);});
+document.getElementById('diff').addEventListener('input',e=>{diffusion=+e.target.value;document.getElementById('diffVal').textContent=diffusion.toFixed(2);});
+document.getElementById('force').addEventListener('input',e=>{forceScale=+e.target.value;document.getElementById('forceVal').textContent=forceScale;});
+document.getElementById('color').addEventListener('change',e=>useColor=e.target.checked);
+document.getElementById('vorticity').addEventListener('change',e=>useVorticity=e.target.checked);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){[vel0,vel1,dye0,dye1]=[createFBO(SIM_RES,SIM_RES),createFBO(SIM_RES,SIM_RES),createFBO(dyeRes,dyeRes),createFBO(dyeRes,dyeRes)];e.preventDefault();}
+  if(e.code==='KeyC'){dye0=createFBO(dyeRes,dyeRes);dye1=createFBO(dyeRes,dyeRes);e.preventDefault();}
+});
+function tick(){
+  frame++;
+  if(mouse.down){
+    const dx=mouse.x-mouse.px,dy=mouse.y-mouse.py;
+    if(Math.hypot(dx,dy)>1)splat(mouse.x,mouse.y,dx,dy);
+    mouse.px=mouse.x;mouse.py=mouse.y;
+  }
+  step();
+  render();
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>75 — Raymarching Scene</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#canvas{width:100%;height:100%;display:block}
+.ui{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;min-width:220px}
+.ui h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.ui-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.7rem}
+.ui-row label{color:var(--muted);min-width:90px}
+.ui-row input,.ui-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.title{position:fixed;top:1rem;left:1rem;z-index:10}
+.title h1{font-size:1.5rem;font-weight:300}
+.title h1 span{font-weight:700;color:var(--accent)}
+.stats{position:fixed;bottom:1rem;left:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.footer{position:fixed;bottom:1rem;right:1rem;z-index:10;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="title"><h1>Raymarching <span>Scene</span></h1></div>
+<div class="ui"><h3>Controls</h3><div class="ui-row"><label>Scene</label><select id="sceneSelect"><option value="spheres">Twisted Spheres</option><option value="mandelbulb">Mandelbulb</option><option value="kaleido">Kaleidoscopic</option><option value="terrain">Procedural Terrain</option><option value="crystals">Crystal Formation</option></select></div><div class="ui-row"><label>Quality</label><select id="qualitySelect"><option value="low">Low (Fast)</option><option value="medium" selected>Medium</option><option value="high">High (Slow)</option></select></div><div class="ui-row"><label>AO</label><input type="checkbox" id="aoEnabled" checked></div><div class="ui-row"><label>Shadows</label><input type="checkbox" id="shadowsEnabled" checked></div><div class="ui-row"><label>Color Mode</label><select id="colorMode"><option value="material">Material</option><option value="depth">Depth</option><option value="normal">Normals</option><option value="checker">Checkerboard</option></select></div></div>
+<div class="stats"><div class="stat"><div class="stat-value" id="statFps">60</div><div class="stat-label">FPS</div></div><div class="stat"><div class="stat-value" id="statIter">0</div><div class="stat-label">Avg Iterations</div></div></div>
+<div class="footer">Nemotron 3 Ultra · 075 / 100 · Raymarching</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const gl=canvas.getContext('webgl2',{antialias:true,alpha:false});
+const vsSrc=`#version 300 es
+in vec2 a_pos;out vec2 v_uv;void main(){v_uv=a_pos*0.5+0.5;gl_Position=vec4(a_pos,0.0,1.0);}
+`;
+const fsBase=`#version 300 es
+precision highp float;
+in vec2 v_uv;out vec4 outColor;
+uniform vec2 u_res;uniform float u_time;uniform float u_mouseX;uniform float u_mouseY;
+uniform int u_maxSteps;uniform float u_aoEnabled;uniform float u_shadowsEnabled;uniform int u_colorMode;
+#define PI 3.14159265359
+#define TAU 6.28318530718
+float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float noise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(hash(i),hash(i+vec2(1,0)),f.x),mix(hash(i+vec2(0,1)),hash(i+vec2(1,1)),f.x),f.y);}
+float fbm(vec2 p){float v=0.0,a=0.5;for(int i=0;i<5;i++){v+=a*noise(p);p*=2.0;a*=0.5;}return v;}
+mat3 rotX(float a){float c=cos(a),s=sin(a);return mat3(1,0,0,0,c,-s,0,s,c);}
+mat3 rotY(float a){float c=cos(a),s=sin(a);return mat3(c,0,s,0,1,0,-s,0,c);}
+mat3 rotZ(float a){float c=cos(a),s=sin(a);return mat3(c,-s,0,s,c,0,0,0,1);}
+// SDFs
+float sdSphere(vec3 p,float r){return length(p)-r;}
+float sdBox(vec3 p,vec3 b){vec3 d=abs(p)-b;return min(max(d.x,max(d.y,d.z)),0.0)+length(max(d,0.0));}
+float sdTorus(vec3 p,vec2 t){vec2 q=vec2(length(p.xz)-t.x,p.y);return length(q)-t.y;}
+float sdCylinder(vec3 p,vec2 h){vec2 d=abs(vec2(length(p.xz),p.y))-h;return min(max(d.x,d.y),0.0)+length(max(d,0.0));}
+float opSmoothU(float a,float b,float k){float h=clamp(0.5+0.5*(b-a)/k,0.0,1.0);return mix(b,a,h)-k*h*(1.0-h);}
+float opSmoothI(float a,float b,float k){float h=clamp(0.5-0.5*(b-a)/k,0.0,1.0);return mix(b,a,h)+k*h*(1.0-h);}
+vec3 calcNormal(vec3 p,float eps){
+  vec2 e=vec2(eps,0.0);
+  return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));
+}
+float softShadow(vec3 ro,vec3 rd,float mint,float k){float res=1.0;float t=mint;for(int i=0;i<32;i++){float h=map(ro+rd*t);if(h<0.001)return 0.0;res=min(res,k*h/t);t+=h;if(t>10.0)break;}return res;}
+float ambientOcclusion(vec3 p,vec3 n){float ao=0.0;float sca=1.0;for(int i=0;i<5;i++){float h=0.01+sca*float(i)/4.0;float d=map(p+n*h);ao+=max(0.0,h-d)*sca;sca*=0.5;}return 1.0-ao;}
+// Scene-specific map functions will be injected here
+float map(vec3 p){return 0.0;}
+// Camera
+vec3 getRay(vec2 uv,vec3 ro,vec3 ta){
+  vec3 w=normalize(ta-ro);vec3 u=normalize(cross(vec3(0,1,0),w));vec3 v=cross(w,u);
+  return normalize(uv.x*u+uv.y*v+w*1.5);
+}
+void main(){
+  vec2 uv=(gl_FragCoord.xy-0.5*u_res)/min(u_res.x,u_res.y);
+  vec3 ro=vec3(0,0,4);
+  vec3 ta=vec3(0,0,0);
+  ro.xz*=rotY(u_time*0.3);
+  ro.y+=sin(u_time*0.5)*0.5;
+  vec3 rd=getRay(uv,ro,ta);
+  float t=0.0;float d=0.0;int steps=0;
+  for(int i=0;i<128;i++){
+    if(i>=u_maxSteps)break;
+    vec3 p=ro+rd*t;
+    d=map(p);
+    if(d<0.001){steps=i;break;}
+    t+=d;
+    if(t>20.0)break;
+    steps=i;
+  }
+  vec3 col=vec3(0.0);
+  if(d<0.001){
+    vec3 p=ro+rd*t;
+    vec3 n=calcNormal(p,0.001);
+    vec3 l=normalize(vec3(1,2,1));
+    float diff=max(dot(n,l),0.0);
+    float spec=pow(max(dot(reflect(-rd,n),l),0.0),32.0);
+    float ao=1.0;if(u_aoEnabled>0.5)ao=ambientOcclusion(p,n);
+    float sh=1.0;if(u_shadowsEnabled>0.5)sh=softShadow(p,n,0.01,16.0);
+    vec3 matCol;
+    if(u_colorMode==0){
+      matCol=vec3(0.2,0.4,0.8);
+    }else if(u_colorMode==1){
+      matCol=vec3(t/10.0);
+    }else if(u_colorMode==2){
+      matCol=n*0.5+0.5;
+    }else{
+      matCol=vec3(fract(p.x*2.0)>0.5==fract(p.z*2.0)>0.5?1.0:0.3);
+    }
+    col=matCol*(diff*0.8+0.2)*ao+vec3(spec)*sh;
+    col+=vec3(0.1)*ao;
+  }
+  // Background
+  col+=vec3(0.02,0.03,0.05)*(1.0-step(0.001,d));
+  outColor=vec4(col,1.0);
+}
+`;
+const scenes={
+  spheres:`// Twisted Spheres
+float map(vec3 p){
+  float d=1e9;
+  for(float i=0.0;i<5.0;i++){
+    float a=i*1.256;
+    vec3 q=p;
+    q.xz*=rotY(a+u_time*0.5);
+    q.y+=sin(u_time+i)*0.5;
+    float s=0.3+0.4*sin(u_time*0.7+i);
+    d=min(d,sdSphere(q,s));
+    d=opSmoothU(d,sdTorus(q.yzx,vec2(0.4,0.1)),0.2);
+  }
+  d=min(d,sdBox(p,vec3(5.0,0.5,5.0))-0.5);
+  return d;
+}`,
+  mandelbulb:`// Mandelbulb
+#define MAX_ITER 16
+float mandelbulb(vec3 z){
+  float dr=1.0;float r=0.0;
+  for(int i=0;i<MAX_ITER;i++){
+    r=length(z);
+    if(r>2.0)break;
+    float theta=acos(clamp(z.z/r,-1.0,1.0))*8.0;
+    float phi=atan(z.y,z.x)*8.0;
+    dr=pow(r,7.0)*8.0*dr+1.0;
+    float zr=pow(r,8.0);
+    z=zr*vec3(sin(theta)*cos(phi),sin(phi)*sin(theta),cos(theta))+vec3(0.5,0.3,0.2);
+  }
+  return 0.5*log(r)*r/dr;
+}
+float map(vec3 p){
+  p*=1.2;
+  return mandelbulb(p);
+}`,
+  kaleido:`// Kaleidoscopic IFS
+float map(vec3 p){
+  float d=1e9;
+  for(int i=0;i<3;i++){
+    p=abs(p);
+    p-=1.0;
+    d=min(d,sdSphere(p,0.5));
+    p.xz*=rotZ(u_time*0.3);
+    p.xy*=rotZ(u_time*0.2);
+  }
+  p=abs(p);p-=0.5;
+  d=min(d,sdBox(p,vec3(0.3)));
+  return d;
+}`,
+  terrain:`// Procedural Terrain
+float map(vec3 p){
+  float h=fbm(p.xz*0.5+u_time*0.1)*2.0;
+  h+=fbm(p.xz*2.0)*0.5;
+  h+=fbm(p.xz*4.0)*0.25;
+  return p.y-h;
+}`,
+  crystals:`// Crystal Formation
+float map(vec3 p){
+  float d=1e9;
+  vec3 q=abs(p);
+  for(int i=0;i<8;i++){
+    float a=float(i)*0.785;
+    vec3 r=q;r.xz*=rotY(a);
+    d=min(d,sdBox(r-vec3(0,0,1.5),vec3(0.2,1.0,0.2)));
+  }
+  d=min(d,sdSphere(p,2.0)-1.8);
+  return d;
+}`
+};
+function compileProgram(fsSrc){
+  const vs=gl.createShader(gl.VERTEX_SHADER);gl.shaderSource(vs,vsSrc);gl.compileShader(vs);
+  if(!gl.getShaderParameter(vs,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(vs));return null;}
+  const fs=gl.createShader(gl.FRAGMENT_SHADER);gl.shaderSource(fs,fsSrc);gl.compileShader(fs);
+  if(!gl.getShaderParameter(fs,gl.COMPILE_STATUS)){console.error(gl.getShaderInfoLog(fs));return null;}
+  const prog=gl.createProgram();gl.attachShader(prog,vs);gl.attachShader(prog,fs);gl.linkProgram(prog);
+  if(!gl.getProgramParameter(prog,gl.LINK_STATUS)){console.error(gl.getProgramInfoLog(prog));return null;}
+  return prog;
+}
+function resize(){
+  canvas.width=window.innerWidth;canvas.height=window.innerHeight;gl.viewport(0,0,canvas.width,canvas.height);
+}
+const quad=new Float32Array([-1,-1,1,-1,-1,1,-1,1,1,-1,1,1]);
+const buf=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,buf);gl.bufferData(gl.ARRAY_BUFFER,quad,gl.STATIC_DRAW);
+let program=null,lastTime=0,totalIter=0,frameCount=0;
+function render(time){
+  const delta=(time-lastTime)/1000;lastTime=time;
+  frameCount++;totalIter+=parseInt(document.getElementById('statIter').textContent)||0;
+  document.getElementById('statFps').textContent=Math.round(1/delta);
+  if(program){
+    gl.useProgram(program);
+    gl.uniform2f(gl.getUniformLocation(program,'u_res'),canvas.width,canvas.height);
+    gl.uniform1f(gl.getUniformLocation(program,'u_time'),time*0.001);
+    gl.uniform1i(gl.getUniformLocation(program,'u_maxSteps'),parseInt(document.getElementById('qualitySelect').value==='low'?64:document.getElementById('qualitySelect').value==='high'?256:128));
+    gl.uniform1f(gl.getUniformLocation(program,'u_aoEnabled'),document.getElementById('aoEnabled').checked?1:0);
+    gl.uniform1f(gl.getUniformLocation(program,'u_shadowsEnabled'),document.getElementById('shadowsEnabled').checked?1:0);
+    gl.uniform1i(gl.getUniformLocation(program,'u_colorMode'),document.getElementById('colorMode').selectedIndex);
+    const posLoc=gl.getAttribLocation(program,'a_pos');
+    gl.enableVertexAttribArray(posLoc);gl.vertexAttribPointer(posLoc,2,gl.FLOAT,false,0,0);
+    gl.drawArrays(gl.TRIANGLES,0,6);
+  }
+  requestAnimationFrame(render);
+}
+function loadScene(name){
+  const fs=fsBase.replace('// Scene-specific map functions will be injected here',scenes[name]);
+  program=compileProgram(fs);
+}
+document.getElementById('sceneSelect').onchange=e=>loadScene(e.target.value);
+document.getElementById('qualitySelect').onchange=()=>{};
+document.getElementById('colorMode').onchange=()=>{};
+resize();loadScene('spheres');render(0);window.addEventListener('resize',resize);
+</script>
+</body>
+</html>

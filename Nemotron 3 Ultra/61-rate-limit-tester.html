@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>61 — Rate Limit Tester</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.config{padding:1.5rem;overflow:auto}
+.config-header{margin-bottom:1.5rem}
+.config-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.config-header h1{font-size:1.5rem;font-weight:300}
+.config-header h1 span{font-weight:700;color:var(--accent)}
+.section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.section h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.row{display:grid;grid-template-columns:150px 1fr;gap:1rem;align-items:center;margin-bottom:.75rem}
+.row label{font-size:.7rem;color:var(--muted)}
+.input{background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px}
+.input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn-group{display:flex;gap:.5rem;margin-top:1rem}
+.results{background:var(--card);border-left:1px solid var(--border);padding:1.5rem;overflow:auto}
+.results-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.results-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stats{display:flex;gap:1.5rem;font-size:.8rem}
+.stat{display:flex;flex-direction:column}
+.stat-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.stat-value.success{color:var(--accent2)}
+.stat-value.error{color:var(--accent4)}
+.stat-value.warning{color:var(--accent3)}
+.chart{height:200px;margin-bottom:1rem}
+.log{font-size:.7rem;max-height:300px;overflow:auto}
+.log-entry{padding:.25rem 0;border-bottom:1px solid var(--border);display:flex;gap:.5rem}
+.log-time{color:var(--muted);white-space:nowrap}
+.log-status{font-weight:700;padding:0 .3rem;border-radius:2px;font-size:.55rem}
+.log-status.ok{background:rgba(63,185,80,.2);color:var(--accent2)}
+.log-status.ratelimited{background:rgba(248,81,73,.2);color:var(--accent4)}
+.log-status.error{background:rgba(210,153,34,.2);color:var(--accent3)}
+.log-latency{color:var(--accent3);margin-left:auto;font-family:'JetBrains Mono',monospace}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="config">
+<div class="config-header"><h2>Configuration</h2><h1>Rate Limit <span>Tester</span></h1></div>
+<div class="section"><h3>Target</h3><div class="row"><label>URL</label><input type="text" class="input" id="targetUrl" placeholder="https://api.example.com/endpoint" value="https://httpbin.org/get"></div><div class="row"><label>Method</label><select class="input" id="targetMethod"><option value="GET">GET</option><option value="POST">POST</option><option value="PUT">PUT</option><option value="DELETE">DELETE</option></select></div></div>
+<div class="section"><h3>Rate Limit Config</h3><div class="row"><label>Requests</label><input type="number" class="input" id="rlRequests" value="100" min="1"></div><div class="row"><label>Window (seconds)</label><input type="number" class="input" id="rlWindow" value="60" min="1"></div><div class="row"><label>Algorithm</label><select class="input" id="rlAlgo"><option value="fixed">Fixed Window</option><option value="sliding">Sliding Window</option><option value="token">Token Bucket</option></select></div></div>
+<div class="section"><h3>Test Parameters</h3><div class="row"><label>Total Requests</label><input type="number" class="input" id="testTotal" value="150" min="1"></div><div class="row"><label>Concurrency</label><input type="number" class="input" id="testConcurrency" value="10" min="1" max="50"></div><div class="row"><label>Delay (ms)</label><input type="number" class="input" id="testDelay" value="0" min="0"></div></div>
+<div class="btn-group"><button class="btn primary" id="startBtn">Start Test</button><button class="btn" id="stopBtn" disabled>Stop</button><button class="btn" id="clearBtn">Clear</button></div>
+</div>
+<div class="results">
+<div class="results-header"><h3>Results</h3><div class="stats"><div class="stat"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Total</span></div><div class="stat"><span class="stat-value success" id="statSuccess">0</span><span class="stat-label">Success</span></div><div class="stat"><span class="stat-value error" id="statRateLimited">0</span><span class="stat-label">Rate Limited</span></div><div class="stat"><span class="stat-value warning" id="statErrors">0</span><span class="stat-label">Errors</span></div></div></div>
+<canvas class="chart" id="chart"></div>
+<div class="log" id="log"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 061 / 100 · Rate Limit Tester</footer>
+<script>
+const logEl=document.getElementById('log');
+const chart=document.getElementById('chart');
+const statTotal=document.getElementById('statTotal');
+const statSuccess=document.getElementById('statSuccess');
+const statRateLimited=document.getElementById('statRateLimited');
+const statErrors=document.getElementById('statErrors');
+let running=false,results={total:0,success:0,rateLimited:0,errors:0},latencies=[],startTime=0;
+function drawChart(){
+  const ctx=chart.getContext('2d');
+  const w=chart.width=chart.offsetWidth*2;
+  const h=chart.height=chart.offsetHeight*2;
+  ctx.scale(2,2);ctx.clearRect(0,0,w/2,h/2);
+  if(latencies.length===0)return;
+  const max=Math.max(...latencies,1),min=Math.min(...latencies);
+  ctx.strokeStyle='var(--accent)';ctx.lineWidth=1.5;ctx.lineCap='round';ctx.beginPath();
+  const step=(w/2)/(latencies.length-1||1);
+  latencies.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-(v-min)/(max-min||1));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,'var(--accent)22');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+function addLog(entry){
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.innerHTML=`<span class="log-time">${new Date().toLocaleTimeString()}</span><span class="log-status ${entry.status}">${entry.status.toUpperCase()}</span><span>${entry.msg}</span><span class="log-latency">${entry.latency}ms</span>`;
+  logEl.insertBefore(div,logEl.firstChild);
+  while(logEl.children.length>100)logEl.removeChild(logEl.lastChild);
+}
+function updateStats(){
+  statTotal.textContent=results.total;
+  statSuccess.textContent=results.success;
+  statRateLimited.textContent=results.rateLimited;
+  statErrors.textContent=results.errors;
+  drawChart();
+}
+async function makeRequest(i){
+  const url=document.getElementById('targetUrl').value;
+  const method=document.getElementById('targetMethod').value;
+  const start=performance.now();
+  try{
+    const res=await fetch(url,{method,signal:AbortSignal.timeout(10000)});
+    const latency=Math.round(performance.now()-start);
+    latencies.push(latency);
+    if(latencies.length>200)latencies.shift();
+    if(res.status===429){
+      results.rateLimited++;
+      addLog({status:'ratelimited',msg:`Request ${i}: Rate limited (429)`,latency});
+    }else if(res.ok){
+      results.success++;
+      addLog({status:'ok',msg:`Request ${i}: ${res.status} OK`,latency});
+    }else{
+      results.errors++;
+      addLog({status:'error',msg:`Request ${i}: ${res.status}`,latency});
+    }
+  }catch(e){
+    results.errors++;
+    addLog({status:'error',msg:`Request ${i}: ${e.name}`,'--'});
+  }
+  results.total++;
+  updateStats();
+}
+async function runTest(){
+  running=true;
+  document.getElementById('startBtn').disabled=true;
+  document.getElementById('stopBtn').disabled=false;
+  const total=parseInt(document.getElementById('testTotal').value);
+  const concurrency=parseInt(document.getElementById('testConcurrency').value);
+  const delay=parseInt(document.getElementById('testDelay').value);
+  const queue=[...Array(total)].map((_,i)=>i+1);
+  const workers=Array(concurrency).fill(0).map(async()=>{
+    while(queue.length>0&&running){
+      const i=queue.shift();
+      if(!i)break;
+      await makeRequest(i);
+      if(delay>0)await new Promise(r=>setTimeout(r,delay));
+    }
+  });
+  await Promise.all(workers);
+  running=false;
+  document.getElementById('startBtn').disabled=false;
+  document.getElementById('stopBtn').disabled=true;
+}
+document.getElementById('startBtn').onclick=()=>{results={total:0,success:0,rateLimited:0,errors:0};latencies=[];logEl.innerHTML='';updateStats();runTest();};
+document.getElementById('stopBtn').onclick=()=>{running=false;};
+document.getElementById('clearBtn').onclick=()=>{results={total:0,success:0,rateLimited:0,errors:0};latencies=[];logEl.innerHTML='';updateStats();};
+</script>
+</body>
+</html>

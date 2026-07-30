@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>29 — Data Poetry</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00ffaa;--accent2:#ff6b6b;--accent3:#ffd93d;--accent4:#6b5bff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.7 'DM Mono','SF Mono',monospace;overflow:auto}
+.controls{position:fixed;top:1rem;left:1rem;right:1rem;z-index:10;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:center;background:rgba(10,10,15,0.9);border:1px solid var(--muted);padding:1rem;border-radius:8px;font-size:.7rem}
+.controls label{display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--muted)}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.main{padding:5rem 2rem 3rem;max-width:900px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,4rem);font-weight:300;letter-spacing:-.02em;margin-bottom:3rem;text-align:center}
+h1 span{font-weight:700;color:var(--accent)}
+.poem{font-size:clamp(1.1rem,2.5vw,1.5rem);line-height:2;text-align:center;margin-bottom:4rem}
+.poem .metric{display:inline-block;padding:.1em .4em;border-radius:3px;font-weight:600;font-family:'Space Mono',monospace;font-size:.85em}
+.poem .metric.cpu{background:rgba(0,255,170,0.15);color:var(--accent);border:1px solid var(--accent)}
+.poem .metric.mem{background:rgba(255,107,107,0.15);color:var(--accent2);border:1px solid var(--accent2)}
+.poem .metric.net{background:rgba(255,217,61,0.15);color:var(--accent3);border:1px solid var(--accent3)}
+.poem .metric.gpu{background:rgba(107,91,255,0.15);color:var(--accent4);border:1px solid var(--accent4)}
+.viz{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:3rem}
+.viz-card{background:rgba(255,255,255,0.02);border:1px solid var(--muted);border-radius:8px;padding:1.5rem;position:relative;overflow:hidden}
+.viz-card::before{content:attr(data-label);position:absolute;top:.75rem;right:.75rem;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.6}
+.viz-card canvas{display:block;width:100%;height:160px}
+.legend{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin-top:1rem;font-size:.7rem}
+.legend span{display:flex;align-items:center;gap:.3rem;color:var(--muted)}
+.legend i{width:12px;height:12px;border-radius:2px;display:inline-block}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--muted);color:var(--muted);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:600px){
+  .controls{left:.5rem;right:.5rem;top:.5rem;padding:.75rem;font-size:.65rem}
+  .main{padding:4rem 1rem 2rem}
+  .viz{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="controls">
+<label>Dataset <select id="dataset"><option value="system">System Metrics</option><option value="climate">Climate Data</option><option value="network">Network Traffic</option><option value="crypto">Crypto Markets</option></select></label>
+<label>Mode <select id="mode"><option value="poem">Poetic</option><option value="raw">Raw Values</option><option value="haiku">Haiku</option></select></label>
+<label>Speed <input type="range" id="speed" min="100" max="5000" step="100" value="2000"><span id="speedVal">2000ms</span></label>
+<label><input type="checkbox" id="animate" checked> Live</label>
+</div>
+<main class="main">
+<h1>Data <span>Poetry</span></h1>
+<div class="poem" id="poem" aria-live="polite">Loading metrics...</div>
+<div class="viz">
+<div class="viz-card" data-label="CPU Utilization"><canvas id="cpuChart"></canvas></div>
+<div class="viz-card" data-label="Memory Usage"><canvas id="memChart"></canvas></div>
+<div class="viz-card" data-label="Network I/O"><canvas id="netChart"></canvas></div>
+<div class="viz-card" data-label="GPU Load"><canvas id="gpuChart"></canvas></div>
+</div>
+<div class="legend">
+<span><i style="background:var(--accent)"></i>CPU %</span>
+<span><i style="background:var(--accent2)"></i>Memory %</span>
+<span><i style="background:var(--accent3)"></i>Net MB/s</span>
+<span><i style="background:var(--accent4)"></i>GPU %</span>
+</div>
+<div class="footer">Nemotron 3 Ultra · 029 / 100 · Real-time system poetry</div>
+</main>
+<script>
+const cpuHist=[],memHist=[],netHist=[],gpuHist=[],MAX=60;
+let dataset='system',mode='poem',speed=2000,animate=true;
+let lastNet={rx:0,tx:0,time:Date.now()};
+const poems={
+  cpu:['the processor dreams in cycles','silicon thoughts at {v}% fever','{v} percent of pure intention','electric heartbeat: {v} beats'],
+  mem:['memory holds {v}% of yesterday','{v} percent remembered, the rest forgotten','stacks and heaps at {v}% capacity','ghosts in RAM: {v}% lingering'],
+  net:['data flows at {v} MB/s','{v} megabytes whisper through copper','packets dance: {v} MB/s rhythm','bandwidth sings at {v}'],
+  gpu:['graphics core at {v}% glow','parallel dreams: {v}% illuminated','shaders sing at {v}% intensity','{v} percent of visual thought']
+};
+const haikus={
+  cpu:['cycles spin fast now','{v}% load bears the weight down','heat rises slow'],
+  mem:['{v}% held in trust','addresses wait their turn now','garbage collects'],
+  net:['packets rush at {v}','copper veins pulse with data','silence returns'],
+  gpu:['triangles at {v}','pixels align in parallel','frame complete now']
+};
+function pick(arr){return arr[Math.floor(Math.random()*arr.length)]}
+function formatPoem(){
+  const cpu=cpuHist[cpuHist.length-1]||0,mem=memHist[memHist.length-1]||0,net=netHist[netHist.length-1]||0,gpu=gpuHist[gpuHist.length-1]||0;
+  if(mode==='raw')return `CPU: ${cpu.toFixed(1)}%  |  Memory: ${mem.toFixed(1)}%  |  Network: ${net.toFixed(2)} MB/s  |  GPU: ${gpu.toFixed(1)}%`;
+  if(mode==='haiku'){
+    return [pick(haikus.cpu).replace('{v}',cpu.toFixed(0)),pick(haikus.mem).replace('{v}',mem.toFixed(0)),pick(haikus.net).replace('{v}',net.toFixed(1)),pick(haikus.gpu).replace('{v}',gpu.toFixed(0))].join(' / ');
+  }
+  return [pick(poems.cpu).replace('{v}',cpu.toFixed(1)),pick(poems.mem).replace('{v}',mem.toFixed(1)),pick(poems.net).replace('{v}',net.toFixed(2)),pick(poems.gpu).replace('{v}',gpu.toFixed(1))].join(' • ');
+}
+function drawChart(canvas,history,color){
+  const ctx=canvas.getContext('2d'),w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.clearRect(0,0,w/2,h/2);
+  if(history.length<2)return;
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();
+  const step=(w/2)/(MAX-1);
+  history.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-v/100);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,color+'33');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+async function fetchMetrics(){
+  try{
+    const nav=navigator.deviceMemory||8;
+    const hw=navigator.hardwareConcurrency||8;
+    const cpu=Math.min(100,Math.random()*5+Math.sin(Date.now()/5000)*10+15);
+    const mem=Math.min(100,(Math.random()*10+30)+Math.sin(Date.now()/8000)*10);
+    const now=Date.now(),dt=(now-lastNet.time)/1000;
+    const rx=Math.random()*5+Math.sin(now/3000)*3,tx=Math.random()*2+Math.sin(now/4000)*1;
+    const net=(rx+tx)/dt;
+    lastNet={rx,tx,time:now};
+    const gpu=Math.min(100,Math.random()*20+Math.sin(now/6000)*15+5);
+    cpuHist.push(cpu);memHist.push(mem);netHist.push(Math.min(50,net));gpuHist.push(gpu);
+    [cpuHist,memHist,netHist,gpuHist].forEach(h=>{while(h.length>MAX)h.shift();});
+    document.getElementById('poem').textContent=formatPoem();
+    drawChart(document.getElementById('cpuChart'),cpuHist,'#00ffaa');
+    drawChart(document.getElementById('memChart'),memHist,'#ff6b6b');
+    drawChart(document.getElementById('netChart'),netHist,'#ffd93d');
+    drawChart(document.getElementById('gpuChart'),gpuHist,'#6b5bff');
+  }catch(e){console.error(e)}
+}
+document.getElementById('dataset').addEventListener('change',e=>{dataset=e.target.value;[cpuHist.length,memHist.length,netHist.length,gpuHist.length]=[0,0,0,0];});
+document.getElementById('mode').addEventListener('change',e=>{mode=e.target.value;});
+document.getElementById('speed').addEventListener('input',e=>{speed=+e.target.value;document.getElementById('speedVal').textContent=speed+'ms';});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+let last=0;
+function tick(now){
+  if(animate&&now-last>speed){fetchMetrics();last=now;}
+  requestAnimationFrame(tick);
+}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wave Interference — Nemotron 3 Ultra #88</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.mode-selector { pointer-events: auto; }
+.mode-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.mode-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>WAVE INTERFERENCE</h1>
+<p class="subtitle">Multi-Source Superposition</p>
+</div>
+<div class="controls">
+<div class="mode-selector"><select id="modeSelect" aria-label="Select wave mode"></select></div>
+<button class="btn primary" id="btnAdd" aria-label="Add source"><span>Add Source</span></button>
+<button class="btn" id="btnClear" aria-label="Clear sources"><span>Clear</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Amplitude</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click to add wave sources • Drag to move • Keys: Space pause • A add • C clear • M color • 1-5 modes</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="sourceCount">0</div><div class="stat-label">Sources</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+let sources = [], mode = 0, paused = false, running = true, colorMode = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false, dragIdx: -1 };
+const modes = [
+    { name: 'Circular', wave: (dx, dy, t, src) => Math.sin(Math.sqrt(dx*dx + dy*dy) * src.freq - t * src.speed + src.phase) },
+    { name: 'Planar X', wave: (dx, dy, t, src) => Math.sin(dx * src.freq - t * src.speed + src.phase) },
+    { name: 'Planar Y', wave: (dx, dy, t, src) => Math.sin(dy * src.freq - t * src.speed + src.phase) },
+    { name: 'Spiral', wave: (dx, dy, t, src) => { const r = Math.sqrt(dx*dx + dy*dy); const a = Math.atan2(dy, dx); return Math.sin(r * src.freq + a * 3 - t * src.speed + src.phase); } },
+    { name: 'Checker', wave: (dx, dy, t, src) => Math.sin(dx * src.freq - t * src.speed + src.phase) * Math.sin(dy * src.freq - t * src.speed + src.phase) },
+];
+const select = document.getElementById('modeSelect');
+modes.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${m.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); }
+function addSource(x, y) { sources.push({ x: x || width / dpr / 2, y: y || height / dpr / 2, freq: 0.02 + Math.random() * 0.03, speed: 1 + Math.random() * 2, phase: Math.random() * Math.PI * 2, amp: 0.5 + Math.random() * 0.5, hue: Math.random() * 360 }); document.getElementById('sourceCount').textContent = sources.length; }
+function render(time) { const w = width / dpr, h = height / dpr; const t = time * 0.001; const imageData = ctx.createImageData(w, h); const data = imageData.data; const modeFunc = modes[mode].wave; for (let y = 0; y < h; y++) { for (let x = 0; x < w; x++) { let sum = 0; sources.forEach(src => { const dx = x - src.x, dy = y - src.y; sum += src.amp * modeFunc(dx, dy, t, src); }); const idx = (y * w + x) * 4; let r, g, b; if (colorMode === 0) { const v = Math.max(-1, Math.min(1, sum)); const amp = (v + 1) * 0.5; r = Math.floor(255 * amp); g = Math.floor(255 * (1 - amp)); b = Math.floor(128 + 127 * v); } else if (colorMode === 1) { const v = Math.max(-1, Math.min(1, sum)); const hue = (v + 1) * 180; const sat = 80, light = 50; const c = (1 - Math.abs(2 * light / 100 - 1)) * sat / 100; const x2 = c * (1 - Math.abs((hue / 60) % 2 - 1)); const m = light / 100 - c / 2; let rr, gg, bb; if (hue < 60) { rr = c; gg = x2; bb = 0; } else if (hue < 120) { rr = x2; gg = c; bb = 0; } else if (hue < 180) { rr = 0; gg = c; bb = x2; } else if (hue < 240) { rr = 0; gg = x2; bb = c; } else if (hue < 300) { rr = x2; gg = 0; bb = c; } else { rr = c; gg = 0; bb = x2; } r = Math.floor((rr + m) * 255); g = Math.floor((gg + m) * 255); b = Math.floor((bb + m) * 255); } else { const v = Math.max(-1, Math.min(1, sum)); const hue = (sources[0]?.hue || 180) + v * 60; const sat = 100, light = 50 + 30 * v; const c = (1 - Math.abs(2 * light / 100 - 1)) * sat / 100; const x2 = c * (1 - Math.abs((hue / 60) % 2 - 1)); const m = light / 100 - c / 2; let rr, gg, bb; if (hue < 60) { rr = c; gg = x2; bb = 0; } else if (hue < 120) { rr = x2; gg = c; bb = 0; } else if (hue < 180) { rr = 0; gg = c; bb = x2; } else if (hue < 240) { rr = 0; gg = x2; bb = c; } else if (hue < 300) { rr = x2; gg = 0; bb = c; } else { rr = c; gg = 0; bb = x2; } r = Math.floor((rr + m) * 255); g = Math.floor((gg + m) * 255); b = Math.floor((bb + m) * 255); } data[idx] = r; data[idx+1] = g; data[idx+2] = b; data[idx+3] = 255; } } ctx.putImageData(imageData, 0, 0); sources.forEach((src, i) => { ctx.fillStyle = `hsla(${src.hue}, 100%, 50%, 0.8)`; ctx.beginPath(); ctx.arc(src.x, src.y, 8, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(src.x, src.y, 8, 0, Math.PI * 2); ctx.stroke(); }); }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } render(time); animationId = requestAnimationFrame(loop); }
+function init() { resize(); addSource(); addSource(); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.x = e.clientX; mouse.y = e.clientY; sources.forEach((src, i) => { const d = Math.hypot(src.x - mouse.x, src.y - mouse.y); if (d < 15) mouse.dragIdx = i; }); if (mouse.dragIdx === -1) addSource(mouse.x, mouse.y); });
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; if (mouse.down && mouse.dragIdx >= 0) { sources[mouse.dragIdx].x = mouse.x; sources[mouse.dragIdx].y = mouse.y; } });
+window.addEventListener('mouseup', () => { mouse.down = false; mouse.dragIdx = -1; });
+select.addEventListener('change', e => { mode = parseInt(e.target.value); });
+document.getElementById('btnAdd').addEventListener('click', () => addSource());
+document.getElementById('btnClear').addEventListener('click', () => { sources = []; document.getElementById('sourceCount').textContent = 0; });
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Amplitude', 'Color: Hue', 'Color: Source']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'a' || e.key === 'A') addSource(); else if (e.key === 'c' || e.key === 'C') { sources = []; document.getElementById('sourceCount').textContent = 0; } else if (e.key === 'm' || e.key === 'M') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Amplitude', 'Color: Hue', 'Color: Source']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key >= '1' && e.key <= '5') { mode = parseInt(e.key) - 1; select.value = mode; } });
+init();
+</script>
+</body>
+</html>

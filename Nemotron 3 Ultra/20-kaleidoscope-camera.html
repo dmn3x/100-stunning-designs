@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20 — Kaleidoscope Camera</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00d4ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<video id="vid" autoplay playsinline muted style="display:none"></video>
+<div class="ui title">Kaleidoscope Camera</div>
+<div class="ui subtitle">mirror symmetry from camera</div>
+<div class="ui controls">
+<label class="ctrl">Mirrors <input type="range" id="mirrors" min="2" max="12" step="1" value="8"><span class="stat" id="mirrorsVal">8</span></label>
+<label class="ctrl">Slices <input type="range" id="slices" min="1" max="4" step="1" value="1"><span class="stat" id="slicesVal">1</span></label>
+<label class="ctrl"><select id="mode"><option value="0">Camera</option><option value="1" selected>Generative</option><option value="2">Noise</option></select></label>
+<label class="ctrl"><input type="checkbox" id="animate" checked> Animate</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> pause · <kbd>C</kbd> capture · <kbd>F</kbd> fullscreen</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+const video=document.getElementById('vid');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let mirrors=8,slices=1,mode=1,animate=true;
+let stream=null,frame=0,time=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+}
+document.getElementById('mirrors').addEventListener('input',e=>{mirrors=+e.target.value;document.getElementById('mirrorsVal').textContent=mirrors;});
+document.getElementById('slices').addEventListener('input',e=>{slices=+e.target.value;document.getElementById('slicesVal').textContent=slices;});
+document.getElementById('mode').addEventListener('change',e=>{
+  mode=+e.target.value;
+  if(mode===0&&!stream)startCamera();
+  if(mode!==0&&stream)stopCamera();
+});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+async function startCamera(){
+  try{
+    stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:'environment'},audio:false});
+    video.srcObject=stream;
+    await video.play();
+  }catch(e){mode=1;document.getElementById('mode').value=1;alert('Camera access denied, using generative mode');}
+}
+function stopCamera(){
+  if(stream){stream.getTracks().forEach(t=>t.stop());stream=null;}
+}
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){animate=!animate;document.getElementById('animate').checked=animate;e.preventDefault();}
+  if(e.code==='KeyC'){capture();e.preventDefault();}
+  if(e.code==='KeyF'){canvas.requestFullscreen().catch(()=>{});e.preventDefault();}
+});
+function generativeSource(){
+  const c=document.createElement('canvas');
+  c.width=W/DPR;c.height=H/DPR;
+  const g=c.getContext('2d');
+  const t=time;
+  for(let y=0;y<H/DPR;y+=4){
+    for(let x=0;x<W/DPR;x+=4){
+      const n=Math.sin(x*0.01+t)*Math.cos(y*0.01+t)*0.5+0.5;
+      const hue=(x*0.1+y*0.1+t*50)%360;
+      g.fillStyle=`hsla(${hue},80%,${40+n*30}%,1)`;
+      g.fillRect(x,y,4,4);
+    }
+  }
+  return c;
+}
+function noiseSource(){
+  const c=document.createElement('canvas');
+  c.width=W/DPR;c.height=H/DPR;
+  const g=c.getContext('2d');
+  for(let y=0;y<H/DPR;y+=2){
+    for(let x=0;x<W/DPR;x+=2){
+      const v=Math.random();
+      g.fillStyle=`rgba(${v*255},${v*255},${v*255},1)`;
+      g.fillRect(x,y,2,2);
+    }
+  }
+  return c;
+}
+function getSource(){
+  if(mode===0&&video.readyState===video.HAVE_ENOUGH_DATA)return video;
+  if(mode===1)return generativeSource();
+  return noiseSource();
+}
+function capture(){
+  const link=document.createElement('a');
+  link.download='kaleidoscope-'+Date.now()+'.png';
+  link.href=canvas.toDataURL('image/png');
+  link.click();
+}
+function tick(){
+  frame++;
+  if(animate)time+=0.016;
+  ctx.fillStyle='#1a1a2e';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const src=getSource();
+  if(!src){requestAnimationFrame(tick);return;}
+  const cw=W/DPR,ch=H/DPR;
+  const cx=cw/2,cy=ch/2;
+  const sliceAngle=Math.PI*2/(mirrors*slices);
+  ctx.save();
+  ctx.translate(cx,cy);
+  for(let s=0;s<slices;s++){
+    for(let m=0;m<mirrors;m++){
+      const angle=(m+s*mirrors)*sliceAngle;
+      ctx.save();
+      ctx.rotate(angle);
+      ctx.scale(1,m%2===-1?-1:1);
+      ctx.drawImage(src,-cx,-cy,cw,ch);
+      ctx.restore();
+    }
+  }
+  ctx.restore();
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

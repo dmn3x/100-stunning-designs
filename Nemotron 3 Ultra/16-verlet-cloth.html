@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>16 — Verlet Cloth</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f5f0e1;--fg:#1a1a1a;--muted:#8b7355;--accent:#c0392b}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'DM Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl label{display:flex;align-items:center;gap:.3rem;cursor:pointer}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(0,0,0,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Verlet Cloth</div>
+<div class="ui subtitle">constraint-based fabric simulation</div>
+<div class="ui controls">
+<label class="ctrl">Stiffness <input type="range" id="stiffness" min="0.1" max="1" step="0.05" value="0.95"><span class="stat" id="stiffVal">0.95</span></label>
+<label class="ctrl">Gravity <input type="range" id="gravity" min="0" max="1" step="0.05" value="0.5"><span class="stat" id="gravVal">0.5</span></label>
+<label class="ctrl">Wind <input type="range" id="wind" min="0" max="1" step="0.05" value="0.2"><span class="stat" id="windVal">0.2</span></label>
+<label class="ctrl"><input type="checkbox" id="tear" checked> Tear on Right-Click</label>
+<label class="ctrl"><input type="checkbox" id="pins" checked> Pin Corners</label>
+<label class="ctrl"><input type="checkbox" id="animate" checked> Animate</label>
+</div>
+<div class="ui mode">drag to pull · right-click/drag to tear · <kbd>Space</kbd> reset · <kbd>R</kbd> randomize</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const COLS=50,ROWS=30,REST=12;
+let stiffness=0.95,gravity=0.5,wind=0.2,tearEnabled=true,pins=true,animate=true;
+let points=[],constraints=[],mouse={x:0,y:0,down:false,right:false,lastX:0,lastY:0};
+let frame=0,time=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+  initCloth();
+}
+function initCloth(){
+  points=[];constraints=[];
+  const startX=(W/DPR-COLS*REST)/2,startY=50;
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      const px=startX+x*REST,py=startY+y*REST;
+      const pinned=pins&&(y===0&&(x===0||x===COLS-1));
+      points.push({x:px,y:px,px:px,py:py,vx:0,vy:0,pinned,pinnedX:px,pinnedY:py});
+    }
+  }
+  for(let y=0;y<ROWS;y++){
+    for(let x=0;x<COLS;x++){
+      const i=y*COLS+x;
+      if(x<COLS-1)constraints.push({a:i,b:i+1,length:REST,stiffness:1});
+      if(y<ROWS-1)constraints.push({a:i,b:i+COLS,length:REST,stiffness:1});
+      if(x<COLS-1&&y<ROWS-1){
+        constraints.push({a:i,b:i+COLS+1,length:REST*Math.sqrt(2),stiffness:0.5});
+        constraints.push({a:i+1,b:i+COLS,length:REST*Math.sqrt(2),stiffness:0.5});
+      }
+    }
+  }
+}
+function getPoint(x,y){
+  const col=Math.floor((x-(W/DPR-COLS*REST)/2)/REST);
+  const row=Math.floor((y-50)/REST);
+  if(col<0||col>=COLS||row<0||row>=ROWS)return null;
+  return points[row*COLS+col];
+}
+document.getElementById('stiffness').addEventListener('input',e=>{stiffness=+e.target.value;document.getElementById('stiffVal').textContent=stiffness.toFixed(2);});
+document.getElementById('gravity').addEventListener('input',e=>{gravity=+e.target.value;document.getElementById('gravVal').textContent=gravity.toFixed(2);});
+document.getElementById('wind').addEventListener('input',e=>{wind=+e.target.value;document.getElementById('windVal').textContent=wind.toFixed(2);});
+document.getElementById('tear').addEventListener('change',e=>tearEnabled=e.target.checked);
+document.getElementById('pins').addEventListener('change',e=>{pins=e.target.checked;initCloth();});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('mousedown',e=>{if(e.button===0)mouse.down=true;if(e.button===2)mouse.right=true;mouse.lastX=e.clientX;mouse.lastY=e.clientY;});
+window.addEventListener('mouseup',e=>{if(e.button===0)mouse.down=false;if(e.button===2)mouse.right=false;});
+window.addEventListener('contextmenu',e=>e.preventDefault());
+window.addEventListener('touchstart',e=>{const t=e.touches[0];mouse.down=true;mouse.x=t.clientX;mouse.y=t.clientY;mouse.lastX=t.clientX;mouse.lastY=t.clientY;},{passive:false});
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;},{passive:false});
+window.addEventListener('touchend',()=>{mouse.down=false;});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){initCloth();e.preventDefault();}
+  if(e.code==='KeyR'){
+    for(const p of points){if(!p.pinned){p.x+=(Math.random()-0.5)*20;p.y+=(Math.random()-0.5)*20;}}
+    e.preventDefault();
+  }
+});
+function solveConstraints(){
+  for(let iter=0;iter<8;iter++){
+    for(const c of constraints){
+      const p1=points[c.a],p2=points[c.b];
+      const dx=p2.x-p1.x,dy=p2.y-p1.y;
+      const dist=Math.hypot(dx,dy)||1;
+      const diff=(c.length-dist)/dist*c.stiffness*stiffness;
+      const offsetX=dx*diff*0.5,offsetY=dy*diff*0.5;
+      if(!p1.pinned){p1.x-=offsetX;p1.y-=offsetY;}
+      if(!p2.pinned){p2.x+=offsetX;p2.y+=offsetY;}
+    }
+  }
+}
+function tearCloth(mx,my){
+  if(!tearEnabled)return;
+  for(let i=constraints.length-1;i>=0;i--){
+    const c=constraints[i];
+    const p1=points[c.a],p2=points[c.b];
+    const dx=p2.x-p1.x,dy=p2.y-p1.y;
+    const dist=Math.hypot(dx,dy)||1;
+    const t=((mx-p1.x)*dx+(my-p1.y)*dy)/(dist*dist);
+    if(t>0&&t<1){
+      const projX=p1.x+dx*t,projY=p1.y+dy*t;
+      if(Math.hypot(mx-projX,my-projY)<8){
+        constraints.splice(i,1);
+      }
+    }
+  }
+}
+function tick(){
+  frame++;
+  if(animate)time+=0.016;
+  ctx.fillStyle='rgba(245,240,225,0.2)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  for(const p of points){
+    if(p.pinned){p.x=p.pinnedX;p.y=p.pinnedY;continue;}
+    const vx=p.x-p.px,vy=p.y-p.py;
+    p.px=p.x;p.py=p.y;
+    p.x+=vx*0.99;p.y+=vy*0.99;
+    p.y+=gravity*0.5;
+    p.x+=wind*0.3+Math.sin(time+p.y*0.05)*0.1;
+    if(mouse.down){
+      const dx=mouse.x-p.x,dy=mouse.y-p.y,dist=Math.hypot(dx,dy);
+      if(dist<30&&dist>0){p.x+=dx/dist*2;p.y+=dy/dist*2;}
+    }
+    if(mouse.right){
+      const dx=mouse.x-p.x,dy=mouse.y-p.y,dist=Math.hypot(dx,dy);
+      if(dist<15){tearCloth(mouse.x,mouse.y);}
+    }
+  }
+  solveConstraints();
+  ctx.strokeStyle='#8b7355';
+  ctx.lineWidth=0.8;
+  ctx.lineCap='round';
+  for(const c of constraints){
+    const p1=points[c.a],p2=points[c.b];
+    ctx.beginPath();
+    ctx.moveTo(p1.x,p1.y);
+    ctx.lineTo(p2.x,p2.y);
+    ctx.stroke();
+  }
+  for(const p of points){
+    if(p.pinned){
+      ctx.beginPath();
+      ctx.arc(p.x,p.y,4,0,Math.PI*2);
+      ctx.fillStyle='#c0392b';
+      ctx.fill();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

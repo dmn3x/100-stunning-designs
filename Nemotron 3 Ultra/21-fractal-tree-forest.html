@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>21 — Fractal Tree Forest</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a1a0a;--fg:#e8f0e8;--muted:#2a4a2a;--accent:#8fbc8f}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Fractal Tree Forest</div>
+<div class="ui subtitle">l-system trees with seasons</div>
+<div class="ui controls">
+<label class="ctrl">Trees <input type="range" id="trees" min="1" max="50" step="1" value="12"><span class="stat" id="treesVal">12</span></label>
+<label class="ctrl">Iterations <input type="range" id="iters" min="3" max="7" step="1" value="5"><span class="stat" id="itersVal">5</span></label>
+<label class="ctrl">Angle <input type="range" id="angle" min="15" max="45" step="1" value="25"><span class="stat" id="angleVal">25°</span></label>
+<label class="ctrl">Season <select id="season"><option value="0">Spring</option><option value="1">Summer</option><option value="2">Autumn</option><option value="3">Winter</option></select></label>
+<label class="ctrl"><input type="checkbox" id="wind" checked> Wind</label>
+<label class="ctrl"><input type="checkbox" id="leaves" checked> Leaves</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> regrow · <kbd>1-4</kbd> seasons · <kbd>W</kbd> wind</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let treeCount=12,iterations=5,branchAngle=25,season=0,wind=true,leaves=true;
+let trees=[],time=0,frame=0,windTime=0,cx=0,cy=0;
+const seasons=[
+  {bg:'#0a1a0a',trunk:'#3d2a1a',leaf:'#8fbc8f',leaf2:'#98fb98',sky:'#87ceeb'},
+  {bg:'#0a2a0a',trunk:'#2d1a0a',leaf:'#228b22',leaf2:'#32cd32',sky:'#87ceeb'},
+  {bg:'#1a150a',trunk:'#4a3a2a',leaf:'#cd853f',leaf2:'#daa520',sky:'#deb887'},
+  {bg:'#0a0a1a',trunk:'#2a2a2a',leaf:'#b0c4de',leaf2:'#ffffff',sky:'#1a1a2e'}
+];
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cx=W/DPR/2;cy=H/DPR;
+  ctx.scale(DPR,DPR);
+  growForest();
+}
+function growForest(){
+  trees=[];
+  for(let i=0;i<treeCount;i++){
+    const x=Math.random()*W/DPR*0.8+W/DPR*0.1;
+    const baseY=H/DPR*0.9+Math.random()*H/DPR*0.1;
+    const scale=0.5+Math.random()*0.8;
+    const seed=Math.random()*1000;
+    trees.push({x,baseY,scale,seed,angle:0,targetAngle:0});
+  }
+}
+function drawTree(x,y,length,angle,depth,seed){
+  if(depth>iterations||length<2)return;
+  const s=seasons[season];
+  const sway=wind?Math.sin(windTime+seed+depth)*length*0.02:0;
+  const newAngle=angle+sway;
+  const nx=x+Math.cos(newAngle)*length;
+  const ny=y-Math.sin(newAngle)*length;
+  const thickness=Math.max(1,length*0.12);
+  ctx.strokeStyle=s.trunk;
+  ctx.lineWidth=thickness;
+  ctx.lineCap='round';
+  ctx.beginPath();
+  ctx.moveTo(x,y);
+  ctx.lineTo(nx,ny);
+  ctx.stroke();
+  if(leaves&&depth>=iterations-1){
+    const leafCount=3+Math.floor(Math.random()*4);
+    for(let i=0;i<leafCount;i++){
+      const lx=nx+(Math.random()-0.5)*length*0.5;
+      const ly=ny-(Math.random())*length*0.5;
+      const lr=2+Math.random()*4;
+      ctx.fillStyle=Math.random()<0.5?s.leaf:s.leaf2;
+      ctx.globalAlpha=0.7;
+      ctx.beginPath();
+      ctx.ellipse(lx,ly,lr,lr*0.6,Math.random()*Math.PI,0,Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha=1;
+    }
+  }
+  const spread=Math.PI/180*branchAngle;
+  drawTree(nx,ny,length*0.67,newAngle+spread,depth+1,seed);
+  drawTree(nx,ny,length*0.67,newAngle-spread,depth+1,seed);
+  if(depth<iterations-2&&Math.random()<0.3){
+    drawTree(nx,ny,length*0.5,newAngle+(Math.random()-0.5)*spread*2,depth+2,seed);
+  }
+}
+document.getElementById('trees').addEventListener('input',e=>{treeCount=+e.target.value;document.getElementById('treesVal').textContent=treeCount;growForest();});
+document.getElementById('iters').addEventListener('input',e=>{iterations=+e.target.value;document.getElementById('itersVal').textContent=iterations;});
+document.getElementById('angle').addEventListener('input',e=>{branchAngle=+e.target.value;document.getElementById('angleVal').textContent=branchAngle+'°';});
+document.getElementById('season').addEventListener('change',e=>season=+e.target.value);
+document.getElementById('wind').addEventListener('change',e=>wind=e.target.checked);
+document.getElementById('leaves').addEventListener('change',e=>leaves=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){growForest();e.preventDefault();}
+  if(e.code==='KeyW'){wind=!wind;document.getElementById('wind').checked=wind;e.preventDefault();}
+  if(e.code==='Digit1'){season=0;document.getElementById('season').value=0;e.preventDefault();}
+  if(e.code==='Digit2'){season=1;document.getElementById('season').value=1;e.preventDefault();}
+  if(e.code==='Digit3'){season=2;document.getElementById('season').value=2;e.preventDefault();}
+  if(e.code==='Digit4'){season=3;document.getElementById('season').value=3;e.preventDefault();}
+});
+function tick(){
+  frame++;
+  time+=0.016;
+  windTime+=wind?0.02:0;
+  const s=seasons[season];
+  ctx.fillStyle=s.bg;
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const grad=ctx.createLinearGradient(0,0,0,H/DPR);
+  grad.addColorStop(0,s.sky);
+  grad.addColorStop(1,s.bg);
+  ctx.fillStyle=grad;
+  ctx.fillRect(0,0,W/DPR,H/DPR*0.4);
+  for(const t of trees){
+    t.targetAngle=(t.x-cx)/(W/DPR)*0.3;
+    t.angle+=(t.targetAngle-t.angle)*0.02;
+    drawTree(t.x,t.baseY,80*t.scale,-Math.PI/2+t.angle,0,t.seed);
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

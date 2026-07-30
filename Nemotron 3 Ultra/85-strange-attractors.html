@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strange Attractors — Nemotron 3 Ultra #85</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.attractor-selector { pointer-events: auto; }
+.attractor-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.attractor-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>STRANGE ATTRACTORS</h1>
+<p class="subtitle">Chaos Theory Visualization</p>
+</div>
+<div class="controls">
+<div class="attractor-selector"><select id="attractorSelect" aria-label="Select attractor"></select></div>
+<button class="btn primary" id="btnReset" aria-label="Reset attractor"><span>Reset</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Time</span></button>
+<button class="btn" id="btnTail" aria-label="Toggle tail"><span>Tail</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to rotate • Scroll to zoom • Keys: Space pause • R reset • C color • T tail • 1-7 attractors</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="pointCount">0</div><div class="stat-label">Points</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const attractors = [
+    { name: 'Lorenz', params: { sigma: 10, rho: 28, beta: 8/3 }, dt: 0.01, scale: 12, color: '#00ffc8' },
+    { name: 'Rössler', params: { a: 0.2, b: 0.2, c: 5.7 }, dt: 0.03, scale: 18, color: '#ff3366' },
+    { name: 'Thomas', params: { b: 0.208186 }, dt: 0.1, scale: 2.5, color: '#ffcc00' },
+    { name: 'Halvorsen', params: { a: 1.4 }, dt: 0.02, scale: 2.5, color: '#00ccff' },
+    { name: 'Aizawa', params: { a: 0.95, b: 0.7, c: 0.6, d: 3.5, e: 0.25, f: 0.1 }, dt: 0.02, scale: 2.2, color: '#cc66ff' },
+    { name: 'Dadras', params: { a: 3, b: 2.7, c: 1.7, d: 2, e: 9 }, dt: 0.01, scale: 10, color: '#ff6633' },
+    { name: 'Chen', params: { a: 35, b: 3, c: 28 }, dt: 0.01, scale: 8, color: '#00ff88' },
+];
+let points = [], trails = [], attractorIdx = 0, paused = false, running = true, colorMode = 0, showTail = true;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0 };
+const camera = { x: 0, y: 0, z: 0, rotX: 0.3, rotY: 0.5, scale: 1, targetScale: 1, targetRotX: 0.3, targetRotY: 0.5 };
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); resetAttractor(); }
+function resetAttractor() { const a = attractors[attractorIdx]; points = []; trails = []; let x = 0.1, y = 0, z = 0; for (let i = 0; i < 50000; i++) { points.push({ x, y, z }); step(x, y, z, a); } document.getElementById('pointCount').textContent = points.length.toLocaleString(); }
+function step(x, y, z, a) { let dx, dy, dz; if (attractorIdx === 0) { dx = a.sigma * (y - x); dy = x * (a.rho - z) - y; dz = x * y - a.beta * z; } else if (attractorIdx === 1) { dx = -y - z; dy = x + a.params.a * y; dz = a.params.b + z * (x - a.params.c); } else if (attractorIdx === 2) { dx = Math.sin(y) - a.params.b * x; dy = Math.sin(z) - a.params.b * y; dz = Math.sin(x) - a.params.b * z; } else if (attractorIdx === 3) { dx = -a.params.a * x - 4 * y - 4 * z - y * y; dy = -a.params.a * y - 4 * z - 4 * x - z * z; dz = -a.params.a * z - 4 * x - 4 * y - x * x; } else if (attractorIdx === 4) { dx = (z - a.params.b) * x - a.params.d * y; dy = a.params.a * y + x; dz = a.params.c + x * y - a.params.e * z; } else if (attractorIdx === 5) { dx = y - a.params.a * x + a.params.b * y * z; dy = a.params.c * y - x * z + z; dz = a.params.d * x * y - a.params.e * z; } else { dx = a.params.a * (y - x); dy = (a.params.c - a.params.a) * x - x * z + a.params.c * y; dz = x * y - a.params.b * z; } x += dx * a.dt; y += dy * a.dt; z += dz * a.dt; return { x, y, z }; }
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = 'rgba(3, 3, 5, 0.15)'; ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(w / 2, h / 2); ctx.scale(camera.scale, camera.scale); const cosX = Math.cos(camera.rotX), sinX = Math.sin(camera.rotX); const cosY = Math.cos(camera.rotY), sinY = Math.sin(camera.rotY); const projected = points.map(p => { let x = p.x, y = p.y, z = p.z; const ry = x * sinY + z * cosY; z = x * cosY - z * sinY; x = ry; const rx = y * cosX - z * sinX; z = y * sinX + z * cosX; y = rx; const scale = 1 / (1 + z * 0.001); return { x: x * scale, y: y * scale, z, scale }; }); const a = attractors[attractorIdx]; if (showTail) { for (let i = 1; i < projected.length; i++) { const p1 = projected[i - 1], p2 = projected[i]; const alpha = (i / projected.length) * 0.5; const hue = colorMode === 0 ? 150 + i * 0.005 : colorMode === 1 ? i * 0.01 : 60 + Math.sin(i * 0.01 + Date.now() * 0.001) * 60; ctx.strokeStyle = `hsla(${hue % 360}, 100%, 50%, ${alpha})`; ctx.lineWidth = 0.5 / camera.scale; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.stroke(); } } projected.forEach((p, i) => { const r = Math.max(0.3, 1.5 / camera.scale * p.scale); const hue = colorMode === 0 ? 150 + i * 0.005 : colorMode === 1 ? i * 0.01 : 60 + Math.sin(i * 0.01 + Date.now() * 0.001) * 60; const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3); gradient.addColorStop(0, `hsla(${hue % 360}, 100%, 50%, 0.8)`); gradient.addColorStop(1, `hsla(${hue % 360}, 100%, 50%, 0)`); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(p.x, p.y, r * 3, 0, Math.PI * 2); ctx.fill(); }); ctx.restore(); }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) { const a = attractors[attractorIdx]; const last = points[points.length - 1]; for (let i = 0; i < 100; i++) { const next = step(last.x, last.y, last.z, a); points.push(next); trails.push({ ...next }); last.x = next.x; last.y = next.y; last.z = next.z; if (points.length > 50000) points.shift(); } } camera.rotX += (camera.targetRotX - camera.rotX) * 0.05; camera.rotY += (camera.targetRotY - camera.rotY) * 0.05; camera.scale += (camera.targetScale - camera.scale) * 0.05; render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); const select = document.getElementById('attractorSelect'); attractors.forEach((a, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i + 1} ${a.name}`; select.appendChild(opt); }); select.value = attractorIdx; lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { camera.targetRotY -= (e.clientX - mouse.lastX) * 0.005; camera.targetRotX = Math.max(-1.4, Math.min(1.4, camera.targetRotX - (e.clientY - mouse.lastY) * 0.005)); mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetScale = Math.max(0.2, Math.min(5, camera.targetScale * (e.deltaY > 0 ? 0.9 : 1.1))); }, { passive: false });
+document.getElementById('attractorSelect').addEventListener('change', e => { attractorIdx = parseInt(e.target.value); resetAttractor(); });
+document.getElementById('btnReset').addEventListener('click', resetAttractor);
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Time', 'Color: Index', 'Color: Wave']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.getElementById('btnTail').addEventListener('click', () => { showTail = !showTail; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') { resetAttractor(); } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Time', 'Color: Index', 'Color: Wave']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key === 't' || e.key === 'T') { showTail = !showTail; } else if (e.key >= '1' && e.key <= '7') { attractorIdx = parseInt(e.key) - 1; document.getElementById('attractorSelect').value = attractorIdx; resetAttractor(); } });
+init();
+</script>
+</body>
+</html>

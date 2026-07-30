@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>58 — Queue Monitor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.kpi-bar{display:flex;gap:2rem}
+.kpi-item{text-align:center}
+.kpi-value{font-size:1.5rem;font-weight:700}
+.kpi-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.queue-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(400px,1fr));gap:1.5rem}
+.queue-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.queue-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.queue-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.queue-status{font-size:.6rem;padding:.2rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.queue-status.healthy{background:rgba(63,185,80,.2);color:var(--accent2)}
+.queue-status.warning{background:rgba(210,153,34,.2);color:var(--accent3)}
+.queue-status.critical{background:rgba(248,81,73,.2);color:var(--accent4)}
+.queue-body{padding:1rem}
+.queue-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1rem}
+.metric{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem;text-align:center}
+.metric-value{font-size:1.25rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.metric-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.25rem}
+.job-list{background:var(--bg);border:1px solid var(--border);border-radius:4px;max-height:300px;overflow:auto}
+.job-header{display:grid;grid-template-columns:1fr 80px 80px 100px 100px;padding:.5rem 1rem;background:var(--border);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);position:sticky;top:0;z-index:1}
+.job-row{display:grid;grid-template-columns:1fr 80px 80px 100px 100px;padding:.5rem 1rem;border-bottom:1px solid var(--border);font-size:.7rem;align-items:center}
+.job-row:hover{background:rgba(88,166,255,.05)}
+.job-id{font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.job-status{font-size:.55rem;padding:.15rem .4rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.job-status.pending{background:rgba(139,148,158,.2);color:var(--muted)}
+.job-status.running{background:rgba(88,166,255,.2);color:var(--accent)}
+.job-status.completed{background:rgba(63,185,80,.2);color:var(--accent2)}
+.job-status.failed{background:rgba(248,81,73,.2);color:var(--accent4)}
+.job-status.retry{background:rgba(210,153,34,.2);color:var(--accent3)}
+.job-priority{font-weight:500}
+.job-time{color:var(--muted)}
+.job-worker{color:var(--accent3);font-size:.65rem}
+.chart-mini{height:60px;margin-top:1rem}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Queue <span>Monitor</span></h1><div class="kpi-bar"><div class="kpi-item"><div class="kpi-value" id="totalQueued">0</div><div class="kpi-label">Queued</div></div><div class="kpi-item"><div class="kpi-value" id="totalProcessing">0</div><div class="kpi-label">Processing</div></div><div class="kpi-item"><div class="kpi-value" id="totalCompleted">0</div><div class="kpi-label">Completed</div></div><div class="kpi-item"><div class="kpi-value" id="totalFailed">0</div><div class="kpi-label">Failed</div></div></div></header>
+<main class="main">
+<div class="queue-grid" id="queueGrid"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 058 / 100 · Queue Monitor</footer>
+<script>
+const queueGrid=document.getElementById('queueGrid');
+const queues={
+  emails:{name:'Email Queue',status:'healthy',workers:4,processing:12,queued:145,completed:12340,failed:23,avgTime:2.3,jobs:[]},
+  images:{name:'Image Processing',status:'warning',workers:2,processing:8,queued:89,completed:5621,failed:112,avgTime:45.7,jobs:[]},
+  webhooks:{name:'Webhook Delivery',status:'healthy',workers:8,processing:24,queued:32,completed:45231,failed:156,avgTime:1.1,jobs:[]},
+  reports:{name:'Report Generation',status:'critical',workers:1,processing:3,queued:12,completed:445,failed:89,avgTime:180.5,jobs:[]},
+  notifications:{name:'Push Notifications',status:'healthy',workers:6,processing:18,queued:67,completed:98234,failed:45,avgTime:0.8,jobs:[]},
+  cleanup:{name:'Data Cleanup',status:'healthy',workers:1,processing:0,queued:0,completed:12,failed:0,avgTime:3600,jobs:[]}
+};
+const jobTypes=['welcome','password-reset','order-confirm','newsletter','invoice','report-daily','report-weekly','webhook-stripe','webhook-github','webhook-slack','image-resize','image-thumb','image-optimize','cleanup-logs','cleanup-sessions','cleanup-cache'];
+function generateJobs(queueName,count){
+  const statuses=['pending','running','completed','failed','retry'];
+  const jobs=[];
+  for(let i=0;i<count;i++){
+    jobs.push({id:`${queueName.slice(0,3).toUpperCase()}-${10000+i}`,type:jobTypes[Math.floor(Math.random()*jobTypes.length)],status:statuses[Math.floor(Math.random()*statuses.length)],priority:Math.floor(Math.random()*3)+1,time:Math.floor(Math.random()*3600),worker:`worker-${Math.floor(Math.random()*8)+1}`});
+  }
+  return jobs.sort((a,b)=>{const s={pending:0,running:1,retry:2,completed:3,failed:4};return s[a.status]-s[b.status];});
+}
+Object.keys(queues).forEach(q=>{queues[q].jobs=generateJobs(q,20);});
+function render(){
+  let totalQueued=0,totalProcessing=0,totalCompleted=0,totalFailed=0;
+  queueGrid.innerHTML=Object.entries(queues).map(([key,q])=>{
+    totalQueued+=q.queued;totalProcessing+=q.processing;totalCompleted+=q.completed;totalFailed+=q.failed;
+    return `<div class="queue-card"><div class="queue-header"><h3>${q.name}</h3><span class="queue-status ${q.status}">${q.status}</span></div><div class="queue-body"><div class="queue-metrics"><div class="metric"><div class="metric-value">${q.queued}</div><div class="metric-label">Queued</div></div><div class="metric"><div class="metric-value">${q.processing}</div><div class="metric-label">Processing</div></div><div class="metric"><div class="metric-value">${q.workers}</div><div class="metric-label">Workers</div></div><div class="metric"><div class="metric-value">${q.avgTime.toFixed(1)}s</div><div class="metric-label">Avg Time</div></div></div><canvas class="chart-mini" id="chart-${key}"></canvas><div class="job-list"><div class="job-header"><span>Job ID</span><span>Status</span><span>Priority</span><span>Time</span><span>Worker</span></div>${q.jobs.slice(0,15).map(j=>`<div class="job-row"><span class="job-id">${j.id}</span><span><span class="job-status ${j.status}">${j.status}</span></span><span class="job-priority">P${j.priority}</span><span class="job-time">${formatTime(j.time)}</span><span class="job-worker">${j.worker}</span></div>`).join('')}</div></div></div>`;
+  }).join('');
+  document.getElementById('totalQueued').textContent=totalQueued;
+  document.getElementById('totalProcessing').textContent=totalProcessing;
+  document.getElementById('totalCompleted').textContent=totalCompleted.toLocaleString();
+  document.getElementById('totalFailed').textContent=totalFailed;
+  Object.keys(queues).forEach(drawMiniChart);
+}
+function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return m>0?`${m}m ${sec}s`:`${sec}s`;}
+function drawMiniChart(key){
+  const q=queues[key];
+  const canvas=document.getElementById(`chart-${key}`);
+  if(!canvas)return;
+  const ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2;
+  const h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);ctx.clearRect(0,0,w/2,h/2);
+  const data=Array(30).fill(0).map(()=>q.processing+Math.floor(Math.random()*5));
+  const max=Math.max(...data,1),min=Math.min(...data);
+  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--accent').trim();
+  ctx.lineWidth=1.5;ctx.lineCap='round';ctx.beginPath();
+  const step=(w/2)/29;
+  data.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-(v-min)/(max-min||1));i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,ctx.strokeStyle+'22');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+function formatTime(s){const m=Math.floor(s/60);const sec=s%60;return m>0?`${m}m ${sec}s`:`${sec}s`;}
+function update(){
+  Object.keys(queues).forEach(key=>{
+    const q=queues[key];
+    q.queued=Math.max(0,q.queued+Math.floor(Math.random()*3)-1);
+    q.processing=Math.max(0,Math.min(q.workers,q.processing+Math.floor(Math.random()*2)-1));
+    if(Math.random()<0.3){q.completed+=Math.floor(Math.random()*3);}
+    if(Math.random()<0.05){q.failed+=1;}
+    q.jobs=generateJobs(key,20);
+  });
+  render();
+}
+setInterval(update,3000);
+render();
+</script>
+</body>
+</html>

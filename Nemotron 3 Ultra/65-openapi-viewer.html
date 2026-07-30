@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>65 — OpenAPI Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:300px 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:1rem;overflow:auto}
+.sidebar-header{position:sticky;top:0;background:var(--card);padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem;z-index:10;display:flex;justify-content:space-between;align-items:center}
+.sidebar-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.api-info{font-size:.7rem;color:var(--muted);margin-bottom:1rem;padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:4px}
+.endpoint-list{display:flex;flex-direction:column;gap:.35rem}
+.endpoint-group{background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.group-header{padding:.5rem .75rem;background:var(--border);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);cursor:pointer}
+.group-header:hover{background:var(--muted)}
+.endpoint-item{padding:.5rem .75rem .5rem 1.5rem;border-top:1px solid var(--border);cursor:pointer;font-size:.7rem;display:flex;align-items:center;gap:.5rem;transition:all .1s}
+.endpoint-item:hover{background:rgba(88,166,255,.1);color:var(--accent)}
+.endpoint-method{font-size:.55rem;padding:.1rem .4rem;border-radius:3px;font-weight:700;min-width:50px;text-align:center}
+.endpoint-method.get{background:rgba(63,185,80,.2);color:var(--accent2)}
+.endpoint-method.post{background:rgba(88,166,255,.2);color:var(--accent)}
+.endpoint-method.put{background:rgba(210,153,34,.2);color:var(--accent3)}
+.endpoint-method.patch{background:rgba(210,153,34,.2);color:var(--accent3)}
+.endpoint-method.delete{background:rgba(248,81,73,.2);color:var(--accent4)}
+.endpoint-path{font-family:'JetBrains Mono',monospace;flex:1}
+.endpoint-summary{color:var(--muted);font-size:.65rem}
+.main{padding:2rem;overflow:auto}
+.spec-header{margin-bottom:2rem}
+.spec-header h1{font-size:1.5rem;font-weight:300}
+.spec-header h1 span{font-weight:700;color:var(--accent)}
+.spec-content{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem}
+.endpoint-detail{display:none}
+.endpoint-detail.active{display:block}
+.detail-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+.detail-method{font-size:.55rem;padding:.2rem .6rem;border-radius:3px;font-weight:700}
+.detail-path{font-size:1rem;font-family:'JetBrains Mono',monospace;color:var(--accent)}
+.detail-description{color:var(--muted);margin-bottom:1.5rem;line-height:1.6}
+.detail-section{margin-bottom:1.5rem}
+.detail-section h4{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.param-table{width:100%;border-collapse:collapse;font-size:.7rem}
+.param-table th,.param-table td{padding:.5rem;text-align:left;border-bottom:1px solid var(--border)}
+.param-table th{font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.param-req{font-size:.55rem;padding:.1rem .3rem;border-radius:2px;background:rgba(248,81,73,.2);color:var(--accent4)}
+.param-opt{font-size:.55rem;padding:.1rem .3rem;border-radius:2px;background:rgba(139,148,158,.2);color:var(--muted)}
+.code-block{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1rem;font-size:.7rem;overflow:auto;max-height:300px}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="sidebar-header"><h2>Endpoints</h2></div>
+<div class="api-info" id="apiInfo">Loading...</div>
+<div class="endpoint-list" id="endpointList"></div>
+</aside>
+<main class="main">
+<div class="spec-header"><h1>OpenAPI <span>Viewer</span></h1></div>
+<div class="spec-content" id="specContent"></div>
+</main>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 065 / 100 · OpenAPI Viewer</footer>
+<script>
+const endpointList=document.getElementById('endpointList');
+const apiInfo=document.getElementById('apiInfo');
+const specContent=document.getElementById('specContent');
+let spec=null,endpoints=[],selectedPath=null,selectedMethod=null;
+const sampleSpec={
+  openapi:'3.0.3',
+  info:{title:'Sample API',version:'1.0.0',description:'A sample API for demonstration'},
+  servers:[{url:'https://api.example.com/v1'}],
+  paths:{
+    '/users':{get:{summary:'List users',description:'Returns a paginated list of users',tags:['Users'],parameters:[{name:'page',in:'query',schema:{type:'integer'},description:'Page number'},{name:'limit',in:'query',schema:{type:'integer'},description:'Items per page'}],responses:{'200':{description:'Successful response'}}},post:{summary:'Create user',description:'Creates a new user',tags:['Users'],requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/User'}}}},responses:{'201':{description:'User created'}}}},
+    '/users/{id}':{get:{summary:'Get user',description:'Returns a single user by ID',tags:['Users'],parameters:[{name:'id',in:'path',required:true,schema:{type:'string'},description:'User ID'}],responses:{'200':{description:'Successful response'}}},put:{summary:'Update user',description:'Updates a user by ID',tags:['Users'],parameters:[{name:'id',in:'path',required:true,schema:{type:'string'}}],requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/User'}}}},responses:{'200':{description:'User updated'}}},delete:{summary:'Delete user',description:'Deletes a user by ID',tags:['Users'],parameters:[{name:'id',in:'path',required:true,schema:{type:'string'}}],responses:{'204':{description:'User deleted'}}}},
+    '/posts':{get:{summary:'List posts',description:'Returns a paginated list of posts',tags:['Posts'],parameters:[{name:'userId',in:'query',schema:{type:'string'},description:'Filter by user'}],responses:{'200':{description:'Successful response'}}},post:{summary:'Create post',description:'Creates a new post',tags:['Posts'],requestBody:{required:true,content:{'application/json':{schema:{$ref:'#/components/schemas/Post'}}}},responses:{'201':{description:'Post created'}}}},
+    '/posts/{id}':{get:{summary:'Get post',description:'Returns a single post by ID',tags:['Posts'],parameters:[{name:'id',in:'path',required:true,schema:{type:'string'}}],responses:{'200':{description:'Successful response'}}},delete:{summary:'Delete post',description:'Deletes a post by ID',tags:['Posts'],parameters:[{name:'id',in:'path',required:true,schema:{type:'string'}}],responses:{'204':{description:'Post deleted'}}}}
+  },
+  components:{schemas:{User:{type:'object',properties:{id:{type:'string'},name:{type:'string'},email:{type:'string'},createdAt:{type:'string',format:'date-time'}},required:['id','name','email']},Post:{type:'object',properties:{id:{type:'string'},title:{type:'string'},content:{type:'string'},authorId:{type:'string'},createdAt:{type:'string',format:'date-time'}},required:['id','title','content','authorId']}}}
+};
+function loadSpec(s){
+  spec=s;
+  apiInfo.innerHTML=`<strong>${s.info.title}</strong> v${s.info.version}<br>${s.info.description||''}<br><span style="color:var(--accent)">${s.servers[0]?.url||''}</span>`;
+  endpoints=[];
+  Object.entries(s.paths).forEach(([path,methods])=>{
+    Object.entries(methods).forEach(([method,details])=>{
+      endpoints.push({path,method,details,tags:details.tags||['Default']});
+    });
+  });
+  renderEndpointList();
+  if(endpoints.length>0)selectEndpoint(endpoints[0].path,endpoints[0].method);
+}
+function renderEndpointList(){
+  const groups={};
+  endpoints.forEach(e=>{if(!groups[e.tags[0]])groups[e.tags[0]]=[];groups[e.tags[0]].push(e);});
+  endpointList.innerHTML=Object.entries(groups).map(([tag,eps])=>`<div class="endpoint-group"><div class="group-header">${tag} (${eps.length})</div>${eps.map(e=>`<div class="endpoint-item" data-path="${e.path}" data-method="${e.method}"><span class="endpoint-method ${e.method}">${e.method.toUpperCase()}</span><span class="endpoint-path">${e.path}</span><span class="endpoint-summary">${e.details.summary||''}</span></div>`).join('')}</div>`).join('');
+  document.querySelectorAll('.endpoint-item').forEach(el=>el.onclick=()=>selectEndpoint(el.dataset.path,el.dataset.method));
+  document.querySelectorAll('.group-header').forEach(h=>h.onclick=()=>{h.nextElementSibling.style.display=h.nextElementSibling.style.display==='none'?'block':'none';});
+}
+function selectEndpoint(path,method){
+  selectedPath=path;selectedMethod=method;
+  document.querySelectorAll('.endpoint-item').forEach(el=>el.classList.toggle('active',el.dataset.path===path&&el.dataset.method===method));
+  renderEndpointDetail();
+}
+function renderEndpointDetail(){
+  const ep=endpoints.find(e=>e.path===selectedPath&&e.method===selectedMethod);
+  if(!ep)return;
+  const d=ep.details;
+  const params=d.parameters||[];
+  const reqBody=d.requestBody;
+  specContent.innerHTML=`<div class="endpoint-detail active"><div class="detail-header"><div><span class="detail-method ${ep.method}">${ep.method.toUpperCase()}</span><span class="detail-path">${ep.path}</span></div></div>${d.description?`<div class="detail-description">${d.description}</div>`:''}${params.length?`<div class="detail-section"><h4>Parameters</h4><table class="param-table"><thead><tr><th>Name</th><th>In</th><th>Required</th><th>Type</th><th>Description</th></tr></thead><tbody>${params.map(p=>`<tr><td>${p.name}</td><td>${p.in}</td><td><span class="${p.required?'param-req':'param-opt'}">${p.required?'Required':'Optional'}</span></td><td>${p.schema?.type||'object'}${p.schema?.format?` (${p.schema.format})`:''}</td><td>${p.description||''}</td></tr>`).join('')}</tbody></table></div>`:''}${reqBody?`<div class="detail-section"><h4>Request Body</h4><div class="code-block">${JSON.stringify(reqBody.content?.['application/json']?.schema||{},null,2)}</div></div>`:''}<div class="detail-section"><h4>Responses</h4>${Object.entries(d.responses||{}).map(([code,resp])=>`<div style="margin-bottom:.5rem"><strong>${code}</strong>: ${resp.description||''}</div>`).join('')}</div></div>`;
+}
+document.getElementById('loadSample').onclick=()=>loadSpec(sampleSpec);
+document.getElementById('loadFile').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='.json,.yaml,.yml';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{let s;if(f.name.endsWith('.yaml')||f.name.endsWith('.yml')){s=jsyaml.load(r.result);}else{s=JSON.parse(r.result);}loadSpec(s);}catch(err){alert('Invalid spec: '+err.message);}};r.readAsText(f);};i.click();};
+// Add load buttons to sidebar header
+const header=document.querySelector('.sidebar-header');
+header.innerHTML+=`<div style="display:flex;gap:.25rem"><button class="btn" id="loadSample" style="padding:.2rem .5rem;font-size:.55rem">Sample</button><button class="btn" id="loadFile" style="padding:.2rem .5rem;font-size:.55rem">Load File</button></div>`;
+// Simple YAML parser for basic cases
+const jsyaml={load(str){return JSON.parse(str.replace(/:\s*([^#\n]+)/g,': "$1"').replace(/'/g,'"').replace(/(\w+):/g,'"$1":'))}};
+loadSpec(sampleSpec);
+</script>
+</body>
+</html>

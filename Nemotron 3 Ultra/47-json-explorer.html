@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>47 — JSON Explorer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:350px 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:1rem;overflow:auto}
+.sidebar-header{position:sticky;top:0;background:var(--card);padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem;z-index:10}
+.sidebar-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;display:flex;justify-content:space-between;align-items:center}
+.input-group{margin-bottom:1rem}
+.input-group label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+.input-group textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px;font-size:.75rem;font-family:inherit;min-height:200px;resize:vertical}
+.input-group textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn{width:100%;padding:.5rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:inherit;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer;margin-bottom:.5rem;transition:all .1s}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.primary:hover{background:#79b8ff}
+.samples{font-size:.65rem;color:var(--muted);line-height:2}
+.samples code{background:var(--bg);padding:.1rem .3rem;border-radius:3px;color:var(--accent2);cursor:pointer}
+.main{padding:1rem;overflow:auto}
+.tree{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.tree-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.tree-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.tree-body{padding:1rem;max-height:70vh;overflow:auto}
+.json-node{cursor:pointer;user-select:none}
+.json-node.collapsed>.json-children{display:none}
+.json-node.collapsed .json-expand::before{content:'▶';transform:rotate(-90deg);display:inline-block}
+.json-expand{display:inline-block;width:1em;text-align:center;color:var(--muted);font-size:.7rem}
+.json-key{color:var(--accent3);font-weight:500}
+.json-string{color:var(--accent2)}
+.json-number{color:#79c0ff}
+.json-boolean{color:var(--accent)}
+.json-null{color:var(--muted);font-style:italic}
+.json-bracket{color:var(--muted)}
+.json-comma{color:var(--muted)}
+.json-path{font-size:.65rem;color:var(--muted);margin-left:.5rem}
+.search-box{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px;font-size:.75rem;margin-bottom:1rem}
+.search-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.stats{font-size:.7rem;color:var(--muted);display:flex;gap:1rem;flex-wrap:wrap}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="sidebar-header"><h2>Input <span id="inputStatus" style="font-weight:400;font-size:.6rem;color:var(--muted)"></span></h2></div>
+<div class="input-group"><label>JSON Data</label><textarea id="jsonInput" placeholder='{"name": "Nemotron 3 Ultra", "version": 100, "designs": ["generative", "editorial", "interactive"], "active": true}' spellcheck="false"></textarea></div>
+<div class="input-group"><button class="btn primary" id="parseBtn">Parse JSON</button><button class="btn" id="formatBtn">Format</button><button class="btn" id="minifyBtn">Minify</button><button class="btn" id="sampleBtn">Load Sample</button></div>
+<input type="search" class="search-box" id="searchBox" placeholder="Search keys/values...">
+<div class="stats"><span id="nodeCount">0 nodes</span><span id="depthCount">Depth: 0</span><span id="sizeCount">0 bytes</span></div>
+<div class="samples"><strong>Try:</strong> <code onclick="loadSample('simple')">Simple Object</code> <code onclick="loadSample('complex')">Nested</code> <code onclick="loadSample('array')">Array</code> <code onclick="loadSample('api')">API Response</code></div>
+</aside>
+<main class="main">
+<div class="tree"><div class="tree-header"><h2>JSON Tree</h2><div style="display:flex;gap:.5rem"><button class="btn" id="expandAll" style="padding:.25rem .5rem;font-size:.6rem">Expand All</button><button class="btn" id="collapseAll" style="padding:.25rem .5rem;font-size:.6rem">Collapse All</button></div></div><div class="tree-body" id="treeBody"></div></div>
+</main>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 047 / 100 · JSON Explorer</footer>
+<script>
+const jsonInput=document.getElementById('jsonInput');
+const treeBody=document.getElementById('treeBody');
+const searchBox=document.getElementById('searchBox');
+const nodeCount=document.getElementById('nodeCount');
+const depthCount=document.getElementById('depthCount');
+const sizeCount=document.getElementById('sizeCount');
+const inputStatus=document.getElementById('inputStatus');
+let jsonData=null,nodeCountTotal=0,maxDepth=0;
+const samples={
+  simple:`{\n  "name": "Nemotron 3 Ultra",\n  "version": 100,\n  "tags": ["generative", "editorial", "interactive", "experimental"],\n  "active": true,\n  "metadata": {\n    "author": "Nous Research",\n    "model": "Nemotron 3 Ultra 550B",\n    "provider": "OmniRoute"\n  }\n}`,
+  complex:`{\n  "project": "Nemotron 3 Ultra",\n  "designs": [\n    {\n      "id": 1,\n      "name": "Neural Bloom",\n      "category": "generative",\n      "tech": ["canvas", "particles", "physics"],\n      "stats": {"lines": 149, "colors": 5, "fps": 60}\n    },\n    {\n      "id": 2,\n      "name": "Lattice Resonance",\n      "category": "generative",\n      "tech": ["canvas", "grid", "audio"],\n      "stats": {"lines": 168, "colors": 7, "fps": 60}\n    }\n  ],\n  "settings": {\n    "theme": "dark",\n    "animations": true,\n    "performance": "high"\n  }\n}`,
+  array:`[\n  {"id": 1, "type": "generative", "title": "Neural Bloom"},\n  {"id": 2, "type": "generative", "title": "Lattice Resonance"},\n  {"id": 3, "type": "editorial", "title": "Brutalist Manifesto"},\n  {"id": 4, "type": "dataviz", "title": "Interactive Data Explorer"},\n  {"id": 5, "type": "interactive", "title": "Shader Playground"}\n]`,
+  api:`{\n  "status": "success",\n  "timestamp": "2026-07-30T14:32:17Z",\n  "data": {\n    "user": {"id": 12345, "name": "Dhafin Dzimar", "tier": "pro"},\n    "projects": [\n      {"id": "nemotron-3-ultra", "name": "Nemotron 3 Ultra", "files": 100, "size": "2.4MB"},\n      {"id": "stunning-html", "name": "Stunning HTML", "files": 100, "size": "2.4MB"}\n    ],\n    "usage": {"apiCalls": 1247, "bandwidth": "2.4GB", "storage": "512MB"}\n  },\n  "meta": {"rateLimit": {"remaining": 4873, "reset": "2026-07-30T15:00:00Z"}}\n}`
+};
+function loadSample(key){
+  jsonInput.value=samples[key];
+  parseJSON();
+}
+function parseJSON(){
+  const val=jsonInput.value.trim();
+  if(!val){treeBody.innerHTML='<div style="padding:2rem;color:var(--muted);text-align:center">Enter JSON to explore</div>';return;}
+  try{
+    jsonData=JSON.parse(val);
+    inputStatus.textContent='✓ Valid JSON';
+    inputStatus.style.color='var(--accent2)';
+    sizeCount.textContent=val.length+' bytes';
+    renderTree(jsonData);
+  }catch(e){
+    inputStatus.textContent='✗ Invalid: '+e.message;
+    inputStatus.style.color='var(--accent4)';
+    treeBody.innerHTML=`<div style="padding:2rem;color:var(--accent4)">Parse Error: ${e.message}</div>`;
+  }
+}
+function renderTree(data,path='$',depth=0){
+  nodeCountTotal=0;maxDepth=0;
+  const html=buildNode(data,path,depth);
+  treeBody.innerHTML=html;
+  nodeCount.textContent=nodeCountTotal+' nodes';
+  depthCount.textContent='Depth: '+maxDepth;
+  addClickHandlers();
+  filterTree();
+}
+function buildNode(data,path,depth){
+  nodeCountTotal++;maxDepth=Math.max(maxDepth,depth);
+  const type=Array.isArray(data)?'array':typeof data;
+  if(data===null)return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-null">null</span></div>`;
+  if(type==='string')return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-string">"${escapeHtml(data)}"</span></div>`;
+  if(type==='number')return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-number">${data}</span></div>`;
+  if(type==='boolean')return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-boolean">${data}</span></div>`;
+  if(type==='array'){
+    if(data.length===0)return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-bracket">[</span><span class="json-bracket">]</span></div>`;
+    let html=`<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-bracket">[</span><div class="json-children" style="margin-left:1.5rem">`;
+    data.forEach((item,i)=>{html+=buildNode(item,path+'['+i+']',depth+1);if(i<data.length-1)html+=`<div class="json-node"><span class="json-comma">,</span></div>`;});
+    html+=`</div><span class="json-bracket">]</span></div>`;
+    return html;
+  }
+  if(type==='object'){
+    const keys=Object.keys(data);
+    if(keys.length===0)return `<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-bracket">{</span><span class="json-bracket">}</span></div>`;
+    let html=`<div class="json-node" data-path="${escapeHtml(path)}"><span class="json-expand"></span><span class="json-bracket">{</span><div class="json-children" style="margin-left:1.5rem">`;
+    keys.forEach((key,i)=>{const childPath=path+(path==='$'?'.':'')+key;html+=`<div class="json-node" data-path="${escapeHtml(childPath)}"><span class="json-expand"></span><span class="json-key">"${escapeHtml(key)}"</span><span class="json-bracket">:</span> ${buildNode(data[key],childPath,depth+1).replace(/^<div class="json-node"/,'<div class="json-node inline"').replace('</div>','')}`;if(i<keys.length-1)html+=`<div class="json-node"><span class="json-comma">,</span></div>`;});
+    html+=`</div><span class="json-bracket">}</span></div>`;
+    return html;
+  }
+  return '';
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"').replace(/'/g,''');}
+function addClickHandlers(){
+  document.querySelectorAll('.json-node:not(.inline) > .json-expand').forEach(el=>{el.addEventListener('click',e=>{e.stopPropagation();const node=e.target.closest('.json-node');node.classList.toggle('collapsed');});});
+  document.querySelectorAll('.json-node').forEach(el=>{el.addEventListener('click',e=>{if(e.target.classList.contains('json-expand'))return;document.querySelectorAll('.json-node.selected').forEach(n=>n.classList.remove('selected'));el.classList.add('selected');const path=el.dataset.path;if(path)navigator.clipboard.writeText(path);});});
+}
+function filterTree(){
+  const q=searchBox.value.toLowerCase();
+  document.querySelectorAll('.json-node').forEach(el=>{const text=el.textContent.toLowerCase();el.style.display=text.includes(q)?'':'none';});
+}
+document.getElementById('parseBtn').onclick=parseJSON;
+document.getElementById('formatBtn').onclick=()=>{try{jsonInput.value=JSON.stringify(JSON.parse(jsonInput.value),null,2);parseJSON();}catch(e){inputStatus.textContent='✗ Invalid JSON';inputStatus.style.color='var(--accent4)';}};
+document.getElementById('minifyBtn').onclick=()=>{try{jsonInput.value=JSON.stringify(JSON.parse(jsonInput.value));parseJSON();}catch(e){inputStatus.textContent='✗ Invalid JSON';inputStatus.style.color='var(--accent4)';}};
+document.getElementById('sampleBtn').onclick=()=>loadSample('complex');
+document.getElementById('expandAll').onclick=()=>document.querySelectorAll('.json-node.collapsed').forEach(n=>n.classList.remove('collapsed'));
+document.getElementById('collapseAll').onclick=()=>document.querySelectorAll('.json-node:not(.collapsed)').forEach(n=>n.classList.add('collapsed'));
+searchBox.addEventListener('input',filterTree);
+jsonInput.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter')parseJSON();});
+jsonInput.value=samples.simple;parseJSON();
+</script>
+</body>
+</html>

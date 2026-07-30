@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raymarching SDFs — Nemotron 3 Ultra #77</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #050508; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0d0f1a; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.sdf-selector { pointer-events: auto; }
+.sdf-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.sdf-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>RAYMARCHING SDFs</h1>
+<p class="subtitle">Signed Distance Fields</p>
+</div>
+<div class="controls">
+<div class="sdf-selector"><select id="sdfSelect" aria-label="Select SDF primitive"></select></div>
+<button class="btn primary" id="btnRandom" aria-label="Random SDF"><span>Random</span></button>
+<button class="btn" id="btnAnimate" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnWireframe" aria-label="Toggle wireframe"><span>Wireframe</span></button>
+<button class="btn" id="btnBloom" aria-label="Toggle bloom"><span>Bloom</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to orbit • Scroll to zoom • Keys: 1-9 SDFs • Space pause • R random</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+<div class="stat"><div class="stat-value" id="iter">0</div><div class="stat-label">Avg Iters</div></div>
+<div class="stat"><div class="stat-value" id="dist">0.00</div><div class="stat-label">Min Dist</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl2', { antialias: false, alpha: false, preserveDrawingBuffer: false });
+const ext = gl.getExtension('EXT_color_buffer_float');
+if (!ext) console.warn('EXT_color_buffer_float not supported');
+
+const vertexSource = `#version 300 es
+precision highp float;
+layout(location = 0) in vec2 aPos;
+out vec2 vUv;
+void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+
+const sdfLibrary = `
+#define PI 3.14159265359
+#define TAU 6.28318530718
+
+float sdSphere(vec3 p, float r) { return length(p) - r; }
+float sdBox(vec3 p, vec3 b) { vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0); }
+float sdRoundBox(vec3 p, vec3 b, float r) { vec3 q = abs(p) - b; return length(max(q, 0.0)) + min(max(q.x, max(q.y, q.z)), 0.0) - r; }
+float sdTorus(vec3 p, vec2 t) { vec2 q = vec2(length(p.xz) - t.x, p.y); return length(q) - t.y; }
+float sdCylinder(vec3 p, vec2 h) { vec2 d = abs(vec2(length(p.xz), p.y)) - h; return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)); }
+float sdCone(vec3 p, vec2 c, float h) { vec2 q = vec2(length(p.xz), p.y); vec2 k = q - c * clamp(dot(q, c) / dot(c, c), 0.0, h); return length(max(q, 0.0)) * sign(max(q.x, q.y)) - min(k.x, k.y); }
+float sdPlane(vec3 p, vec3 n, float h) { return dot(p, n) + h; }
+float sdHexPrism(vec3 p, float h) { const vec3 k = vec3(-0.8660254, 0.5, 0.57735); p = abs(p); p.xy -= 2.0 * min(dot(k.xy, p.xy), 0.0) * k.xy; vec2 d = vec2(length(p.xy - vec2(clamp(p.x, -k.z * h, k.z * h), h)) * sign(p.y - h), p.z - h); return min(max(d.x, d.y), 0.0) + length(max(d, 0.0)); }
+float sdCappedTorus(vec3 p, float ra, float rb) { vec2 q = vec2(length(p.xz) - ra, p.y); return length(q) - rb; }
+float sdLink(vec3 p, float le, float r1, float r2) { vec3 q = vec3(p.x, max(abs(p.y) - le, 0.0), p.z); return length(vec2(length(q.xy) - r1, q.z)) - r2; }
+float sdOctahedron(vec3 p, float s) { p = abs(p); float m = p.x + p.y + p.z - s; vec3 q; if (3.0 * p.x < m) q = p.xyz; else if (3.0 * p.y < m) q = p.yzx; else if (3.0 * p.z < m) q = p.zxy; else return m * 0.57735027; float k = clamp(0.5 * (q.z - q.y + s), 0.0, s); return length(vec3(q.x, q.y - s + k, q.z - k)); }
+float sdPyramid(vec3 p, float h) { float m2 = h * h + 0.25; p.xz = abs(p.xz); p.xz = (p.z > p.x) ? p.zx : p.xz; p.xz -= 0.5; vec3 q = vec3(p.z, h * p.y - 0.5 * p.x, h * p.x + 0.5 * p.y); float s = max(-q.x, 0.0); float t = clamp((q.y - 0.5 * p.z) / (m2 + 0.25), 0.0, 1.0); float a = m2 * (q.x + s) * (q.x + s) + q.y * q.y; float b = m2 * (q.x + 0.5 * t) * (q.x + 0.5 * t) + (q.y - m2 * t) * (q.y - m2 * t); float d2 = min(q.y, -q.x * m2 - q.y * 0.5) > 0.0 ? 0.0 : min(a, b); return sqrt((d2 + q.z * q.z) / m2) * sign(max(q.z, -p.y)); }
+float sdCapsule(vec3 p, float h, float r) { p.y -= clamp(p.y, -h, h); return length(p.xz) - r; }
+float sdEllipsoid(vec3 p, vec3 r) { float k0 = length(p / r); float k1 = length(p / (r * r)); return k0 * (k0 - 1.0) / k1; }
+float sdTriangle(vec3 p, vec3 a, vec3 b, vec3 c) { vec3 ba = b - a, ca = c - a, pa = p - a, nor = cross(ba, ca); float d = dot(pa, nor) / length(nor); vec3 baPa = ba - pa * dot(ba, pa) / dot(ba, ba); vec3 caPa = ca - pa * dot(ca, pa) / dot(ca, ca); vec3 bcPb = (c - b) - (p - b) * dot(c - b, p - b) / dot(c - b, c - b); float s = sign(dot(nor, cross(ba, baPa))) + sign(dot(nor, cross(caPa, ca))) + sign(dot(nor, cross(bcPb, c - b))); return s < 2.0 ? length(d) : min(length(baPa), min(length(caPa), length(bcPb))); }
+
+float opSmoothU(float d1, float d2, float k) { float h = clamp(0.5 + 0.5 * (d2 - d1) / k, 0.0, 1.0); return mix(d2, d1, h) - k * h * (1.0 - h); }
+float opSmoothI(float d1, float d2, float k) { float h = clamp(0.5 - 0.5 * (d2 + d1) / k, 0.0, 1.0); return mix(d2, -d1, h) + k * h * (1.0 - h); }
+float opSmoothS(float d1, float d2, float k) { float h = clamp(0.5 - 0.5 * (d2 - d1) / k, 0.0, 1.0); return mix(d2, -d1, h) + k * h * (1.0 - h); }
+
+vec3 opRep(vec3 p, vec3 c) { return mod(p + 0.5 * c, c) - 0.5 * c; }
+vec3 opRepLimited(vec3 p, vec3 c, vec3 l) { vec3 q = mod(p + 0.5 * c, c) - 0.5 * c; return max(q - l, 0.0) + min(q, l); }
+
+mat3 rotX(float a) { float c = cos(a), s = sin(a); return mat3(1,0,0, 0,c,-s, 0,s,c); }
+mat3 rotY(float a) { float c = cos(a), s = sin(a); return mat3(c,0,s, 0,1,0, -s,0,c); }
+mat3 rotZ(float a) { float c = cos(a), s = sin(a); return mat3(c,-s,0, s,c,0, 0,0,1); }
+
+float map(vec3 p, float time, int sdfId);
+vec3 getNormal(vec3 p, float time, int sdfId) { const float eps = 0.0005; return normalize(vec3(map(p + vec3(eps,0,0), time, sdfId) - map(p - vec3(eps,0,0), time, sdfId), map(p + vec3(0,eps,0), time, sdfId) - map(p - vec3(0,eps,0), time, sdfId), map(p + vec3(0,0,eps), time, sdfId) - map(p - vec3(0,0,eps), time, sdfId))); }
+
+float softShadow(vec3 ro, vec3 rd, float mint, float tmax, int sdfId, float time) { float res = 1.0; float t = mint; for (int i = 0; i < 32; i++) { float h = map(ro + rd * t, time, sdfId); if (h < 0.001) return 0.0; res = min(res, 8.0 * h / t); t += h; if (t > tmax) break; } return res; }
+
+vec3 getColor(vec3 p, vec3 n, vec3 rd, vec3 ro, float time, int sdfId, float dist) {
+    vec3 col = vec3(0.0);
+    vec3 lightDir = normalize(vec3(sin(time * 0.3), 1.0, cos(time * 0.3)));
+    float diff = max(dot(n, lightDir), 0.0);
+    float spec = pow(max(dot(reflect(-lightDir, n), -rd), 0.0), 32.0);
+    float amb = 0.15;
+    float shadow = softShadow(p + n * 0.01, lightDir, 0.01, 10.0, sdfId, time);
+    
+    float hue = 0.5 + 0.5 * sin(time * 0.2 + p.x * 0.5);
+    vec3 baseCol = vec3(0.0);
+    if (sdfId == 0) baseCol = mix(vec3(0.0, 0.8, 1.0), vec3(1.0, 0.2, 0.5), smoothstep(-1.0, 1.0, p.y));
+    else if (sdfId == 1) baseCol = mix(vec3(0.1, 0.9, 0.4), vec3(1.0, 0.8, 0.1), smoothstep(-1.0, 1.0, p.x));
+    else if (sdfId == 2) baseCol = vec3(0.9, 0.2, 0.6);
+    else if (sdfId == 3) baseCol = mix(vec3(1.0, 0.3, 0.0), vec3(0.0, 0.7, 1.0), smoothstep(-1.0, 1.0, p.z));
+    else if (sdfId == 4) baseCol = vec3(0.8, 0.6, 1.0);
+    else if (sdfId == 5) baseCol = mix(vec3(0.2, 1.0, 0.8), vec3(1.0, 0.2, 0.6), sin(time + p.y * 3.0) * 0.5 + 0.5);
+    else if (sdfId == 6) baseCol = vec3(1.0, 0.9, 0.2);
+    else if (sdfId == 7) baseCol = mix(vec3(0.5, 0.0, 1.0), vec3(0.0, 1.0, 0.5), sin(time * 0.5 + length(p.xz) * 2.0) * 0.5 + 0.5);
+    else if (sdfId == 8) baseCol = vec3(0.0, 0.9, 0.7);
+    else baseCol = vec3(0.8, 0.8, 0.9);
+    
+    col = baseCol * (amb + diff * shadow) + vec3(spec * shadow) * 0.5;
+    col += vec3(0.02, 0.01, 0.03) * (1.0 - smoothstep(0.0, 5.0, dist));
+    return col;
+}
+
+float map(vec3 p, float time, int sdfId) {
+    float d = 1e9;
+    vec3 q = p;
+    if (sdfId == 0) { d = sdSphere(p, 1.0); }
+    else if (sdfId == 1) { d = sdBox(p, vec3(1.0)); }
+    else if (sdfId == 2) { d = sdTorus(p, vec2(1.0, 0.35)); }
+    else if (sdfId == 3) { d = sdCylinder(p, vec2(1.0, 1.5)); }
+    else if (sdfId == 4) { d = sdCone(p, normalize(vec2(1.0, 1.5)), 2.0); }
+    else if (sdfId == 5) { d = sdRoundBox(p, vec3(0.9), 0.2); }
+    else if (sdfId == 6) { d = sdHexPrism(p, 1.2); }
+    else if (sdfId == 7) { d = sdCappedTorus(p, 1.2, 0.3); }
+    else if (sdfId == 8) { d = sdOctahedron(p, 1.3); }
+    else if (sdfId == 9) { d = sdPyramid(p, 1.5); }
+    else if (sdfId == 10) { d = sdCapsule(p, 1.2, 0.4); }
+    else if (sdfId == 11) { d = sdEllipsoid(p, vec3(1.2, 0.8, 1.5)); }
+    else if (sdfId == 12) { d = sdLink(p, 0.5, 0.8, 0.3); }
+    else if (sdfId == 13) { 
+        float t = time * 0.5;
+        q = p * rotY(t);
+        d = opSmoothU(sdSphere(q - vec3(-1.2, 0, 0), 0.7), sdSphere(q - vec3(1.2, 0, 0), 0.7), 0.3);
+    }
+    else if (sdfId == 14) {
+        float t = time * 0.3;
+        q = p * rotY(t) * rotX(t * 0.7);
+        d = opSmoothU(sdBox(q, vec3(0.6)), sdSphere(q, 0.5), 0.2);
+    }
+    else if (sdfId == 15) {
+        float t = time * 0.4;
+        d = opSmoothU(sdTorus(p * rotY(t), vec2(1.0, 0.3)), sdSphere(p, 0.4), 0.2);
+    }
+    else if (sdfId == 16) {
+        vec3 r = opRepLimited(p, vec3(2.5), vec3(3.0));
+        d = sdSphere(r, 0.6);
+    }
+    else if (sdfId == 17) {
+        vec3 r = opRep(p, vec3(2.0));
+        d = sdRoundBox(r, vec3(0.7), 0.15);
+    }
+    else if (sdfId == 18) {
+        vec3 r = opRepLimited(p, vec3(2.5), vec3(4.0));
+        d = sdTorus(r, vec2(0.8, 0.25));
+    }
+    else if (sdfId == 19) {
+        float t = time * 0.2;
+        q = p * rotY(t);
+        d = opSmoothI(sdBox(q, vec3(1.2)), sdSphere(q, 0.8), 0.3);
+    }
+    else if (sdfId == 20) {
+        float t = time * 0.6;
+        q = p * rotY(t) * rotZ(t * 0.5);
+        d = sdCapsule(q, 1.0, 0.3);
+    }
+    else if (sdfId == 21) {
+        float t = time * 0.4;
+        q = p * rotY(t);
+        d = opSmoothU(sdCone(q, normalize(vec2(1.0, 2.0)), 1.5), sdSphere(q - vec3(0, 1.8, 0), 0.4), 0.2);
+    }
+    else if (sdfId == 22) {
+        float t = time * 0.5;
+        q = p * rotY(t);
+        d = sdEllipsoid(q, vec3(1.0, 0.6, 1.4));
+    }
+    else if (sdfId == 23) {
+        d = sdLink(p, 0.8, 0.7, 0.25);
+    }
+    else if (sdfId == 24) {
+        float t = time * 0.3;
+        q = p * rotY(t);
+        d = opSmoothU(sdOctahedron(q, 1.2), sdSphere(q, 0.5), 0.25);
+    }
+    else if (sdfId == 25) {
+        float t = time * 0.4;
+        q = p * rotY(t);
+        d = opSmoothU(sdPyramid(q, 1.5), sdSphere(q - vec3(0, 1.0, 0), 0.5), 0.2);
+    }
+    else if (sdfId == 26) {
+        vec3 r = opRep(p, vec3(2.2));
+        float t = time * 0.2;
+        r = r * rotY(t);
+        d = sdCylinder(r, vec2(0.6, 1.0));
+    }
+    else if (sdfId == 27) {
+        vec3 r = opRepLimited(p, vec3(2.5), vec3(4.0));
+        float t = time * 0.15;
+        r = r * rotY(t);
+        d = sdRoundBox(r, vec3(0.8), 0.2);
+    }
+    else if (sdfId == 28) {
+        float t = time * 0.5;
+        q = p * rotY(t);
+        d = opSmoothU(sdTorus(q, vec2(0.9, 0.3)), sdSphere(q, 0.6), 0.2);
+    }
+    else if (sdfId == 29) {
+        d = opSmoothU(sdBox(p, vec3(1.0)), sdSphere(p, 0.7), 0.4);
+    }
+    else { d = sdSphere(p, 1.0); }
+    return d;
+}
+`;
+
+const fragmentSource = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 fragColor;
+uniform float uTime;
+uniform vec2 uRes;
+uniform float uCamDist;
+uniform vec3 uCamRot;
+uniform int uSdfId;
+uniform bool uWireframe;
+${sdfLibrary}
+
+vec3 rayMarch(vec3 ro, vec3 rd, float time, int sdfId, out int steps, out float minDist) {
+    float t = 0.0;
+    float d = 0.0;
+    minDist = 1e9;
+    steps = 0;
+    for (int i = 0; i < 128; i++) {
+        vec3 p = ro + rd * t;
+        d = map(p, time, sdfId);
+        minDist = min(minDist, abs(d));
+        if (d < 0.001) break;
+        t += d;
+        if (t > 30.0) break;
+        steps++;
+    }
+    return ro + rd * t;
+}
+
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * uRes) / min(uRes.x, uRes.y);
+    float time = uTime;
+    int sdfId = uSdfId;
+    
+    vec3 ro = vec3(0.0, 0.0, uCamDist);
+    ro.xz *= rotY(uCamRot.y);
+    ro.xy *= rotX(uCamRot.x);
+    
+    vec3 rd = normalize(vec3(uv, -1.5));
+    rd.xz *= rotY(uCamRot.y);
+    rd.xy *= rotX(uCamRot.x);
+    
+    int steps;
+    float minDist;
+    vec3 p = rayMarch(ro, rd, time, sdfId, steps, minDist);
+    float d = map(p, time, sdfId);
+    
+    vec3 col = vec3(0.02, 0.01, 0.03);
+    if (d < 0.001) {
+        vec3 n = getNormal(p, time, sdfId);
+        col = getColor(p, n, rd, ro, time, sdfId, length(p - ro));
+        if (uWireframe) {
+            float edge = minDist * 50.0;
+            col = mix(col, vec3(1.0), smoothstep(0.0, 0.02, edge));
+        }
+    }
+    
+    float vignette = 1.0 - 0.3 * length(uv);
+    col *= vignette;
+    col = pow(col, vec3(0.9));
+    col = col / (col + vec3(1.0));
+    col = pow(col, vec3(1.0/2.2));
+    
+    fragColor = vec4(col, 1.0);
+}`;
+
+function createShader(gl, type, source) {
+    const shader = gl.createShader(type);
+    gl.shaderSource(shader, source);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        console.error('Shader compile error:', gl.getShaderInfoLog(shader));
+        gl.deleteShader(shader);
+        return null;
+    }
+    return shader;
+}
+
+function createProgram(gl, vs, fs) {
+    const program = gl.createProgram();
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+        console.error('Program link error:', gl.getProgramInfoLog(program));
+        return null;
+    }
+    return program;
+}
+
+const vs = createShader(gl, gl.VERTEX_SHADER, vertexSource);
+const fs = createShader(gl, gl.FRAGMENT_SHADER, fragmentSource);
+const program = createProgram(gl, vs, fs);
+
+const positions = new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]);
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+const vbo = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, vbo);
+gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+gl.enableVertexAttribArray(0);
+gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
+
+const uniforms = {
+    uTime: gl.getUniformLocation(program, 'uTime'),
+    uRes: gl.getUniformLocation(program, 'uRes'),
+    uCamDist: gl.getUniformLocation(program, 'uCamDist'),
+    uCamRot: gl.getUniformLocation(program, 'uCamRot'),
+    uSdfId: gl.getUniformLocation(program, 'uSdfId'),
+    uWireframe: gl.getUniformLocation(program, 'uWireframe'),
+};
+
+const sdfNames = [
+    'Sphere', 'Box', 'Torus', 'Cylinder', 'Cone', 'Round Box', 'Hex Prism',
+    'Capped Torus', 'Octahedron', 'Pyramid', 'Capsule', 'Ellipsoid', 'Link',
+    'Twin Spheres', 'Morph Box-Sphere', 'Spinning Toroid', 'Sphere Grid',
+    'Round Box Grid', 'Torus Grid', 'Inverted Sphere', 'Spinning Capsule',
+    'Cone + Sphere', 'Ellipsoid', 'Chain Link', 'Morph Octa-Sphere',
+    'Morph Pyramid', 'Cylinder Grid', 'Round Box Grid Limited',
+    'Twin Toroids', 'Box-Sphere Blend'
+];
+
+const select = document.getElementById('sdfSelect');
+sdfNames.forEach((name, i) => {
+    const opt = document.createElement('option');
+    opt.value = i;
+    opt.textContent = `${i.toString().padStart(2, '0')} ${name}`;
+    select.appendChild(opt);
+});
+
+let width = 0, height = 0, dpr = 1;
+let camDist = 4.5, camRotX = 0.3, camRotY = 0.5;
+let targetDist = camDist, targetRotX = camRotX, targetRotY = camRotY;
+let sdfId = 0, wireframe = false, bloom = false, running = true;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0;
+let totalSteps = 0, totalMinDist = 0, frameSamples = 0;
+const mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0 };
+
+function resize() {
+    dpr = Math.min(window.devicePixelRatio || 1, 2);
+    width = canvas.width = Math.floor(window.innerWidth * dpr);
+    height = canvas.height = Math.floor(window.innerHeight * dpr);
+    gl.viewport(0, 0, width, height);
+    gl.uniform2f(uniforms.uRes, width, height);
+}
+
+function render(time) {
+    if (!running) { animationId = requestAnimationFrame(render); return; }
+    const dt = (time - lastTime) / 1000;
+    lastTime = time;
+    frameCount++;
+    if (time - fpsTime > 1000) {
+        fps = Math.round(frameCount * 1000 / (time - fpsTime));
+        frameCount = 0;
+        fpsTime = time;
+        document.getElementById('fps').textContent = fps;
+        if (frameSamples > 0) {
+            document.getElementById('iter').textContent = (totalSteps / frameSamples).toFixed(1);
+            document.getElementById('dist').textContent = (totalMinDist / frameSamples).toFixed(4);
+            totalSteps = 0; totalMinDist = 0; frameSamples = 0;
+        }
+    }
+    camDist += (targetDist - camDist) * 0.1;
+    camRotX += (targetRotX - camRotX) * 0.1;
+    camRotY += (targetRotY - camRotY) * 0.1;
+    
+    gl.useProgram(program);
+    gl.bindVertexArray(vao);
+    gl.uniform1f(uniforms.uTime, time * 0.001);
+    gl.uniform1f(uniforms.uCamDist, camDist);
+    gl.uniform3f(uniforms.uCamRot, camRotX, camRotY, 0);
+    gl.uniform1i(uniforms.uSdfId, sdfId);
+    gl.uniform1i(uniforms.uWireframe, wireframe ? 1 : 0);
+    gl.drawArrays(gl.TRIANGLES, 0, 6);
+    
+    animationId = requestAnimationFrame(render);
+}
+
+let animationId;
+
+function init() {
+    resize();
+    select.value = sdfId;
+    lastTime = performance.now();
+    fpsTime = performance.now();
+    render(lastTime);
+}
+
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { targetRotY -= (e.clientX - mouse.lastX) * 0.005; targetRotX = Math.max(-1.4, Math.min(1.4, targetRotX - (e.clientY - mouse.lastY) * 0.005)); mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); targetDist = Math.max(2, Math.min(15, targetDist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
+select.addEventListener('change', e => { sdfId = parseInt(e.target.value); });
+document.getElementById('btnRandom').addEventListener('click', () => { sdfId = Math.floor(Math.random() * sdfNames.length); select.value = sdfId; });
+document.getElementById('btnAnimate').addEventListener('click', () => { running = !running; document.getElementById('btnAnimate').querySelector('span').textContent = running ? 'Pause' : 'Resume'; if (running) { lastTime = performance.now(); render(lastTime); } });
+document.getElementById('btnWireframe').addEventListener('click', () => { wireframe = !wireframe; });
+document.getElementById('btnBloom').addEventListener('click', () => { bloom = !bloom; document.getElementById('btnBloom').classList.toggle('primary', bloom); });
+document.addEventListener('keydown', e => { if (e.key >= '1' && e.key <= '9') { sdfId = parseInt(e.key) - 1 + (e.shiftKey ? 10 : 0); if (sdfId < sdfNames.length) select.value = sdfId; } else if (e.key === '0') { sdfId = 9; select.value = sdfId; } else if (e.key === ' ') { e.preventDefault(); running = !running; document.getElementById('btnAnimate').querySelector('span').textContent = running ? 'Pause' : 'Resume'; if (running) { lastTime = performance.now(); render(lastTime); } } else if (e.key === 'r' || e.key === 'R') { sdfId = Math.floor(Math.random() * sdfNames.length); select.value = sdfId; } else if (e.key === 'w' || e.key === 'W') { wireframe = !wireframe; } else if (e.key === 'b' || e.key === 'B') { bloom = !bloom; document.getElementById('btnBloom').classList.toggle('primary', bloom); } });
+init();
+</script>
+</body>
+</html>

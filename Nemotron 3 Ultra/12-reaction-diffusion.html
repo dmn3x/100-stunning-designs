@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 — Reaction Diffusion</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafafa;--fg:#2c3e50;--muted:#ecf0f1;--accent:#2c3e50}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(0,0,0,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Reaction Diffusion</div>
+<div class="ui subtitle">gray-scott pattern formation</div>
+<div class="ui controls">
+<label class="ctrl">Feed (f) <input type="range" id="feed" min="0.01" max="0.1" step="0.001" value="0.055"><span class="stat" id="feedVal">0.055</span></label>
+<label class="ctrl">Kill (k) <input type="range" id="kill" min="0.04" max="0.08" step="0.001" value="0.062"><span class="stat" id="killVal">0.062</span></label>
+<label class="ctrl">Diffusion <input type="range" id="diff" min="0.1" max="2" step="0.05" value="1"><span class="stat" id="diffVal">1.0</span></label>
+<label class="ctrl"><select id="preset"><option value="0">Custom</option><option value="1">Spots</option><option value="2" selected>Stripes</option><option value="3">Waves</option><option value="4">Chaos</option><option value="5">Mitosis</option></select></label>
+<label class="ctrl"><input type="checkbox" id="pause"> Pause</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> pause · <kbd>C</kbd> clear · click to seed</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const SCALE=2;
+let cols=0,rows=0;
+let U=[],V=[],nextU=[],nextV=[];
+let feed=0.055,kill=0.062,diffU=1,diffV=0.5,dt=1;
+let paused=false,frame=0;
+const presets=[
+  {f:0.055,k:0.062,du:1,dv:0.5},
+  {f:0.022,k:0.051,du:1,dv:0.5},
+  {f:0.055,k:0.062,du:1,dv:0.5},
+  {f:0.054,k:0.063,du:1,dv:0.5},
+  {f:0.026,k:0.053,du:1,dv:0.5},
+  {f:0.018,k:0.051,du:1,dv:0.5}
+];
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cols=Math.ceil(W/DPR/SCALE);rows=Math.ceil(H/DPR/SCALE);
+  U=new Float32Array(cols*rows);V=new Float32Array(cols*rows);
+  nextU=new Float32Array(cols*rows);nextV=new Float32Array(cols*rows);
+  for(let i=0;i<cols*rows;i++){U[i]=1;V[i]=0}
+  seedCenter();
+  ctx.scale(DPR,DPR);
+}
+function idx(x,y){return (y*cols+x)%(cols*rows)}
+function wrapX(x){return (x+cols)%cols}
+function wrapY(y){return (y+rows)%rows}
+function seedCenter(){
+  const cx=Math.floor(cols/2),cy=Math.floor(rows/2);
+  for(let y=-10;y<=10;y++)for(let x=-10;x<=10;x++){
+    if(x*x+y*y<100){
+      U[idx(cx+x,cy+y)]=0.5;V[idx(cx+x,cy+y)]=0.25;
+    }
+  }
+}
+function seed(x,y){
+  const gx=Math.floor(x/SCALE),gy=Math.floor(y/SCALE);
+  for(let dy=-5;dy<=5;dy++)for(let dx=-5;dx<=5;dx++){
+    if(dx*dx+dy*dy<25){
+      U[idx(wrapX(gx+dx),wrapY(gy+dy))]=0;
+      V[idx(wrapX(gx+dx),wrapY(gy+dy))]=1;
+    }
+  }
+}
+document.getElementById('feed').addEventListener('input',e=>{feed=+e.target.value;document.getElementById('feedVal').textContent=feed.toFixed(3);document.getElementById('preset').value=0;});
+document.getElementById('kill').addEventListener('input',e=>{kill=+e.target.value;document.getElementById('killVal').textContent=kill.toFixed(3);document.getElementById('preset').value=0;});
+document.getElementById('diff').addEventListener('input',e=>{diffU=+e.target.value;document.getElementById('diffVal').textContent=diffU.toFixed(2);document.getElementById('preset').value=0;});
+document.getElementById('preset').addEventListener('change',e=>{
+  const p=presets[+e.target.value];
+  feed=p.f;kill=p.k;diffU=p.du;diffV=p.dv;
+  document.getElementById('feed').value=feed;document.getElementById('feedVal').textContent=feed.toFixed(3);
+  document.getElementById('kill').value=kill;document.getElementById('killVal').textContent=kill.toFixed(3);
+  document.getElementById('diff').value=diffU;document.getElementById('diffVal').textContent=diffU.toFixed(2);
+});
+document.getElementById('pause').addEventListener('change',e=>paused=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{if(e.buttons===1)seed(e.clientX,e.clientY);});
+window.addEventListener('mousedown',e=>seed(e.clientX,e.clientY));
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];seed(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('touchstart',e=>{const t=e.touches[0];seed(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){paused=!paused;document.getElementById('pause').checked=paused;e.preventDefault();}
+  if(e.code==='KeyC'){U.fill(1);V.fill(0);seedCenter();e.preventDefault();}
+});
+function laplacian(arr,x,y){
+  return arr[idx(wrapX(x-1),y)]+arr[idx(wrapX(x+1),y)]+arr[idx(x,wrapY(y-1))]+arr[idx(x,wrapY(y+1))]-4*arr[idx(x,y)];
+}
+function step(){
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const i=idx(x,y);
+      const u=U[i],v=V[i];
+      const uu=u*u*v;
+      const lu=laplacian(U,x,y),lv=laplacian(V,x,y);
+      nextU[i]=u+(diffU*lu-uu+feed*(1-u))*dt;
+      nextV[i]=v+(diffV*lv+uu-(feed+kill)*v)*dt;
+    }
+  }
+  [U,nextU]=[nextU,U];
+  [V,nextV]=[nextV,V];
+}
+function render(){
+  const imgData=ctx.createImageData(cols,rows);
+  for(let i=0;i<cols*rows;i++){
+    const v=V[i],u=U[i];
+    const idx4=i*4;
+    if(v>u){
+      imgData.data[idx4]=Math.min(255,v*300);
+      imgData.data[idx4+1]=Math.min(255,v*200);
+      imgData.data[idx4+2]=Math.min(255,v*100);
+    }else{
+      imgData.data[idx4]=255;
+      imgData.data[idx4+1]=255;
+      imgData.data[idx4+2]=255;
+    }
+    imgData.data[idx4+3]=255;
+  }
+  ctx.putImageData(imgData,0,0);
+  ctx.imageSmoothingEnabled=true;
+  ctx.drawImage(canvas,0,0,cols,rows,0,0,W/DPR,H/DPR);
+}
+function tick(){
+  frame++;
+  if(!paused){
+    for(let i=0;i<4;i++)step();
+    render();
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

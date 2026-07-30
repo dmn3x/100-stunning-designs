@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>69 — SQL Query Analyzer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.editor-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:1rem;min-height:400px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.results{padding:1.5rem;overflow:auto}
+.results-header{margin-bottom:1rem}
+.results-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:1rem;margin-bottom:1.5rem}
+.analysis-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.analysis-card h4{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.metric{display:flex;justify-content:space-between;margin-bottom:.5rem;font-size:.75rem}
+.metric .label{color:var(--muted)}
+.metric .value{font-weight:500;font-family:'JetBrains Mono',monospace}
+.metric .value.warning{color:var(--accent3)}
+.metric .value.error{color:var(--accent4)}
+.metric .value.ok{color:var(--accent2)}
+.issue-list{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.issue-list h4{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.issue{padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;margin-bottom:.5rem}
+.issue-header{display:flex;gap:.5rem;margin-bottom:.35rem}
+.issue-type{font-size:.55rem;padding:.1rem .35rem;border-radius:3px;font-weight:700}
+.issue-type.warning{background:rgba(210,153,34,.2);color:var(--accent3)}
+.issue-type.error{background:rgba(248,81,73,.2);color:var(--accent4)}
+.issue-type.info{background:rgba(88,166,255,.2);color:var(--accent)}
+.issue-message{font-size:.75rem;color:var(--fg)}
+.issue-suggestion{font-size:.7rem;color:var(--accent);margin-top:.35rem}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>SQL Editor</h2><div class="editor-actions"><button class="btn primary" id="analyzeBtn">Analyze</button><button class="btn" id="formatBtn">Format</button><button class="btn" id="sampleBtn">Load Sample</button></div></div>
+<textarea id="sqlInput" spellcheck="false" placeholder="Enter SQL query..."></textarea>
+</div>
+<div class="results">
+<div class="results-header"><h3>Analysis Results</h3></div>
+<div class="analysis-grid">
+<div class="analysis-card"><h4>Query Stats</h4><div class="metric"><span class="label">Tables</span><span class="value" id="statTables">0</span></div><div class="metric"><span class="label">Joins</span><span class="value" id="statJoins">0</span></div><div class="metric"><span class="label">Subqueries</span><span class="value" id="statSubqueries">0</span></div><div class="metric"><span class="label">Columns</span><span class="value" id="statColumns">0</span></div></div>
+<div class="analysis-card"><h4>Complexity</h4><div class="metric"><span class="label">Nesting Level</span><span class="value" id="statNesting">0</span></div><div class="metric"><span class="label">Conditions</span><span class="value" id="statConditions">0</span></div><div class="metric"><span class="label">Estimated Cost</span><span class="value" id="statCost">Low</span></div><div class="metric"><span class="label">Index Usage</span><span class="value" id="statIndex">Unknown</span></div></div>
+<div class="analysis-card"><h4>Performance</h4><div class="metric"><span class="label">Select *</span><span class="value" id="statSelectStar">No</span></div><div class="metric"><span class="label">Missing WHERE</span><span class="value" id="statNoWhere">No</span></div><div class="metric"><span class="label">Cartesian Product</span><span class="value" id="statCartesian">No</span></div><div class="metric"><span class="label">Functions in WHERE</span><span class="value" id="statFuncWhere">No</span></div></div>
+<div class="analysis-card"><h4>Best Practices</h4><div class="metric"><span class="label">Explicit Columns</span><span class="value" id="statExplicit">Yes</span></div><div class="metric"><span class="label">Aliases Used</span><span class="value" id="statAliases">Yes</span></div><div class="metric"><span class="label">LIMIT Clause</span><span class="value" id="statLimit">Yes</span></div><div class="metric"><span class="label">Parameterized</span><span class="value" id="statParams">Yes</span></div></div>
+</div>
+<div class="issue-list"><h4>Issues & Suggestions</h4><div id="issueList"><div style="color:var(--muted);text-align:center;padding:2rem">Run analysis to see issues</div></div></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 069 / 100 · SQL Query Analyzer</footer>
+<script>
+const sqlInput=document.getElementById('sqlInput');
+const issueList=document.getElementById('issueList');
+const sampleSql=`-- Sample query with issues for demonstration
+SELECT u.*, p.title, p.content, c.name as category
+FROM users u
+LEFT JOIN posts p ON u.id = p.user_id
+LEFT JOIN categories c ON p.category_id = c.id
+LEFT JOIN comments cm ON p.id = cm.post_id
+WHERE u.created_at > DATE_SUB(NOW(), INTERVAL 30 DAY)
+  AND UPPER(u.email) LIKE '%@EXAMPLE.COM'
+  AND p.published = true
+ORDER BY p.created_at DESC;`;
+sqlInput.value=sampleSql;
+function analyze(){
+  const sql=sqlInput.value.trim();
+  if(!sql){alert('Enter a query');return;}
+  const upper=sql.toUpperCase();
+  const issues=[];
+  // Tables
+  const tableMatches=upper.match(/\b(FROM|JOIN)\s+(\w+)/g)||[];
+  const tables=[...new Set(tableMatches.map(m=>m.split(/\s+/)[1]))];
+  document.getElementById('statTables').textContent=tables.length;
+  // Joins
+  const joins=(upper.match(/\bJOIN\b/g)||[]).length;
+  document.getElementById('statJoins').textContent=joins;
+  // Subqueries
+  const subqueries=(upper.match(/\(SELECT/g)||[]).length;
+  document.getElementById('statSubqueries').textContent=subqueries;
+  // Columns in SELECT
+  const selectMatch=upper.match(/SELECT\s+(.*?)\s+FROM/);
+  const cols=selectMatch?selectMatch[1].split(',').map(c=>c.trim()).filter(Boolean).length:0;
+  document.getElementById('statColumns').textContent=cols;
+  // Nesting level (rough)
+  let nesting=0,maxNesting=0;
+  for(const ch of upper){if(ch==='('){nesting++;maxNesting=Math.max(maxNesting,nesting);}else if(ch===')')nesting=Math.max(0,nesting-1);}
+  document.getElementById('statNesting').textContent=maxNesting;
+  // Conditions
+  const conditions=(upper.match(/\bWHERE\b|\bAND\b|\bOR\b/g)||[]).length;
+  document.getElementById('statConditions').textContent=conditions;
+  // Select *
+  const hasSelectStar=/\bSELECT\s+\*/.test(upper);
+  document.getElementById('statSelectStar').textContent=hasSelectStar?'Yes':'No';
+  document.getElementById('statSelectStar').className='value '+(hasSelectStar?'warning':'ok');
+  if(hasSelectStar)issues.push({type:'warning',msg:'Using SELECT * - specify columns explicitly',suggestion:'List only the columns you need for better performance and clarity'});
+  // Missing WHERE
+  const hasWhere=/\bWHERE\b/.test(upper);
+  document.getElementById('statNoWhere').textContent=hasWhere?'No':'Yes';
+  document.getElementById('statNoWhere').className='value '+(hasWhere?'ok':'warning');
+  if(!hasWhere&&/\b(UPDATE|DELETE)\b/.test(upper))issues.push({type:'error',msg:'UPDATE/DELETE without WHERE clause',suggestion:'Add WHERE clause to avoid affecting all rows'});
+  else if(!hasWhere&&/\bSELECT\b/.test(upper))issues.push({type:'warning',msg:'SELECT without WHERE clause',suggestion:'Consider adding WHERE to limit result set'});
+  // Cartesian product (multiple tables, no join condition)
+  if(tables.length>1&&joins===0)issues.push({type:'error',msg:'Possible Cartesian product',suggestion:'Add JOIN conditions between tables'});
+  document.getElementById('statCartesian').textContent=(tables.length>1&&joins===0)?'Yes':'No';
+  document.getElementById('statCartesian').className='value '+((tables.length>1&&joins===0)?'error':'ok');
+  // Functions in WHERE
+  const funcInWhere=/\bWHERE\b.*\b(UPPER|LOWER|TRIM|SUBSTRING|DATE|YEAR|MONTH|DAY)\s*\(/.test(upper);
+  document.getElementById('statFuncWhere').textContent=funcInWhere?'Yes':'No';
+  document.getElementById('statFuncWhere').className='value '+(funcInWhere?'warning':'ok');
+  if(funcInWhere)issues.push({type:'warning',msg:'Function on column in WHERE clause',suggestion:'Avoid functions on indexed columns; consider computed columns or index on expression'});
+  // Explicit columns
+  document.getElementById('statExplicit').textContent=hasSelectStar?'No':'Yes';
+  document.getElementById('statExplicit').className='value '+(hasSelectStar?'warning':'ok');
+  // Aliases
+  const hasAliases=/\bAS\s+\w+|\b\w+\s+AS\b/.test(upper);
+  document.getElementById('statAliases').textContent=hasAliases?'Yes':'No';
+  document.getElementById('statAliases').className='value '+(hasAliases?'ok':'warning');
+  // LIMIT
+  const hasLimit=/\bLIMIT\s+\d+/.test(upper);
+  document.getElementById('statLimit').textContent=hasLimit?'Yes':'No';
+  document.getElementById('statLimit').className='value '+(hasLimit?'ok':'warning');
+  if(!hasLimit&&/\bSELECT\b/.test(upper))issues.push({type:'info',msg:'No LIMIT clause',suggestion:'Add LIMIT to prevent large result sets'});
+  // Parameterized (check for string literals in WHERE)
+  const hasLiterals=/\bWHERE\b.*['"].*['"]/.test(upper);
+  document.getElementById('statParams').textContent=hasLiterals?'No (literals found)':'Yes';
+  document.getElementById('statParams').className='value '+(hasLiterals?'warning':'ok');
+  if(hasLiterals)issues.push({type:'warning',msg:'String literals in WHERE clause',suggestion:'Use parameterized queries to prevent SQL injection'});
+  // Estimated cost
+  let cost='Low';
+  if(joins>3||subqueries>2||maxNesting>2)cost='High';
+  else if(joins>1||subqueries>0||maxNesting>1)cost='Medium';
+  document.getElementById('statCost').textContent=cost;
+  document.getElementById('statCost').className='value '+(cost==='High'?'error':cost==='Medium'?'warning':'ok');
+  // Index usage (mock)
+  document.getElementById('statIndex').textContent=hasWhere?'Likely':'Full Scan';
+  document.getElementById('statIndex').className='value '+(hasWhere?'ok':'warning');
+  // Render issues
+  if(issues.length===0){issueList.innerHTML='<div style="color:var(--accent2);text-align:center;padding:2rem">✓ No issues found</div>';}
+  else{issueList.innerHTML=issues.map(i=>`<div class="issue"><div class="issue-header"><span class="issue-type ${i.type}">${i.type.toUpperCase()}</span></div><div class="issue-message">${i.msg}</div><div class="issue-suggestion">${i.suggestion}</div></div>`).join('');}
+}
+document.getElementById('analyzeBtn').onclick=analyze;
+document.getElementById('formatBtn').onclick=()=>{try{const formatted=sqlInput.value.replace(/\s+/g,' ').replace(/\s*,\s*/g,', ').replace(/\s*([=<>]+)\s*/g,' $1 ').replace(/\b(SELECT|FROM|WHERE|JOIN|LEFT|RIGHT|INNER|OUTER|ON|AND|OR|ORDER|BY|GROUP|LIMIT|OFFSET|AS|DESC|ASC)\b/gi,m=>m.toUpperCase());sqlInput.value=formatted;}catch{alert('Format error')};};
+document.getElementById('sampleBtn').onclick=()=>{sqlInput.value=sampleSql;analyze();};
+analyze();
+</script>
+</body>
+</html>

@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11 — Ferrofluid Dreams</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080808;--fg:#c0c0c0;--muted:#3a3a3a;--accent:#00ffff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.5rem;left:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;line-height:1.8}
+.hint{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.6;text-align:right}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .stats{bottom:1rem;left:1rem;font-size:.55rem}
+  .hint{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Ferrofluid Dreams</div>
+<div class="ui subtitle">magnetic spike simulation</div>
+<div class="ui stats">
+Spikes: <span id="spikes">0</span><br>
+Field Strength: <span id="field">1.0</span><br>
+Viscosity: <span id="visc">0.95</span>
+</div>
+<div class="ui hint">cursor = magnet<br><kbd>↑↓</kbd> field · <kbd>←→</kbd> viscosity · <kbd>Space</kbd> reset</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const GRID=8;
+let cols=0,rows=0;
+let height=[],velocity=[],target=[];
+let fieldStrength=1,viscosity=0.95;
+let mouse={x:0,y:0,down:false},frame=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cols=Math.ceil(W/DPR/GRID);rows=Math.ceil(H/DPR/GRID);
+  height=new Array(cols*rows).fill(0);
+  velocity=new Array(cols*rows).fill(0);
+  target=new Array(cols*rows).fill(0);
+  ctx.scale(DPR,DPR);
+}
+function idx(x,y){return y*cols+x}
+function get(arr,x,y){if(x<0||x>=cols||y<0||y>=rows)return 0;return arr[idx(x,y)]}
+function set(arr,x,y,v){if(x>=0&&x<cols&&y>=0&&y<rows)arr[idx(x,y)]=v}
+function magnetic(x,y,mx,my){
+  const dx=mx-x,dy=my-y,dist2=dx*dx+dy*dy+100;
+  return fieldStrength*1000/dist2;
+}
+document.getElementById('field').textContent=fieldStrength.toFixed(1);
+document.getElementById('visc').textContent=viscosity.toFixed(2);
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('mousedown',()=>mouse.down=true);
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;},{passive:false});
+window.addEventListener('touchstart',e=>{mouse.down=true;const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;},{passive:false});
+window.addEventListener('touchend',()=>mouse.down=false);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){height.fill(0);velocity.fill(0);target.fill(0);frame=0;e.preventDefault();}
+  if(e.code==='ArrowUp'){fieldStrength=Math.min(3,fieldStrength+0.1);document.getElementById('field').textContent=fieldStrength.toFixed(1);e.preventDefault();}
+  if(e.code==='ArrowDown'){fieldStrength=Math.max(0.1,fieldStrength-0.1);document.getElementById('field').textContent=fieldStrength.toFixed(1);e.preventDefault();}
+  if(e.code==='ArrowRight'){viscosity=Math.min(0.99,viscosity+0.01);document.getElementById('visc').textContent=viscosity.toFixed(2);e.preventDefault();}
+  if(e.code==='ArrowLeft'){viscosity=Math.max(0.8,viscosity-0.01);document.getElementById('visc').textContent=viscosity.toFixed(2);e.preventDefault();}
+});
+function tick(){
+  frame++;
+  ctx.fillStyle='rgba(8,8,8,0.15)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const mx=mouse.x,my=mouse.y;
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const i=idx(x,y);
+      const wx=x*GRID+GRID/2,wy=y*GRID+GRID/2;
+      if(mouse.down)target[i]=magnetic(wx,wy,mx,my);
+      else target[i]*=0.98;
+      const diff=target[i]-height[i];
+      velocity[i]=(velocity[i]+diff*0.3)*viscosity;
+      height[i]+=velocity[i];
+      height[i]*=0.995;
+    }
+  }
+  let spikes=0;
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      const h=height[idx(x,y)];
+      if(h>2){
+        spikes++;
+        const alpha=Math.min(1,h/30);
+        const wx=x*GRID+GRID/2,wy=y*GRID+GRID/2;
+        const spikeH=h*3;
+        ctx.beginPath();
+        ctx.moveTo(wx,wy);
+        ctx.lineTo(wx,wy-spikeH);
+        ctx.strokeStyle=`rgba(192,192,192,${alpha*0.8})`;
+        ctx.lineWidth=Math.max(0.5,GRID*0.6);
+        ctx.stroke();
+        const grad=ctx.createRadialGradient(wx,wy-spikeH*0.3,0,wx,wy-spikeH*0.3,spikeH*0.5);
+        grad.addColorStop(0,`rgba(0,255,255,${alpha*0.4})`);
+        grad.addColorStop(1,`rgba(0,255,255,0)`);
+        ctx.beginPath();
+        ctx.arc(wx,wy-spikeH*0.3,spikeH*0.5,0,Math.PI*2);
+        ctx.fillStyle=grad;
+        ctx.fill();
+      }
+    }
+  }
+  document.getElementById('spikes').textContent=spikes;
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

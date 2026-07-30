@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Raymarching Volumetric — Nemotron 3 Ultra #94</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.scene-selector { pointer-events: auto; }
+.scene-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.scene-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>VOLUMETRIC RAYMARCHING</h1>
+<p class="subtitle">3D Density Fields</p>
+</div>
+<div class="controls">
+<div class="scene-selector"><select id="sceneSelect" aria-label="Select scene"></select></div>
+<div class="slider-group"><label>Steps</label><input type="range" id="stepsSlider" min="32" max="256" step="16" value="96"></div>
+<div class="slider-group"><label>Density</label><input type="range" id="densitySlider" min="0.1" max="3" step="0.1" value="1"></div>
+<button class="btn primary" id="btnAnimate" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnLighting" aria-label="Toggle lighting"><span>Lighting: On</span></button>
+<button class="btn" id="btnShadows" aria-label="Toggle shadows"><span>Shadows: On</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to rotate • Scroll to zoom • Keys: Space pause • L lighting • S shadows • 1-6 scenes</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="stepsCount">96</div><div class="stat-label">March Steps</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const gl = canvas.getContext('webgl2', { alpha: false, antialias: false });
+let width = 0, height = 0, dpr = 1;
+const vsSource = `#version 300 es
+precision highp float;
+in vec2 aPos;
+out vec2 vUv;
+void main() { vUv = aPos * 0.5 + 0.5; gl_Position = vec4(aPos, 0.0, 1.0); }`;
+const scenes = [
+    { name: 'Nebula', code: `
+    float density(vec3 p) {
+        float n = 0.0;
+        p *= 0.5;
+        for (int i = 0; i < 5; i++) {
+            n += abs(snoise(p)) / 16.0);
+            p *= 2.0;
+        }
+        return n * 0.5;
+    }` },
+    { name: 'Clouds', code: `
+    float density(vec3 p) {
+        p.y += time * 0.1;
+        float n = 0.0;
+        float a = 1.0, f = 0.5;
+        for (int i = 0; i < 6; i++) {
+            n += a * abs(snoise(p * f));
+            f *= 2.0; a *= 0.5;
+        }
+        return smoothstep(0.3, 0.6, n) * 0.8;
+    }` },
+    { name: 'Fire', code: `
+    float density(vec3 p) {
+        p.y -= time * 0.5;
+        float n = 0.0;
+        p.xz *= 1.5;
+        for (int i = 0; i < 5; i++) {
+            n += abs(snoise(p)) * 0.5;
+            p *= 2.0;
+        }
+        float shape = smoothstep(1.0, 0.0, length(p.xz) * 0.5) * smoothstep(2.0, -1.0, p.y);
+        return n * shape;
+    }` },
+    { name: 'Galaxy', code: `
+    float density(vec3 p) {
+        float r = length(p.xz);
+        float a = atan(p.z, p.x) + time * 0.1 + r * 2.0;
+        float arm = sin(a * 2.0) * 0.5 + 0.5;
+        float core = exp(-r * 3.0) * 2.0;
+        float disk = exp(-abs(p.y) * 10.0);
+        return (arm * 0.3 + core) * disk;
+    }` },
+    { name: 'Crystals', code: `
+    float density(vec3 p) {
+        p = mod(p, 2.0) - 1.0;
+        float d = min(min(abs(p.x), abs(p.y)), abs(p.z)) - 0.3;
+        float n = snoise(p * 0.5 + time * 0.1) * 0.2;
+        return step(d + n, 0.0);
+    }` },
+    { name: 'DNA', code: `
+    float density(vec3 p) {
+        float r = length(p.xy);
+        float a1 = atan(p.y, p.x) + p.z * 3.0 + time;
+        float a2 = atan(p.y, p.x) - p.z * 3.0 + time + 3.14159;
+        float s1 = sin(a1) * 0.3 + 0.3;
+        float s2 = sin(a2) * 0.3 + 0.3;
+        float core = exp(-r * 10.0) * (s1 + s2);
+        float backbone = exp(-(r - 0.4)*(r - 0.4) * 50.0);
+        return (core + backbone) * exp(-abs(p.z) * 0.5);
+    }` },
+];
+let sceneIdx = 0, maxSteps = 96, densityScale = 1, lighting = true, shadows = true, paused = false, running = true, time = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const camera = { rotX: 0.2, rotY: 0.5, dist: 3, targetRotX: 0.2, targetRotY: 0.5, targetDist: 3 };
+const mouse = { down: false, lastX: 0, lastY: 0 };
+const select = document.getElementById('sceneSelect');
+scenes.forEach((s, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${s.name}`; select.appendChild(opt); });
+const fsTemplate = `#version 300 es
+precision highp float;
+in vec2 vUv;
+out vec4 fragColor;
+uniform float uTime;
+uniform vec2 uRes;
+uniform int uMaxSteps;
+uniform float uDensity;
+uniform int uLighting;
+uniform int uShadows;
+uniform mat3 uRot;
+#define PI 3.14159265359
+vec3 hash33(vec3 p) { p = vec3(dot(p, vec3(127.1,311.7,74.7)), dot(p, vec3(269.5,183.3,246.1)), dot(p, vec3(113.5,271.9,124.6))); return fract(sin(p)*43758.5453); }
+float snoise(vec3 p) { vec3 i = floor(p); vec3 f = fract(p); f = f*f*(3.0-2.0*f); float n = i.x+i.y*57.0+i.z*57.0*57.0; return mix(mix(mix(hash33(vec3(n, n+1, n+57)).x, hash33(vec3(n+1, n+1, n+57)).x, f.x), mix(hash33(vec3(n, n+58, n+57)).x, hash33(vec3(n+1, n+58, n+57)).x, f.x), f.y), mix(mix(hash33(vec3(n, n+1, n+114)).x, hash33(vec3(n+1, n+1, n+114)).x, f.x), mix(hash33(vec3(n, n+58, n+114)).x, hash33(vec3(n+1, n+58, n+114)).x, f.x), f.y), f.z); }
+float sceneDensity(vec3 p) { SCENE_CODE }
+vec3 getNormal(vec3 p) { vec2 e = vec2(0.01, 0.0); return normalize(vec3(sceneDensity(p+e.xyy)-sceneDensity(p-e.xyy), sceneDensity(p+e.yxy)-sceneDensity(p-e.yxy), sceneDensity(p+e.yyx)-sceneDensity(p-e.yyx))); }
+void main() {
+    vec2 uv = (vUv - 0.5) * vec2(uRes.x/uRes.y, 1.0);
+    vec3 ro = vec3(0.0, 0.0, 3.0) * uRot;
+    vec3 rd = normalize(vec3(uv, -1.0)) * uRot;
+    float t = 0.0, density = 0.0, transmittance = 1.0;
+    vec3 col = vec3(0.0), lightDir = normalize(vec3(0.5, 1.0, 0.3));
+    for (int i = 0; i < 256; i++) {
+        if (i >= uMaxSteps) break;
+        vec3 p = ro + rd * t;
+        float d = sceneDensity(p) * uDensity;
+        if (d > 0.0) {
+            float dt = 0.02;
+            vec3 n = getNormal(p);
+            float diff = uLighting == 1 ? max(0.0, dot(n, lightDir)) : 1.0;
+            float shadow = 1.0;
+            if (uShadows == 1) {
+                vec3 sp = p + n * 0.01;
+                for (int s = 0; s < 16; s++) { sp += lightDir * 0.1; shadow *= 1.0 - sceneDensity(sp) * uDensity * 0.1; }
+            }
+            vec3 lightCol = vec3(1.0, 0.9, 0.7) * diff * shadow;
+            float alpha = 1.0 - exp(-d * dt);
+            col += transmittance * alpha * lightCol;
+            transmittance *= 1.0 - alpha;
+            if (transmittance < 0.01) break;
+        }
+        t += dt;
+    }
+    fragColor = vec4(col, 1.0);
+}`;
+function compileShader(gl, type, source) { const shader = gl.createShader(type); gl.shaderSource(shader, source); gl.compileShader(shader); if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) { console.error(gl.getShaderInfoLog(shader)); return null; } return shader; }
+function createProgram(gl, vs, fs) { const program = gl.createProgram(); gl.attachShader(program, vs); gl.attachShader(program, fs); gl.linkProgram(program); if (!gl.getProgramParameter(program, gl.LINK_STATUS)) { console.error(gl.getProgramInfoLog(program)); return null; } return program; }
+const vs = compileShader(gl, gl.VERTEX_SHADER, vsSource);
+const quadBuffer = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1,-1, 1,-1, -1,1, -1,1, 1,-1, 1,1]), gl.STATIC_DRAW);
+function getProgram() { const fs = fsTemplate.replace('SCENE_CODE', scenes[sceneIdx].code); const fsShader = compileShader(gl, gl.FRAGMENT_SHADER, fs); return createProgram(gl, vs, fsShader); }
+let program = getProgram();
+const uTime = gl.getUniformLocation(program, 'uTime'), uRes = gl.getUniformLocation(program, 'uRes'), uMaxSteps = gl.getUniformLocation(program, 'uMaxSteps'), uDensity = gl.getUniformLocation(program, 'uDensity'), uLighting = gl.getUniformLocation(program, 'uLighting'), uShadows = gl.getUniformLocation(program, 'uShadows'), uRot = gl.getUniformLocation(program, 'uRot'), aPos = gl.getAttribLocation(program, 'aPos');
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); gl.viewport(0, 0, width, height); }
+function getRotMatrix() { const cx = Math.cos(camera.rotX), sx = Math.sin(camera.rotX); const cy = Math.cos(camera.rotY), sy = Math.sin(camera.rotY); return new Float32Array([cy, 0, sy, 0, 1, 0, -sy, 0, cy]); }
+function render() { gl.useProgram(program); gl.uniform1f(uTime, time); gl.uniform2f(uRes, width, height); gl.uniform1i(uMaxSteps, maxSteps); gl.uniform1f(uDensity, densityScale); gl.uniform1i(uLighting, lighting ? 1 : 0); gl.uniform1i(uShadows, shadows ? 1 : 0); gl.uniformMatrix3fv(uRot, false, getRotMatrix()); gl.enableVertexAttribArray(aPos); gl.bindBuffer(gl.ARRAY_BUFFER, quadBuffer); gl.vertexAttribPointer(aPos, 2, gl.FLOAT, false, 0, 0); gl.drawArrays(gl.TRIANGLES, 0, 6); }
+function loop(t) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (t - lastTime) / 1000; lastTime = t; frameCount++; if (t - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (t - fpsTime)); frameCount = 0; fpsTime = t; document.getElementById('fps').textContent = fps; } if (!paused) time += dt; camera.rotX += (camera.targetRotX - camera.rotX) * 0.05; camera.rotY += (camera.targetRotY - camera.rotY) * 0.05; camera.dist += (camera.targetDist - camera.dist) * 0.05; render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('stepsSlider').addEventListener('input', e => { maxSteps = parseInt(e.target.value); document.getElementById('stepsCount').textContent = maxSteps; }); document.getElementById('densitySlider').addEventListener('input', e => densityScale = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', () => { resize(); program = getProgram(); });
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { camera.targetRotY -= (e.clientX - mouse.lastX) * 0.005; camera.targetRotX = Math.max(-1.4, Math.min(1.4, camera.targetRotX - (e.clientY - mouse.lastY) * 0.005)); mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetDist = Math.max(1, Math.min(10, camera.targetDist * (e.deltaY > 0 ? 1.1 : 0.9))); }, { passive: false });
+select.addEventListener('change', e => { sceneIdx = parseInt(e.target.value); program = getProgram(); });
+document.getElementById('btnAnimate').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnLighting').addEventListener('click', () => { lighting = !lighting; document.getElementById('btnLighting').classList.toggle('primary', lighting); });
+document.getElementById('btnShadows').addEventListener('click', () => { shadows = !shadows; document.getElementById('btnShadows').classList.toggle('primary', shadows); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'l' || e.key === 'L') { lighting = !lighting; document.getElementById('btnLighting').classList.toggle('primary', lighting); } else if (e.key === 's' || e.key === 'S') { shadows = !shadows; document.getElementById('btnShadows').classList.toggle('primary', shadows); } else if (e.key >= '1' && e.key <= '6') { sceneIdx = parseInt(e.key) - 1; select.value = sceneIdx; program = getProgram(); } });
+init();
+</script>
+</body>
+</html>

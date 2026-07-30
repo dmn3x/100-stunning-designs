@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>18 — Phyllotaxis Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fdf6e3;--fg:#5d4e37;--muted:#a89878;--accent:#f1c40f;--accent2:#27ae60}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'DM Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(0,0,0,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Phyllotaxis Garden</div>
+<div class="ui subtitle">golden angle spiral packing</div>
+<div class="ui controls">
+<label class="ctrl">Count <input type="range" id="count" min="100" max="3000" step="50" value="1500"><span class="stat" id="countVal">1500</span></label>
+<label class="ctrl">Angle <input type="range" id="angle" min="130" max="145" step="0.1" value="137.508"><span class="stat" id="angleVal">137.5°</span></label>
+<label class="ctrl">Scale <input type="range" id="scale" min="2" max="20" step="0.5" value="8"><span class="stat" id="scaleVal">8</span></label>
+<label class="ctrl">Divergence <input type="range" id="div" min="0" max="10" step="0.1" value="0"><span class="stat" id="divVal">0°</span></label>
+<label class="ctrl"><input type="checkbox" id="spiral" checked> Spiral</label>
+<label class="ctrl"><input type="checkbox" id="colorful" checked> Color</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> reset · <kbd>G</kbd> golden · <kbd>R</kbd> random</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let count=1500,angle=137.508,scale=8,divergence=0,spiral=true,colorful=true;
+let cx=0,cy=0,frame=0,time=0;
+const PHI=(1+Math.sqrt(5))/2;
+const GOLDEN_ANGLE=2*Math.PI*(1-1/PHI);
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cx=W/DPR/2;cy=H/DPR/2;
+  ctx.scale(DPR,DPR);
+}
+document.getElementById('count').addEventListener('input',e=>{count=+e.target.value;document.getElementById('countVal').textContent=count;});
+document.getElementById('angle').addEventListener('input',e=>{angle=+e.target.value;document.getElementById('angleVal').textContent=angle.toFixed(1)+'°';});
+document.getElementById('scale').addEventListener('input',e=>{scale=+e.target.value;document.getElementById('scaleVal').textContent=scale.toFixed(1);});
+document.getElementById('div').addEventListener('input',e=>{divergence=+e.target.value;document.getElementById('divVal').textContent=divergence.toFixed(1)+'°';});
+document.getElementById('spiral').addEventListener('change',e=>spiral=e.target.checked);
+document.getElementById('colorful').addEventListener('change',e=>colorful=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){time=0;e.preventDefault();}
+  if(e.code==='KeyG'){angle=137.508;document.getElementById('angle').value=angle;document.getElementById('angleVal').textContent=angle.toFixed(1)+'°';e.preventDefault();}
+  if(e.code==='KeyR'){angle=Math.random()*180;document.getElementById('angle').value=angle;document.getElementById('angleVal').textContent=angle.toFixed(1)+'°';e.preventDefault();}
+});
+function tick(){
+  frame++;
+  time+=0.005;
+  ctx.fillStyle='#fdf6e3';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const a=(angle+divergence)*Math.PI/180;
+  for(let i=0;i<count;i++){
+    const r=scale*Math.sqrt(i);
+    const theta=i*a;
+    let x=cx+r*Math.cos(theta);
+    let y=cy+r*Math.sin(theta);
+    if(spiral){
+      x+=Math.sin(time+i*0.01)*10;
+      y+=Math.cos(time+i*0.01)*10;
+    }
+    if(x<0||x>W/DPR||y<0||y>H/DPR)continue;
+    const size=Math.max(1,scale*0.8*(1-i/count)*2);
+    if(colorful){
+      const hue=(i*angle*0.5+time*50)%360;
+      ctx.fillStyle=`hsla(${hue},70%,50%,0.8)`;
+    }else{
+      const gray=Math.floor(93+i*0.05)%255;
+      ctx.fillStyle=`rgb(${gray},${Math.floor(gray*0.9)},${Math.floor(gray*0.7)})`;
+    }
+    ctx.beginPath();
+    ctx.arc(x,y,size,0,Math.PI*2);
+    ctx.fill();
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>71 — 3D Globe Visualization</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#canvas{width:100%;height:100%;display:block}
+.ui{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;min-width:200px}
+.ui h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.ui-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.7rem}
+.ui-row label{color:var(--muted);min-width:80px}
+.ui-row input,.ui-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.title{position:fixed;top:1rem;left:1rem;z-index:10}
+.title h1{font-size:1.5rem;font-weight:300}
+.title h1 span{font-weight:700;color:var(--accent)}
+.stats{position:fixed;bottom:1rem;left:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.footer{position:fixed;bottom:1rem;right:1rem;z-index:10;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="title"><h1>3D <span>Globe</span> Visualization</h1></div>
+<div class="ui"><h3>Controls</h3><div class="ui-row"><label>Mode</label><select id="modeSelect"><option value="wireframe">Wireframe</option><option value="points">Points</option><option value="heatmap">Heatmap</option><option value="connections">Connections</option></select></div><div class="ui-row"><label>Rotation</label><input type="range" id="rotSpeed" min="0" max="0.02" step="0.001" value="0.002"></div><div class="ui-row"><label>Point Size</label><input type="range" id="pointSize" min="1" max="5" step="0.5" value="2"></div><div class="ui-row"><label>Color Scheme</label><select id="colorScheme"><option value="default">Default</option><option value="matrix">Matrix</option><option value="fire">Fire</option><option value="ocean">Ocean</option><option value="sunset">Sunset</option></select></div><div class="ui-row"><label><input type="checkbox" id="autoRotate" checked> Auto Rotate</label></div><div class="ui-row"><label><input type="checkbox" id="showAtmosphere" checked> Atmosphere</label></div></div>
+<div class="stats"><div class="stat"><div class="stat-value" id="statPoints">0</div><div class="stat-label">Points</div></div><div class="stat"><div class="stat-value" id="statFps">60</div><div class="stat-label">FPS</div></div></div>
+<div class="footer">Nemotron 3 Ultra · 071 / 100 · 3D Globe</div>
+<canvas id="canvas"></canvas>
+<script type="importmap">
+{"imports":{"three":"https://unpkg.com/three@0.160.0/build/three.module.js","three/addons/":"https://unpkg.com/three@0.160.0/examples/jsm/"}}
+</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from 'three/addons/controls/OrbitControls.js';
+const canvas=document.getElementById('canvas');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setSize(window.innerWidth,window.innerHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio,2));
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(45,window.innerWidth/window.innerHeight,0.1,1000);
+camera.position.z=2.5;
+const controls=new OrbitControls(camera,canvas);
+controls.enableDamping=true;
+controls.dampingFactor=0.05;
+controls.enablePan=false;
+controls.minDistance=1.5;
+controls.maxDistance=5;
+const points=[],connections=[],pointData=[];
+const NUM_POINTS=3000;
+const colors={default:['#58a6ff','#3fb950','#d29922','#f85149'],matrix:['#0f0','#0a0','#080','#060'],fire:['#ff3300','#ff6600','#ff9900','#ffcc00'],ocean:['#0066ff','#0099ff','#00ccff','#66ffff'],sunset:['#ff3366','#ff6633','#ff9933','#ffcc66']};
+let currentColors=colors.default;
+function createPoints(){
+  const geometry=new THREE.BufferGeometry();
+  const positions=new Float32Array(NUM_POINTS*3);
+  const sizes=new Float32Array(NUM_POINTS);
+  const colorArray=new Float32Array(NUM_POINTS*3);
+  for(let i=0;i<NUM_POINTS;i++){
+    const u=Math.random();
+    const v=Math.random();
+    const theta=2*Math.PI*u;
+    const phi=Math.acos(2*v-1);
+    const radius=1+Math.random()*0.1;
+    const x=radius*Math.sin(phi)*Math.cos(theta);
+    const y=radius*Math.sin(phi)*Math.sin(theta);
+    const z=radius*Math.cos(phi);
+    positions[i*3]=x;positions[i*3+1]=y;positions[i*3+2]=z;
+    sizes[i]=Math.random()*2+1;
+    const c=new THREE.Color(currentColors[Math.floor(Math.random()*currentColors.length)]);
+    colorArray[i*3]=c.r;colorArray[i*3+1]=c.g;colorArray[i*3+2]=c.b;
+    pointData.push({theta,phi,radius,baseRadius:radius,speed:Math.random()*0.001+0.0005,phase:Math.random()*Math.PI*2});
+  }
+  geometry.setAttribute('position',new THREE.BufferAttribute(positions,3));
+  geometry.setAttribute('size',new THREE.BufferAttribute(sizes,1));
+  geometry.setAttribute('color',new THREE.BufferAttribute(colorArray,3));
+  const material=new THREE.PointsMaterial({size:0.01,vertexColors:true,transparent:true,opacity:0.8,sizeAttenuation:true});
+  const pointCloud=new THREE.Points(geometry,material);
+  scene.add(pointCloud);
+  points.push(pointCloud);
+  // Wireframe sphere
+  const wireGeo=new THREE.IcosahedronGeometry(1,16);
+  const wireMat=new THREE.MeshBasicMaterial({color:0x58a6ff,wireframe:true,transparent:true,opacity:0.1});
+  const wire=new THREE.Mesh(wireGeo,wireMat);
+  scene.add(wire);
+  points.push(wire);
+  // Atmosphere
+  const atmGeo=new THREE.SphereGeometry(1.15,64,64);
+  const atmMat=new THREE.MeshBasicMaterial({color:0x58a6ff,transparent:true,opacity:0.05,side:THREE.BackSide});
+  const atmosphere=new THREE.Mesh(atmGeo,atmMat);
+  scene.add(atmosphere);
+  points.push(atmosphere);
+  // Connection lines (subset)
+  const lineGeo=new THREE.BufferGeometry();
+  const linePositions=[];
+  for(let i=0;i<200;i++){
+    const a=Math.floor(Math.random()*NUM_POINTS);
+    const b=Math.floor(Math.random()*NUM_POINTS);
+    const pa=pointData[a],pb=pointData[b];
+    const dist=Math.acos(Math.sin(pa.phi)*Math.sin(pb.phi)+Math.cos(pa.phi)*Math.cos(pb.phi)*Math.cos(pa.theta-pb.theta));
+    if(dist<0.3){
+      const ra=1+Math.random()*0.1,rb=1+Math.random()*0.1;
+      const xa=ra*Math.sin(pa.phi)*Math.cos(pa.theta),ya=ra*Math.sin(pa.phi)*Math.sin(pa.theta),za=ra*Math.cos(pa.phi);
+      const xb=rb*Math.sin(pb.phi)*Math.cos(pb.theta),yb=rb*Math.sin(pb.phi)*Math.sin(pb.theta),zb=rb*Math.cos(pb.phi);
+      linePositions.push(xa,ya,za,xb,yb,zb);
+    }
+  }
+  lineGeo.setAttribute('position',new THREE.Float32BufferAttribute(linePositions,3));
+  const lineMat=new THREE.LineBasicMaterial({color:0x58a6ff,transparent:true,opacity:0.2});
+  const lines=new THREE.LineSegments(lineGeo,lineMat);
+  scene.add(lines);
+  connections.push(lines);
+}
+createPoints();
+let frame=0,lastTime=performance.now();
+function animate(){
+  const now=performance.now();
+  const delta=(now-lastTime)/1000;
+  lastTime=now;
+  frame++;
+  const speed=parseFloat(document.getElementById('rotSpeed').value);
+  const autoRotate=document.getElementById('autoRotate').checked;
+  const mode=document.getElementById('modeSelect').value;
+  const pointSize=parseFloat(document.getElementById('pointSize').value);
+  const newColors=colors[document.getElementById('colorScheme').value];
+  if(newColors!==currentColors){
+    currentColors=newColors;
+    // Recreate points with new colors
+    points.forEach(p=>scene.remove(p));
+    points.length=0;
+    connections.forEach(c=>scene.remove(c));
+    connections.length=0;
+    pointData.length=0;
+    createPoints();
+  }
+  if(autoRotate)scene.rotation.y+=speed;
+  // Animate points
+  points.forEach(p=>{
+    if(p.isPoints){
+      const pos=p.geometry.attributes.position.array;
+      const sizeAttr=p.geometry.attributes.size;
+      for(let i=0;i<NUM_POINTS;i++){
+        const pd=pointData[i];
+        pd.theta+=pd.speed*delta*60;
+        pd.phi+=Math.sin(frame*0.01+pd.phase)*0.0001;
+        const r=pd.baseRadius+Math.sin(frame*0.02+pd.phase)*0.02;
+        pos[i*3]=r*Math.sin(pd.phi)*Math.cos(pd.theta);
+        pos[i*3+1]=r*Math.sin(pd.phi)*Math.sin(pd.theta);
+        pos[i*3+2]=r*Math.cos(pd.phi);
+      }
+      p.geometry.attributes.position.needsUpdate=true;
+      p.material.size=pointSize*0.01;
+    }else if(p.isMesh&&p.material.wireframe){
+      p.rotation.y+=speed*0.5;
+      p.rotation.x+=speed*0.2;
+    }else if(p.material.side===THREE.BackSide){
+      p.rotation.y+=speed*0.3;
+    }
+  });
+  connections.forEach(c=>{c.rotation.y+=speed;});
+  controls.update();
+  renderer.render(scene,camera);
+  // FPS
+  document.getElementById('statFps').textContent=Math.round(1/delta);
+  document.getElementById('statPoints').textContent=NUM_POINTS;
+  requestAnimationFrame(animate);
+}
+animate();
+window.addEventListener('resize',()=>{camera.aspect=window.innerWidth/window.innerHeight;camera.updateProjectionMatrix();renderer.setSize(window.innerWidth,window.innerHeight);});
+</script>
+</body>
+</html>

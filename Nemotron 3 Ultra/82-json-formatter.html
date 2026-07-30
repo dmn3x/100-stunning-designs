@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>82 — JSON Formatter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.editor-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:1rem;min-height:calc(100vh - 120px);resize:none;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.6}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.output{padding:1.5rem;overflow:auto;background:var(--card);border-left:1px solid var(--border)}
+.output-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.output-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.output-content{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.75rem;line-height:1.6;max-height:70vh;overflow:auto;white-space:pre-wrap;word-break:break-word}
+.json-string{color:var(--accent3)}
+.json-number{color:var(--accent)}
+.json-boolean{color:var(--accent2)}
+.json-null{color:var(--muted);font-style:italic}
+.json-key{color:var(--accent)}
+.json-punct{color:var(--muted)}
+.error-msg{color:var(--accent4);padding:1rem}
+.tree-view{font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.8}
+.tree-node{cursor:pointer;user-select:none}
+.tree-node.collapsed .tree-children{display:none}
+.tree-node.collapsed .tree-expander::before{content:'▶ '}
+.tree-node .tree-expander::before{content:'▼ '}
+.tree-key{color:var(--accent)}
+.tree-string{color:var(--accent3)}
+.tree-number{color:var(--accent)}
+.tree-boolean{color:var(--accent2)}
+.tree-null{color:var(--muted);font-style:italic}
+.tree-brace{color:var(--muted)}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Input</h2><div class="editor-actions"><button class="btn primary" id="formatBtn">Format</button><button class="btn" id="minifyBtn">Minify</button><button class="btn" id="treeBtn">Tree View</button><button class="btn" id="loadSample">Sample</button><button class="btn" id="clearBtn">Clear</button></div></div>
+<textarea id="jsonInput" spellcheck="false" placeholder="Paste JSON here..."></textarea>
+</div>
+<div class="output">
+<div class="output-header"><h3>Output</h3><div><button class="btn" id="copyBtn" style="padding:.25rem .5rem;font-size:.6rem">Copy</button><button class="btn" id="downloadBtn" style="padding:.25rem .5rem;font-size:.6rem">Download</button></div></div>
+<div class="output-content" id="outputContent"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 082 / 100 · JSON Formatter</footer>
+<script>
+const jsonInput=document.getElementById('jsonInput');
+const outputContent=document.getElementById('outputContent');
+let currentJson=null,viewMode='formatted';
+const sampleJson=`{
+  "users": [
+    {"id": 1, "name": "Alice", "email": "alice@example.com", "active": true, "roles": ["admin", "user"]},
+    {"id": 2, "name": "Bob", "email": "bob@example.com", "active": false, "roles": ["user"]},
+    {"id": 3, "name": "Charlie", "email": "charlie@example.com", "active": true, "roles": ["user", "editor"]}
+  ],
+  "metadata": {
+    "total": 3,
+    "page": 1,
+    "perPage": 10,
+    "timestamp": "2024-01-15T10:30:00Z"
+  },
+  "config": {
+    "theme": "dark",
+    "notifications": {"email": true, "push": false, "sms": true},
+    "features": ["darkMode", "analytics", "export"]
+  }
+}`;
+jsonInput.value=sampleJson;
+function highlightJson(json){
+  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g,match=>{
+    let cls='json-punct';
+    if(/^"/.test(match)){
+      if(/:$/.test(match))cls='json-key';
+      else cls='json-string';
+    }else if(/true|false/.test(match))cls='json-boolean';
+    else if(/null/.test(match))cls='json-null';
+    else if(/^-?\d/.test(match))cls='json-number';
+    return `<span class="${cls}">${escapeHtml(match)}</span>`;
+  });
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
+function buildTree(obj,indent=0,isLast=true,key=null){
+  const spacing='  '.repeat(indent);
+  let html='';
+  if(key!==null){
+    html+=`<div class="tree-node"><span class="tree-expander"></span><span class="tree-brace">${spacing}</span><span class="tree-key">"${escapeHtml(key)}"</span><span class="tree-brace">: `;
+  }else{
+    html+=`<div class="tree-node"><span class="tree-expander"></span><span class="tree-brace">${spacing}`;
+  }
+  if(obj===null){
+    html+=`<span class="tree-null">null</span>`;
+  }else if(typeof obj==='object'){
+    if(Array.isArray(obj)){
+      html+=`<span class="tree-brace">[</span><span class="tree-number">${obj.length}</span><span class="tree-brace">]</span>`;
+      if(obj.length>0){
+        html+=`<div class="tree-children">`;
+        obj.forEach((item,i)=>html+=buildTree(item,indent+1,i===obj.length-1,i));
+        html+=`</div>`;
+      }
+    }else{
+      const keys=Object.keys(obj);
+      html+=`<span class="tree-brace">{</span><span class="tree-number">${keys.length}</span><span class="tree-brace">}</span>`;
+      if(keys.length>0){
+        html+=`<div class="tree-children">`;
+        keys.forEach((k,i)=>html+=buildTree(obj[k],indent+1,i===keys.length-1,k));
+        html+=`</div>`;
+      }
+    }
+  }else if(typeof obj==='string'){
+    html+=`<span class="tree-string">"${escapeHtml(obj)}"</span>`;
+  }else if(typeof obj==='number'){
+    html+=`<span class="tree-number">${obj}</span>`;
+  }else if(typeof obj==='boolean'){
+    html+=`<span class="tree-boolean">${obj}</span>`;
+  }
+  if(key!==null||indent>0)html+=`<span class="tree-brace">,</span>`;
+  html+=`</div>`;
+  return html;
+}
+function parseAndRender(){
+  try{
+    currentJson=JSON.parse(jsonInput.value);
+    render();
+  }catch(e){
+    outputContent.innerHTML=`<div class="error-msg">Invalid JSON: ${e.message}</div>`;
+    currentJson=null;
+  }
+}
+function render(){
+  if(currentJson===null)return;
+  if(viewMode==='formatted'){
+    const formatted=JSON.stringify(currentJson,null,2);
+    outputContent.innerHTML=highlightJson(formatted);
+  }else if(viewMode==='minified'){
+    const minified=JSON.stringify(currentJson);
+    outputContent.innerHTML=highlightJson(minified);
+  }else if(viewMode==='tree'){
+    outputContent.innerHTML=`<div class="tree-view">${buildTree(currentJson)}</div>`;
+    document.querySelectorAll('.tree-node').forEach(node=>{
+      const expander=node.querySelector('.tree-expander');
+      expander.onclick=e=>{e.stopPropagation();node.classList.toggle('collapsed');};
+    });
+  }
+}
+document.getElementById('formatBtn').onclick=()=>{viewMode='formatted';render();};
+document.getElementById('minifyBtn').onclick=()=>{viewMode='minified';render();};
+document.getElementById('treeBtn').onclick=()=>{viewMode='tree';render();};
+document.getElementById('loadSample').onclick=()=>{jsonInput.value=sampleJson;parseAndRender();};
+document.getElementById('clearBtn').onclick=()=>{jsonInput.value='';outputContent.innerHTML='';currentJson=null;};
+document.getElementById('copyBtn').onclick=()=>{if(currentJson){navigator.clipboard.writeText(viewMode==='minified'?JSON.stringify(currentJson):JSON.stringify(currentJson,null,2));alert('Copied!');}};
+document.getElementById('downloadBtn').onclick=()=>{if(currentJson){const blob=new Blob([viewMode==='minified'?JSON.stringify(currentJson):JSON.stringify(currentJson,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='data.json';a.click();}};
+jsonInput.oninput=()=>{clearTimeout(jsonInput.timer);jsonInput.timer=setTimeout(parseAndRender,300);};
+parseAndRender();
+</script>
+</body>
+</html>

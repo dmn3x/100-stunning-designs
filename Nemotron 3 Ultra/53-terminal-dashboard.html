@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>53 — Terminal Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.header .sysinfo{display:flex;gap:2rem;font-size:.7rem;color:var(--muted)}
+.sysinfo span{display:flex;align-items:center;gap:.3rem}
+.sysinfo .dot{width:6px;height:6px;border-radius:50%;background:var(--accent2);animation:blink 1s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:1.5rem}
+.panel{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.panel-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.panel-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.panel-body{padding:1rem}
+.term{font-family:'JetBrains Mono','SF Mono',monospace;font-size:.8rem;line-height:1.7;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1rem;min-height:200px;max-height:400px;overflow:auto;white-space:pre-wrap}
+.term .prompt{color:var(--accent2)}
+.term .path{color:var(--accent)}
+.term .cmd{color:var(--fg)}
+.term .out{color:var(--muted)}
+.term .out.ok{color:var(--accent2)}
+.term .out.err{color:var(--accent4)}
+.term .out.warn{color:var(--accent3)}
+.term .comment{color:var(--muted)}
+.metric-row{display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid var(--border)}
+.metric-row:last-child{border-bottom:none}
+.metric-label{color:var(--muted);font-size:.8rem}
+.metric-value{font-weight:500;font-family:'JetBrains Mono',monospace}
+.metric-value.ok{color:var(--accent2)}
+.metric-value.warn{color:var(--accent3)}
+.metric-value.err{color:var(--accent4)}
+.bar{height:6px;background:var(--bg);border:1px solid var(--border);border-radius:3px;overflow:hidden;margin-top:.25rem}
+.bar-fill{height:100%;border-radius:3px;transition:width .3s}
+.service-list{display:flex;flex-direction:column;gap:.5rem}
+.service-item{display:flex;justify-content:space-between;align-items:center;padding:.5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px}
+.service-name{font-size:.8rem}
+.service-status{font-size:.6rem;padding:.15rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.service-status.running{background:rgba(63,185,80,.2);color:var(--accent2)}
+.service-status.stopped{background:rgba(248,81,73,.2);color:var(--accent4)}
+.service-status.pending{background:rgba(210,153,34,.2);color:var(--accent3)}
+.log-stream{height:300px;overflow:auto;font-size:.7rem;line-height:1.8}
+.log-line{padding:.15rem 0;border-bottom:1px solid var(--border);display:flex;gap:.5rem}
+.log-time{color:var(--muted);white-space:nowrap}
+.log-level{padding:0 .3rem;border-radius:2px;font-size:.55rem;font-weight:700}
+.log-level.info{background:rgba(88,166,255,.2);color:var(--accent)}
+.log-level.warn{background:rgba(210,153,34,.2);color:var(--accent3)}
+.log-level.error{background:rgba(248,81,73,.2);color:var(--accent4)}
+.log-level.debug{background:rgba(139,148,158,.2);color:var(--muted)}
+.log-msg{color:var(--fg);flex:1}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Terminal <span>Dashboard</span></h1><div class="sysinfo"><span><span class="dot"></span> CPU: <span id="hdrCpu">42%</span></span><span><span class="dot"></span> MEM: <span id="hdrMem">68%</span></span><span><span class="dot"></span> DISK: <span id="hdrDisk">45%</span></span><span><span class="dot"></span> NET: <span id="hdrNet">127 Mbps</span></span></div></header>
+<main class="main">
+<div class="grid">
+<div class="panel" style="grid-column:1/-1"><div class="panel-header"><h3>System Log Stream</h3></div><div class="panel-body"><div class="log-stream" id="logStream"></div></div></div>
+<div class="panel"><div class="panel-header"><h3>CPU & Load</h3></div><div class="panel-body"><div class="term" id="cpuTerm"></div></div></div>
+<div class="panel"><div class="panel-header"><h3>Memory</h3></div><div class="panel-body"><div class="metric-row"><span class="metric-label">Total</span><span class="metric-value" id="memTotal">16 GB</span></div><div class="metric-row"><span class="metric-label">Used</span><span class="metric-value" id="memUsed">10.9 GB</span></div><div class="metric-row"><span class="metric-label">Available</span><span class="metric-value ok" id="memAvail">5.1 GB</span></div><div class="metric-row"><span class="metric-label">Cached</span><span class="metric-value" id="memCached">2.1 GB</span></div><div class="metric-row"><span class="metric-label">Swap</span><span class="metric-value" id="memSwap">0 B</span></div><div class="bar" style="margin-top:1rem"><div class="bar-fill" id="memBar" style="width:68%;background:var(--accent)"></div></div></div></div>
+<div class="panel"><div class="panel-header"><h3>Disk Usage</h3></div><div class="panel-body"><div class="metric-row"><span class="metric-label">/ (root)</span><span class="metric-value" id="diskRoot">320 / 500 GB</span></div><div class="bar"><div class="bar-fill" id="diskRootBar" style="width:64%;background:var(--accent)"></div></div><div class="metric-row"><span class="metric-label">/home</span><span class="metric-value" id="diskHome">450 / 1000 GB</span></div><div class="bar"><div class="bar-fill" id="diskHomeBar" style="width:45%;background:var(--accent)"></div></div><div class="metric-row"><span class="metric-label">/var</span><span class="metric-value" id="diskVar">45 / 100 GB</span></div><div class="bar"><div class="bar-fill" id="diskVarBar" style="width:45%;background:var(--accent)"></div></div></div></div>
+<div class="panel"><div class="panel-header"><h3>Services</h3></div><div class="panel-body"><div class="service-list" id="serviceList"></div></div></div>
+<div class="panel"><div class="panel-header"><h3>Network</h3></div><div class="panel-body"><div class="term" id="netTerm"></div></div></div>
+</div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 053 / 100 · Terminal Dashboard</footer>
+<script>
+const logStream=document.getElementById('logStream');
+const cpuTerm=document.getElementById('cpuTerm');
+const netTerm=document.getElementById('netTerm');
+const serviceList=document.getElementById('serviceList');
+const hdrCpu=document.getElementById('hdrCpu');
+const hdrMem=document.getElementById('hdrMem');
+const hdrDisk=document.getElementById('hdrDisk');
+const hdrNet=document.getElementById('hdrNet');
+const services=[
+  {name:'nginx',status:'running',pid:1234,port:80},
+  {name:'postgresql',status:'running',pid:5678,port:5432},
+  {name:'redis',status:'running',pid:9012,port:6379},
+  {name:'docker',status:'running',pid:3456,port:'—'},
+  {name:'ssh',status:'running',pid:7890,port:22},
+  {name:'prometheus',status:'stopped',pid:0,port:9090},
+  {name:'grafana',status:'stopped',pid:0,port:3000},
+  {name:'elasticsearch',status:'running',pid:1111,port:9200}
+];
+const logLevels=['info','warn','error','debug'];
+const logMessages=[
+  'systemd[1]: Started Session 1234 of user dhafin',
+  'nginx[1234]: 192.168.1.100 - - [30/Jul/2026:14:32:17] "GET /api/health HTTP/1.1" 200',
+  'postgresql[5678]: LOG:  checkpoint starting: time',
+  'redis[9012]: 1000 changes in 300 seconds, saving...',
+  'systemd[1]: docker.service: Scheduled restart job, restart counter is at 1',
+  'kernel: [12345.67] TCP: request_sock_TCP: Possible SYN flooding on port 443',
+  'sshd[7890]: Accepted publickey for dhafin from 192.168.1.100',
+  'docker[3456]: Container nemotron-3-ultra started',
+  'prometheus[0]: WARN: Target nginx:80 is unreachable',
+  'grafana[0]: INFO: Server listening on :3000'
+];
+function randomLog(){
+  const level=logLevels[Math.floor(Math.random()*logLevels.length)];
+  const msg=logMessages[Math.floor(Math.random()*logMessages.length)];
+  const time=new Date().toLocaleTimeString();
+  return `<div class="log-line"><span class="log-time">${time}</span><span class="log-level ${level}">${level.toUpperCase()}</span><span class="log-msg">${msg}</span></div>`;
+}
+function renderLogs(){
+  logStream.innerHTML=Array(20).fill(0).map(randomLog).join('')+logStream.innerHTML;
+  while(logStream.children.length>100)logStream.removeChild(logStream.lastChild);
+}
+function renderCpu(){
+  const cpu=(Math.random()*30+20).toFixed(1);
+  const load1=(2+Math.random()*1).toFixed(2);
+  const load5=(1.8+Math.random()*0.5).toFixed(2);
+  const load15=(1.5+Math.random()*0.3).toFixed(2);
+  cpuTerm.innerHTML=`<span class="prompt">$</span> <span class="cmd">top -bn1 | head -20</span>
+<span class="out">Tasks: 342 total,   2 running, 340 sleeping,   0 stopped,   0 zombie</span>
+<span class="out">%Cpu(s):  ${cpu} us,  3.2 sy,  0.0 ni, ${(100-cpu-3.2).toFixed(1)} id,  0.0 wa,  0.0 hi,  0.5 si,  0.0 st</span>
+<span class="out">MiB Mem :  16384 total,   5243 free,  11141 used,   2156 buff/cache</span>
+<span class="out">MiB Swap:   2048 total,   2048 free,      0 used.   5123 avail Mem</span>
+<span class="out ok">Load average: ${load1}, ${load5}, ${load15}</span>
+<span class="out">PID USER      PR  NI    VIRT    RES    SHR S  %CPU  %MEM     TIME+ COMMAND</span>
+<span class="out">1234 dhafin    20   0  2.4GB 1.2GB 123MB S  12.3   7.5   4:32.10 chrome</span>
+<span class="out">5678 dhafin    20   0  1.8GB 890MB  89MB S   8.7   5.4   2:15.40 code</span>
+<span class="out">9012 dhafin    20   0  512MB 234MB  45MB S   5.2   1.4   1:02.30 node</span>
+<span class="prompt">$</span> <span class="comment"># CPU: ${cpu}% | Load: ${load1}/${load5}/${load15}</span>`;
+  hdrCpu.textContent=cpu+'%';
+}
+function renderMem(){
+  const used=(Math.random()*3+8).toFixed(1);
+  const avail=(16-parseFloat(used)).toFixed(1);
+  const cached=(Math.random()*2+1).toFixed(1);
+  document.getElementById('memUsed').textContent=used+' GB';
+  document.getElementById('memAvail').textContent=avail+' GB';
+  document.getElementById('memCached').textContent=cached+' GB';
+  document.getElementById('memBar').style.width=(parseFloat(used)/16*100)+'%';
+  hdrMem.textContent=(parseFloat(used)/16*100).toFixed(0)+'%';
+}
+function renderDisk(){
+  hdrDisk.textContent='45%';
+}
+function renderNet(){
+  const up=(Math.random()*50+20).toFixed(1);
+  const down=(Math.random()*100+50).toFixed(1);
+  netTerm.innerHTML=`<span class="prompt">$</span> <span class="cmd">iftop -n -t -s 1</span>
+<span class="out">Interface: eth0 (192.168.1.50)</span>
+<span class="out">TX: ${up} Mbps  RX: ${down} Mbps</span>
+<span class="out">Connections: 47 established, 3 waiting</span>
+<span class="out ok">DNS: 1.1.1.1, 8.8.8.8</span>
+<span class="prompt">$</span> <span class="cmd">ss -tuln | head -10</span>
+<span class="out">State      Recv-Q Send-Q Local Address:Port   Peer Address:Port</span>
+<span class="out">LISTEN     0      128    0.0.0.0:22         0.0.0.0:*</span>
+<span class="out">LISTEN     0      128    0.0.0.0:80         0.0.0.0:*</span>
+<span class="out">LISTEN     0      128    0.0.0.0:443        0.0.0.0:*</span>
+<span class="out">LISTEN     0      128    127.0.0.1:5432     0.0.0.0:*</span>
+<span class="out">LISTEN     0      128    127.0.0.1:6379     0.0.0.0:*</span>
+<span class="prompt">$</span> <span class="comment"># TX: ${up} Mbps | RX: ${down} Mbps</span>`;
+  hdrNet.textContent=down+' Mbps';
+}
+function renderServices(){
+  serviceList.innerHTML=services.map(s=>`<div class="service-item"><span class="service-name">${s.name} <span style="color:var(--muted);font-size:.65rem">(pid ${s.pid}, port ${s.port})</span></span><span class="service-status ${s.status}">${s.status}</span></div>`).join('');
+}
+function update(){
+  renderLogs();
+  renderCpu();
+  renderMem();
+  renderDisk();
+  renderNet();
+  renderServices();
+}
+setInterval(update,3000);
+update();
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>14 — Snow Globe</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#e8f4fd;--fg:#1a2a3a;--muted:#6a8a9a;--accent:#8b7355;--snow:#ffffff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'DM Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.5rem;left:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;line-height:1.8}
+.controls{bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.4rem;align-items:flex-end}
+.btn{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .6rem;font-size:.55rem;cursor:pointer;transition:.15s;font-family:inherit}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(139,115,85,0.1)}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .stats{bottom:1rem;left:1rem;font-size:.55rem}
+  .controls{bottom:1rem;right:1rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Snow Globe</div>
+<div class="ui subtitle">physics-based snow simulation</div>
+<div class="ui stats">
+Flakes: <span id="flakes">0</span><br>
+Settled: <span id="settled">0</span><br>
+Wind: <span id="wind">0</span>
+</div>
+<div class="ui controls">
+<button class="btn" id="btnShake">SHAKE</button>
+<button class="btn" id="btnClear">CLEAR</button>
+<button class="btn" id="btnWind">WIND</button>
+<kbd>Space</kbd> shake · <kbd>←→</kbd> wind
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const flakes=[],settled=[],MAX_FLAKES=800;
+let wind=0,windTarget=0,shake=0,frame=0;
+let mouse={x:0,y:0,down:false};
+const GLOBE_R=Math.min(300,window.innerWidth*0.4);
+const GLOBE_CX=0,GLOBE_CY=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+  ctx.translate(W/DPR/2,H/DPR/2);
+}
+class Flake{
+  constructor(x,y){
+    this.x=x;this.y=y;
+    this.vx=(Math.random()-0.5)*0.5;
+    this.vy=0.5+Math.random()*1.5;
+    this.size=1+Math.random()*2.5;
+    this.angle=Math.random()*Math.PI*2;
+    this.spin=(Math.random()-0.5)*0.05;
+    this.opacity=0.6+Math.random()*0.4;
+    this.settled=false;
+  }
+  update(){
+    if(this.settled)return;
+    this.vy+=0.01;
+    this.vx+=wind*0.02+(Math.random()-0.5)*0.05;
+    this.vx*=0.99;this.vy*=0.99;
+    this.x+=this.vx;this.y+=this.vy;
+    this.angle+=this.spin;
+    const dist=Math.hypot(this.x-GLOBE_CX,this.y-GLOBE_CY);
+    if(dist+this.size>GLOBE_R){
+      const nx=(this.x-GLOBE_CX)/dist,ny=(this.y-GLOBE_CY)/dist;
+      this.x=GLOBE_CX+nx*(GLOBE_R-this.size);
+      this.y=GLOBE_CY+ny*(GLOBE_R-this.size);
+      this.vx*=-0.3;this.vy*=-0.3;
+      if(Math.abs(this.vx)<0.05&&Math.abs(this.vy)<0.05){
+        this.settled=true;
+        settled.push({x:this.x,y:this.y,size:this.size,angle:this.angle,opacity:this.opacity});
+        return false;
+      }
+    }
+    return true;
+  }
+  draw(){
+    ctx.save();
+    ctx.translate(this.x,this.y);
+    ctx.rotate(this.angle);
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3;
+      ctx.lineTo(Math.cos(a)*this.size,Math.sin(a)*this.size);
+    }
+    ctx.closePath();
+    ctx.fillStyle=`rgba(255,255,255,${this.opacity})`;
+    ctx.fill();
+    ctx.restore();
+  }
+}
+function addFlake(){
+  const angle=Math.random()*Math.PI*2;
+  const r=GLOBE_R*0.9;
+  flakes.push(new Flake(GLOBE_CX+Math.cos(angle)*r,GLOBE_CY+Math.sin(angle)*r-Math.random()*100));
+}
+function shakeGlobe(){
+  shake=20;
+  for(const f of flakes){
+    f.vx+=(Math.random()-0.5)*2;
+    f.vy+=(Math.random()-0.5)*2-2;
+  }
+  for(const s of settled){
+    if(Math.random()<0.3){
+      flakes.push(new Flake(s.x,s.y));
+      s.removed=true;
+    }
+  }
+  for(let i=settled.length-1;i>=0;i--)if(settled[i].removed)settled.splice(i,1);
+}
+document.getElementById('btnShake').onclick=shakeGlobe;
+document.getElementById('btnClear').onclick=()=>{flakes.length=0;settled.length=0;};
+document.getElementById('btnWind').onclick=()=>{windTarget=windTarget?0:(Math.random()-0.5)*2;};
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX-W/2;mouse.y=e.clientY-H/2;});
+window.addEventListener('mousedown',e=>{mouse.down=true;});
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX-W/2;mouse.y=t.clientY-H/2;},{passive:false});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){shakeGlobe();e.preventDefault();}
+  if(e.code==='ArrowLeft')windTarget=-1.5;
+  if(e.code==='ArrowRight')windTarget=1.5;
+});
+window.addEventListener('keyup',e=>{
+  if(e.code==='ArrowLeft'||e.code==='ArrowRight')windTarget=0;
+});
+function tick(){
+  frame++;
+  wind+= (windTarget-wind)*0.02;
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle='rgba(232,244,253,0.3)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  ctx.translate(W/DPR/2,H/DPR/2);
+  if(shake>0){
+    ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+    shake*=0.95;
+  }
+  ctx.beginPath();
+  ctx.arc(GLOBE_CX,GLOBE_CY,GLOBE_R,0,Math.PI*2);
+  const grad=ctx.createRadialGradient(GLOBE_CX,GLOBE_CY,0,GLOBE_CX,GLOBE_CY,GLOBE_R);
+  grad.addColorStop(0,'rgba(232,244,253,0)');
+  grad.addColorStop(1,'rgba(139,115,85,0.1)');
+  ctx.fillStyle=grad;
+  ctx.fill();
+  ctx.strokeStyle='rgba(139,115,85,0.3)';
+  ctx.lineWidth=3;
+  ctx.stroke();
+  const baseY=GLOBE_CY+GLOBE_R-10;
+  ctx.beginPath();
+  ctx.ellipse(GLOBE_CX,baseY,GLOBE_R*0.6,8,0,0,Math.PI*2);
+  ctx.fillStyle='rgba(139,115,85,0.4)';
+  ctx.fill();
+  if(flakes.length<MAX_FLAKES&&Math.random()<0.3)addFlake();
+  for(let i=flakes.length-1;i>=0;i--){
+    if(!flakes[i].update())flakes.splice(i,1);
+    else flakes[i].draw();
+  }
+  for(const s of settled){
+    ctx.save();
+    ctx.translate(s.x,s.y);
+    ctx.rotate(s.angle);
+    ctx.beginPath();
+    for(let i=0;i<6;i++){
+      const a=i*Math.PI/3;
+      ctx.lineTo(Math.cos(a)*s.size,Math.sin(a)*s.size);
+    }
+    ctx.closePath();
+    ctx.fillStyle=`rgba(255,255,255,${s.opacity*0.8})`;
+    ctx.fill();
+    ctx.restore();
+  }
+  document.getElementById('flakes').textContent=flakes.length;
+  document.getElementById('settled').textContent=settled.length;
+  document.getElementById('wind').textContent=wind.toFixed(1);
+  requestAnimationFrame(tick);
+}
+resize();
+for(let i=0;i<100;i++)addFlake();
+tick();
+</script>
+</body>
+</html>

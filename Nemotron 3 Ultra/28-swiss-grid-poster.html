@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>28 — Swiss Grid Poster</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#ffffff;--fg:#000000;--accent:#ff0000;--muted:#333333;--grid:rgba(0,0,0,0.04)}
+@media (prefers-color-scheme:dark){:root{--bg:#000000;--fg:#ffffff;--accent:#ff3333;--muted:#cccccc;--grid:rgba(255,255,255,0.04)}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:10px/1.5 'Helvetica Neue',Helvetica,Arial,sans-serif;overflow:hidden}
+.poster{position:relative;width:100%;height:100%;display:grid;grid-template-columns:repeat(12,1fr);grid-template-rows:repeat(12,1fr);gap:0}
+.poster::before{content:'';position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:8% 8%;pointer-events:none;z-index:100}
+.poster::after{content:'';position:absolute;inset:0;border:4px solid var(--fg);pointer-events:none;z-index:101}
+.block{position:relative;z-index:1;display:flex;flex-direction:column;justify-content:flex-end;padding:calc(100%/12/2)}
+.block::before{content:attr(data-coords);position:absolute;top:4px;left:4px;font-size:6px;color:var(--muted);opacity:0.5;font-family:monospace;z-index:2}
+h1{font-size:clamp(1.5rem,4vw,3.5rem);font-weight:800;line-height:1;letter-spacing:-0.03em;text-transform:uppercase}
+h2{font-size:clamp(0.75rem,1.5vw,1.25rem);font-weight:600;line-height:1.2;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:0.5rem}
+p{font-size:clamp(0.6rem,1vw,0.85rem);line-height:1.6;font-weight:400}
+.accent{color:var(--accent)}
+.rule{width:60px;height:2px;background:var(--fg);margin:0.5rem 0}
+.rule.red{background:var(--accent)}
+.num{font-size:clamp(3rem,8vw,8rem);font-weight:800;line-height:1;color:var(--muted);opacity:0.15}
+.block:nth-child(1){grid-column:1/5;grid-row:1/4}
+.block:nth-child(2){grid-column:5/13;grid-row:1/3}
+.block:nth-child(3){grid-column:5/9;grid-row:3/5}
+.block:nth-child(4){grid-column:9/13;grid-row:3/6}
+.block:nth-child(5){grid-column:1/7;grid-row:4/8}
+.block:nth-child(6){grid-column:7/13;grid-row:5/9}
+.block:nth-child(7){grid-column:1/4;grid-row:8/13}
+.block:nth-child(8){grid-column:4/10;grid-row:8/11}
+.block:nth-child(9){grid-column:10/13;grid-row:8/13}
+.block:nth-child(10){grid-column:4/7;grid-row:11/13}
+@media (max-width:800px){
+  .poster{grid-template-columns:1fr;grid-template-rows:auto}
+  .block{grid-column:auto!important;grid-row:auto!important;padding:2rem}
+  .poster::before,.poster::after{display:none}
+}
+</style>
+</head>
+<body>
+<div class="poster" role="img" aria-label="Swiss Grid Poster - International Typographic Style">
+<div class="block" data-coords="1-4 / 1-3"><div class="num">028</div><h1>Swiss<br>Grid<br>System</h1></div>
+<div class="block" data-coords="5-12 / 1-2"><h2>International Typographic Style</h2><p>Order. Clarity. Objectivity. The grid is not a constraint — it is a liberation. When structure is absolute, content breathes.</p></div>
+<div class="block" data-coords="5-8 / 3-4"><div class="rule red"></div><h2>Principles</h2><p>Asymmetrical balance. Flush left, ragged right. Sans-serif typography. Objective photography. Mathematical precision.</p></div>
+<div class="block" data-coords="9-12 / 3-5"><h2>Grid Anatomy</h2><p>12 columns. 12 rows. Equal gutters. Modules combine to form fields. Fields organize content. The rhythm is invisible but felt.</p><div class="rule"></div><p style="font-size:0.7rem;color:var(--muted);margin-top:0.5rem">Baseline grid: 4pt increments</p></div>
+<div class="block" data-coords="1-6 / 4-7"><h2>Typography</h2><p>Helvetica. Univers. Akzidenz-Grotesk. The typeface disappears. The message remains. Weight, size, position — these create hierarchy. Not decoration.</p><div class="rule"></div><p style="margin-top:0.5rem"><strong>Primary:</strong> Helvetica Neue 55 Roman<br><strong>Display:</sup> Helvetica Neue 75 Bold<br><strong>Caption:</strong> Helvetica Neue 45 Light</p></div>
+<div class="block" data-coords="7-12 / 5-8"><div class="num" style="opacity:0.08">1950s</div><h2>History</h2><p>Born in Switzerland. Müller-Brockmann. Hofmann. Ruder. The International Style spread globally. Corporate identity. Wayfinding. The visual language of modernity.</p></div>
+<div class="block" data-coords="1-3 / 8-12"><h2>Application</h2><p>Posters. Books. Signage. Corporate identity. Exhibition design. The grid scales. From stamp to building facade. The system holds.</p><div class="rule"></div><p style="margin-top:0.5rem;font-size:0.7rem">Modular → Column → Manuscript → Baseline</p></div>
+<div class="block" data-coords="4-9 / 8-10"><h2>Contemporary</h2><p>CSS Grid. Flexbox. The browser is the new compositor. The principles remain. The tools evolved. Variable fonts. Fluid grids. Container queries. The Swiss spirit lives in code.</p></div>
+<div class="block" data-coords="9-12 / 8-12"><h2>Nemotron 3 Ultra</h2><p class="accent" style="font-size:1.2rem;font-weight:700;letter-spacing:0.05em">028 / 100</p><p style="font-size:0.65rem;color:var(--muted);margin-top:0.5rem">Swiss Grid Poster Series<br>Hand-coded HTML/CSS<br>No frameworks. No libraries.</p></div>
+<div class="block" data-coords="4-6 / 11-12"><h2>References</h2><p style="font-size:0.65rem;line-height:2">Müller-Brockmann: Grid Systems<br>Hofmann: Graphic Design Manual<br>Ruder: Typography<br>Vignelli: Canon</p></div>
+</div>
+</body>
+</html>

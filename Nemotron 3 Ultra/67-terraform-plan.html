@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>67 — Terraform Plan Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{margin-bottom:1.5rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.editor-header h1{font-size:1.5rem;font-weight:300}
+.editor-header h1 span{font-weight:700;color:var(--accent)}
+.plan-input{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.plan-input label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.plan-input textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.75rem;border-radius:4px;min-height:400px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.75rem}
+.plan-input textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn-group{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.summary{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem}
+.summary h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem}
+.summary-item{text-align:center;padding:1rem;background:var(--bg);border-radius:4px}
+.summary-value{font-size:2rem;font-weight:700}
+.summary-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-top:.5rem}
+.summary-item.create .summary-value{color:var(--accent2)}
+.summary-item.update .summary-value{color:var(--accent3)}
+.summary-item.delete .summary-value{color:var(--accent4)}
+.summary-item.replace .summary-value{color:var(--accent)}
+.results{background:var(--card);border-left:1px solid var(--border);padding:1.5rem;overflow:auto}
+.results-header{margin-bottom:1rem}
+.results-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.resource-tree{display:flex;flex-direction:column;gap:.35rem}
+.resource-node{background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.resource-header{display:flex;align-items:center;gap:.5rem;padding:.75rem;cursor:pointer}
+.resource-header:hover{background:rgba(88,166,255,.1)}
+.resource-action{font-size:.55rem;padding:.15rem .4rem;border-radius:3px;font-weight:700;min-width:60px;text-align:center}
+.resource-action.create{background:rgba(63,185,80,.2);color:var(--accent2)}
+.resource-action.update{background:rgba(210,153,34,.2);color:var(--accent3)}
+.resource-action.delete{background:rgba(248,81,73,.2);color:var(--accent4)}
+.resource-action.replace{background:rgba(88,166,255,.2);color:var(--accent)}
+.resource-action.noop{background:rgba(139,148,158,.2);color:var(--muted)}
+.resource-name{font-family:'JetBrains Mono',monospace;font-size:.75rem;flex:1}
+.resource-provider{font-size:.6rem;color:var(--muted)}
+.resource-details{padding:0 1rem 1rem 2.5rem;display:none;font-size:.7rem}
+.resource-details.show{display:block}
+.detail-row{display:flex;gap:1rem;margin:.5rem 0}
+.detail-label{color:var(--muted);min-width:120px}
+.detail-value{color:var(--fg);font-family:'JetBrains Mono',monospace;word-break:break-all}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Input</h2><h1>Terraform <span>Plan</span> Visualizer</h1></div>
+<div class="plan-input"><label>Terraform Plan Output (JSON)</label><textarea id="planInput" placeholder="Paste `terraform show -json plan.out` output here..."></textarea></div>
+<div class="btn-group"><button class="btn primary" id="parseBtn">Parse Plan</button><button class="btn" id="loadSample">Load Sample</button><button class="btn" id="clearBtn">Clear</button></div>
+<div class="summary" id="summary" style="display:none"><h3>Plan Summary</h3><div class="summary-grid"><div class="summary-item create"><div class="summary-value" id="countCreate">0</div><div class="summary-label">Create</div></div><div class="summary-item update"><div class="summary-value" id="countUpdate">0</div><div class="summary-label">Update</div></div><div class="summary-item delete"><div class="summary-value" id="countDelete">0</div><div class="summary-label">Delete</div></div><div class="summary-item replace"><div class="summary-value" id="countReplace">0</div><div class="summary-label">Replace</div></div></div></div>
+</div>
+<div class="results">
+<div class="results-header"><h3>Resource Changes</h3></div>
+<div class="resource-tree" id="resourceTree"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 067 / 100 · Terraform Plan Visualizer</footer>
+<script>
+const planInput=document.getElementById('planInput');
+const resourceTree=document.getElementById('resourceTree');
+const summary=document.getElementById('summary');
+const samplePlan={
+  format_version:"1.0",
+  terraform_version:"1.6.0",
+  planned_values:{root_module:{resources:[]}},
+  resource_changes:[
+    {address:"aws_instance.web",type:"aws_instance",name:"web",provider_name:"registry.terraform.io/hashicorp/aws",change:{actions:["create"],before:null,after:{ami:"ami-0c55b159cbfafe1f0",instance_type:"t3.micro",tags:{Name:"web-server"}},after_unknown:{private_ip:true}}},
+    {address:"aws_s3_bucket.data",type:"aws_s3_bucket",name:"data",provider_name:"registry.terraform.io/hashicorp/aws",change:{actions:["create"],before:null,after:{bucket:"my-data-bucket",versioning:{enabled:true}}}},
+    {address:"aws_security_group.web",type:"aws_security_group",name:"web",provider_name:"registry.terraform.io/hashicorp/aws",change:{actions:["update"],before:{ingress:[{from_port:80,to_port:80,protocol:"tcp",cidr_blocks:["0.0.0.0/0"]}]},after:{ingress:[{from_port:80,to_port:80,protocol:"tcp",cidr_blocks:["0.0.0.0/0"}],egress:[{from_port:0,to_port:0,protocol:"-1",cidr_blocks:["0.0.0.0/0"}]]}}},
+    {address:"aws_db_instance.main",type:"aws_db_instance",name:"main",provider_name:"registry.terraform.io/hashicorp/aws",change:{actions:["replace"],before:{instance_class:"db.t3.micro",allocated_storage:20},after:{instance_class:"db.t3.small",allocated_storage:50}}},
+    {address:"aws_lambda_function.processor",type:"aws_lambda_function",name:"processor",provider_name:"registry.terraform.io/hashicorp/aws",change:{actions:["delete"],before:{function_name:"old-processor",runtime:"python3.9",handler:"index.handler"},after:null}}
+  ]
+};
+function parsePlan(){
+  try{
+    const plan=JSON.parse(planInput.value);
+    renderPlan(plan);
+  }catch(e){
+    alert('Invalid JSON: '+e.message);
+  }
+}
+function renderPlan(plan){
+  const changes=plan.resource_changes||[];
+  const counts={create:0,update:0,delete:0,replace:0,noop:0};
+  changes.forEach(c=>{const action=c.change.actions[0];counts[action]=(counts[action]||0)+1;});
+  document.getElementById('countCreate').textContent=counts.create;
+  document.getElementById('countUpdate').textContent=counts.update;
+  document.getElementById('countDelete').textContent=counts.delete;
+  document.getElementById('countReplace').textContent=counts.replace;
+  summary.style.display='block';
+  resourceTree.innerHTML=changes.map(c=>{
+    const action=c.change.actions[0];
+    const actionClass=action==='create'?'create':action==='update'?'update':action==='delete'?'delete':action==='replace'?'replace':'noop';
+    return `<div class="resource-node"><div class="resource-header" onclick="this.nextElementSibling.classList.toggle('show');this.querySelector('.resource-action').classList.toggle('rotated')"><span class="resource-action ${actionClass}">${action.toUpperCase()}</span><span class="resource-name">${c.address}</span><span class="resource-provider">${c.type} (${c.provider_name})</span></div><div class="resource-details">${renderDetails(c)}</div></div>`;
+  }).join('');
+}
+function renderDetails(c){
+  const change=c.change;
+  const before=change.before;
+  const after=change.after;
+  let html='';
+  if(before){html+=`<div class="detail-row"><span class="detail-label">Before:</span><span class="detail-value">${escapeHtml(JSON.stringify(before,null,2))}</span></div>`;}
+  if(after){html+=`<div class="detail-row"><span class="detail-label">After:</span><span class="detail-value">${escapeHtml(JSON.stringify(after,null,2))}</span></div>`;}
+  if(change.after_unknown){html+=`<div class="detail-row"><span class="detail-label">After (unknown):</span><span class="detail-value">${escapeHtml(JSON.stringify(change.after_unknown,null,2))}</span></div>`;}
+  return html||'<div style="color:var(--muted);padding:.5rem">No attribute changes</div>';
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
+document.getElementById('parseBtn').onclick=parsePlan;
+document.getElementById('loadSample').onclick=()=>{planInput.value=JSON.stringify(samplePlan,null,2);parsePlan();};
+document.getElementById('clearBtn').onclick=()=>{planInput.value='';resourceTree.innerHTML='';summary.style.display='none';};
+</script>
+</body>
+</html>

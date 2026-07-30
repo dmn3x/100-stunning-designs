@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>41 — Timeline Explorer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00d4ff;--accent2:#ff6b6b;--card:#121220}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--muted);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.timeline{position:relative;padding-left:3rem}
+.timeline::before{content:'';position:absolute;left:1rem;top:0;bottom:0;width:2px;background:linear-gradient(180deg,var(--accent),var(--muted),var(--accent2))}
+.event{position:relative;padding-left:3rem;margin-bottom:2rem;opacity:0;transform:translateX(-20px);transition:all .6s cubic-bezier(.16,1,.3,1)}
+.event.visible{opacity:1;transform:translateX(0)}
+.event-marker{position:absolute;left:-1rem;top:.25rem;width:14px;height:14px;border-radius:50%;border:3px solid var(--bg);box-shadow:0 0 0 2px var(--accent);background:var(--accent);transition:all .2s}
+.event:hover .event-marker{transform:scale(1.5);box-shadow:0 0 0 4px var(--accent)44}
+.event-date{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+.event-title{font-size:1.1rem;font-weight:500;margin-bottom:.5rem;color:var(--fg)}
+.event-body{color:var(--muted);line-height:1.7;max-width:700px}
+.event-tags{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:.75rem}
+.event-tags span{font-size:.6rem;padding:.15rem .5rem;border:1px solid var(--muted);letter-spacing:.05em;text-transform:uppercase;color:var(--muted);transition:all .1s}
+.event-tags span:hover{border-color:var(--accent);color:var(--accent)}
+.filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem;padding:1rem;background:var(--card);border:1px solid var(--muted);border-radius:4px}
+.filters label{display:flex;align-items:center;gap:.3rem;cursor:pointer;font-size:.7rem;color:var(--muted)}
+.filters input{accent-color:var(--accent)}
+.stats{display:flex;gap:2rem;margin-bottom:2rem;padding:1rem;background:var(--card);border:1px solid var(--muted);border-radius:4px}
+.stat{color:var(--muted)}
+.stat strong{color:var(--accent);font-size:1.5rem}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--muted);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:768px){
+  .header{flex-direction:column;align-items:flex-start}
+  .timeline{padding-left:2rem}
+  .event{padding-left:2.5rem}
+  .event-marker{left:-0.75rem}
+}
+</style>
+</head>
+<body>
+<header class="header"><h1>Timeline <span>Explorer</span></h1><div class="controls"><label>Era <select id="eraFilter"><option value="all">All Eras</option></select></label><label>Category <select id="catFilter"><option value="all">All Categories</option></select></label><label><input type="checkbox" id="animate" checked> Animate</label><label><input type="checkbox" id="showFuture" checked> Future Events</label></div></header>
+<main class="main">
+<div class="stats"><div class="stat"><strong id="totalEvents">0</strong> Events</div><div class="stat"><strong id="eraCount">0</strong> Eras</div><div class="stat"><strong id="catCount">0</strong> Categories</div><div class="stat"><strong id="timeSpan">0</strong> Years</div></div>
+<div class="filters" id="filters"></div>
+<div class="timeline" id="timeline"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 041 / 100 · Interactive Timeline Explorer</footer>
+<script>
+const events=[
+  {date:-13800000000,title:"Big Bang",era:"Cosmic Dawn",category:"Physics",desc:"The universe begins expanding from a singularity. Space, time, and all matter originate in this moment.",tags:["Cosmology","Origin"]},
+  {date:-4600000000,title:"Solar System Forms",era:"Cosmic Dawn",category:"Astronomy",desc:"A molecular cloud collapses, forming the Sun and protoplanetary disk that becomes our solar system.",tags:["Astronomy","Formation"]},
+  {date:-4540000000,title:"Earth Forms",era:"Cosmic Dawn",category:"Geology",desc:"Accretion of planetesimals forms Earth. Molten surface begins to cool.",tags:["Geology","Earth"]},
+  {date:-3800000000,title:"First Life Appears",era:"Early Earth",category:"Biology",desc:"Earliest evidence of microbial life in hydrothermal vents. LUCA — Last Universal Common Ancestor.",tags:["Biology","Origin of Life"]},
+  {date:-2400000000,title:"Great Oxidation Event",era:"Early Earth",category:"Geology",desc:"Cyanobacteria produce oxygen, transforming atmosphere and enabling complex life. Mass extinction of anaerobes.",tags:["Geology","Atmosphere"]},
+  {date:-541000000,title:"Cambrian Explosion",era:"Paleozoic",category:"Biology",desc:"Rapid diversification of complex multicellular life. Most modern animal phyla appear in fossil record.",tags:["Biology","Evolution"]},
+  {date:-252000000,title:"Permian-Triassic Extinction",era:"Paleozoic",category:"Geology",desc:"'Great Dying' — 96% of marine species, 70% of terrestrial vertebrates extinct. Volcanic CO2, climate change.",tags:["Extinction","Climate"]},
+  {date:-66000000,title:"Cretaceous-Paleogene Extinction",era:"Mesozoic",category:"Geology",desc:"Asteroid impact ends non-avian dinosaurs. Mammals radiate into vacant niches.",tags:["Extinction","Impact"]},
+  {date:-300000,title:"Homo sapiens Emerges",era:"Pleistocene",category:"Anthropology",desc:"Anatomically modern humans appear in Africa. Cognitive revolution begins.",tags:["Human","Evolution"]},
+  {date:-50000,title:"Out of Africa Migration",era:"Pleistocene",category:"Anthropology",desc:"Modern humans disperse from Africa, populating Eurasia, Australia, eventually Americas.",tags:["Migration","Human"]},
+  {date:-12000,title:"Agricultural Revolution",era:"Holocene",category:"Civilization",desc:"Domestication of plants/animals in Fertile Crescent. Sedentary settlements, population growth.",tags:["Agriculture","Civilization"]},
+  {date:-4000,title:"Writing Invented",era:"Holocene",category:"Civilization",desc:"Cuneiform in Sumer. First recorded history. Administration, literature, law become possible.",tags:["Writing","History"]},
+  {date:-2500,title:"Pyramids of Giza",era:"Holocene",category:"Engineering",desc:"Khufu's Great Pyramid completed. 2.3M limestone blocks, 146m tall. Tallest structure for 3800 years.",tags:["Engineering","Architecture"]},
+  {date:-500,title:"Classical Philosophy",era:"Antiquity",category:"Philosophy",desc:"Socrates, Plato, Aristotle lay foundations of Western philosophy. Democracy in Athens.",tags:["Philosophy","Democracy"]},
+  {date:0,title:"Common Era Begins",era:"Antiquity",category:"History",desc:"Traditional dating system origin. Roman Empire at height. Silk Road connects East/West.",tags:["History","Calendar"]},
+  {date:476,title:"Fall of Western Rome",era:"Late Antiquity",category:"History",desc:"Last Western Roman emperor deposed. Medieval period begins in Europe. Eastern Empire endures.",tags:["History","Rome"]},
+  {date:622,title:"Hijra — Islamic Calendar",era:"Middle Ages",category:"Religion",desc:"Muhammad's migration to Medina. Birth of Islamic community. Rapid expansion of Islam.",tags:["Religion","Islam"]},
+  {date:1054,title:"East-West Schism",era:"Middle Ages",category:"Religion",desc:"Catholic and Orthodox churches formally split. Cultural divide between Latin West and Greek East.",tags:["Religion","Christianity"]},
+  {date:1215,title:"Magna Carta",era:"Middle Ages",category:"Law",desc:"English barons force King John to accept limits on royal power. Foundation of constitutional law.",tags:["Law","Rights"]},
+  {date:1347,title:"Black Death",era:"Late Middle Ages",category:"Medicine",desc:"Yersinia pestis kills 30-60% of Europe's population. Social, economic, religious upheaval.",tags:["Pandemic","Society"]},
+  {date:1440,title:"Printing Press",era:"Renaissance",category:"Technology",desc:"Gutenberg's movable type. Mass production of books. Literacy spreads. Reformation enabled.",tags:["Technology","Information"]},
+  {date:1492,title:"Columbian Exchange Begins",era:"Age of Exploration",category:"History",desc:"Columbus reaches Americas. Global biological exchange. Demographic catastrophe for indigenous peoples.",tags:["Exploration","Globalization"]},
+  {date:1517,title:"Protestant Reformation",era:"Reformation",category:"Religion",desc:"Luther's 95 Theses. Religious fragmentation of Europe. Wars of religion. Rise of nation-states.",tags:["Religion","Europe"]},
+  {date:1687,title:"Newton's Principia",era:"Scientific Revolution",category:"Physics",desc:"Laws of motion, universal gravitation. Mathematical framework for classical mechanics.",tags:["Physics","Mathematics"]},
+  {date:1776,title:"American Declaration of Independence",era:"Enlightenment",category:"Politics",desc:"'All men are created equal.' Birth of modern democratic republic. Inspiration for global revolutions.",tags:["Democracy","Rights"]},
+  {date:1789,title:"French Revolution",era:"Enlightenment",category:"Politics",desc:"Monarchy overthrown. Declaration of Rights of Man. Radical restructuring of French society.",tags:["Revolution","Rights"]},
+  {date:1800,title:"Industrial Revolution Accelerates",era:"Industrial Age",category:"Technology",desc:"Steam power, mechanized textiles, iron production. Urbanization. Fossil fuel economy begins.",tags:["Industry","Energy"]},
+  {date:1859,title:"Darwin Publishes Origin of Species",era:"Victorian Era",category:"Biology",desc:"Natural selection explains biodiversity. Unifies biology. Challenges creationist worldview.",tags:["Evolution","Biology"]},
+  {date:1865,title:"Maxwell's Equations",era:"Victorian Era",category:"Physics",desc:"Unification of electricity, magnetism, light. Foundation of classical electromagnetism.",tags:["Physics","Electromagnetism"]},
+  {date:1905,title:"Einstein's Miracle Year",era:"Modern Physics",category:"Physics",desc:"Special relativity, photoelectric effect, Brownian motion, E=mc². Physics transformed.",tags:["Relativity","Quantum"]},
+  {date:1914,title:"World War I Begins",era:"World Wars",category:"History",desc:"Industrialized warfare. 20M dead. Empires fall. Seeds of WWII planted. Modern geopolitics born.",tags:["War","Geopolitics"]},
+  {date:1928,title:"Penicillin Discovered",era:"Interwar",category:"Medicine",desc:"Fleming discovers first antibiotic. Revolutionizes treatment of bacterial infections. Saves hundreds of millions.",tags:["Medicine","Antibiotics"]},
+  {date:1939,title:"World War II Begins",era:"World Wars",category:"History",desc:"Global conflict. 70-85M dead. Holocaust. Nuclear age dawns. UN formed. Decolonization accelerates.",tags:["War","Nuclear"]},
+  {date:1945,title:"Trinity Test / Hiroshima",era:"Atomic Age",category:"Physics",desc:"First nuclear detonation. Atomic bombs end WWII. Cold War begins. Existential risk enters history.",tags:["Nuclear","Physics"]},
+  {date:1953,title:"DNA Structure Discovered",era:"Molecular Biology",category:"Biology",desc:"Watson, Crick, Franklin, Wilkins reveal double helix. Genetic code. Biotechnology era begins.",tags:["Genetics","Biology"]},
+  {date:1957,title:"Sputnik 1 Launched",era:"Space Age",category:"Space",desc:"First artificial satellite. Space Race begins. Orbital technology transforms communication, surveillance.",tags:["Space","Technology"]},
+  {date:1969,title:"Apollo 11 Moon Landing",era:"Space Age",category:"Space",desc:"Armstrong, Aldrin walk on Moon. 'One small step.' Peak of human spaceflight. 600M watch live.",tags:["Space","Achievement"]},
+  {date:1971,title:"Microprocessor Invented",era:"Digital Revolution",category:"Technology",desc:"Intel 4004. Computing power exponential growth begins. Personal computer revolution enabled.",tags:["Computing","Hardware"]},
+  {date:1983,title:"TCP/IP Standardized",era:"Digital Revolution",category:"Technology",desc:"Internet protocol suite adopted. ARPANET transitions to Internet. Global network born.",tags:["Internet","Networking"]},
+  {date:1989,title:"Berlin Wall Falls",era:"Late Cold War",category:"Politics",desc:"Symbol of Iron Curtain falls. German reunification. Soviet bloc collapses. Cold War ends.",tags:["Politics","Freedom"]},
+  {date:1990,title:"World Wide Web Invented",era:"Information Age",category:"Technology",desc:"Berners-Lee creates HTTP, HTML, URLs at CERN. Information universally accessible. Dot-com boom follows.",tags:["Web","Information"]},
+  {date:1997,title:"Dolly the Sheep Cloned",era:"Biotech Age",category:"Biology",desc:"First mammal cloned from adult somatic cell. Reproductive cloning proven possible. Ethical debates ignite.",tags:["Cloning","Ethics"]},
+  {date:2001,title:"Human Genome Sequenced",era:"Genomic Era",category:"Biology",desc:"International project completes draft. 3 billion base pairs. Personalized medicine, CRISPR enabled.",tags:["Genomics","Medicine"]},
+  {date:2007,title:"iPhone Released",era:"Mobile Era",category:"Technology",desc:"Touchscreen smartphone redefines computing. App economy born. Internet becomes pocket-sized.",tags:["Mobile","Computing"]},
+  {date:2012,title:"Higgs Boson Discovered",era:"Particle Physics",category:"Physics",desc:"LHC confirms Higgs field. Standard Model complete. Mass mechanism understood. Nobel 2013.",tags:["Physics","CERN"]},
+  {date:2015,title:"CRISPR-Cas9 Genome Editing",era:"Biotech Age",category:"Biology",desc:"Precise, cheap gene editing. Therapeutic potential. Designer babies debate. Nobel 2020.",tags:["Genetics","Ethics"]},
+  {date:2016,title:"Gravitational Waves Detected",era:"Multi-messenger Astronomy",category:"Physics",desc:"LIGO confirms Einstein's 1916 prediction. Black hole merger observed. New window on universe.",tags:["Physics","Astronomy"]},
+  {date:2020,title:"COVID-19 Pandemic",era:"Modern Era",category:"Medicine",desc:"SARS-CoV-2 spreads globally. mRNA vaccines developed in record time. Society transformed.",tags:["Pandemic","Vaccines"]},
+  {date:2022,title:"ChatGPT Released",era:"AI Era",category:"Technology",desc:"Generative AI reaches mainstream. LLMs transform knowledge work, creativity, search. Alignment debates intensify.",tags:["AI","LLM"]},
+  {date:2024,title:"Artemis Program Advances",era:"New Space Age",category:"Space",desc:"NASA returns to Moon. Sustainable presence. Mars preparation. Commercial spaceflight matures.",tags:["Space","Exploration"]},
+  {date:2025,title:"Fusion Ignition Achieved",era:"Energy Transition",category:"Physics",desc:"NIF achieves net energy gain from fusion. Clean, abundant energy pathway demonstrated. Decades to deployment.",tags:["Fusion","Energy"]},
+  {date:2030,title:"AGI Milestone Predicted",era:"AI Era",category:"Technology",desc:"Expert consensus: ~50% chance of AGI by 2030. Society transformation unprecedented. Alignment critical.",tags:["AI","Future"]},
+  {date:2035,title:"First Human Mars Landing",era:"New Space Age",category:"Space",desc:"SpaceX Starship or NASA Artemis derivative. Multiplanetary species. Existential backup drive.",tags:["Mars","Space"]},
+  {date:2050,title:"Global Net Zero Target",era:"Climate Era",category:"Climate",desc:"Paris Agreement goal. Energy, transport, industry decarbonized. Climate stabilization begins.",tags:["Climate","Energy"]},
+  {date:2100,title:"Post-Carbon Civilization",era:"Deep Future",category:"Civilization",desc:"Fusion/solar dominant. Cities arcologies. Life extension. Interstellar probes launched. Type I civilization.",tags:["Future","Civilization"]}
+];
+let filterEra='all',filterCat='all',animate=true,showFuture=true;
+const eras=[...new Set(events.map(e=>e.era))];
+const cats=[...new Set(events.map(e=>e.category))];
+document.getElementById('eraFilter').innerHTML='<option value="all">All Eras</option>'+eras.map(e=>`<option value="${e}">${e}</option>`).join('');
+document.getElementById('catFilter').innerHTML='<option value="all">All Categories</option>'+cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+document.getElementById('filters').innerHTML=[...new Set(events.flatMap(e=>e.tags))].map(t=>`<label><input type="checkbox" value="${t}" checked> ${t}</label>`).join('');
+function render(){
+  const now=Date.now()/1000/31557600+1970;
+  const activeTags=[...document.querySelectorAll('#filters input:checked')].map(i=>i.value);
+  const filtered=events.filter(e=>(filterEra==='all'||e.era===filterEra)&&(filterCat==='all'||e.category===filterCat)&&(showFuture||e.date<=now)&&e.tags.some(t=>activeTags.includes(t)));
+  document.getElementById('totalEvents').textContent=filtered.length;
+  document.getElementById('eraCount').textContent=[...new Set(filtered.map(e=>e.era))].length;
+  document.getElementById('catCount').textContent=[...new Set(filtered.map(e=>e.category))].length;
+  const dates=filtered.map(e=>e.date);document.getElementById('timeSpan').textContent=dates.length?Math.round(Math.max(...dates)-Math.min(...dates)):'0';
+  const tl=document.getElementById('timeline');
+  tl.innerHTML=filtered.map((e,i)=>`<div class="event" style="transition-delay:${i*50}ms"><div class="event-marker" style="background:${e.category==='Physics'?'#00d4ff':e.category==='Biology'?'#3fb950':e.category==='Technology'?'#d29922':e.category==='Space'?'#a371f7':e.category==='History'?'#f85149':'#8b949e'}"></div><div class="event-date">${e.date<0?Math.abs(e.date/1e6).toFixed(1)+' MYA':e.date+' CE'}</div><div class="event-title">${e.title}</div><div class="event-body">${e.desc}</div><div class="event-tags">${e.tags.map(t=>`<span>${t}</span>`).join('')}</div></div>`).join('');
+  requestAnimationFrame(()=>{document.querySelectorAll('.event').forEach((el,i)=>{setTimeout(()=>el.classList.add('visible'),i*30);});});
+}
+document.getElementById('eraFilter').onchange=e=>{filterEra=e.target.value;render();};
+document.getElementById('catFilter').onchange=e=>{filterCat=e.target.value;render();};
+document.getElementById('animate').onchange=e=>animate=e.target.checked;
+document.getElementById('showFuture').onchange=e=>{showFuture=e.target.checked;render();};
+document.getElementById('filters').onchange=render;
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>74 — Flow Field Visualization</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#canvas{width:100%;height:100%;display:block}
+.ui{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;min-width:200px}
+.ui h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.ui-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.7rem}
+.ui-row label{color:var(--muted);min-width:90px}
+.ui-row input,.ui-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.title{position:fixed;top:1rem;left:1rem;z-index:10}
+.title h1{font-size:1.5rem;font-weight:300}
+.title h1 span{font-weight:700;color:var(--accent)}
+.stats{position:fixed;bottom:1rem;left:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.footer{position:fixed;bottom:1rem;right:1rem;z-index:10;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="title"><h1>Flow Field <span>Visualization</span></h1></div>
+<div class="ui"><h3>Controls</h3><div class="ui-row"><label>Field Type</label><select id="fieldType"><option value="perlin">Perlin Noise</option><option value="curl">Curl Noise</option><option value="vortex">Vortex</option><option value="attractor">Strange Attractor</option><option value="wave">Wave Interference</option></select></div><div class="ui-row"><label>Particles</label><input type="range" id="particleCount" min="500" max="5000" step="100" value="2000"></div><div class="ui-row"><label>Speed</label><input type="range" id="speed" min="0.1" max="5" step="0.1" value="1.5"></div><div class="ui-row"><label>Tail Length</label><input type="range" id="tailLength" min="1" max="50" step="1" value="20"></div><div class="ui-row"><label>Color Scheme</label><select id="colorScheme"><option value="velocity">By Velocity</option><option value="direction">By Direction</option><option value="rainbow">Rainbow</option><option value="mono">Monochrome</option></select></div><div class="ui-row"><label><input type="checkbox" id="showField" checked> Show Field</label></div><div class="ui-row"><label><input type="checkbox" id="wrapEdges" checked> Wrap Edges</label></div></div>
+<div class="stats"><div class="stat"><div class="stat-value" id="statParticles">0</div><div class="stat-label">Particles</div></div><div class="stat"><div class="stat-value" id="statFps">60</div><div class="stat-label">FPS</div></div></div>
+<div class="footer">Nemotron 3 Ultra · 074 / 100 · Flow Field</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let particles=[],flowField=[],animationId,lastTime=0;
+const cols=80,rows=45;
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+}
+function initFlowField(){
+  flowField=[];
+  const type=document.getElementById('fieldType').value;
+  const scale=0.01;
+  const time=Date.now()*0.0005;
+  for(let y=0;y<rows;y++){
+    for(let x=0;x<cols;x++){
+      let angle=0;
+      const nx=x*scale,ny=y*scale;
+      if(type==='perlin'){
+        angle=noise(nx,ny,time)*Math.PI*4;
+      }else if(type==='curl'){
+        const eps=0.01;
+        const n1=noise(nx+eps,ny,time),n2=noise(nx-eps,ny,time);
+        const n3=noise(nx,ny+eps,time),n4=noise(nx,ny-eps,time);
+        angle=Math.atan2(n3-n4,n1-n2);
+      }else if(type==='vortex'){
+        const cx=cols/2,cy=rows/2;
+        const dx=x-cx,dy=y-cy;
+        angle=Math.atan2(dy,dx)+Math.PI/2+time;
+      }else if(type==='attractor'){
+        // Lorenz-like
+        angle=(Math.sin(nx*3+time)*Math.cos(ny*3)+time)*Math.PI*2;
+      }else if(type==='wave'){
+        angle=Math.sin(nx*10+time)*Math.cos(ny*10+time)*Math.PI*2;
+      }
+      flowField.push({x,y,angle,vx:Math.cos(angle),vy:Math.sin(angle)});
+    }
+  }
+}
+function noise(x,y,z){
+  // Simple pseudo-random noise
+  const n=Math.sin(x*12.9898+y*78.233+z*43.758)*43758.5453;
+  return n-Math.floor(n);
+}
+function createParticles(count){
+  particles=[];
+  for(let i=0;i<count;i++){
+    particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:0,vy:0,history:[],hue:Math.random()*360});
+  }
+}
+function getFlowAt(x,y){
+  const col=Math.floor(x/canvas.width*cols);
+  const row=Math.floor(y/canvas.height*rows);
+  if(col>=0&&col<cols&&row>=0&&row<rows){
+    return flowField[row*cols+col];
+  }
+  return {vx:0,vy:0,angle:0};
+}
+function update(){
+  const speed=parseFloat(document.getElementById('speed').value);
+  const wrap=document.getElementById('wrapEdges').checked;
+  initFlowField();
+  particles.forEach(p=>{
+    const flow=getFlowAt(p.x,p.y);
+    p.vx+=flow.vx*0.1;
+    p.vy+=flow.vy*0.1;
+    const drag=0.95;
+    p.vx*=drag;p.vy*=drag;
+    p.x+=p.vx*speed;
+    p.y+=p.vy*speed;
+    p.history.push({x:p.x,y:p.y});
+    const maxTail=parseInt(document.getElementById('tailLength').value);
+    if(p.history.length>maxTail)p.history.shift();
+    if(wrap){
+      if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+      if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+    }else{
+      if(p.x<0||p.x>canvas.width||p.y<0||p.y>canvas.height){
+        p.x=Math.random()*canvas.width;
+        p.y=Math.random()*canvas.height;
+        p.history=[];
+      }
+    }
+    // Update hue based on direction
+    p.hue=(Math.atan2(p.vy,p.vx)*180/Math.PI+360)%360;
+  });
+}
+function draw(){
+  const showField=document.getElementById('showField').checked;
+  const colorScheme=document.getElementById('colorScheme').value;
+  ctx.fillStyle='rgba(13,17,23,0.2)';
+  ctx.fillRect(0,0,canvas.width,canvas.height);
+  if(showField){
+    ctx.strokeStyle='rgba(88,166,255,0.05)';
+    ctx.lineWidth=1;
+    flowField.forEach(f=>{
+      const px=f.x/canvas.width*canvas.width;
+      const py=f.y/canvas.height*canvas.height;
+      const len=15;
+      ctx.beginPath();
+      ctx.moveTo(px,py);
+      ctx.lineTo(px+Math.cos(f.angle)*len,py+Math.sin(f.angle)*len);
+      ctx.stroke();
+    });
+  }
+  particles.forEach(p=>{
+    if(p.history.length<2)return;
+    ctx.beginPath();
+    ctx.moveTo(p.history[0].x,p.history[0].y);
+    for(let i=1;i<p.history.length;i++){
+      ctx.lineTo(p.history[i].x,p.history[i].y);
+    }
+    const speed=Math.hypot(p.vx,p.vy);
+    let color;
+    if(colorScheme==='velocity'){
+      const h=Math.min(speed*60,240);
+      color=`hsl(${240-h},80%,60%)`;
+    }else if(colorScheme==='direction'){
+      color=`hsl(${p.hue},80%,60%)`;
+    }else if(colorScheme==='rainbow'){
+      color=`hsl(${(Date.now()*0.05+p.x*0.01)%360},80%,60%)`;
+    }else{
+      color='rgba(88,166,255,0.8)';
+    }
+    ctx.strokeStyle=color;
+    ctx.lineWidth=1.5;
+    ctx.stroke();
+  });
+}
+function animate(time){
+  const delta=(time-lastTime)/1000;
+  lastTime=time;
+  document.getElementById('statFps').textContent=Math.round(1/delta);
+  document.getElementById('statParticles').textContent=particles.length;
+  update();
+  draw();
+  animationId=requestAnimationFrame(animate);
+}
+resize();
+createParticles(2000);
+animate(0);
+window.addEventListener('resize',()=>{resize();initFlowField();});
+document.getElementById('particleCount').oninput=e=>{createParticles(parseInt(e.target.value));};
+document.getElementById('fieldType').onchange=()=>{initFlowField();};
+document.getElementById('tailLength').oninput=()=>{}; // Handled in update
+</script>
+</body>
+</html>

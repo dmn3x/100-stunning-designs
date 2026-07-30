@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 — Lattice Resonance</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--fg:#e0e0e8;--muted:#3a3a4a;--accent:#ff6b6b;--accent2:#4ecdc4;--glow:rgba(255,107,107,0.12)}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em;opacity:.95}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:120px;accent-color:var(--accent)}
+.ctrl input[type=checkbox]{accent-color:var(--accent);width:14px;height:14px}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:80px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Lattice Resonance</div>
+<div class="ui subtitle">wave interference field</div>
+<div class="ui controls">
+<label class="ctrl">Frequency <input type="range" id="freq" min="0.5" max="5" step="0.1" value="1.8"><span class="stat" id="freqVal">1.8</span></label>
+<label class="ctrl">Damping <input type="range" id="damp" min="0.9" max="0.999" step="0.001" value="0.985"><span class="stat" id="dampVal">0.985</span></label>
+<label class="ctrl"><input type="checkbox" id="colorMode" checked> Color Waves</label>
+<label class="ctrl"><input type="checkbox" id="wireframe" checked> Wireframe</label>
+<label class="ctrl"><input type="checkbox" id="pause"> Pause</label>
+</div>
+<div class="ui mode">click / drag to disturb<br><kbd>Space</kbd> reset · <kbd>C</kbd> clear color</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const GRID=18;
+let cols=0,rows=0;
+let current=[],previous=[];
+let mouse={x:0,y:0,down:false,lastX:0,lastY:0};
+let freq=1.8,damping=0.985,colorMode=true,wireframe=true,paused=false;
+let frame=0,lastTime=0,fps=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cols=Math.ceil(W/DPR/GRID);rows=Math.ceil(H/DPR/GRID);
+  current=new Array(cols*rows).fill(0);
+  previous=new Array(cols*rows).fill(0);
+  ctx.scale(DPR,DPR);
+}
+function idx(x,y){return y*cols+x}
+function get(arr,x,y){if(x<0||x>=cols||y<0||y>=rows)return 0;return arr[idx(x,y)]}
+function set(arr,x,y,v){if(x>=0&&x<cols&&y>=0&&y<rows)arr[idx(x,y)]=v}
+function disturb(mx,my,force=1){
+  const gx=Math.floor(mx/GRID),gy=Math.floor(my/GRID);
+  for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+    const x=gx+dx,y=gy+dy,dist=Math.hypot(dx,dy);
+    if(dist<2.5)set(current,x,y,get(current,x,y)+force*(1-dist/2.5)*0.5);
+  }
+}
+document.getElementById('freq').addEventListener('input',e=>{freq=+e.target.value;document.getElementById('freqVal').textContent=freq.toFixed(1)});
+document.getElementById('damp').addEventListener('input',e=>{damping=+e.target.value;document.getElementById('dampVal').textContent=damping.toFixed(3)});
+document.getElementById('colorMode').addEventListener('change',e=>colorMode=e.target.checked);
+document.getElementById('wireframe').addEventListener('change',e=>wireframe=e.target.checked);
+document.getElementById('pause').addEventListener('change',e=>paused=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;if(mouse.down)disturb(mouse.x,mouse.y,0.8)});
+window.addEventListener('mousedown',e=>{mouse.down=true;mouse.lastX=e.clientX;mouse.lastY=e.clientY;disturb(e.clientX,e.clientY,1.5)});
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;disturb(t.clientX,t.clientY,0.8)},{passive:false});
+window.addEventListener('touchstart',e=>{mouse.down=true;const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;disturb(t.clientX,t.clientY,1.5)},{passive:false});
+window.addEventListener('touchend',()=>mouse.down=false);
+window.addEventListener('keydown',e=>{if(e.code==='Space'){current.fill(0);previous.fill(0);e.preventDefault()}if(e.code==='KeyC')colorMode=!colorMode});
+function tick(now){
+  if(!lastTime)lastTime=now;
+  frame++;
+  if(frame%30===0)fps=Math.round(30000/(now-(lastTime-(now-lastTime)*30)));
+  if(!paused){
+    ctx.fillStyle='rgba(10,10,18,0.08)';
+    ctx.fillRect(0,0,W/DPR,H/DPR);
+    for(let y=1;y<rows-1;y++){
+      for(let x=1;x<cols-1;x++){
+        const i=idx(x,y);
+        const sum=get(previous,x-1,y)+get(previous,x+1,y)+get(previous,x,y-1)+get(previous,x,y+1);
+        current[i]=(sum*0.5-current[i])*damping;
+        if(Math.abs(current[i])<0.001)current[i]=0;
+      }
+    }
+    if(mouse.down)disturb(mouse.x,mouse.y,0.6);
+    if(wireframe){
+      ctx.lineWidth=0.6;
+      for(let y=0;y<rows-1;y++){
+        for(let x=0;x<cols-1;x++){
+          const v=get(current,x,y);
+          if(Math.abs(v)>0.02){
+            const hx=(v+1)*180;
+            ctx.strokeStyle=colorMode?`hsla(${hx},90%,55%,${Math.min(0.6,Math.abs(v)*0.8)})`:`rgba(255,255,255,${Math.min(0.5,Math.abs(v)*0.6)})`;
+            ctx.beginPath();
+            ctx.moveTo(x*GRID,y*GRID);
+            ctx.lineTo((x+1)*GRID,y*GRID);
+            ctx.moveTo(x*GRID,y*GRID);
+            ctx.lineTo(x*GRID,(y+1)*GRID);
+            ctx.stroke();
+          }
+        }
+      }
+      for(let y=0;y<rows;y++){
+        const v=get(current,cols-1,y);
+        if(Math.abs(v)>0.02){
+          const hx=(v+1)*180;
+          ctx.strokeStyle=colorMode?`hsla(${hx},90%,55%,${Math.min(0.6,Math.abs(v)*0.8)})`:`rgba(255,255,255,${Math.min(0.5,Math.abs(v)*0.6)})`;
+          ctx.beginPath();
+          ctx.moveTo((cols-1)*GRID,y*GRID);
+          ctx.lineTo(cols*GRID,y*GRID);
+          ctx.stroke();
+        }
+      }
+      for(let x=0;x<cols;x++){
+        const v=get(current,x,rows-1);
+        if(Math.abs(v)>0.02){
+          const hx=(v+1)*180;
+          ctx.strokeStyle=colorMode?`hsla(${hx},90%,55%,${Math.min(0.6,Math.abs(v)*0.8)})`:`rgba(255,255,255,${Math.min(0.5,Math.abs(v)*0.6)})`;
+          ctx.beginPath();
+          ctx.moveTo(x*GRID,(rows-1)*GRID);
+          ctx.lineTo(x*GRID,rows*GRID);
+          ctx.stroke();
+        }
+      }
+    }else{
+      const imgData=ctx.createImageData(cols,rows);
+      for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
+        const v=get(current,x,y),i=(y*cols+x)*4;
+        if(colorMode){
+          const h=((v+1)*180)%360,s=80,l=50+Math.abs(v)*30;
+          imgData.data[i]=Math.round(l/100*255*Math.cos(h*Math.PI/180));
+          imgData.data[i+1]=Math.round(l/100*255*Math.sin(h*Math.PI/180));
+          imgData.data[i+2]=Math.round((100-s)/100*255);
+          imgData.data[i+3]=Math.min(255,Math.abs(v)*600);
+        }else{
+          const g=Math.min(255,Math.abs(v)*400);
+          imgData.data[i]=imgData.data[i+1]=imgData.data[i+2]=g;
+          imgData.data[i+3]=Math.min(255,Math.abs(v)*500);
+        }
+      }
+      ctx.putImageData(imgData,0,0);
+      ctx.imageSmoothingEnabled=true;
+      ctx.drawImage(canvas,0,0,cols,rows,0,0,W/DPR,H/DPR);
+    }
+    const temp=previous;previous=current;current=temp;
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+for(let i=0;i<20;i++)disturb(Math.random()*W/DPR,Math.random()*H/DPR,Math.random()*0.8);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

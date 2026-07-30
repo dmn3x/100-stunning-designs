@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>44 — Isometric Grid Builder</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00d4ff;--accent2:#ff6b6b;--accent3:#ffd93d;--card:#121220}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--muted);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.controls button{background:var(--card);border:1px solid var(--muted);color:var(--fg);padding:.3rem .75rem;font:inherit;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.controls button:hover{border-color:var(--accent);color:var(--accent)}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.viewport{position:relative;width:100%;aspect-ratio:4/3;background:var(--card);border:1px solid var(--muted);border-radius:8px;overflow:hidden;cursor:grab}
+.viewport:active{cursor:grabbing}
+.canvas-wrapper{position:absolute;top:0;left:0;transform-origin:0 0;transition:transform 0.1s linear}
+canvas{display:block}
+.toolbar{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem;padding:1rem;background:var(--card);border:1px solid var(--muted);border-radius:4px}
+.tool{padding:.5rem 1rem;border:1px solid var(--muted);background:var(--bg);color:var(--fg);font:inherit;font-size:.7rem;border-radius:4px;cursor:pointer;transition:all .1s}
+.tool:hover,.tool.active{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,0.1)}
+.tool.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.palette{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.color-btn{width:32px;height:32px;border-radius:4px;border:2px solid transparent;cursor:pointer;transition:transform .1s}
+.color-btn:hover,.color-btn.active{transform:scale(1.2);border-color:var(--fg)}
+.layers{margin-top:1rem;padding:1rem;background:var(--card);border:1px solid var(--muted);border-radius:4px}
+.layer{display:flex;align-items:center;gap:.5rem;padding:.5rem;margin:.25rem 0;background:var(--bg);border:1px solid var(--muted);border-radius:4px;font-size:.75rem}
+.layer input[type=checkbox]{accent-color:var(--accent)}
+.layer input[type=range]{flex:1;accent-color:var(--accent)}
+.layer .layer-color{width:20px;height:20px;border-radius:3px;border:1px solid var(--muted)}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--muted);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:768px){.header{flex-direction:column;align-items:flex-start}.viewport{aspect-ratio:1/1}}
+</style>
+</head>
+<body>
+<header class="header"><h1>Isometric <span>Grid</span> Builder</h1><div class="controls"><label>Grid Size <input type="range" id="gridSize" min="4" max="20" value="10" style="width:100px"><span id="gridSizeVal">10</span></label><label>Cube Size <input type="range" id="cubeSize" min="20" max="80" value="40" style="width:100px"><span id="cubeSizeVal">40</span></label><label>Height <input type="range" id="heightScale" min="0" max="100" value="30" style="width:100px"><span id="heightVal">30</span></label><button id="randomize">Randomize</button><button id="clear">Clear</button><button class="primary" id="export">Export PNG</button></div></header>
+<main class="main">
+<div class="viewport" id="viewport">
+<div class="canvas-wrapper" id="canvasWrapper"><canvas id="canvas"></canvas></div>
+</div>
+<div class="toolbar">
+<button class="tool active" data-tool="raise" title="Raise (Left Click)">▲ Raise</button>
+<button class="tool" data-tool="lower" title="Lower (Left Click)">▼ Lower</button>
+<button class="tool" data-tool="paint" title="Paint (Left Click)">🎨 Paint</button>
+<button class="tool" data-tool="erase" title="Erase (Left Click)">🧽 Erase</button>
+<button class="tool" data-tool="select" title="Select (Drag)">⬜ Select</button>
+<button class="tool primary" id="rotateBtn" title="Rotate View">⟲ Rotate</button>
+</div>
+<div class="palette" id="palette"></div>
+<div class="layers">
+<div style="font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:.5rem">Layers</div>
+<div id="layerList"></div>
+</div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 044 / 100 · Isometric Grid Builder</footer>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+const wrapper=document.getElementById('canvasWrapper');
+const viewport=document.getElementById('viewport');
+let W=0,H=0,gridSize=10,cubeSize=40,heightScale=30;
+let grid=[],colors=['#00d4ff','#ff6b6b','#ffd93d','#3fb950','#a371f7','#f85149','#00ffaa','#ffcc00','#ff6b9d','#6b5bff'];
+let selectedColor=colors[0],tool='raise',rotation=0,layers=[{name:'Base',visible:true,opacity:1,color:colors[0]}],activeLayer=0;
+let dragging=false,dragStart={x:0,y:0},pan={x:0,y:0},scale=1;
+const ISO_ANGLE=Math.PI/6;
+function isoToScreen(x,y,z){
+  const sx=(x-y)*Math.cos(ISO_ANGLE);
+  const sy=(x+y)*Math.sin(ISO_ANGLE)-z;
+  return {x:sx,y:sy};
+}
+function screenToIso(sx,sy){
+  const x=(sx/Math.cos(ISO_ANGLE)+sy/Math.sin(ISO_ANGLE))/2;
+  const y=(sy/Math.sin(ISO_ANGLE)-sx/Math.cos(ISO_ANGLE))/2;
+  return {x:Math.round(x),y:Math.round(y)};
+}
+function initGrid(){
+  grid=[];for(let x=0;x<gridSize;x++){for(let y=0;y<gridSize;y++){grid.push({x,y,z:0,color:null});}}
+  layers=[{name:'Base',visible:true,opacity:1,color:colors[0]}];activeLayer=0;renderLayers();
+}
+function resize(){
+  const rect=viewport.getBoundingClientRect();
+  W=canvas.width=rect.width*2;H=canvas.height=rect.height*2;
+  canvas.style.width=rect.width+'px';canvas.style.height=rect.height+'px';
+  ctx.scale(2,2);
+  draw();
+}
+function project(x,y,z){
+  const iso=isoToScreen(x,y,z*heightScale*0.5);
+  return {x:W/4+iso.x*cubeSize*0.7*scale+pan.x,y:H/4+iso.y*cubeSize*0.7*scale+pan.y};
+}
+function drawCube(x,y,z,color,highlight=false){
+  const p0=project(x,y,z),p1=project(x+1,y,z),p2=project(x+1,y+1,z),p3=project(x,y+1,z);
+  const p4=project(x,y,z+1),p5=project(x+1,y,z+1),p6=project(x+1,y+1,z+1),p7=project(x,y+1,z+1);
+  const faces=[
+    {pts:[p0,p1,p2,p3],normal:{x:0,y:0,z:1},color:color}, // top
+    {pts:[p0,p3,p7,p4],normal:{x:-1,y:0,z:0},color:shade(color,-30)}, // left
+    {pts:[p1,p2,p6,p5],normal:{x:1,y:0,z:0},color:shade(color,-15)}, // right
+  ];
+  faces.sort((a,b)=>a.normal.z-b.normal.z);
+  faces.forEach(f=>{
+    ctx.beginPath();ctx.moveTo(f.pts[0].x,f.pts[0].y);
+    f.pts.forEach(p=>ctx.lineTo(p.x,p.y));ctx.closePath();
+    ctx.fillStyle=f.color;ctx.fill();
+    if(highlight){ctx.strokeStyle='rgba(255,255,255,0.5)';ctx.lineWidth=2;ctx.stroke();}
+    ctx.strokeStyle='rgba(0,0,0,0.3)';ctx.lineWidth=1;ctx.stroke();
+  });
+}
+function shade(hex,amt){
+  const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+  const f=(c)=>Math.max(0,Math.min(255,c+amt));
+  return '#'+[f(r),f(g),f(b)].map(x=>x.toString(16).padStart(2,'0')).join('');
+}
+function draw(){
+  ctx.clearRect(0,0,W/2,H/2);
+  ctx.save();ctx.translate(pan.x,pan.y);ctx.scale(scale,scale);ctx.translate(-pan.x,-pan.y);
+  const sorted=[...grid].sort((a,b)=>(a.x+a.y)-(b.x+b.y));
+  sorted.forEach(c=>{
+    if(c.z>0||c.color){
+      const layer=layers.find(l=>l.color===c.color)||layers[0];
+      if(layer.visible)drawCube(c.x,c.y,c.z,c.color||layer.color);
+    }else{
+      const p0=project(c.x,c.y,0),p1=project(c.x+1,c.y,0),p2=project(c.x+1,c.y+1,0),p3=project(c.x,c.y+1,0);
+      ctx.beginPath();ctx.moveTo(p0.x,p0.y);ctx.lineTo(p1.x,p1.y);ctx.lineTo(p2.x,p2.y);ctx.lineTo(p3.x,p3.y);ctx.closePath();
+      ctx.strokeStyle='rgba(58,58,90,0.2)';ctx.lineWidth=1;ctx.stroke();
+    }
+  });
+  ctx.restore();
+}
+function getCubeAt(mx,my){
+  for(const c of grid.sort((a,b)=>(b.x+b.y)-(a.x+a.y))){
+    const p0=project(c.x,c.y,c.z),p1=project(c.x+1,c.y,c.z),p2=project(c.x+1,c.y+1,c.z),p3=project(c.x,c.y+1,c.z);
+    if(pointInPoly(mx,my,[p0,p1,p2,p3]))return c;
+  }
+  return null;
+}
+function pointInPoly(px,py,poly){
+  let inside=false;
+  for(let i=0,j=poly.length-1;i<poly.length;j=i++){
+    const xi=poly[i].x,yi=poly[i].y,xj=poly[j].x,yj=poly[j].y;
+    if(((yi>py)!==(yj>py))&&(px<(xj-xi)*(py-yi)/(yj-yi)+xi))inside=!inside;
+  }
+  return inside;
+}
+viewport.addEventListener('mousedown',e=>{
+  if(e.button!==0)return;
+  dragging=true;dragStart={x:e.clientX,y:e.clientY};
+  const rect=viewport.getBoundingClientRect();
+  const mx=e.clientX-rect.left,my=e.clientY-rect.top;
+  if(tool==='select'){panStart={x:pan.x,y:pan.y};}
+  else{const cube=getCubeAt(mx,my);if(cube)handleTool(cube);}
+});
+viewport.addEventListener('mousemove',e=>{
+  if(!dragging)return;
+  const dx=e.clientX-dragStart.x,dy=e.clientY-dragStart.y;
+  if(tool==='select'){pan.x=panStart.x+dx;pan.y=panStart.y+dy;}
+  else{const rect=viewport.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;const cube=getCubeAt(mx,my);if(cube)handleTool(cube);}
+  draw();
+});
+viewport.addEventListener('mouseup',()=>dragging=false);
+viewport.addEventListener('mouseleave',()=>dragging=false);
+viewport.addEventListener('wheel',e=>{e.preventDefault();const rect=viewport.getBoundingClientRect();const mx=e.clientX-rect.left,my=e.clientY-rect.top;const factor=e.deltaY>0?0.9:1.1;scale=Math.max(0.3,Math.min(3,scale*factor));draw();},{passive:false});
+function handleTool(cube){
+  const layer=layers[activeLayer];
+  if(tool==='raise')cube.z+=1;
+  else if(tool==='lower')cube.z=Math.max(0,cube.z-1);
+  else if(tool==='paint'){cube.color=layer.color;if(cube.z===0)cube.z=1;}
+  else if(tool==='erase'){cube.color=null;cube.z=0;}
+}
+document.querySelectorAll('.tool[data-tool]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.tool[data-tool]').forEach(t=>t.classList.remove('active'));b.classList.add('active');tool=b.dataset.tool;});
+document.getElementById('rotateBtn').onclick=()=>{rotation=(rotation+1)%4;wrapper.style.transform=`rotate(${rotation*90}deg)`;};
+document.getElementById('gridSize').oninput=e=>{gridSize=+e.target.value;document.getElementById('gridSizeVal').textContent=gridSize;initGrid();resize();};
+document.getElementById('cubeSize').oninput=e=>{cubeSize=+e.target.value;document.getElementById('cubeSizeVal').textContent=cubeSize;draw();};
+document.getElementById('heightScale').oninput=e=>{heightScale=+e.target.value;document.getElementById('heightVal').textContent=heightScale;draw();};
+document.getElementById('randomize').onclick=()=>{grid.forEach(c=>{c.z=Math.random()<0.3?Math.floor(Math.random()*5):0;c.color=Math.random()<0.2?colors[Math.floor(Math.random()*colors.length)]:null;});draw();};
+document.getElementById('clear').onclick=()=>{grid.forEach(c=>{c.z=0;c.color=null;});draw();};
+document.getElementById('export').onclick=()=>{const link=document.createElement('a');link.download='isometric-grid.png';link.href=canvas.toDataURL();link.click();};
+function renderPalette(){
+  document.getElementById('palette').innerHTML=colors.map(c=>`<div class="color-btn${c===selectedColor?' active':''}" style="background:${c}" data-color="${c}"></div>`).join('');
+  document.querySelectorAll('.color-btn').forEach(b=>b.onclick=()=>{selectedColor=b.dataset.color;layers[activeLayer].color=selectedColor;document.querySelectorAll('.color-btn').forEach(btn=>btn.classList.toggle('active',btn.dataset.color===selectedColor));renderLayers();});
+}
+function renderLayers(){
+  document.getElementById('layerList').innerHTML=layers.map((l,i)=>`<div class="layer"><input type="checkbox" ${l.visible?'checked':''} data-layer="${i}" title="Visibility"><div class="layer-color" style="background:${l.color}"></div><span style="flex:1">${l.name}</span><input type="range" min="0" max="1" step="0.1" value="${l.opacity}" data-layer="${i}" title="Opacity"><button class="tool" data-del="${i}" style="padding:.2rem .5rem;font-size:.6rem">Del</button></div>`).join('');
+  document.querySelectorAll('.layer input[type=checkbox]').forEach(c=>c.onchange=e=>{layers[+e.target.dataset.layer].visible=e.target.checked;draw();});
+  document.querySelectorAll('.layer input[type=range]').forEach(c=>c.oninput=e=>{layers[+e.target.dataset.layer].opacity=+e.target.value;draw();});
+  document.querySelectorAll('.layer button[data-del]').forEach(b=>b.onclick=e=>{if(layers.length>1){layers.splice(+e.target.dataset.del,1);if(activeLayer>=layers.length)activeLayer=layers.length-1;renderLayers();draw();}});
+}
+renderPalette();
+renderLayers();
+initGrid();
+resize();
+</script>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>48 — CSS Grid Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafafa;--fg:#1a1a1a;--muted:#666;--accent:#0066cc;--accent2:#22863a;--accent3:#bf8700;--card:#fff;--border:#e0e0e0}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--card:#161b22;--border:#30363d}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.controls button{background:var(--card);border:1px solid var(--muted);color:var(--fg);padding:.3rem .75rem;font:inherit;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.controls button:hover{border-color:var(--accent);color:var(--accent)}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.garden{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin-bottom:2rem}
+.plot{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.plot-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.plot-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.plot-header .plot-size{font-size:.65rem;color:var(--muted)}
+.plot-body{padding:1rem;min-height:200px}
+.grid-demo{background:var(--bg);border:1px dashed var(--border);border-radius:4px;min-height:200px;position:relative}
+.grid-demo .cell{position:absolute;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:500;color:var(--fg);border:1px solid var(--border)}
+.legend{display:flex;flex-wrap:wrap;gap:.5rem;padding:1rem;background:var(--card);border:1px solid var(--border);border-radius:4px}
+.legend-item{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--muted)}
+.legend-item .swatch{width:16px;height:16px;border-radius:3px;border:1px solid var(--border)}
+.code{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1rem;font-size:.7rem;overflow:auto;max-height:300px}
+.code .prop{color:var(--accent)}
+.code .val{color:var(--accent2)}
+.code .unit{color:var(--muted)}
+.code .comment{color:var(--muted);font-style:italic}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>CSS Grid <span>Garden</span></h1><div class="controls"><label>Layout <select id="layoutSelect"><option value="basic">Basic Grid</option><option value="areas">Grid Areas</option><option value="auto-fit">Auto-fit Columns</option><option value="auto-fill">Auto-fill Columns</option><option value="masonry">Masonry (CSS)</option><option value="asymmetric">Asymmetric</option><option value="nested">Nested Grids</option><option value="overlap">Overlapping Items</option></select></label><label>Gap <input type="range" id="gap" min="0" max="40" value="16" style="width:80px"><span id="gapVal">16px</span></label><button id="copyCSS">Copy CSS</button></div></header>
+<main class="main">
+<div class="garden" id="garden"></div>
+<div class="legend" id="legend"></div>
+<div class="code" id="codeDisplay"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 048 / 100 · CSS Grid Garden</footer>
+<script>
+const layouts={
+  basic:{css:`.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}`,html:(g)=>g.repeat(9).fill(0).map((_,i)=>`<div class="cell" style="grid-area:${Math.floor(i/3)+1}/${(i%3)+1}">${i+1}</div>`).join('')},
+  areas:{css:`.grid{display:grid;grid-template-areas:"header header header""sidebar main main""footer footer footer";gap:16px;}`,html:(g)=>`<div class="cell" style="grid-area:header;background:var(--accent);color:var(--bg)">Header</div><div class="cell" style="grid-area:sidebar;background:var(--accent2);color:var(--bg)">Sidebar</div><div class="cell" style="grid-area:main;background:var(--accent3);color:var(--bg)">Main</div><div class="cell" style="grid-area:footer;background:var(--accent4);color:var(--bg)">Footer</div>`},
+  'auto-fit':{css:`.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:16px;}`,html:(g)=>g.repeat(12).fill(0).map((_,i)=>`<div class="cell">${i+1}</div>`).join('')},
+  'auto-fill':{css:`.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:16px;}`,html:(g)=>g.repeat(12).fill(0).map((_,i)=>`<div class="cell">${i+1}</div>`).join('')},
+  masonry:{css:`.grid{display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:masonry;gap:16px;}`,html:(g)=>[80,120,60,100,90,70,110,50,130,60,90,80].map((h,i)=>`<div class="cell" style="height:${h}px">${i+1} (${h}px)</div>`).join('')},
+  asymmetric:{css:`.grid{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 2fr;gap:16px;}`,html:(g)=>`<div class="cell" style="grid-column:1/2;grid-row:1/3;background:var(--accent);color:var(--bg)">Featured</div><div class="cell">2</div><div class="cell">3</div><div class="cell">4</div><div class="cell" style="grid-column:2/4">5+6</div>`},
+  nested:{css:`.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;}.nested{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}`,html:(g)=>`<div class="cell"><div class="nested" style="background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:8px">${[1,2,3].map(i=>`<div class="cell" style="font-size:.55rem;padding:4px">${i}</div>`).join('')}</div></div><div class="cell">Main</div>`},
+  overlap:{css:`.grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:16px;}`,html:(g)=>`<div class="cell" style="grid-column:1/3;grid-row:1/3;background:var(--accent);color:var(--bg);z-index:1">Large</div><div class="cell" style="grid-column:2/4;grid-row:2/3;background:var(--accent2);color:var(--bg);z-index:2">Overlap</div><div class="cell">3</div>`}
+};
+let currentLayout='basic',gap=16;
+const garden=document.getElementById('garden');
+const legend=document.getElementById('legend');
+const codeDisplay=document.getElementById('codeDisplay');
+function render(){
+  const L=layouts[currentLayout];
+  garden.innerHTML=`<div class="plot"><div class="plot-header"><h3>${currentLayout.replace('-',' ').replace(/\b\w/g,c=>c.toUpperCase())}</h3><span class="plot-size">Gap: ${gap}px</span></div><div class="plot-body"><div class="grid-demo" id="gridDemo" style="gap:${gap}px"></div></div></div>`;
+  const demo=document.getElementById('gridDemo');
+  demo.className='grid-demo grid';
+  demo.style.gap=gap+'px';
+  demo.innerHTML=L.html(demo);
+  legend.innerHTML=Object.entries(layouts).map(([k,v])=>`<div class="legend-item"><span class="swatch" style="background:${k===currentLayout?'var(--accent)':'var(--border)'}"></span>${k.replace('-',' ').replace(/\b\w/g,c=>c.toUpperCase())}</div>`).join('');
+  codeDisplay.textContent=L.css.replace(/;/g,';\n').replace(/{/g,' {\n  ').replace(/}/g,'\n}').replace(/,/g,', ');
+  document.querySelectorAll('.legend-item').forEach((el,i)=>{el.onclick=()=>{currentLayout=Object.keys(layouts)[i];render();};});
+}
+document.getElementById('layoutSelect').onchange=e=>{currentLayout=e.target.value;render();};
+document.getElementById('gap').oninput=e=>{gap=+e.target.value;document.getElementById('gapVal').textContent=gap+'px';render();};
+document.getElementById('copyCSS').onclick=()=>{navigator.clipboard.writeText(layouts[currentLayout].css);const btn=document.getElementById('copyCSS');const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1000);};
+render();
+</script>
+</body>
+</html>

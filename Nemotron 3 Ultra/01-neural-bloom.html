@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 — Neural Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08080f;--fg:#e8e8f0;--muted:#4a4a5a;--accent:#00ffff;--glow:rgba(0,255,255,0.15)}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'JetBrains Mono','Fira Code','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.4rem);font-weight:200;letter-spacing:.08em;opacity:.9}
+.subtitle{top:3.2rem;left:1.5rem;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.5rem;left:1.5rem;display:flex;gap:2rem;font-size:.65rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted)}
+.stat .val{color:var(--accent);font-weight:500;font-size:.9rem}
+.hint{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.15em;text-transform:uppercase;color:var(--muted);opacity:.6;text-align:right}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .stats{bottom:1rem;left:1rem;gap:1rem}
+  .hint{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Neural Bloom</div>
+<div class="ui subtitle">synaptic particle field</div>
+<div class="ui stats">
+<div class="stat">Particles: <span class="val" id="pc">0</span></div>
+<div class="stat">Connections: <span class="val" id="cc">0</span></div>
+<div class="stat">FPS: <span class="val" id="fps">0</span></div>
+</div>
+<div class="ui hint">move cursor to attract<br>click to spawn burst<br>space to clear</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const particles=[],maxParticles=3500,connectionDist=140,attractDist=220,attractForce=0.045;
+let mouse={x:W/2,y:H/2,down:false},lastTime=0,frameCount=0,fps=0;
+const colors=['#00ffff','#ff00ff','#ffff00','#00ff88','#ff8800','#8800ff'];
+class Particle{
+  constructor(x,y,isBurst=false){
+    this.x=x;this.y=y;this.vx=(Math.random()-0.5)*0.8;this.vy=(Math.random()-0.5)*0.8;
+    this.life=1;this.decay=isBurst?0.003:0.0008+Math.random()*0.0012;
+    this.size=isBurst?2+Math.random()*3:1.5+Math.random()*2;
+    this.hue=Math.floor(Math.random()*colors.length);
+    this.color=colors[this.hue];
+    this.trail=[];
+    this.maxTrail=isBurst?8:12;
+  }
+  update(){
+    this.trail.unshift({x:this.x,y:this.y});
+    if(this.trail.length>this.maxTrail)this.trail.pop();
+    const dx=mouse.x-this.x,dy=mouse.y-this.y,dist2=dx*dx+dy*dy;
+    if(mouse.down&&dist2<attractDist*attractDist){
+      const dist=Math.sqrt(dist2)||1;
+      this.vx+=dx/dist*attractForce;this.vy+=dy/dist*attractForce;
+    }
+    this.vx*=0.992;this.vy*=0.992;
+    this.x+=this.vx;this.y+=this.vy;
+    this.life-=this.decay;
+    if(this.x<0||this.x>W||this.y<0||this.y>H){
+      this.x=Math.max(0,Math.min(W,this.x));
+      this.y=Math.max(0,Math.min(H,this.y));
+      this.vx*=-0.5;this.vy*=-0.5;
+    }
+  }
+  draw(){
+    if(this.trail.length<2)return;
+    ctx.beginPath();
+    ctx.moveTo(this.trail[0].x,this.trail[0].y);
+    for(let i=1;i<this.trail.length;i++){
+      const t=this.trail[i],alpha=(1-i/this.trail.length)*this.life*0.6;
+      ctx.lineTo(t.x,t.y);
+      ctx.strokeStyle=this.color.replace(')','').replace('rgb','rgba').replace('#','');
+      const hex=this.color;
+      const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+      ctx.strokeStyle=`rgba(${r},${g},${b},${alpha})`;
+      ctx.lineWidth=this.size*(1-i/this.trail.length)*0.7;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(t.x,t.y);
+    }
+  }
+}
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+}
+function spawnBurst(x,y,count=30){
+  for(let i=0;i<count&&particles.length<maxParticles;i++){
+    const angle=Math.random()*Math.PI*2,speed=1+Math.random()*3;
+    const p=new Particle(x,y,true);
+    p.vx=Math.cos(angle)*speed;p.vy=Math.sin(angle)*speed;
+    p.size=2+Math.random()*2;p.decay=0.004+Math.random()*0.003;
+    particles.push(p);
+  }
+}
+function tick(now){
+  if(!lastTime)lastTime=now;
+  const dt=now-lastTime;lastTime=now;
+  frameCount++;
+  if(frameCount%30===0)fps=Math.round(30000/(now-(lastTime-dt*30)));
+  ctx.fillStyle='rgba(8,8,15,0.18)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  let connections=0;
+  for(let i=0;i<particles.length;i++){
+    const p=particles[i];p.update();p.draw();
+    for(let j=i+1;j<particles.length;j++){
+      const q=particles[j],dx=p.x-q.x,dy=p.y-q.y,dist2=dx*dx+dy*dy;
+      if(dist2<connectionDist*connectionDist){
+        connections++;
+        const alpha=(1-Math.sqrt(dist2)/connectionDist)*0.12*p.life*q.life;
+        const r=parseInt(p.color.slice(1,3),16),g=parseInt(p.color.slice(3,5),16),b=parseInt(p.color.slice(5,7),16);
+        ctx.beginPath();
+        ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);
+        ctx.strokeStyle=`rgba(${r},${g},${b},${alpha})`;
+        ctx.lineWidth=0.4;ctx.stroke();
+      }
+    }
+  }
+  for(let i=particles.length-1;i>=0;i--){
+    if(particles[i].life<=0)particles.splice(i,1);
+  }
+  if(particles.length<80&&Math.random()<0.02){
+    spawnBurst(Math.random()*W,Math.random()*H,1);
+  }
+  document.getElementById('pc').textContent=particles.length;
+  document.getElementById('cc').textContent=connections;
+  document.getElementById('fps').textContent=fps||'--';
+  requestAnimationFrame(tick);
+}
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX*DPR;mouse.y=e.clientY*DPR;});
+window.addEventListener('mousedown',()=>mouse.down=true);
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX*DPR;mouse.y=t.clientY*DPR;},{passive:false});
+window.addEventListener('touchstart',e=>{mouse.down=true;const t=e.touches[0];mouse.x=t.clientX*DPR;mouse.y=t.clientY*DPR;},{passive:false});
+window.addEventListener('touchend',()=>mouse.down=false);
+window.addEventListener('keydown',e=>{if(e.code==='Space'){particles.length=0;e.preventDefault();}});
+resize();
+for(let i=0;i<120;i++)spawnBurst(Math.random()*W,Math.random()*H,1);
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

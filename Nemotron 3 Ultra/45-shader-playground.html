@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>45 — Shader Playground</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a0f;--fg:#f0f0f5;--muted:#2a2a3a;--accent:#00d4ff;--accent2:#ff6b6b;--card:#12121a}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:1fr auto}}
+.editor-pane{position:relative;background:var(--card);border-right:1px solid var(--muted)}
+.editor-header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--muted);padding:.75rem 1rem;display:flex;justify-content:space-between;align-items:center;z-index:10}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.editor-actions{display:flex;gap:.5rem}
+.editor-actions button{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .75rem;font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.editor-actions button:hover{border-color:var(--accent);color:var(--accent)}
+.editor-actions button.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.editor{font-family:'JetBrains Mono','Fira Code',monospace;font-size:13px;line-height:1.6;background:var(--card);border:none;color:var(--fg);padding:1rem;width:100%;height:calc(100% - 50px);outline:none;resize:none;tab-size:2}
+.editor::selection{background:var(--accent)33}
+.canvas-pane{position:relative;background:#000;overflow:hidden}
+canvas{display:block;position:absolute;top:0;left:0}
+.canvas-info{position:absolute;bottom:1rem;left:1rem;right:1rem;display:flex;justify-content:space-between;align-items:center;pointer-events:none}
+.canvas-info .stats{font-size:.65rem;color:var(--muted);letter-spacing:.1em}
+.canvas-info .fps{color:var(--accent);font-weight:700}
+.error-overlay{position:absolute;top:1rem;left:1rem;right:1rem;background:rgba(248,81,73,0.9);color:#000;padding:.75rem 1rem;border-radius:4px;font-size:.7rem;display:none;z-index:10}
+.resizer{position:absolute;right:0;top:0;bottom:0;width:4px;background:var(--muted);cursor:col-resize;z-index:20}
+.resizer:hover{background:var(--accent)}
+.templates{display:flex;flex-wrap:wrap;gap:.5rem;padding:1rem;background:var(--bg);border-top:1px solid var(--muted)}
+.template-btn{padding:.4rem .75rem;border:1px solid var(--muted);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;border-radius:4px;cursor:pointer}
+.template-btn:hover{border-color:var(--accent);color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor-pane">
+<div class="editor-header"><h2>GLSL Fragment Shader</h2><div class="editor-actions"><button id="formatBtn">Format</button><button class="primary" id="compileBtn">Compile (Ctrl+Enter)</button></div></div>
+<textarea class="editor" id="editor" spellcheck="false">#version 300 es
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec2 u_mouse;
+
+out vec4 fragColor;
+
+// ─────────────────────────────────────────────
+// Nemotron 3 Ultra — Shader Playground
+// ─────────────────────────────────────────────
+
+// Hash function for pseudo-randomness
+float hash(vec2 p) {
+    return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
+}
+
+// Smooth noise
+float noise(vec2 p) {
+    vec2 i = floor(p);
+    vec2 f = fract(p);
+    f = f * f * (3.0 - 2.0 * f);
+    return mix(mix(hash(i), hash(i + vec2(1.0, 0.0)), f.x),
+               mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), f.x), f.y);
+}
+
+// Fractal Brownian Motion
+float fbm(vec2 p, int octaves) {
+    float value = 0.0;
+    float amplitude = 0.5;
+    for (int i = 0; i < 8; i++) {
+        if (i >= octaves) break;
+        value += amplitude * noise(p);
+        p *= 2.0;
+        amplitude *= 0.5;
+    }
+    return value;
+}
+
+// Rotate 2D
+vec2 rotate2d(vec2 p, float a) {
+    float s = sin(a), c = cos(a);
+    return mat2(c, -s, s, c) * p;
+}
+
+// SDF: Circle
+float sdCircle(vec2 p, float r) {
+    return length(p) - r;
+}
+
+// SDF: Box
+float sdBox(vec2 p, vec2 b) {
+    vec2 d = abs(p) - b;
+    return length(max(d, 0.0)) + min(max(d.x, d.y), 0.0);
+}
+
+// SDF: Line
+float sdLine(vec2 p, vec2 a, vec2 b, float r) {
+    vec2 pa = p - a, ba = b - a;
+    float h = clamp(dot(pa, ba) / dot(ba, ba), 0.0, 1.0);
+    return length(pa - ba * h) - r;
+}
+
+// Main
+void main() {
+    vec2 uv = (gl_FragCoord.xy - 0.5 * u_resolution) / min(u_resolution.x, u_resolution.y);
+    vec2 uv0 = uv;
+    
+    // Time-based animation
+    float t = u_time * 0.5;
+    
+    // Mouse influence
+    vec2 mouse = u_mouse / u_resolution;
+    mouse = mouse * 2.0 - 1.0;
+    mouse.y *= -1.0;
+    
+    // ─────────────────────────────────────────────
+    // Nemotron 3 Ultra — Visual Pattern
+    // ─────────────────────────────────────────────
+    
+    // Polar coordinates for radial patterns
+    float r = length(uv);
+    float a = atan(uv.y, uv.x);
+    
+    // Multiple layers of movement
+    float layer1 = fbm(uv * 3.0 + vec2(t * 0.3, t * 0.2), 5);
+    float layer2 = fbm(uv * 6.0 - vec2(t * 0.2, t * 0.4), 4);
+    float layer3 = sin(a * 6.0 + t * 2.0 + fbm(uv * 2.0, 3) * 3.0) * 0.5;
+    
+    // Radial interference
+    float radial = sin(r * 30.0 - t * 4.0 + layer1 * 5.0) * 0.5;
+    
+    // Mouse distortion
+    float mouseDist = length(uv - mouse * 0.5);
+    float mouseInfluence = smoothstep(0.3, 0.0, mouseDist);
+    uv += normalize(uv - mouse * 0.5) * mouseInfluence * 0.2;
+    
+    // Combine layers
+    float pattern = layer1 * 0.5 + layer2 * 0.3 + radial * 0.2 + layer3 * 0.2;
+    pattern = smoothstep(0.3, 0.7, pattern);
+    
+    // Color palette
+    vec3 col1 = vec3(0.0, 0.83, 1.0);   // Cyan
+    vec3 col2 = vec3(1.0, 0.42, 0.42);  // Coral
+    vec3 col3 = vec3(1.0, 0.85, 0.24);  // Gold
+    vec3 col4 = vec3(0.25, 0.73, 0.31); // Green
+    vec3 col5 = vec3(0.64, 0.44, 0.97); // Purple
+    
+    // Color mixing based on pattern and angle
+    float hue = a * 0.5 / 3.14159 + t * 0.1 + pattern * 0.5;
+    vec3 color = mix(col1, col2, sin(hue * 6.28) * 0.5 + 0.5);
+    color = mix(color, col3, pattern);
+    color = mix(color, col4, layer2);
+    color = mix(color, col5, radial * 0.5 + 0.5);
+    
+    // Vignette
+    float vig = 1.0 - r * 1.2;
+    color *= vig * vig;
+    
+    // Scanlines for CRT feel
+    color *= 0.95 + 0.05 * sin(gl_FragCoord.y * 4.0 + t * 10.0);
+    
+    fragColor = vec4(color, 1.0);
+}</textarea>
+<div class="templates" id="templates"></div>
+</div>
+<div class="canvas-pane">
+<canvas id="canvas"></canvas>
+<div class="error-overlay" id="errorOverlay"></div>
+<div class="canvas-info"><span class="stats">Nemotron 3 Ultra · Shader Playground</span><span class="stats fps" id="fps">60 FPS</span></div>
+</div>
+<div class="resizer" id="resizer"></div>
+</div>
+<script>
+const canvas=document.getElementById('canvas');
+const gl=canvas.getContext('webgl2',{antialias:false,alpha:false});
+const editor=document.getElementById('editor');
+const errorOverlay=document.getElementById('errorOverlay');
+const fpsEl=document.getElementById('fps');
+const templatesEl=document.getElementById('templates');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let program=null,startTime=performance.now(),frameCount=0,lastFpsTime=startTime;
+let mouse={x:0,y:0},drag=false;
+const vertexSrc=`#version 300 es
+precision highp float;
+in vec2 a_position;
+void main(){gl_Position=vec4(a_position,0.0,1.0);}`;
+const templates=[
+  {name:'Classic FBM',code:`// Classic FBM Noise
+float fbm(vec2 p) {
+    float v=0.0,a=0.5;
+    for(int i=0;i<6;i++){
+        v+=a*noise(p);p*=2.0;a*=0.5;
+    }
+    return v;
+}
+void main(){
+    vec2 uv=(gl_FragCoord.xy-0.5*u_resolution)/min(u_resolution.x,u_resolution.y);
+    float t=u_time*0.3;
+    float n=fbm(uv*4.0+vec2(t,t*0.5));
+    vec3 col=mix(vec3(0.0,0.8,1.0),vec3(1.0,0.4,0.4),n);
+    fragColor=vec4(col,1.0);
+}`},
+  {name:'Raymarch Scene',code:`// Raymarching Primitives
+float sdSphere(vec3 p,float r){return length(p)-r;}
+float sdBox(vec3 p,vec3 b){vec3 d=abs(p)-b;return length(max(d,0.0))+min(max(d.x,max(d.y,d.z)),0.0);}
+float map(vec3 p){
+    float s=sdSphere(p-vec3(sin(u_time)*1.5,0,0),0.5);
+    s=min(s,sdBox(p-vec3(0,sin(u_time*0.7)*1.5,0),vec3(0.4)));
+    s=min(s,sdSphere(p-vec3(0,0,sin(u_time*1.2)*1.5),0.3));
+    return s;
+}
+vec3 getNormal(vec3 p){
+    vec2 e=vec2(0.001,0.0);
+    return normalize(vec3(map(p+e.xyy)-map(p-e.xyy),map(p+e.yxy)-map(p-e.yxy),map(p+e.yyx)-map(p-e.yyx)));
+}
+void main(){
+    vec2 uv=(gl_FragCoord.xy-0.5*u_resolution)/min(u_resolution.x,u_resolution.y);
+    vec3 ro=vec3(0,0,5),rd=normalize(vec3(uv, -3));
+    float t=0.0;
+    for(int i=0;i<64;i++){
+        vec3 p=ro+rd*t;
+        float d=map(p);
+        if(d<0.001)break;
+        t+=d;
+        if(t>20.0)break;
+    }
+    vec3 col=vec3(0.0);
+    if(t<20.0){
+        vec3 p=ro+rd*t;
+        vec3 n=getNormal(p);
+        vec3 l=normalize(vec3(1,2,3));
+        float diff=max(dot(n,l),0.0);
+        col=vec3(diff)*vec3(0.0,0.8,1.0)+vec3(0.1);
+    }
+    fragColor=vec4(col,1.0);
+}`},
+  {name:'Reaction-Diffusion',code:`// Reaction-Diffusion (Gray-Scott)
+uniform sampler2D u_prevFrame;
+void main(){
+    vec2 uv=gl_FragCoord.xy/u_resolution;
+    vec4 state=texture(u_prevFrame,uv);
+    float u=state.r,v=state.g;
+    float du=0.14*0.001, dv=0.06*0.001;
+    float f=0.035, k=0.065;
+    vec2 duv=1.0/u_resolution;
+    float Lu=(texture(u_prevFrame,uv+vec2(duv.x,0)).r+texture(u_prevFrame,uv-vec2(duv.x,0)).r+
+            texture(u_prevFrame,uv+vec2(0,duv.y)).r+texture(u_prevFrame,uv-vec2(0,duv.y)).r-4.0*u)/dot(duv,duv);
+    float Lv=(texture(u_prevFrame,uv+vec2(duv.x,0)).g+texture(u_prevFrame,uv-vec2(duv.x,0)).g+
+            texture(u_prevFrame,uv+vec2(0,duv.y)).g+texture(u_prevFrame,uv-vec2(0,duv.y)).g-4.0*v)/dot(duv,duv);
+    float uvv=u*v*v;
+    u+=du*Lu-uvv+f*(1.0-u);
+    v+=dv*Lv+uvv-(f+k)*v;
+    vec3 col=mix(vec3(0.0,0.2,0.4),vec3(1.0,0.8,0.2),v*10.0);
+    fragColor=vec4(col,1.0);
+}`},
+  {name:'Mandelbrot',code:`// Mandelbrot Set
+vec3 hsv2rgb(vec3 c){
+    vec4 K=vec4(1.0,2.0/3.0,1.0/3.0,3.0);
+    vec3 p=abs(fract(c.xxx+K.xyz)*6.0-K.www);
+    return c.z*mix(K.xxx,clamp(p-K.xxx,0.0,1.0),c.y);
+}
+void main(){
+    vec2 uv=(gl_FragCoord.xy-0.5*u_resolution)/min(u_resolution.x,u_resolution.y);
+    uv.x*=u_resolution.x/u_resolution.y;
+    vec2 c=uv*2.0+vec2(-0.5,0.0);
+    vec2 z=vec2(0.0);
+    float iterations=0.0;
+    for(int i=0;i<100;i++){
+        z=vec2(z.x*z.x-z.y*z.y,2.0*z.x*z.y)+c;
+        if(dot(z,z)>4.0)break;
+        iterations+=1.0;
+    }
+    float smooth=iterations-log2(log2(dot(z,z)))+4.0;
+    float hue=smooth*0.02+u_time*0.05;
+    vec3 col=hsv2rgb(vec3(fract(hue),0.8,1.0-smooth*0.01));
+    if(iterations>=100.0)col=vec3(0.0);
+    fragColor=vec4(col,1.0);
+}`},
+  {name:'Plasma',code:`// Plasma Effect
+void main(){
+    vec2 uv=(gl_FragCoord.xy-0.5*u_resolution)/min(u_resolution.x,u_resolution.y);
+    float t=u_time*0.5;
+    float v=0.0;
+    v+=sin(uv.x*10.0+t);
+    v+=sin(uv.y*10.0+t);
+    v+=sin((uv.x+uv.y)*10.0+t);
+    v+=sin(sqrt(uv.x*uv.x+uv.y*uv.y)*20.0-t);
+    v=v/4.0*0.5+0.5;
+    vec3 col=vec3(sin(v*6.28+t),sin(v*6.28+t+2.1),sin(v*6.28+t+4.2))*0.5+0.5;
+    fragColor=vec4(col,1.0);
+}`}
+];
+function resize(){
+  const pane=canvas.parentElement;
+  W=canvas.width=pane.clientWidth*DPR;
+  H=canvas.height=pane.clientHeight*DPR;
+  canvas.style.width=pane.clientWidth+'px';
+  canvas.style.height=pane.clientHeight+'px';
+  gl.viewport(0,0,W,H);
+}
+const quad=gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER,quad);
+gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([-1,-1,1,-1,-1,1,1,1]),gl.STATIC_DRAW);
+function createShader(src,type){
+  const s=gl.createShader(type);
+  gl.shaderSource(s,src);gl.compileShader(s);
+  if(!gl.getShaderParameter(s,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(s));
+  return s;
+}
+function compile(fragSrc){
+  try{
+    if(program)gl.deleteProgram(program);
+    const vs=createShader(vertexSrc,gl.VERTEX_SHADER);
+    const fs=createShader(fragSrc,gl.FRAGMENT_SHADER);
+    program=gl.createProgram();
+    gl.attachShader(program,vs);gl.attachShader(program,fs);
+    gl.linkProgram(program);
+    if(!gl.getProgramParameter(program,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(program));
+    gl.useProgram(program);
+    const pos=gl.getAttribLocation(program,'a_position');
+    gl.enableVertexAttribArray(pos);
+    gl.bindBuffer(gl.ARRAY_BUFFER,quad);
+    gl.vertexAttribPointer(pos,2,gl.FLOAT,false,0,0);
+    errorOverlay.style.display='none';
+    return true;
+  }catch(e){
+    errorOverlay.textContent=e.message;
+    errorOverlay.style.display='block';
+    return false;
+  }
+}
+function render(){
+  if(!program)return;
+  const now=performance.now();
+  const time=(now-startTime)/1000;
+  gl.uniform2f(gl.getUniformLocation(program,'u_resolution'),W,H);
+  gl.uniform1f(gl.getUniformLocation(program,'u_time'),time);
+  gl.uniform2f(gl.getUniformLocation(program,'u_mouse'),mouse.x*DPR,mouse.y*DPR);
+  gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+  frameCount++;
+  if(now-lastFpsTime>500){fpsEl.textContent=Math.round(frameCount*1000/(now-lastFpsTime))+' FPS';frameCount=0;lastFpsTime=now;}
+  requestAnimationFrame(render);
+}
+editor.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key==='Enter'){compile(editor.value);}});
+document.getElementById('compileBtn').onclick=()=>compile(editor.value);
+document.getElementById('formatBtn').onclick=()=>{editor.value=editor.value.replace(/; /g,';\n').replace(/ {4}/g,'\t');};
+canvas.addEventListener('mousemove',e=>{const r=canvas.getBoundingClientRect();mouse.x=e.clientX-r.left;mouse.y=e.clientY-r.top;});
+canvas.addEventListener('mouseleave',()=>{mouse.x=W/2/DPR;mouse.y=H/2/DPR;});
+templates.forEach((t,i)=>{const b=document.createElement('button');b.className='template-btn';b.textContent=t.name;b.onclick=()=>{editor.value=t.code;compile(t.code);};templatesEl.appendChild(b);});
+const resizer=document.getElementById('resizer');
+resizer.addEventListener('mousedown',()=>{drag=true;document.body.style.cursor='col-resize';});
+document.addEventListener('mousemove',e=>{if(drag){const left=document.querySelector('.editor-pane');left.style.flex=`0 0 ${e.clientX}px`;resize();}});
+document.addEventListener('mouseup',()=>{drag=false;document.body.style.cursor='';});
+resize();
+compile(editor.value);
+render();
+</script>
+</body>
+</html>

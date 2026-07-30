@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>51 — System Monitor Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.header .status{display:flex;gap:1rem;align-items:center}
+.status-dot{width:8px;height:8px;border-radius:50%;background:var(--accent2);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.main{padding:2rem;max-width:1600px;margin:0 auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem}
+.card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.card-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.card-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card-body{padding:1rem}
+.metric{font-size:clamp(2rem,4vw,3.5rem);font-weight:700;line-height:1;letter-spacing:-0.03em}
+.metric small{font-size:.25em;font-weight:400;color:var(--muted)}
+.sparkline{height:60px;width:100%;margin-top:1rem}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:1rem;margin-top:1rem}
+.detail-item{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem}
+.detail-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+.detail-value{font-size:.9rem;font-weight:500;font-family:'JetBrains Mono',monospace}
+.process-list{display:flex;flex-direction:column;gap:.5rem}
+.process-item{display:flex;justify-content:space-between;align-items:center;padding:.75rem;background:var(--bg);border:1px solid var(--border);border-radius:4px}
+.process-info{display:flex;align-items:center;gap:.75rem}
+.process-icon{width:32px;height:32px;border-radius:4px;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+.process-name{font-weight:500}
+.process-pid{font-size:.7rem;color:var(--muted)}
+.process-stats{display:flex;gap:1.5rem;text-align:right}
+.process-stat{font-size:.7rem}
+.process-stat .val{font-weight:700;font-size:.9rem;color:var(--fg)}
+.network-io{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.io-card{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1rem}
+.io-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.io-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.io-value.up{color:var(--accent2)}
+.io-value.down{color:var(--accent4)}
+.disk-usage{display:flex;flex-direction:column;gap:.75rem}
+.disk-bar{height:8px;background:var(--bg);border:1px solid var(--border);border-radius:4px;overflow:hidden}
+.disk-bar-fill{height:100%;border-radius:4px;transition:width .3s}
+.disk-info{display:flex;justify-content:space-between;font-size:.7rem;color:var(--muted)}
+.logs{height:200px;overflow:auto;font-size:.7rem;line-height:1.8}
+.log-entry{padding:.25rem 0;border-bottom:1px solid var(--border);display:flex;gap:.75rem}
+.log-time{color:var(--muted);white-space:nowrap}
+.log-level{font-weight:700;padding:0 .3rem;border-radius:2px;font-size:.55rem}
+.log-level.info{background:rgba(88,166,255,.2);color:var(--accent)}
+.log-level.warn{background:rgba(210,153,34,.2);color:var(--accent3)}
+.log-level.error{background:rgba(248,81,73,.2);color:var(--accent4)}
+.log-msg{color:var(--fg);flex:1}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>System <span>Monitor</span></h1><div class="status"><span class="status-dot"></span><span style="font-size:.7rem;color:var(--muted);letter-spacing:.1em;text-transform:uppercase">Live</span><span id="lastUpdate" style="font-size:.7rem;color:var(--muted)"></span></div></header>
+<main class="main">
+<div class="grid">
+<div class="card"><div class="card-header"><h3>CPU</h3></div><div class="card-body"><div class="metric" id="cpuMetric">42<small>%</small></div><canvas class="sparkline" id="cpuSpark"></canvas><div class="detail-grid"><div class="detail-item"><div class="detail-label">Cores</div><div class="detail-value" id="cpuCores">8</div></div><div class="detail-item"><div class="detail-label">Freq</div><div class="detail-value" id="cpuFreq">3.2 GHz</div></div><div class="detail-item"><div class="detail-label">Load 1m</div><div class="detail-value" id="load1">2.34</div></div><div class="detail-item"><div class="detail-label">Load 5m</div><div class="detail-value" id="load5">2.11</div></div></div></div></div>
+<div class="card"><div class="card-header"><h3>Memory</h3></div><div class="card-body"><div class="metric" id="memMetric">68<small>%</small></div><canvas class="sparkline" id="memSpark"></canvas><div class="detail-grid"><div class="detail-item"><div class="detail-label">Used</div><div class="detail-value" id="memUsed">10.9 GB</div></div><div class="detail-item"><div class="detail-label">Total</div><div class="detail-value" id="memTotal">16 GB</div></div><div class="detail-item"><div class="detail-label">Cached</div><div class="detail-value" id="memCached">2.1 GB</div></div><div class="detail-item"><div class="detail-label">Swap</div><div class="detail-value" id="memSwap">0 MB</div></div></div></div></div>
+<div class="card"><div class="card-header"><h3>GPU</h3></div><div class="card-body"><div class="metric" id="gpuMetric">23<small>%</small></div><canvas class="sparkline" id="gpuSpark"></canvas><div class="detail-grid"><div class="detail-item"><div class="detail-label">VRAM</div><div class="detail-value" id="gpuVram">4.2 / 24 GB</div></div><div class="detail-item"><div class="detail-label">Temp</div><div class="detail-value" id="gpuTemp">42°C</div></div><div class="detail-item"><div class="detail-label">Power</div><div class="detail-value" id="gpuPower">180 W</div></div><div class="detail-item"><div class="detail-label">Fan</div><div class="detail-value" id="gpuFan">35%</div></div></div></div></div>
+<div class="card"><div class="card-header"><h3>Disk I/O</h3></div><div class="card-body"><div class="network-io"><div class="io-card"><div class="io-label">Read</div><div class="io-value down" id="diskRead">2.4 GB/s</div></div><div class="io-card"><div class="io-label">Write</div><div class="io-value up" id="diskWrite">1.1 GB/s</div></div></div><div class="disk-usage" id="diskUsage"></div></div></div>
+<div class="card" style="grid-column:1/-1"><div class="card-header"><h3>Top Processes</h3></div><div class="card-body"><div class="process-list" id="processList"></div></div></div>
+<div class="card" style="grid-column:1/-1"><div class="card-header"><h3>System Logs</h3></div><div class="card-body"><div class="logs" id="logs"></div></div></div>
+</div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 051 / 100 · System Monitor Dashboard · Updates every 2s</footer>
+<script>
+const sparkData={cpu:[],mem:[],gpu:[]};
+const MAX=60;
+function drawSpark(id,data,color){
+  const canvas=document.getElementById(id),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);ctx.clearRect(0,0,w/2,h/2);
+  if(data.length<2)return;
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();
+  const step=(w/2)/(MAX-1);
+  data.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-v/100);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,color+'33');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+const processes=[
+  {pid:1234,name:'chrome',icon:'🌐',cpu:12.3,mem:18.2},
+  {pid:5678,name:'code',icon:'📝',cpu:8.7,mem:22.1},
+  {pid:9012,name:'node',icon:'⚡',cpu:5.2,mem:8.4},
+  {pid:3456,name:'docker',icon:'🐳',cpu:3.1,mem:5.6},
+  {pid:7890,name:'postgres',icon:'🐘',cpu:2.8,mem:12.3},
+  {pid:2345,name:'redis',icon:'🔴',cpu:0.5,mem:1.2},
+  {pid:6789,name:'nginx',icon:'🌐',cpu:0.3,mem:0.8},
+  {pid:1111,name:'systemd',icon:'⚙️',cpu:0.1,mem:0.3}
+];
+const disks=[
+  {name:'/',total:500,used:320},
+  {name:'/home',total:1000,used:450},
+  {name:'/var',total:100,used:45}
+];
+const logLevels=['info','warn','error'];
+const logMessages=[
+  'System boot completed',
+  'Network interface eth0 up',
+  'Service nginx started',
+  'Memory pressure detected',
+  'Disk cleanup scheduled',
+  'Backup completed successfully',
+  'SSL certificate renewed',
+  'High CPU usage on process chrome',
+  'New SSH connection from 192.168.1.100',
+  'Docker container restarted'
+];
+function formatTime(){return new Date().toLocaleTimeString();}
+function update(){
+  const now=new Date();
+  document.getElementById('lastUpdate').textContent=`Updated ${now.toLocaleTimeString()}`;
+  const cpu=Math.random()*30+20;
+  const mem=Math.random()*20+55;
+  const gpu=Math.random()*40;
+  sparkData.cpu.push(cpu);sparkData.mem.push(mem);sparkData.gpu.push(gpu);
+  [sparkData.cpu,sparkData.mem,sparkData.gpu].forEach(d=>{while(d.length>MAX)d.shift();});
+  document.getElementById('cpuMetric').innerHTML=`${cpu.toFixed(1)}<small>%</small>`;
+  document.getElementById('memMetric').innerHTML=`${mem.toFixed(1)}<small>%</small>`;
+  document.getElementById('gpuMetric').innerHTML=`${gpu.toFixed(1)}<small>%</small>`;
+  document.getElementById('cpuFreq').textContent=(3.0+Math.random()*0.5).toFixed(1)+' GHz';
+  document.getElementById('load1').textContent=(2+Math.random()*1).toFixed(2);
+  document.getElementById('load5').textContent=(1.8+Math.random()*0.5).toFixed(2);
+  document.getElementById('memUsed').textContent=(mem/100*16).toFixed(1)+' GB';
+  document.getElementById('memCached').textContent=(1+Math.random()*2).toFixed(1)+' GB';
+  document.getElementById('gpuVram').textContent=(3+Math.random()*3).toFixed(1)+' / 24 GB';
+  document.getElementById('gpuTemp').textContent=(40+Math.random()*10).toFixed(0)+'°C';
+  document.getElementById('gpuPower').textContent=(150+Math.random()*100).toFixed(0)+' W';
+  document.getElementById('gpuFan').textContent=(30+Math.random()*40).toFixed(0)+'%';
+  document.getElementById('diskRead').textContent=(1+Math.random()*3).toFixed(1)+' GB/s';
+  document.getElementById('diskWrite').textContent=(0.5+Math.random()*2).toFixed(1)+' GB/s';
+  drawSpark('cpuSpark',sparkData.cpu,'var(--accent)');
+  drawSpark('memSpark',sparkData.mem,'var(--accent2)');
+  drawSpark('gpuSpark',sparkData.gpu,'var(--accent3)');
+  renderProcesses();
+  renderDisks();
+  addLog();
+}
+function renderProcesses(){
+  const list=document.getElementById('processList');
+  processes.forEach(p=>{p.cpu=Math.max(0.1,Math.min(100,p.cpu+(Math.random()-0.5)*2));p.mem=Math.max(0.1,Math.min(100,p.mem+(Math.random()-0.5)*0.5));});
+  processes.sort((a,b)=>b.cpu-a.cpu);
+  list.innerHTML=processes.slice(0,8).map(p=>`<div class="process-item"><div class="process-info"><span class="process-icon">${p.icon}</span><div><div class="process-name">${p.name}</div><div class="process-pid">PID ${p.pid}</div></div></div><div class="process-stats"><div class="process-stat"><div class="val">${p.cpu.toFixed(1)}%</div>CPU</div><div class="process-stat"><div class="val">${p.mem.toFixed(1)}%</div>MEM</div></div></div>`).join('');
+}
+function renderDisks(){
+  const container=document.getElementById('diskUsage');
+  container.innerHTML=disks.map(d=>{const pct=(d.used/d.total*100).toFixed(1);return `<div><div class="disk-info"><span>${d.name}</span><span>${d.used} / ${d.total} GB (${pct}%)</span></div><div class="disk-bar"><div class="disk-bar-fill" style="width:${pct}%;background:${pct>80?'var(--accent4)':pct>60?'var(--accent3)':'var(--accent2)'}"></div></div>`;}).join('');
+}
+function addLog(){
+  const logs=document.getElementById('logs');
+  if(Math.random()<0.3){
+    const level=logLevels[Math.floor(Math.random()*logLevels.length)];
+    const msg=logMessages[Math.floor(Math.random()*logMessages.length)];
+    const entry=document.createElement('div');
+    entry.className='log-entry';
+    entry.innerHTML=`<span class="log-time">${formatTime()}</span><span class="log-level ${level}">${level.toUpperCase()}</span><span class="log-msg">${msg}</span>`;
+    logs.insertBefore(entry,logs.firstChild);
+    while(logs.children.length>50)logs.removeChild(logs.lastChild);
+  }
+}
+setInterval(update,2000);
+update();
+</script>
+</body>
+</html>

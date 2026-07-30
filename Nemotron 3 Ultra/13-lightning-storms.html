@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>13 — Lightning Storms</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--fg:#ffffff;--muted:#3a3a5a;--accent:#ffffff;--glow:#8000ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.5rem;left:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;line-height:1.8}
+.controls{bottom:1.5rem;right:1.5rem;display:flex;flex-direction:column;gap:.4rem;align-items:flex-end}
+.btn{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .6rem;font-size:.55rem;cursor:pointer;transition:.15s;font-family:inherit}
+.btn:hover{border-color:var(--accent);background:rgba(255,255,255,0.1)}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .stats{bottom:1rem;left:1rem;font-size:.55rem}
+  .controls{bottom:1rem;right:1rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Lightning Storms</div>
+<div class="ui subtitle">procedural fractal bolts</div>
+<div class="ui stats">
+Bolts: <span id="bolts">0</span><br>
+Branches: <span id="branches">0</span><br>
+Intensity: <span id="intensity">1.0</span>
+</div>
+<div class="ui controls">
+<button class="btn" id="btnStrike">STRIKE</button>
+<button class="btn" id="btnStorm">STORM</button>
+<button class="btn" id="btnClear">CLEAR</button>
+<kbd>Space</kbd> strike · <kbd>S</kbd> storm
+</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+const bolts=[],MAX_BOLTS=50;
+let intensity=1,shake=0,frame=0;
+let mouse={x:0,y:0,down:false};
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+}
+class Bolt{
+  constructor(x,y,angle,gen=0,parent=null){
+    this.x=x;this.y=y;this.angle=angle;this.gen=gen;
+    this.life=1;this.decay=0.02+gen*0.005;
+    this.segments=[];this.maxSeg=20-gen*2;
+    this.color=gen===0?[255,255,255]:[200,200,255];
+    this.glow=gen===0?20:10;
+    this.width=Math.max(0.5,3-gen*0.8);
+    this.targetX=null;this.targetY=null;
+  }
+  step(){
+    if(this.segments.length>=this.maxSeg||this.life<=0)return false;
+    const spread=(Math.random()-0.5)*Math.PI*0.6;
+    this.angle+=spread;
+    const len=15+Math.random()*25*(1-this.gen*0.2);
+    const nx=this.x+Math.cos(this.angle)*len;
+    const ny=this.y+Math.sin(this.angle)*len;
+    this.segments.push({x:this.x,y:this.y,nx,ny,life:this.life});
+    this.x=nx;this.y=ny;
+    this.life-=this.decay;
+    if(this.gen===0&&Math.random()<0.15&&this.gen<3){
+      bolts.push(new Bolt(this.x,this.y,this.angle+(Math.random()-0.5)*1.2,this.gen+1,this));
+    }
+    if(this.x<0||this.x>W/DPR||this.y<0||this.y>H/DPR)return false;
+    return true;
+  }
+  draw(){
+    for(const s of this.segments){
+      const a=s.life*0.8;
+      ctx.beginPath();
+      ctx.moveTo(s.x,s.y);
+      ctx.lineTo(s.nx,s.ny);
+      ctx.strokeStyle=`rgba(${this.color.join(',')},${a})`;
+      ctx.lineWidth=this.width*s.life;
+      ctx.shadowColor=`rgba(128,0,255,${a*0.5})`;
+      ctx.shadowBlur=this.glow*s.life;
+      ctx.stroke();
+    }
+    ctx.shadowBlur=0;
+  }
+}
+function strike(x,y){
+  const angle=-Math.PI/2+(Math.random()-0.5)*0.5;
+  bolts.push(new Bolt(x,y,angle));
+  shake=15;
+}
+function storm(){
+  for(let i=0;i<10;i++){
+    setTimeout(()=>strike(Math.random()*W/DPR,Math.random()*H/DPR*0.3),i*50);
+  }
+}
+document.getElementById('btnStrike').onclick=()=>strike(mouse.x,mouse.y);
+document.getElementById('btnStorm').onclick=storm;
+document.getElementById('btnClear').onclick=()=>{bolts.length=0;shake=0;};
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('mousedown',e=>{mouse.down=true;strike(e.clientX,e.clientY);});
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;if(mouse.down&&Math.random()<0.3)strike(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('touchstart',e=>{mouse.down=true;const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;strike(t.clientX,t.clientY);},{passive:false});
+window.addEventListener('touchend',()=>mouse.down=false);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){strike(mouse.x,mouse.y);e.preventDefault();}
+  if(e.code==='KeyS')storm();
+});
+function tick(){
+  frame++;
+  ctx.save();
+  if(shake>0){
+    ctx.translate((Math.random()-0.5)*shake,(Math.random()-0.5)*shake);
+    shake*=0.9;
+  }
+  ctx.fillStyle='rgba(26,26,46,0.15)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  let totalBranches=0;
+  for(let i=bolts.length-1;i>=0;i--){
+    const b=bolts[i];
+    if(b.step()){
+      b.draw();
+      totalBranches+=b.segments.length;
+    }else{
+      bolts.splice(i,1);
+    }
+  }
+  if(Math.random()<0.01*intensity)strike(Math.random()*W/DPR,Math.random()*H/DPR*0.2);
+  document.getElementById('bolts').textContent=bolts.length;
+  document.getElementById('branches').textContent=totalBranches;
+  document.getElementById('intensity').textContent=intensity.toFixed(1);
+  ctx.restore();
+  requestAnimationFrame(tick);
+}
+resize();
+storm();
+tick();
+</script>
+</body>
+</html>

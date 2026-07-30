@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>57 — Feature Flag Console</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.header .actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.btn.danger{background:var(--accent4);border-color:var(--accent4);color:var(--bg)}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.toolbar{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1.5rem;display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.toolbar-group{display:flex;align-items:center;gap:.5rem}
+.toolbar-group label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.toolbar-group select,.toolbar-group input{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.flag-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(350px,1fr));gap:1rem}
+.flag-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:all .1s}
+.flag-card:hover{border-color:var(--accent);box-shadow:0 8px 32px rgba(88,166,255,.1)}
+.flag-header{padding:1rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:flex-start}
+.flag-name{font-weight:500;font-size:.9rem}
+.flag-key{font-size:.65rem;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.flag-status{font-size:.6rem;padding:.2rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.flag-status.on{background:rgba(63,185,80,.2);color:var(--accent2)}
+.flag-status.off{background:rgba(139,148,158,.2);color:var(--muted)}
+.flag-status.scheduled{background:rgba(210,153,34,.2);color:var(--accent3)}
+.flag-body{padding:1rem}
+.flag-desc{font-size:.75rem;color:var(--muted);margin-bottom:1rem;line-height:1.5}
+.flag-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.65rem;color:var(--muted);margin-bottom:1rem}
+.flag-meta strong{color:var(--fg)}
+.flag-rules{display:flex;flex-direction:column;gap:.5rem}
+.rule{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.5rem;font-size:.7rem}
+.rule-type{font-weight:500;color:var(--accent);margin-right:.5rem}
+.rule-value{color:var(--fg)}
+.flag-actions{display:flex;gap:.5rem;padding:1rem;border-top:1px solid var(--border);background:var(--bg)}
+.flag-actions .btn{font-size:.6rem;padding:.35rem .75rem}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal-content{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;min-width:500px;max-width:700px;max-height:80vh;overflow:auto}
+.modal-title{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.form-row{margin-bottom:1rem}
+.form-row label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.form-row input,.form-row select,.form-row textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px}
+.form-row textarea{min-height:80px;resize:vertical;font-family:'JetBrains Mono',monospace}
+.form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem}
+.rule-builder{display:flex;flex-direction:column;gap:.5rem}
+.rule-row{display:flex;gap:.5rem;align-items:center}
+.rule-row select,.rule-row input{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Feature <span>Flag</span> Console</h1><div class="actions"><button class="btn" id="exportBtn">Export</button><button class="btn" id="importBtn">Import</button><button class="btn primary" id="addFlagBtn">+ New Flag</button></div></header>
+<main class="main">
+<div class="toolbar">
+<div class="toolbar-group"><label>Environment</label><select id="envFilter"><option value="production">Production</option><option value="staging">Staging</option><option value="development">Development</option></select></div>
+<div class="toolbar-group"><label>Status</label><select id="statusFilter"><option value="">All</option><option value="on">Enabled</option><option value="off">Disabled</option><option value="scheduled">Scheduled</option></select></div>
+<div class="toolbar-group"><label>Search</label><input type="text" id="searchFlags" placeholder="Filter flags..."></div>
+</div>
+<div class="flag-grid" id="flagGrid"></div>
+</main>
+<div class="modal" id="flagModal">
+<div class="modal-content">
+<div class="modal-title" id="modalTitle">Create Flag</div>
+<form id="flagForm">
+<input type="hidden" id="editFlagKey">
+<div class="form-row"><label>Key</label><input type="text" id="flagKey" placeholder="new-feature-flag" required></div>
+<div class="form-row"><label>Name</label><input type="text" id="flagName" placeholder="New Feature Flag" required></div>
+<div class="form-row"><label>Description</label><textarea id="flagDesc" placeholder="Description of what this flag controls..."></textarea></div>
+<div class="form-row"><label>Type</label><select id="flagType"><option value="boolean">Boolean</option><option value="string">String</option><option value="number">Number</option><option value="json">JSON</option></select></div>
+<div class="form-row"><label>Default Value</label><input type="text" id="flagDefault" placeholder="false"></div>
+<div class="form-row"><label>Status</label><select id="flagStatus"><option value="off">Disabled</option><option value="on">Enabled</option><option value="scheduled">Scheduled Rollout</option></select></div>
+<div class="form-row"><label>Targeting Rules</label>
+<div class="rule-builder" id="ruleBuilder"></div>
+<button type="button" class="btn" id="addRuleBtn" style="width:auto">+ Add Rule</button>
+</div>
+<div class="form-actions"><button type="button" class="btn" id="cancelFlag">Cancel</button><button type="submit" class="btn primary">Save Flag</button></div>
+</form>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 057 / 100 · Feature Flag Console</footer>
+<script>
+const flagGrid=document.getElementById('flagGrid');
+const flagModal=document.getElementById('flagModal');
+const ruleBuilder=document.getElementById('ruleBuilder');
+let flags={},editingKey=null;
+const sampleFlags={
+  'new-dashboard':{key:'new-dashboard',name:'New Dashboard UI',desc:'Enable the redesigned dashboard with improved UX',type:'boolean',default:'false',status:'on',rules:[{type:'percentage',value:50},{type:'userId',value:'beta-users'}]},
+  'dark-mode':{key:'dark-mode',name:'Dark Mode',desc:'Allow users to toggle dark/light theme',type:'boolean',default:'true',status:'on',rules:[]},
+  'api-v2':{key:'api-v2',name:'API v2 Migration',desc:'Route traffic to new API version',type:'boolean',default:'false',status:'scheduled',rules:[{type:'percentage',value:10},{type:'header',value:'x-api-version:v2'}]},
+  'experimental-search':{key:'experimental-search',name:'Experimental Search',desc:'Enable AI-powered search (experimental)',type:'boolean',default:'false',status:'off',rules:[{type:'userId',value:'internal-team'}]},
+  'maintenance-mode':{key:'maintenance-mode',name:'Maintenance Mode',desc:'Show maintenance page to non-admin users',type:'boolean',default:'false',status:'off',rules:[]},
+  'max-upload-size':{key:'max-upload-size',name:'Max Upload Size',desc:'Maximum file upload size in MB',type:'number',default:'10',status:'on',rules:[]},
+  'feature-flags':{key:'feature-flags',name:'Feature Flags System',desc:'Meta flag to enable/disable the feature flag system itself',type:'boolean',default:'true',status:'on',rules:[]}
+};
+flags={...sampleFlags};
+function renderFlags(){
+  const search=document.getElementById('searchFlags').value.toLowerCase();
+  const status=document.getElementById('statusFilter').value;
+  flagGrid.innerHTML=Object.values(flags).filter(f=>{const matchSearch=!search||f.key.includes(search)||f.name.toLowerCase().includes(search)||f.desc.toLowerCase().includes(search);const matchStatus=!status||f.status===status;return matchSearch&&matchStatus;}).map(f=>`<div class="flag-card"><div class="flag-header"><div><div class="flag-name">${escapeHtml(f.name)}</div><div class="flag-key">${escapeHtml(f.key)}</div></div><span class="flag-status ${f.status}">${f.status.toUpperCase()}</span></div><div class="flag-body"><div class="flag-desc">${escapeHtml(f.desc)}</div><div class="flag-meta"><div><strong>Type:</strong> ${f.type}</div><div><strong>Default:</strong> ${f.default}</div></div><div class="flag-rules">${f.rules.length?f.rules.map(r=>`<div class="rule"><span class="rule-type">${r.type}:</span><span class="rule-value">${escapeHtml(r.value)}</span></div>`).join(''):'<div style="color:var(--muted);font-size:.7rem">No targeting rules</div>'}</div><div class="flag-actions"><button class="btn" onclick="editFlag(\'${f.key}\')">Edit</button><button class="btn" onclick="toggleFlag(\'${f.key}\')">${f.status==='on'?'Disable':'Enable'}</button><button class="btn danger" onclick="deleteFlag(\'${f.key}\')">Delete</button></div></div></div>`).join('');
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/"/g,'"');}
+function openModal(flag=null){
+  document.getElementById('flagForm').reset();
+  document.getElementById('editFlagKey').value='';
+  ruleBuilder.innerHTML='';
+  if(flag){
+    document.getElementById('modalTitle').textContent='Edit Flag';
+    document.getElementById('editFlagKey').value=flag;
+    document.getElementById('flagKey').value=flags[flag].key;
+    document.getElementById('flagKey').disabled=true;
+    document.getElementById('flagName').value=flags[flag].name;
+    document.getElementById('flagDesc').value=flags[flag].desc;
+    document.getElementById('flagType').value=flags[flag].type;
+    document.getElementById('flagDefault').value=flags[flag].default;
+    document.getElementById('flagStatus').value=flags[flag].status;
+    flags[flag].rules.forEach(r=>addRuleRow(r.type,r.value));
+  }else{
+    document.getElementById('modalTitle').textContent='Create Flag';
+    document.getElementById('flagKey').disabled=false;
+    addRuleRow();
+  }
+  flagModal.style.display='flex';
+}
+function addRuleRow(type='',value=''){
+  const row=document.createElement('div');
+  row.className='rule-row';
+  row.innerHTML=`<select><option value="percentage">Percentage Rollout</option><option value="userId">User ID</option><option value="email">Email Domain</option><option value="country">Country</option><option value="header">Custom Header</option><option value="ip">IP Range</option></select><input type="text" placeholder="Value (e.g., 50, @company.com, US)"><button type="button" class="btn" style="padding:.2rem .5rem;font-size:.6rem">Remove</button>`;
+  row.querySelector('select').value=type;
+  row.querySelector('input').value=value;
+  row.querySelector('button').onclick=()=>row.remove();
+  ruleBuilder.appendChild(row);
+}
+document.getElementById('addRuleBtn').onclick=()=>addRuleRow();
+document.getElementById('addFlagBtn').onclick=()=>openModal();
+document.getElementById('cancelFlag').onclick=()=>flagModal.style.display='none';
+document.getElementById('flagForm').onsubmit=e=>{
+  e.preventDefault();
+  const key=document.getElementById('flagKey').value.trim();
+  const editKey=document.getElementById('editFlagKey').value;
+  const rules=[];
+  ruleBuilder.querySelectorAll('.rule-row').forEach(row=>{const type=row.querySelector('select').value;const value=row.querySelector('input').value.trim();if(value)rules.push({type,value});});
+  const flag={key,name:document.getElementById('flagName').value,desc:document.getElementById('flagDesc').value,type:document.getElementById('flagType').value,default:document.getElementById('flagDefault').value,status:document.getElementById('flagStatus').value,rules};
+  if(editKey&&editKey!==key){delete flags[editKey];}
+  flags[key]=flag;
+  flagModal.style.display='none';
+  renderFlags();
+};
+function editFlag(key){openModal(key);}
+function toggleFlag(key){
+  flags[key].status=flags[key].status==='on'?'off':'on';
+  renderFlags();
+}
+function deleteFlag(key){
+  if(confirm('Delete flag "'+key+'"?')){delete flags[key];renderFlags();}
+}
+document.getElementById('exportBtn').onclick=()=>{navigator.clipboard.writeText(JSON.stringify(flags,null,2));alert('Exported to clipboard');};
+document.getElementById('importBtn').onclick=()=>{const i=document.createElement('input');i.type='file';i.accept='.json';i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{flags={...flags,...JSON.parse(r.result)};renderFlags();}catch(err){alert('Invalid JSON');}};r.readAsText(f);};i.click();};
+document.getElementById('searchFlags').oninput=renderFlags;
+document.getElementById('statusFilter').onchange=renderFlags;
+renderFlags();
+</script>
+</body>
+</html>

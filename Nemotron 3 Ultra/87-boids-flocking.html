@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Boids Flocking — Nemotron 3 Ultra #87</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #040408; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 120px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+.slider-group input::-moz-range-thumb { width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; border: none; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>BOIDS FLOCKING</h1>
+<p class="subtitle">Emergent Swarm Intelligence</p>
+</div>
+<div class="controls">
+<div class="slider-group"><label>Separation</label><input type="range" id="sepSlider" min="0" max="5" step="0.1" value="1.5"></div>
+<div class="slider-group"><label>Alignment</label><input type="range" id="aliSlider" min="0" max="2" step="0.1" value="1.0"></div>
+<div class="slider-group"><label>Cohesion</label><input type="range" id="cohSlider" min="0" max="2" step="0.1" value="1.0"></div>
+<div class="slider-group"><label>Perception</label><input type="range" id="perSlider" min="20" max="150" step="5" value="50"></div>
+<div class="slider-group"><label>Max Speed</label><input type="range" id="spdSlider" min="1" max="8" step="0.5" value="4"></div>
+<button class="btn primary" id="btnReset" aria-label="Reset flock"><span>Reset</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle simulation"><span>Pause</span></button>
+<button class="btn" id="btnPredator" aria-label="Toggle predator"><span>Predator</span></button>
+<button class="btn" id="btnObstacles" aria-label="Toggle obstacles"><span>Obstacles</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click to add boids • Drag predator • Keys: Space pause • R reset • P predator • O obstacles</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="boidCount">0</div><div class="stat-label">Boids</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+let boids = [], predator = null, obstacles = [];
+let separationWeight = 1.5, alignmentWeight = 1.0, cohesionWeight = 1.0, perceptionRadius = 50, maxSpeed = 4, maxForce = 0.2;
+let paused = false, running = true, showPredator = false, showObstacles = false;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false };
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); initBoids(); initObstacles(); }
+function initBoids() { boids = []; const count = 200; for (let i = 0; i < count; i++) { boids.push({ x: Math.random() * width / dpr, y: Math.random() * height / dpr, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, ax: 0, ay: 0, hue: Math.random() * 60 + 150 }); } document.getElementById('boidCount').textContent = boids.length; }
+function initObstacles() { obstacles = []; const count = 5; for (let i = 0; i < count; i++) { obstacles.push({ x: Math.random() * width / dpr, y: Math.random() * height / dpr, r: 30 + Math.random() * 40 }); } }
+function distance(x1, y1, x2, y2) { const dx = x2 - x1, dy = y2 - y1; return Math.sqrt(dx * dx + dy * dy); }
+function wrap(v, max) { if (v < 0) return v + max; if (v >= max) return v - max; return v; }
+function steer(boid, targetX, targetY, weight) { const dx = targetX - boid.x, dy = targetY - boid.y; const dist = Math.sqrt(dx * dx + dy * dy) || 1; const desiredSpeed = maxSpeed; boid.ax += (dx / dist) * desiredSpeed * weight; boid.ay += (dy / dist) * desiredSpeed * weight; }
+function flock(boid) { let sepX = 0, sepY = 0, aliX = 0, aliY = 0, cohX = 0, cohY = 0; let sepCount = 0, aliCount = 0, cohCount = 0; boids.forEach(other => { if (other === boid) return; const d = distance(boid.x, boid.y, other.x, other.y); if (d < perceptionRadius) { if (d > 0 && d < 25) { sepX += (boid.x - other.x) / d; sepY += (boid.y - other.y) / d; sepCount++; } if (d < perceptionRadius) { aliX += other.vx; aliY += other.vy; aliCount++; cohX += other.x; cohY += other.y; cohCount++; } } }); if (sepCount > 0) { sepX /= sepCount; sepY /= sepCount; const mag = Math.sqrt(sepX * sepX + sepY * sepY) || 1; boid.ax += (sepX / mag) * maxSpeed * separationWeight; boid.ay += (sepY / mag) * maxSpeed * separationWeight; } if (aliCount > 0) { aliX /= aliCount; aliY /= aliCount; const mag = Math.sqrt(aliX * aliX + aliY * aliY) || 1; boid.ax += (aliX / mag) * maxSpeed * alignmentWeight - boid.vx * alignmentWeight * 0.5; boid.ay += (aliY / mag) * maxSpeed * alignmentWeight - boid.vy * alignmentWeight * 0.5; } if (cohCount > 0) { cohX /= cohCount; cohY /= cohCount; steer(boid, cohX, cohY, cohesionWeight); } if (showPredator && predator) { const d = distance(boid.x, boid.y, predator.x, predator.y); if (d < 150 && d > 0) { boid.ax += (boid.x - predator.x) / d * maxSpeed * 3; boid.ay += (boid.y - predator.y) / d * maxSpeed * 3; } } if (showObstacles) { obstacles.forEach(obs => { const d = distance(boid.x, boid.y, obs.x, obs.y); if (d < obs.r + 50 && d > 0) { boid.ax += (boid.x - obs.x) / d * maxSpeed * 2; boid.ay += (boid.y - obs.y) / d * maxSpeed * 2; } }); } const forceMag = Math.sqrt(boid.ax * boid.ax + boid.ay * boid.ay); if (forceMag > maxForce) { boid.ax = (boid.ax / forceMag) * maxForce; boid.ay = (boid.ay / forceMag) * maxForce; } }
+function update() { boids.forEach(boid => { boid.ax = 0; boid.ay = 0; flock(boid); boid.vx += boid.ax; boid.vy += boid.ay; const speed = Math.sqrt(boid.vx * boid.vx + boid.vy * boid.vy); if (speed > maxSpeed) { boid.vx = (boid.vx / speed) * maxSpeed; boid.vy = (boid.vy / speed) * maxSpeed; } boid.x += boid.vx; boid.y += boid.vy; boid.x = wrap(boid.x, width / dpr); boid.y = wrap(boid.y, height / dpr); }); if (showPredator && predator) { predator.x += predator.vx; predator.y += predator.vy; predator.x = wrap(predator.x, width / dpr); predator.y = wrap(predator.y, height / dpr); } }
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = 'rgba(4, 4, 8, 0.15)'; ctx.fillRect(0, 0, w, h); if (showObstacles) { obstacles.forEach(obs => { const gradient = ctx.createRadialGradient(obs.x, obs.y, 0, obs.x, obs.y, obs.r); gradient.addColorStop(0, 'rgba(255, 51, 102, 0.3)'); gradient.addColorStop(1, 'rgba(255, 51, 102, 0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(255, 51, 102, 0.5)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(obs.x, obs.y, obs.r, 0, Math.PI * 2); ctx.stroke(); }); } boids.forEach(boid => { const angle = Math.atan2(boid.vy, boid.vx); const size = 6; ctx.save(); ctx.translate(boid.x, boid.y); ctx.rotate(angle); const gradient = ctx.createLinearGradient(-size, 0, size, 0); gradient.addColorStop(0, `hsla(${boid.hue}, 100%, 50%, 0.3)`); gradient.addColorStop(1, `hsla(${boid.hue}, 100%, 50%, 1)`); ctx.fillStyle = gradient; ctx.beginPath(); ctx.moveTo(size, 0); ctx.lineTo(-size * 0.7, -size * 0.5); ctx.lineTo(-size * 0.3, 0); ctx.lineTo(-size * 0.7, size * 0.5); ctx.closePath(); ctx.fill(); ctx.restore(); }); if (showPredator && predator) { ctx.save(); ctx.translate(predator.x, predator.y); ctx.rotate(Date.now() * 0.002); const g = ctx.createRadialGradient(0, 0, 0, 0, 0, 20); g.addColorStop(0, '#ff3366'); g.addColorStop(1, 'rgba(255, 51, 102, 0)'); ctx.fillStyle = g; ctx.beginPath(); ctx.arc(0, 0, 20, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = '#ff3366'; ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-10, -8); ctx.lineTo(-5, 0); ctx.lineTo(-10, 8); ctx.closePath(); ctx.fill(); ctx.restore(); } }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) update(); render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('sepSlider').addEventListener('input', e => separationWeight = parseFloat(e.target.value)); document.getElementById('aliSlider').addEventListener('input', e => alignmentWeight = parseFloat(e.target.value)); document.getElementById('cohSlider').addEventListener('input', e => cohesionWeight = parseFloat(e.target.value)); document.getElementById('perSlider').addEventListener('input', e => perceptionRadius = parseFloat(e.target.value)); document.getElementById('spdSlider').addEventListener('input', e => maxSpeed = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; if (showPredator && predator) { const d = distance(e.clientX, e.clientY, predator.x, predator.y); if (d < 30) { predator.dragging = true; return; } } boids.push({ x: e.clientX, y: e.clientY, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, ax: 0, ay: 0, hue: Math.random() * 60 + 150 }); document.getElementById('boidCount').textContent = boids.length; });
+window.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; if (showPredator && predator && predator.dragging) { predator.x = e.clientX; predator.y = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; if (predator) predator.dragging = false; });
+document.getElementById('btnReset').addEventListener('click', initBoids);
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnPredator').addEventListener('click', () => { showPredator = !showPredator; document.getElementById('btnPredator').classList.toggle('primary', showPredator); if (showPredator && !predator) { predator = { x: width / dpr / 2, y: height / dpr / 2, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, dragging: false }; } });
+document.getElementById('btnObstacles').addEventListener('click', () => { showObstacles = !showObstacles; document.getElementById('btnObstacles').classList.toggle('primary', showObstacles); if (showObstacles) initObstacles(); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') { initBoids(); } else if (e.key === 'p' || e.key === 'P') { showPredator = !showPredator; document.getElementById('btnPredator').classList.toggle('primary', showPredator); if (showPredator && !predator) { predator = { x: width / dpr / 2, y: height / dpr / 2, vx: (Math.random() - 0.5) * 3, vy: (Math.random() - 0.5) * 3, dragging: false }; } } else if (e.key === 'o' || e.key === 'O') { showObstacles = !showObstacles; document.getElementById('btnObstacles').classList.toggle('primary', showObstacles); if (showObstacles) initObstacles(); } });
+init();
+</script>
+</body>
+</html>

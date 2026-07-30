@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>70 — Regex Tester</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.flags{display:flex;gap:.5rem}
+.flag{display:flex;align-items:center;gap:.3rem;font-size:.65rem;cursor:pointer}
+.flag input{width:14px;height:14px;accent-color:var(--accent)}
+.editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:1rem;min-height:150px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.85rem;line-height:1.6}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.section{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem}
+.section h3{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.test-area{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:600px){.test-area{grid-template-columns:1fr}}
+.test-input{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1rem;min-height:200px;resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6}
+.test-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.results{padding:1.5rem;overflow:auto}
+.results-header{margin-bottom:1rem}
+.results-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.match-info{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-bottom:1rem}
+.match-info h4{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.match-item{padding:.5rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;margin-bottom:.5rem;display:flex;gap:1rem;flex-wrap:wrap}
+.match-full{font-weight:500;color:var(--accent2)}
+.match-groups{display:flex;flex-wrap:wrap;gap:.5rem}
+.match-group{font-size:.7rem;background:rgba(88,166,255,.1);border:1px solid var(--accent);border-radius:3px;padding:.2rem .5rem}
+.match-group .num{color:var(--accent);font-weight:700}
+.match-group .val{color:var(--fg)}
+.match-index{color:var(--muted);font-size:.65rem}
+.explanation{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem}
+.explanation h4{font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.explanation pre{font-size:.7rem;line-height:1.8;color:var(--fg);white-space:pre-wrap;word-break:break-word}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Pattern</h2><div class="flags"><label class="flag"><input type="checkbox" id="flagG" checked> Global</label><label class="flag"><input type="checkbox" id="flagI"> Case Insensitive</label><label class="flag"><input type="checkbox" id="flagM"> Multiline</label><label class="flag"><input type="checkbox" id="flagS"> Dot All</label><label class="flag"><input type="checkbox" id="flagU"> Unicode</label></div></div>
+<textarea id="regexInput" placeholder="Enter regex pattern..." spellcheck="false"></textarea>
+<div class="section"><h3>Test String</h3><textarea id="testInput" class="test-input" placeholder="Enter test string..." spellcheck="false"></textarea></div>
+<div class="section"><h3>Substitution</h3><div style="display:flex;gap:.5rem"><input type="text" id="replaceInput" class="test-input" style="flex:1;height:50px;min-height:50px" placeholder="Replacement string (e.g., $1-$2)"><button class="btn primary" id="replaceBtn" style="height:50px;align-self:center">Replace</button></div><div class="test-input" id="replaceOutput" style="min-height:80px;color:var(--accent2)" readonly></div></div>
+</div>
+<div class="results">
+<div class="results-header"><h3>Matches</h3></div>
+<div class="match-info"><h4>Match Details</h4><div id="matchList"></div></div>
+<div class="explanation"><h4>Explanation</h4><pre id="explanation"></pre></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 070 / 100 · Regex Tester</footer>
+<script>
+const regexInput=document.getElementById('regexInput');
+const testInput=document.getElementById('testInput');
+const matchList=document.getElementById('matchList');
+const explanation=document.getElementById('explanation');
+const replaceInput=document.getElementById('replaceInput');
+const replaceOutput=document.getElementById('replaceOutput');
+const sampleRegex='\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b';
+const sampleText=`Contact us at support@example.com or sales@company.org for more info.
+Also reach out to john.doe@domain.co.uk and jane_smith@test-domain.io.
+Invalid emails: @nodomain.com, user@, user@domain, user@domain.`;
+regexInput.value=sampleRegex;
+testInput.value=sampleText;
+function getFlags(){
+  let f='';
+  if(document.getElementById('flagG').checked)f+='g';
+  if(document.getElementById('flagI').checked)f+='i';
+  if(document.getElementById('flagM').checked)f+='m';
+  if(document.getElementById('flagS').checked)f+='s';
+  if(document.getElementById('flagU').checked)f+='u';
+  return f;
+}
+function testRegex(){
+  const pattern=regexInput.value;
+  const text=testInput.value;
+  const flags=getFlags();
+  if(!pattern){matchList.innerHTML='<div style="color:var(--muted)">Enter a pattern</div>';explanation.textContent='';return;}
+  try{
+    const regex=new RegExp(pattern,flags);
+    const matches=[];
+    let match;
+    while((match=regex.exec(text))!==null){
+      matches.push({index:match.index,full:match[0],groups:match.slice(1)});
+      if(!flags.includes('g'))break;
+    }
+    if(matches.length===0){
+      matchList.innerHTML='<div style="color:var(--accent3)">No matches found</div>';
+    }else{
+      matchList.innerHTML=matches.map((m,i)=>`<div class="match-item"><span class="match-index">Match ${i+1} (index ${m.index})</span><span class="match-full">${escapeHtml(m.full)}</span>${m.groups.length?`<div class="match-groups">${m.groups.map((g,j)=>`<span class="match-group"><span class="num">$${j+1}:</span><span class="val">${escapeHtml(g)}</span></span>`).join('')}</div>`:''}</div>`).join('');
+    }
+    // Explanation
+    explanation.textContent=explainRegex(pattern);
+    // Replacement
+    if(replaceInput.value){
+      const result=text.replace(regex,replaceInput.value);
+      replaceOutput.textContent=result;
+    }
+  }catch(e){
+    matchList.innerHTML=`<div style="color:var(--accent4)">Error: ${e.message}</div>`;
+    explanation.textContent='';
+  }
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
+function explainRegex(pattern){
+  const tokens=[{regex:/\\d/g,desc:'Digit [0-9]'},
+    {regex:/\\w/g,desc:'Word character [A-Za-z0-9_]'},
+    {regex:/\\s/g,desc:'Whitespace'},
+    {regex:/\\b/g,desc:'Word boundary'},
+    {regex:/\\./g,desc:'Any character (except newline)'},
+    {regex:/\*/g,desc:'Zero or more (greedy)'},
+    {regex:/\+/g,desc:'One or more (greedy)'},
+    {regex:/\?/g,desc:'Zero or one (greedy)'},
+    {regex:/\\^/g,desc:'Start of string/line'},
+    {regex:/\\$/g,desc:'End of string/line'},
+    {regex:/\\|/g,desc:'Alternation (OR)'},
+    {regex:/\(/g,desc:'Capturing group'},
+    {regex:/\)/g,desc:'End group'},
+    {regex:/\[/g,desc:'Character class start'},
+    {regex:/\]/g,desc:'Character class end'},
+    {regex:/\{/g,desc:'Quantifier start'},
+    {regex:/\}/g,desc:'Quantifier end'}];
+  let explained=pattern;
+  tokens.forEach(t=>{explained=explained.replace(t.regex,`<span style="color:var(--accent2)">${t.regex.source}</span>`);});
+  return explained.replace(/\\/g,'<span style="color:var(--accent3)">\\\\</span>');
+}
+['regexInput','testInput','flagG','flagI','flagM','flagS','flagU'].forEach(id=>document.getElementById(id).oninput=testRegex);
+document.getElementById('replaceBtn').onclick=()=>{testRegex();};
+testRegex();
+</script>
+</body>
+</html>

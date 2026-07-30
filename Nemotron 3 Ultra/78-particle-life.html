@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particle Life — Nemotron 3 Ultra #78</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030306; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.species-selector { pointer-events: auto; }
+.species-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.species-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>PARTICLE LIFE</h1>
+<p class="subtitle">Emergent Behaviors</p>
+</div>
+<div class="controls">
+<div class="species-selector"><select id="speciesSelect" aria-label="Select species preset"></select></div>
+<button class="btn primary" id="btnRandom" aria-label="Random species"><span>Random</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle simulation"><span>Pause</span></button>
+<button class="btn" id="btnTrails" aria-label="Toggle trails"><span>Trails</span></button>
+<button class="btn" id="btnGravity" aria-label="Toggle gravity center"><span>Gravity</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to pan • Scroll to zoom • Keys: Space pause • R random • T trails • G gravity</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="particleCount">0</div><div class="stat-label">Particles</div></div>
+<div class="stat"><div class="stat-value" id="speciesCount">0</div><div class="stat-label">Species</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const speciesPresets = [
+    { name: 'Classic', colors: ['#00ffc8', '#ff3366', '#ffcc00'], matrix: [[0.3, -0.5, 0.2], [-0.5, 0.3, -0.2], [0.2, -0.2, 0.4]], radius: 80, friction: 0.5 },
+    { name: 'Clusters', colors: ['#00ffc8', '#00ccff', '#0099ff'], matrix: [[0.5, -0.3, -0.1], [-0.3, 0.4, -0.4], [-0.1, -0.4, 0.5]], radius: 100, friction: 0.6 },
+    { name: 'Chains', colors: ['#ff3366', '#ff6699', '#ff99cc'], matrix: [[-0.2, 0.8, -0.3], [0.8, -0.2, 0.6], [-0.3, 0.6, -0.1]], radius: 90, friction: 0.4 },
+    { name: 'Orbits', colors: ['#ffcc00', '#ffdd44', '#ffee88'], matrix: [[0.1, -0.6, 0.5], [-0.6, 0.1, -0.4], [0.5, -0.4, 0.2]], radius: 120, friction: 0.3 },
+    { name: 'Repulsion', colors: ['#ff3366', '#00ffc8', '#ffcc00', '#00ccff', '#cc66ff'], matrix: [[-0.5, 0.3, 0.2, -0.1, 0.1], [0.3, -0.4, -0.2, 0.1, -0.3], [0.2, -0.2, -0.5, 0.3, -0.1], [-0.1, 0.1, 0.3, -0.4, 0.2], [0.1, -0.3, -0.1, 0.2, -0.3]], radius: 70, friction: 0.7 },
+    { name: 'Galaxies', colors: ['#ff3366', '#00ccff', '#cc66ff', '#ffcc00', '#00ff88', '#ff6633'], matrix: [[0.4, -0.4, 0.2, -0.2, 0.1, -0.1], [-0.4, 0.3, -0.3, 0.2, -0.1, 0.1], [0.2, -0.3, 0.4, -0.2, 0.1, -0.1], [-0.2, 0.2, -0.2, 0.3, -0.2, 0.1], [0.1, -0.1, 0.1, -0.2, 0.4, -0.3], [-0.1, 0.1, -0.1, 0.1, -0.3, 0.5]], radius: 110, friction: 0.4 },
+    { name: 'Molecules', colors: ['#00ffc8', '#ff3366'], matrix: [[0.6, -0.8], [-0.8, 0.5]], radius: 60, friction: 0.8 },
+    { name: 'Crystals', colors: ['#00ccff', '#cc66ff', '#00ff88'], matrix: [[0.7, -0.2, -0.3], [-0.2, 0.6, -0.4], [-0.3, -0.4, 0.7]], radius: 50, friction: 0.9 },
+    { name: 'Chaos', colors: ['#ff3366', '#ffcc00', '#00ffc8', '#00ccff', '#cc66ff', '#ff6633', '#ffff66'], matrix: [[-0.3, 0.4, -0.2, 0.1, -0.1, 0.2, -0.2], [0.4, -0.3, 0.3, -0.2, 0.1, -0.1, 0.1], [-0.2, 0.3, -0.4, 0.2, -0.1, 0.1, -0.1], [0.1, -0.2, 0.2, -0.3, 0.2, -0.2, 0.1], [-0.1, 0.1, -0.1, 0.2, -0.2, 0.1, -0.1], [0.2, -0.1, 0.1, -0.2, 0.1, -0.3, 0.2], [-0.2, 0.1, -0.1, 0.1, -0.1, 0.2, -0.4]], radius: 100, friction: 0.3 },
+    { name: 'Organic', colors: ['#00ff88', '#88ff00', '#ffcc00', '#ff8800', '#ff3366'], matrix: [[0.3, -0.4, 0.2, -0.1, 0.1], [-0.4, 0.3, -0.3, 0.2, -0.2], [0.2, -0.3, 0.4, -0.2, 0.1], [-0.1, 0.2, -0.2, 0.3, -0.3], [0.1, -0.2, 0.1, -0.3, 0.4]], radius: 90, friction: 0.5 },
+];
+let particles = [], speciesCount = 3, trails = true, gravity = false, paused = false, running = true;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0 };
+const camera = { x: 0, y: 0, scale: 1, targetX: 0, targetY: 0, targetScale: 1 };
+const select = document.getElementById('speciesSelect');
+speciesPresets.forEach((p, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i.toString().padStart(2, '0')} ${p.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); camera.targetX = width / dpr / 2; camera.targetY = height / dpr / 2; }
+function createParticles(preset) { particles = []; speciesCount = preset.colors.length; const cx = width / dpr / 2, cy = height / dpr / 2; const perSpecies = Math.floor(400 / speciesCount); for (let s = 0; s < speciesCount; s++) { for (let i = 0; i < perSpecies; i++) { const angle = Math.random() * Math.PI * 2; const r = Math.random() * Math.min(width, height) / dpr * 0.4; particles.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r, vx: (Math.random() - 0.5) * 0.5, vy: (Math.random() - 0.5) * 0.5, species: s, color: preset.colors[s], radius: 2 + Math.random() * 2 }); } } document.getElementById('particleCount').textContent = particles.length.toLocaleString(); document.getElementById('speciesCount').textContent = speciesCount; }
+function force(p1, p2, matrix, radius) { const dx = p2.x - p1.x, dy = p2.y - p1.y; const dist2 = dx * dx + dy * dy; if (dist2 === 0 || dist2 > radius * radius) return; const dist = Math.sqrt(dist2); const f = matrix[p1.species][p2.species] * (1 - dist / radius) / dist; p1.vx += dx * f; p1.vy += dy * f; p2.vx -= dx * f; p2.vy -= dy * f; }
+function physics(preset, dt) { if (gravity) { const cx = width / dpr / 2 + camera.x, cy = height / dpr / 2 + camera.y; particles.forEach(p => { const dx = cx - p.x, dy = cy - p.y; const dist2 = dx * dx + dy * dy; if (dist2 > 1) { const dist = Math.sqrt(dist2); p.vx += dx / dist * 0.001 * dt; p.vy += dy / dist * 0.001 * dt; } }); } for (let i = 0; i < particles.length; i++) { for (let j = i + 1; j < particles.length; j++) { force(particles[i], particles[j], preset.matrix, preset.radius); } } particles.forEach(p => { p.vx *= preset.friction; p.vy *= preset.friction; p.x += p.vx * dt; p.y += p.vy * dt; const hw = width / dpr / 2, hh = height / dpr / 2; if (p.x < -hw) p.x = -hw, p.vx *= -0.5; if (p.x > hw) p.x = hw, p.vx *= -0.5; if (p.y < -hh) p.y = -hh, p.vy *= -0.5; if (p.y > hh) p.y = hh, p.vy *= -0.5; }); }
+function render() { if (!trails) { ctx.fillStyle = '#030306'; ctx.fillRect(0, 0, width / dpr, height / dpr); } else { ctx.fillStyle = 'rgba(3, 3, 6, 0.15)'; ctx.fillRect(0, 0, width / dpr, height / dpr); } ctx.save(); ctx.translate(width / dpr / 2 - camera.x * camera.scale, height / dpr / 2 - camera.y * camera.scale); ctx.scale(camera.scale, camera.scale); particles.forEach(p => { const r = Math.max(0.5, p.radius / camera.scale); const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, r * 3); gradient.addColorStop(0, p.color); gradient.addColorStop(0.5, p.color + '40'); gradient.addColorStop(1, p.color + '00'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(p.x, p.y, r * 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, r, 0, Math.PI * 2); ctx.fill(); }); ctx.restore(); }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = Math.min((time - lastTime) / 16.67, 3); lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } camera.x += (camera.targetX - camera.x) * 0.08; camera.y += (camera.targetY - camera.y) * 0.08; camera.scale += (camera.targetScale - camera.scale) * 0.08; const preset = speciesPresets[select.value]; physics(preset, dt); render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); createParticles(speciesPresets[select.value]); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', () => { const oldW = width / dpr, oldH = height / dpr; resize(); camera.targetX *= (width / dpr) / oldW; camera.targetY *= (height / dpr) / oldH; });
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { const dx = (e.clientX - mouse.lastX) / camera.scale; const dy = (e.clientY - mouse.lastY) / camera.scale; camera.targetX -= dx; camera.targetY -= dy; mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); const zoom = e.deltaY > 0 ? 0.9 : 1.1; camera.targetScale = Math.max(0.3, Math.min(3, camera.targetScale * zoom)); }, { passive: false });
+select.addEventListener('change', () => createParticles(speciesPresets[select.value]));
+document.getElementById('btnRandom').addEventListener('click', () => { select.value = Math.floor(Math.random() * speciesPresets.length); createParticles(speciesPresets[select.value]); });
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnTrails').addEventListener('click', () => { trails = !trails; });
+document.getElementById('btnGravity').addEventListener('click', () => { gravity = !gravity; document.getElementById('btnGravity').classList.toggle('primary', gravity); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') { select.value = Math.floor(Math.random() * speciesPresets.length); createParticles(speciesPresets[select.value]); } else if (e.key === 't' || e.key === 'T') { trails = !trails; } else if (e.key === 'g' || e.key === 'G') { gravity = !gravity; document.getElementById('btnGravity').classList.toggle('primary', gravity); } else if (e.key >= '1' && e.key <= '9') { const idx = parseInt(e.key) - 1; if (idx < speciesPresets.length) { select.value = idx; createParticles(speciesPresets[idx]); } } });
+init();
+</script>
+</body>
+</html>

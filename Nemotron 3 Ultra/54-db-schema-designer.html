@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>54 — Database Schema Designer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:300px 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:1rem;overflow:auto}
+.sidebar-header{position:sticky;top:0;background:var(--card);padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem;z-index:10;display:flex;justify-content:space-between;align-items:center}
+.sidebar-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.table-list{display:flex;flex-direction:column;gap:.5rem}
+.table-item{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem;cursor:pointer;transition:all .1s}
+.table-item:hover,.table-item.active{border-color:var(--accent);background:rgba(88,166,255,.1)}
+.table-item-name{font-weight:500;margin-bottom:.25rem}
+.table-item-cols{font-size:.65rem;color:var(--muted)}
+.btn{width:100%;margin-top:1rem;padding:.5rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.canvas{position:relative;background:var(--bg);overflow:auto}
+.canvas-inner{position:absolute;top:0;left:0}
+.grid-bg{position:absolute;top:0;left:0;width:100%;height:100%;background-image:linear-gradient(var(--border) 1px,transparent 1px),linear-gradient(90deg,var(--border) 1px,transparent 1px);background-size:20px 20px}
+.table-node{position:absolute;background:var(--card);border:2px solid var(--border);border-radius:8px;min-width:200px;transition:all .1s;box-shadow:0 8px 32px rgba(0,0,0,.3)}
+.table-node.selected{border-color:var(--accent);box-shadow:0 8px 32px rgba(88,166,255,.3),0 0 0 2px var(--accent)}
+.table-header{background:var(--accent);color:var(--bg);padding:.5rem .75rem;border-radius:6px 6px 0 0;font-weight:600;display:flex;justify-content:space-between;align-items:center}
+.table-close{background:none;border:none;color:var(--bg);cursor:pointer;padding:0;font-size:.75rem;opacity:.7}
+.table-close:hover{opacity:1}
+.table-body{padding:.5rem}
+.column{display:flex;align-items:center;gap:.5rem;padding:.35rem 0;border-bottom:1px solid var(--border);font-size:.8rem}
+.column:last-child{border-bottom:none}
+.col-pk{width:16px;height:16px;border:2px solid var(--accent3);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--accent3);font-size:.6rem;flex-shrink:0}
+.col-pk.has{background:var(--accent3);color:var(--bg)}
+.col-fk{width:16px;height:16px;border:2px solid var(--accent);border-radius:3px;display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:.6rem;flex-shrink:0}
+.col-fk.has{background:var(--accent);color:var(--bg)}
+.col-name{flex:1;font-weight:500}
+.col-type{color:var(--muted);font-size:.7rem;white-space:nowrap}
+.col-null{font-size:.6rem;color:var(--muted)}
+.relationship{position:absolute;pointer-events:none;stroke:var(--muted);stroke-width:2;stroke-dasharray:4,4;z-index:1}
+.relationship.active{stroke:var(--accent);stroke-dasharray:none}
+.toolbar{position:fixed;bottom:1rem;right:1rem;z-index:20;display:flex;gap:.5rem;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:.5rem}
+.toolbar-btn{padding:.5rem .75rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:inherit;font-size:.65rem;border-radius:4px;cursor:pointer}
+.toolbar-btn:hover{border-color:var(--accent);color:var(--accent)}
+.modal{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;z-index:100;display:none}
+.modal-content{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;min-width:400px;max-width:500px}
+.modal-title{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.form-row{margin-bottom:1rem}
+.form-row label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.35rem}
+.form-row input,.form-row select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px}
+.form-actions{display:flex;justify-content:flex-end;gap:.5rem;margin-top:1.5rem}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="sidebar-header"><h2>Tables</h2><button class="btn primary" id="addTableBtn" style="width:auto;padding:.35rem .75rem;font-size:.6rem">+ Table</button></div>
+<div class="table-list" id="tableList"></div>
+<button class="btn" id="exportSQL">Export SQL</button>
+<button class="btn" id="exportJSON">Export JSON</button>
+<button class="btn" id="importJSON">Import JSON</button>
+</aside>
+<main class="canvas">
+<div class="grid-bg"></div>
+<div class="canvas-inner" id="canvasInner"></div>
+<div class="toolbar">
+<button class="toolbar-btn" id="zoomIn">+ Zoom</button>
+<button class="toolbar-btn" id="zoomOut">- Zoom</button>
+<button class="toolbar-btn" id="resetView">Reset</button>
+<button class="toolbar-btn" id="autoLayout">Auto Layout</button>
+</div>
+</main>
+</div>
+<div class="modal" id="tableModal">
+<div class="modal-content">
+<div class="modal-title" id="modalTitle">Add Table</div>
+<form id="tableForm">
+<input type="hidden" id="editTableId">
+<div class="form-row"><label>Table Name</label><input type="text" id="tableName" placeholder="users" required></div>
+<div class="form-row"><label>Columns (JSON)</label><textarea id="tableColumns" rows="8" placeholder='[{"name":"id","type":"INTEGER","pk":true},{"name":"email","type":"VARCHAR(255)","unique":true}]'></textarea></div>
+<div class="form-actions"><button type="button" class="btn" id="cancelModal">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+</form>
+</div>
+</div>
+<div class="modal" id="columnModal">
+<div class="modal-content">
+<div class="modal-title" id="colModalTitle">Add Column</div>
+<form id="columnForm">
+<input type="hidden" id="colTableId">
+<input type="hidden" id="editColIndex">
+<div class="form-row"><label>Name</label><input type="text" id="colName" required></div>
+<div class="form-row"><label>Type</label><select id="colType"><option value="INTEGER">INTEGER</option><option value="BIGINT">BIGINT</option><option value="VARCHAR(255)">VARCHAR(255)</option><option value="TEXT">TEXT</option><option value="BOOLEAN">BOOLEAN</option><option value="TIMESTAMP">TIMESTAMP</option><option value="DATE">DATE</option><option value="DECIMAL(10,2)">DECIMAL(10,2)</option><option value="UUID">UUID</option><option value="JSON">JSON</option></select></div>
+<div class="form-row"><label><input type="checkbox" id="colPk"> Primary Key</label></div>
+<div class="form-row"><label><input type="checkbox" id="colFk"> Foreign Key</label></div>
+<div class="form-row" id="fkOptions" style="display:none"><label>References (table.column)</label><input type="text" id="colRef" placeholder="users.id"></div>
+<div class="form-row"><label><input type="checkbox" id="colNotNull"> Not Null</label></div>
+<div class="form-row"><label><input type="checkbox" id="colUnique"> Unique</label></div>
+<div class="form-row"><label>Default</label><input type="text" id="colDefault" placeholder="CURRENT_TIMESTAMP"></div>
+<div class="form-actions"><button type="button" class="btn" id="cancelColModal">Cancel</button><button type="submit" class="btn primary">Save</button></div>
+</form>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 054 / 100 · Database Schema Designer</footer>
+<script>
+const canvas=document.getElementById('canvasInner');
+const tableList=document.getElementById('tableList');
+const tableModal=document.getElementById('tableModal');
+const columnModal=document.getElementById('columnModal');
+let tables={},selectedTable=null,scale=1,pan={x:0,y:0},dragging=false,dragStart={},dragTable=null;
+const types=['INTEGER','BIGINT','VARCHAR(255)','TEXT','BOOLEAN','TIMESTAMP','DATE','DECIMAL(10,2)','UUID','JSON'];
+function renderTableList(){
+  tableList.innerHTML=Object.entries(tables).map(([name,t])=>`<div class="table-item${selectedTable===name?' active':''}" data-table="${name}"><div class="table-item-name">${name}</div><div class="table-item-cols">${t.columns.length} columns</div></div>`).join('');
+  document.querySelectorAll('.table-item').forEach(el=>el.onclick=()=>{selectTable(el.dataset.table);});
+}
+function selectTable(name){
+  selectedTable=name;
+  renderTableList();
+  renderCanvas();
+}
+function renderCanvas(){
+  canvas.innerHTML='';
+  Object.entries(tables).forEach(([name,t])=>{
+    const node=document.createElement('div');
+    node.className='table-node'+(name===selectedTable?' selected':'');
+    node.style.left=t.x+'px';
+    node.style.top=t.y+'px';
+    node.innerHTML=`<div class="table-header">${name}<button class="table-close" data-table="${name}">×</button></div><div class="table-body">${t.columns.map(c=>`<div class="column"><span class="col-pk${c.pk?' has':''}">${c.pk?'PK':''}</span><span class="col-fk${c.fk?' has':''}">${c.fk?'FK':''}</span><span class="col-name">${c.name}</span><span class="col-type">${c.type}</span><span class="col-null">${c.notNull?'NOT NULL':'NULL'}</span></div>`).join('')}</div>`;
+    node.querySelector('.table-close').onclick=e=>{e.stopPropagation();deleteTable(name);};
+    node.addEventListener('mousedown',e=>{if(e.target.classList.contains('table-close'))return;dragTable=name;dragging=true;dragStart={x:e.clientX-t.x,y:e.clientY-t.y};node.style.zIndex=100;});
+    canvas.appendChild(node);
+  });
+  drawRelationships();
+}
+function drawRelationships(){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.position='absolute';svg.style.top=0;svg.style.left=0;svg.style.width='100%';svg.style.height='100%';svg.style.pointerEvents='none';svg.style.zIndex=1;
+  Object.entries(tables).forEach(([name,t])=>{
+    t.columns.filter(c=>c.fk&&c.ref).forEach(c=>{
+      const refTable=c.ref.split('.')[0];
+      if(tables[refTable]){
+        const from=tables[name],to=tables[refTable];
+        const x1=from.x+100,y1=from.y+from.columns.length*22+30;
+        const x2=to.x+100,y2=to.y+30;
+        const path=document.createElementNS('http://www.w3.org/2000/svg','path');
+        path.setAttribute('d',`M${x1},${y1} C${x1},${(y1+y2)/2} ${x2},${(y1+y2)/2} ${x2},${y2}`);
+        path.setAttribute('class','relationship');
+        path.setAttribute('marker-end','url(#arrow)');
+        svg.appendChild(path);
+      }
+    });
+  });
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+  defs.innerHTML=`<marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"><path d="M0,0 L0,6 L9,3 z" fill="var(--muted)"/></marker>`;
+  svg.prepend(defs);
+  canvas.appendChild(svg);
+}
+function deleteTable(name){
+  delete tables[name];
+  Object.values(tables).forEach(t=>{t.columns=t.columns.filter(c=>!c.fk||c.ref.split('.')[0]!==name);});
+  if(selectedTable===name)selectedTable=null;
+  renderTableList();
+  renderCanvas();
+}
+function openTableModal(table=null){
+  document.getElementById('tableForm').reset();
+  document.getElementById('editTableId').value='';
+  if(table){
+    document.getElementById('modalTitle').textContent='Edit Table';
+    document.getElementById('editTableId').value=table;
+    document.getElementById('tableName').value=table;
+    document.getElementById('tableColumns').value=JSON.stringify(tables[table].columns,null,2);
+  }else{
+    document.getElementById('modalTitle').textContent='Add Table';
+  }
+  tableModal.style.display='flex';
+}
+function openColumnModal(tableId,col=null,index=null){
+  document.getElementById('columnForm').reset();
+  document.getElementById('colTableId').value=tableId;
+  document.getElementById('editColIndex').value='';
+  document.getElementById('fkOptions').style.display='none';
+  if(col){
+    document.getElementById('colModalTitle').textContent='Edit Column';
+    document.getElementById('editColIndex').value=index;
+    document.getElementById('colName').value=col.name;
+    document.getElementById('colType').value=col.type;
+    document.getElementById('colPk').checked=col.pk||false;
+    document.getElementById('colFk').checked=col.fk||false;
+    document.getElementById('colNotNull').checked=col.notNull||false;
+    document.getElementById('colUnique').checked=col.unique||false;
+    document.getElementById('colDefault').value=col.default||'';
+    if(col.fk){document.getElementById('fkOptions').style.display='block';document.getElementById('colRef').value=col.ref||'';}
+  }else{
+    document.getElementById('colModalTitle').textContent='Add Column';
+  }
+  columnModal.style.display='flex';
+}
+document.getElementById('addTableBtn').onclick=()=>openTableModal();
+document.getElementById('cancelModal').onclick=()=>tableModal.style.display='none';
+document.getElementById('cancelColModal').onclick=()=>columnModal.style.display='none';
+document.getElementById('colFk').onchange=e=>{document.getElementById('fkOptions').style.display=e.target.checked?'block':'none';};
+document.getElementById('tableForm').onsubmit=e=>{
+  e.preventDefault();
+  const name=document.getElementById('tableName').value.trim();
+  const editId=document.getElementById('editTableId').value;
+  try{
+    const cols=JSON.parse(document.getElementById('tableColumns').value);
+    if(editId&&editId!==name){delete tables[editId];}
+    tables[name]={columns:cols,x:tables[editId]?.x||100+Object.keys(tables).length*250,y:tables[editId]?.y||100};
+    if(editId===selectedTable)selectedTable=name;
+    tableModal.style.display='none';
+    renderTableList();
+    renderCanvas();
+  }catch(err){alert('Invalid JSON: '+err.message);}
+};
+document.getElementById('columnForm').onsubmit=e=>{
+  e.preventDefault();
+  const tableId=document.getElementById('colTableId').value;
+  const editIndex=document.getElementById('editColIndex').value;
+  const col={name:document.getElementById('colName').value,type:document.getElementById('colType').value,pk:document.getElementById('colPk').checked,fk:document.getElementById('colFk').checked,notNull:document.getElementById('colNotNull').checked,unique:document.getElementById('colUnique').checked,default:document.getElementById('colDefault').value};
+  if(col.fk)col.ref=document.getElementById('colRef').value;
+  if(editIndex!=='')tables[tableId].columns[parseInt(editIndex)]=col;
+  else tables[tableId].columns.push(col);
+  columnModal.style.display='none';
+  renderCanvas();
+};
+document.getElementById('exportSQL').onclick=()=>{
+  let sql='';
+  Object.entries(tables).forEach(([name,t])=>{
+    sql+=`CREATE TABLE ${name} (\n`;
+    sql+=t.columns.map(c=>`  ${c.name} ${c.type}${c.pk?' PRIMARY KEY':''}${c.notNull?' NOT NULL':''}${c.unique?' UNIQUE':''}${c.default?' DEFAULT '+c.default:''}${c.fk?' REFERENCES '+c.ref:''}`).join(',\n');
+    sql+='\n);\n\n';
+  });
+  navigator.clipboard.writeText(sql);
+  alert('SQL copied to clipboard');
+};
+document.getElementById('exportJSON').onclick=()=>{
+  const data={tables:{}};
+  Object.entries(tables).forEach(([name,t])=>{data.tables[name]={columns:t.columns,x:t.x,y:t.y};});
+  navigator.clipboard.writeText(JSON.stringify(data,null,2));
+  alert('JSON copied to clipboard');
+};
+document.getElementById('importJSON').onclick=()=>{
+  const i=document.createElement('input');i.type='file';i.accept='.json';
+  i.onchange=e=>{const f=e.target.files[0];const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(d.tables){tables=d.tables;selectedTable=null;renderTableList();renderCanvas();}}catch(err){alert('Invalid JSON');}};r.readAsText(f);};i.click();
+};
+canvas.addEventListener('mousemove',e=>{if(dragging&&dragTable){tables[dragTable].x=e.clientX-dragStart.x;tables[dragTable].y=e.clientY-dragStart.y;renderCanvas();}});
+canvas.addEventListener('mouseup',()=>{if(dragTable){dragTable.style.zIndex='';}dragging=false;dragTable=null;});
+canvas.addEventListener('wheel',e=>{e.preventDefault();const factor=e.deltaY>0?0.9:1.1;scale=Math.max(0.3,Math.min(2,scale*factor));canvas.style.transform=`scale(${scale})`;},{passive:false});
+document.getElementById('zoomIn').onclick=()=>{scale=Math.min(2,scale*1.2);canvas.style.transform=`scale(${scale})`;};
+document.getElementById('zoomOut').onclick=()=>{scale=Math.max(0.3,scale/1.2);canvas.style.transform=`scale(${scale})`;};
+document.getElementById('resetView').onclick=()=>{scale=1;canvas.style.transform='scale(1)';};
+document.getElementById('autoLayout').onclick=()=>{
+  Object.keys(tables).forEach((name,i)=>{tables[name].x=100+(i%3)*300;tables[name].y=100+Math.floor(i/3)*300;});
+  renderCanvas();
+};
+// Double-click table to add column
+canvas.addEventListener('dblclick',e=>{
+  const node=e.target.closest('.table-node');
+  if(node&&!e.target.classList.contains('table-close')){openColumnModal(node.querySelector('.table-header').textContent.replace('×','').trim());}
+});
+tables={users:{columns:[{name:'id',type:'INTEGER',pk:true,notNull:true},{name:'email',type:'VARCHAR(255)',unique:true,notNull:true},{name:'name',type:'VARCHAR(255)',notNull:true},{name:'created_at',type:'TIMESTAMP',default:'CURRENT_TIMESTAMP'}],x:100,y:100},posts:{columns:[{name:'id',type:'INTEGER',pk:true,notNull:true},{name:'user_id',type:'INTEGER',fk:true,ref:'users.id',notNull:true},{name:'title',type:'VARCHAR(255)',notNull:true},{name:'content',type:'TEXT'},{name:'published',type:'BOOLEAN',default:'FALSE'}],x:500,y:100},comments:{columns:[{name:'id',type:'INTEGER',pk:true,notNull:true},{name:'post_id',type:'INTEGER',fk:true,ref:'posts.id',notNull:true},{name:'user_id',type:'INTEGER',fk:true,ref:'users.id',notNull:true},{name:'content',type:'TEXT',notNull:true}],x:300,y:400}};
+renderTableList();
+renderCanvas();
+</script>
+</body>
+</html>

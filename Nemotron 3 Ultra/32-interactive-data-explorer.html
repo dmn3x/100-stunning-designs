@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>32 — Interactive Data Explorer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00d4ff;--accent2:#ff6b6b;--card:#121220}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+.header{position:fixed;top:0;left:0;right:0;padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;z-index:10;background:linear-gradient(180deg,var(--bg),transparent);border-bottom:1px solid var(--muted)}
+.header h1{font-size:1.25rem;font-weight:300;letter-spacing:.1em}
+.header .stats{display:flex;gap:2rem;font-size:.75rem;color:var(--muted)}
+.header .stat{color:var(--accent);font-weight:500}
+.main{padding:5rem 2rem 2rem;display:grid;grid-template-columns:280px 1fr;gap:2rem;height:100vh;overflow:hidden}
+@media (max-width:1000px){.main{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.panel{background:var(--card);border:1px solid var(--muted);border-radius:4px;overflow:hidden;display:flex;flex-direction:column}
+.panel-header{padding:1rem;border-bottom:1px solid var(--muted);display:flex;justify-content:space-between;align-items:center}
+.panel-header h3{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.panel-body{flex:1;overflow:auto;padding:1rem}
+.dataset-list{list-style:none}
+.dataset-item{padding:.75rem 1rem;cursor:pointer;border-bottom:1px solid var(--muted);transition:background .1s}
+.dataset-item:hover,.dataset-item.active{background:rgba(0,212,255,.1);border-left:3px solid var(--accent)}
+.dataset-item:last-child{border-bottom:none}
+.dataset-name{font-weight:500;margin-bottom:.25rem}
+.dataset-meta{font-size:.7rem;color:var(--muted);display:flex;gap:1rem}
+.chart-container{height:100%;min-height:400px;position:relative}
+canvas{display:block;width:100%;height:100%}
+.controls{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;padding-bottom:1rem;border-bottom:1px solid var(--muted)}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted)}
+.ctrl select,.ctrl input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.25rem .5rem;font:inherit;font-size:.7rem}
+.ctrl input[type=range]{width:120px;accent-color:var(--accent)}
+.tooltip{position:fixed;background:var(--card);border:1px solid var(--accent);padding:.75rem 1rem;border-radius:4px;pointer-events:none;z-index:100;font-size:.75rem;line-height:1.6;display:none;max-width:250px}
+.tooltip .label{color:var(--accent);font-weight:500}
+.tooltip .value{color:var(--fg)}
+.insight{background:rgba(255,107,107,.1);border-left:3px solid var(--accent2);padding:1rem;margin-top:1rem;font-size:.8rem;line-height:1.7}
+.insight strong{color:var(--accent2)}
+</style>
+</head>
+<body>
+<div class="header"><h1>Data Explorer</h1><div class="stats"><span class="stat" id="datasetCount">0</span> datasets · <span class="stat" id="pointCount">0</span> points · <span class="stat" id="currentDataset">—</span></div></div>
+<main class="main">
+<aside class="panel"><div class="panel-header"><h3>Datasets</h3></div><div class="panel-body"><ul class="dataset-list" id="datasetList"></ul></div></aside>
+<section class="panel"><div class="panel-header"><h3>Visualization</h3></div><div class="panel-body"><div class="controls"><label class="ctrl">Chart <select id="chartType"><option value="line">Line</option><option value="area">Area</option><option value="bar">Bar</option><option value="scatter">Scatter</option><option value="heatmap">Heatmap</option></select></label><label class="ctrl">Smoothing <input type="range" id="smoothing" min="0" max="1" step="0.05" value="0"><span id="smoothingVal">0</span></label><label class="ctrl">Animation <input type="range" id="animSpeed" min="0" max="2" step="0.1" value="1"><span id="animSpeedVal">1x</span></label><label class="ctrl"><input type="checkbox" id="showPoints" checked> Points</label><label class="ctrl"><input type="checkbox" id="showGrid" checked> Grid</label></div><div class="chart-container" id="chartContainer"><canvas id="chart"></canvas><div class="tooltip" id="tooltip"></div></div><div class="insight" id="insight"></div></div></section>
+</main>
+<script>
+// Datasets
+const datasets={
+  'Global Temperature Anomalies':{type:'time-series',data:Array.from({length:140},(_,i)=>({x:1880+i,y:(Math.sin(i*0.1)+i*0.01+(Math.random()-0.5)*0.3)*1.2}))},
+  'Stock Market Simulation':{type:'time-series',data:Array.from({length:252},(_,i)=>{let v=100;for(let j=0;j<=i;j++)v*=1+(Math.random()-0.48)*0.02;return {x:j,y:v}}),multi:true},
+  'Population by Country':{type:'categorical',data:[{name:'China',value:1412},{name:'India',value:1393},{name:'USA',value:331},{name:'Indonesia',value:273},{name:'Pakistan',value:225},{name:'Brazil',value:213},{name:'Nigeria',value:211},{name:'Bangladesh',value:166},{name:'Russia',value:146},{name:'Mexico',value:128}]},
+  'Income Distribution':{type:'distribution',data:Array.from({length:1000},()=>Math.random()*100000*Math.pow(Math.random(),2))},
+  'Correlation Matrix':{type:'matrix',data:Array.from({length:8},()=>Array.from({length:8},()=>Math.random()*2-1)),labels:['GDP','Life Exp','Education','Health','Freedom','Trust','Generosity','Corruption']},
+  'Server Metrics':{type:'time-series',data:Array.from({length:500},(_,i)=>({x:i,y:50+Math.sin(i*0.1)*30+Math.random()*20+Math.sin(i*0.02)*15}))},
+  'Product Sales Funnel':{type:'funnel',data:[{stage:'Visitors',value:100000},{stage:'Signups',value:15000},{stage:'Trial',value:5000},{stage:'Paid',value:1200},{stage:'Retained',value:800}]},
+  'Network Latency':{type:'distribution',data:Array.from({length:500},()=>Math.max(1,Math.random()*100*Math.pow(Math.random(),1.5)))}
+};
+let currentDataset='Global Temperature Anomalies';
+let chartType='line';
+let smoothing=0;
+let animSpeed=1;
+let showPoints=true;
+let showGrid=true;
+let animationFrame=0;
+let hoverIndex=-1;
+const canvas=document.getElementById('chart');
+const ctx=canvas.getContext('2d');
+const tooltip=document.getElementById('tooltip');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+function resize(){
+  const container=document.getElementById('chartContainer');
+  W=canvas.width=container.clientWidth*DPR;
+  H=canvas.height=container.clientHeight*DPR;
+  canvas.style.width=container.clientWidth+'px';
+  canvas.style.height=container.clientHeight+'px';
+  ctx.scale(DPR,DPR);
+  draw();
+}
+function initDatasets(){
+  const list=document.getElementById('datasetList');
+  let i=0;
+  for(const name of Object.keys(datasets)){
+    const li=document.createElement('li');
+    li.className='dataset-item'+(i===0?' active':'');
+    li.dataset.name=name;
+    li.innerHTML=`<div class="dataset-name">${name}</div><div class="dataset-meta"><span>${datasets[name].type}</span><span>${datasets[name].data.length} pts</span></div>`;
+    li.addEventListener('click',()=>selectDataset(name));
+    list.appendChild(li);
+    i++;
+  }
+  document.getElementById('datasetCount').textContent=Object.keys(datasets).length;
+  updateStats();
+}
+function selectDataset(name){
+  currentDataset=name;
+  document.querySelectorAll('.dataset-item').forEach(el=>el.classList.toggle('active',el.dataset.name===name));
+  document.getElementById('currentDataset').textContent=name;
+  animationFrame=0;
+  hoverIndex=-1;
+  updateStats();
+  draw();
+}
+function updateStats(){
+  const d=datasets[currentDataset];
+  document.getElementById('pointCount').textContent=Array.isArray(d.data)?d.data.length:'—';
+}
+function getValue(d,i){
+  if(d.type==='matrix')return null;
+  if(d.type==='funnel')return d.data[i].value;
+  if(d.type==='categorical')return d.data[i].value;
+  return d.data[i].y!==undefined?d.data[i].y:d.data[i];
+}
+function getLabel(d,i){
+  if(d.type==='matrix')return null;
+  if(d.type==='funnel')return d.data[i].stage;
+  if(d.type==='categorical')return d.data[i].name;
+  if(d.data[i].x!==undefined)return d.data[i].x;
+  return i;
+}
+function draw(){
+  const cw=canvas.clientWidth,ch=canvas.clientHeight;
+  const d=datasets[currentDataset];
+  const data=d.data;
+  const n=data.length;
+  if(n===0)return;
+  ctx.clearRect(0,0,cw,ch);
+  const pad={top:40,right:40,bottom:50,left:60};
+  const iw=cw-pad.left-pad.right,ih=ch-pad.top-pad.bottom;
+  // Grid
+  if(showGrid){
+    ctx.strokeStyle='rgba(58,58,90,0.3)';
+    ctx.lineWidth=1;
+    for(let i=0;i<=10;i++){
+      const y=pad.top+ih*i/10;
+      ctx.beginPath();ctx.moveTo(pad.left,y);ctx.lineTo(pad.left+iw,y);ctx.stroke();
+    }
+    for(let i=0;i<=10;i++){
+      const x=pad.left+iw*i/10;
+      ctx.beginPath();ctx.moveTo(x,pad.top);ctx.lineTo(x,pad.top+ih);ctx.stroke();
+    }
+  }
+  // Axes
+  ctx.strokeStyle='rgba(58,58,90,0.6)';
+  ctx.lineWidth=1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left,pad.top);ctx.lineTo(pad.left,pad.top+ih);
+  ctx.lineTo(pad.left+iw,pad.top+ih);ctx.stroke();
+  // Values
+  let min=Infinity,max=-Infinity;
+  for(let i=0;i<n;i++){
+    const v=getValue(d,i);
+    if(typeof v==='number'){if(v<min)min=v;if(v>max)max=v;}
+  }
+  if(!isFinite(min))min=0;
+  if(!isFinite(max))max=1;
+  const range=max-min||1;
+  const getX=(i)=>pad.left+(d.type==='categorical'||d.type==='funnel'?((i+0.5)/n)*iw:(i/(Math.max(1,n-1)))*iw);
+  const getY=(v)=>pad.top+ih-(v-min)/range*ih;
+  // Draw chart
+  ctx.lineCap='round';
+  ctx.lineJoin='round';
+  const hue=currentDataset==='Stock Market Simulation'?350:195;
+  const mainColor=`hsl(${hue},100%,50%)`;
+  const fillColor=`hsla(${hue},100%,50%,0.15)`;
+  if(chartType==='line'||chartType==='area'){
+    ctx.beginPath();
+    for(let i=0;i<n;i++){
+      const v=getValue(d,i);
+      if(typeof v!=='number')continue;
+      const x=getX(i),y=getY(v);
+      if(i===0)ctx.moveTo(x,y);
+      else{
+        if(smoothing>0&&i>0){
+          const pv=getValue(d,i-1);
+          const px=getX(i-1),py=getY(pv);
+          const cpX=px+(x-px)*smoothing;
+          ctx.bezierCurveTo(cpX,py,cpX,y,x,y);
+        }else ctx.lineTo(x,y);
+      }
+    }
+    if(chartType==='area'){
+      ctx.lineTo(getX(n-1),pad.top+ih);
+      ctx.lineTo(getX(0),pad.top+ih);
+      ctx.closePath();
+      ctx.fillStyle=fillColor;
+      ctx.fill();
+    }
+    ctx.strokeStyle=mainColor;
+    ctx.lineWidth=2;
+    ctx.stroke();
+    if(showPoints){
+      for(let i=0;i<n;i+=Math.max(1,Math.floor(n/60))){
+        const v=getValue(d,i);
+        if(typeof v!=='number')continue;
+        const x=getX(i),y=getY(v);
+        ctx.beginPath();
+        ctx.arc(x,y,3,0,Math.PI*2);
+        ctx.fillStyle=i===hoverIndex?'#fff':mainColor;
+        ctx.fill();
+        if(i===hoverIndex){
+          ctx.strokeStyle='#fff';
+          ctx.lineWidth=2;
+          ctx.stroke();
+        }
+      }
+    }
+  }else if(chartType==='bar'){
+    const barW=iw/n*0.8;
+    for(let i=0;i<n;i++){
+      const v=getValue(d,i);
+      if(typeof v!=='number')continue;
+      const x=getX(i)-barW/2,y=getY(v),h=pad.top+ih-y;
+      ctx.fillStyle=i===hoverIndex?'#fff':mainColor;
+      ctx.fillRect(x,y,barW,h);
+    }
+  }else if(chartType==='scatter'){
+    for(let i=0;i<n;i++){
+      const v=getValue(d,i);
+      if(typeof v!=='number')continue;
+      const x=getX(i),y=getY(v);
+      ctx.beginPath();
+      ctx.arc(x,y,i===hoverIndex?5:3,0,Math.PI*2);
+      ctx.fillStyle=i===hoverIndex?'#fff':mainColor;
+      ctx.fill();
+    }
+  }else if(chartType==='heatmap'&&d.type==='matrix'){
+    const size=Math.min(iw,ih)/d.data.length;
+    for(let y=0;y<d.data.length;y++){
+      for(let x=0;x<d.data[y].length;x++){
+        const v=d.data[y][x];
+        const intensity=(v+1)/2;
+        ctx.fillStyle=`hsl(${195-intensity*195},100%,${30+intensity*40}%)`;
+        ctx.fillRect(pad.left+x*size,pad.top+y*size,size,size);
+      }
+    }
+    // Labels
+    ctx.fillStyle='var(--fg)';
+    ctx.font='10px monospace';
+    ctx.textAlign='right';
+    d.labels.forEach((l,i)=>{ctx.fillText(l,pad.left-5,pad.top+(i+0.5)*size+3);});
+    ctx.textAlign='center';
+    d.labels.forEach((l,i)=>{ctx.fillText(l,pad.left+(i+0.5)*size,pad.top+ih+15);});
+  }
+  // Hover tooltip
+  if(hoverIndex>=0&&hoverIndex<n&&(chartType!=='heatmap'||d.type!=='matrix')){
+    const v=getValue(d,hoverIndex);
+    const label=getLabel(d,hoverIndex);
+    if(typeof v==='number'){
+      const x=getX(hoverIndex),y=getY(v);
+      tooltip.style.display='block';
+      tooltip.style.left=(x+pad.left+10)+'px';
+      tooltip.style.top=(y-60)+'px';
+      tooltip.innerHTML=`<div class="label">${label}</div><div class="value">${v.toLocaleString()}</div>`;
+    }
+  }else{
+    tooltip.style.display='none';
+  }
+  // Insight
+  const insight=document.getElementById('insight');
+  if(d.type==='time-series'){
+    const first=getValue(d,0),last=getValue(d,n-1);
+    const change=((last-first)/Math.abs(first)*100).toFixed(1);
+    insight.innerHTML=`<strong>Trend:</strong> ${change>0?'📈':'📉'} ${Math.abs(change)}% over period | Range: ${min.toFixed(1)} – ${max.toFixed(1)} | Mean: ${(data.reduce((s,_,i)=>s+getValue(d,i),0)/n).toFixed(1)}`;
+  }else if(d.type==='categorical'){
+    const total=data.reduce((s,_,i)=>s+getValue(d,i),0);
+    insight.innerHTML=`<strong>Total:</strong> ${total.toLocaleString()} | <strong>Top:</strong> ${data[0].name} (${((data[0].value/total)*100).toFixed(1)}%) | <strong>Categories:</strong> ${n}`;
+  }else if(d.type==='distribution'){
+    const mean=data.reduce((a,b)=>a+b,0)/n;
+    const sorted=[...data].sort((a,b)=>a-b);
+    const median=sorted[Math.floor(n/2)];
+    insight.innerHTML=`<strong>Mean:</strong> ${mean.toFixed(1)} | <strong>Median:</strong> ${median.toFixed(1)} | <strong>Std Dev:</strong> ${Math.sqrt(data.reduce((s,v)=>s+(v-mean)**2,0)/n).toFixed(1)} | <strong>Samples:</strong> ${n}`;
+  }else{
+    insight.innerHTML='Hover a data point for details. Switch chart types to explore different views.';
+  }
+}
+canvas.addEventListener('mousemove',e=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=e.clientX-rect.left,y=e.clientY-rect.top;
+  const d=datasets[currentDataset];
+  const pad={top:40,right:40,bottom:50,left:60};
+  const iw=canvas.clientWidth-pad.left-pad.right;
+  const dataX=(x-pad.left)/iw*Math.max(1,d.data.length-1);
+  hoverIndex=Math.round(dataX);
+  if(hoverIndex<0)hoverIndex=0;
+  if(hoverIndex>=d.data.length)hoverIndex=d.data.length-1;
+  draw();
+});
+canvas.addEventListener('mouseleave',()=>{hoverIndex=-1;draw();});
+document.getElementById('chartType').addEventListener('change',e=>{chartType=e.target.value;draw();});
+document.getElementById('smoothing').addEventListener('input',e=>{smoothing=+e.target.value;document.getElementById('smoothingVal').textContent=smoothing.toFixed(2);draw();});
+document.getElementById('animSpeed').addEventListener('input',e=>{animSpeed=+e.target.value;document.getElementById('animSpeedVal').textContent=animSpeed.toFixed(1)+'x';});
+document.getElementById('showPoints').addEventListener('change',e=>{showPoints=e.target.checked;draw();});
+document.getElementById('showGrid').addEventListener('change',e=>{showGrid=e.target.checked;draw();});
+window.addEventListener('resize',resize);
+function animate(){
+  animationFrame+=0.02*animSpeed;
+  if(animSpeed>0&&(chartType==='line'||chartType==='area'))draw();
+  requestAnimationFrame(animate);
+}
+initDatasets();
+resize();
+animate();
+</script>
+</body>
+</html>

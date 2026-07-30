@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>22 — Voronoi Stained Glass</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a2e;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#ffd700}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Voronoi Stained Glass</div>
+<div class="ui subtitle">click to add sites, light passes through</div>
+<div class="ui controls">
+<label class="ctrl">Sites <input type="range" id="sites" min="10" max="300" step="5" value="80"><span class="stat" id="sitesVal">80</span></label>
+<label class="ctrl">Relax <input type="range" id="relax" min="0" max="10" step="1" value="2"><span class="stat" id="relaxVal">2</span></label>
+<label class="ctrl"><input type="checkbox" id="animate" checked> Animate</label>
+<label class="ctrl"><input type="checkbox" id="edges" checked> Lead Lines</label>
+</div>
+<div class="ui mode">click to add site · <kbd>Space</kbd> pause · <kbd>C</kbd> clear · <kbd>R</kbd> randomize</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let sites=[],targetSites=80,relaxIter=2,animate=true,showEdges=true;
+let frame=0,time=0;
+const palette=[[192,0,0],[0,128,0],[0,0,128],[204,153,0],[128,0,128],[0,128,128],[139,69,19],[75,0,130]];
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+  while(sites.length<targetSites)addRandomSite();
+  while(sites.length>targetSites)sites.pop();
+}
+function addRandomSite(){
+  sites.push({x:Math.random()*W/DPR,y:Math.random()*H/DPR,color:palette[Math.floor(Math.random()*palette.length)]});
+}
+function relax(){
+  const grid={},cellSize=50;
+  for(const s of sites){
+    const gx=Math.floor(s.x/cellSize),gy=Math.floor(s.y/cellSize);
+    const key=gx+','+gy;
+    if(!grid[key])grid[key]=[];
+    grid[key].push(s);
+  }
+  for(const s of sites){
+    let fx=0,fy=0,count=0;
+    const gx=Math.floor(s.x/cellSize),gy=Math.floor(s.y/cellSize);
+    for(let dx=-1;dx<=1;dx++)for(let dy=-1;dy<=1;dy++){
+      const key=(gx+dx)+','+(gy+dy);
+      if(grid[key])for(const o of grid[key]){
+        if(o===s)continue;
+        const dx=o.x-s.x,dy=o.y-s.y,dist=Math.hypot(dx,dy)||1;
+        if(dist<cellSize*1.5){
+          fx-=dx/dist*0.5;fy-=dy/dist*0.5;count++;
+        }
+      }
+    }
+    if(count>0){
+      s.x+=fx/count;s.y+=fy/count;
+      s.x=Math.max(10,Math.min(W/DPR-10,s.x));
+      s.y=Math.max(10,Math.min(H/DPR-10,s.y));
+    }
+  }
+}
+function voronoi(){
+  const cw=W/DPR,ch=H/DPR;
+  const res=3;
+  const imgData=ctx.createImageData(cw,ch);
+  for(let y=0;y<ch;y+=res){
+    for(let x=0;x<cw;x+=res){
+      let best=null,bestDist=Infinity;
+      for(const s of sites){
+        const dx=s.x-x,dy=s.y-y,dist=dx*dx+dy*dy;
+        if(dist<bestDist){bestDist=dist;best=s;}
+      }
+      const [r,g,b]=best.color;
+      const idx=(y*cw+x)*4;
+      imgData.data[idx]=r;imgData.data[idx+1]=g;imgData.data[idx+2]=b;imgData.data[idx+3]=255;
+    }
+  }
+  ctx.putImageData(imgData,0,0);
+  if(showEdges){
+    ctx.strokeStyle='rgba(20,20,40,0.6)';
+    ctx.lineWidth=1.5;
+    for(const s of sites){
+      ctx.beginPath();
+      ctx.arc(s.x,s.y,3,0,Math.PI*2);
+      ctx.stroke();
+    }
+  }
+}
+document.getElementById('sites').addEventListener('input',e=>{targetSites=+e.target.value;document.getElementById('sitesVal').textContent=targetSites;});
+document.getElementById('relax').addEventListener('input',e=>{relaxIter=+e.target.value;document.getElementById('relaxVal').textContent=relaxIter;});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+document.getElementById('edges').addEventListener('change',e=>showEdges=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('click',e=>{sites.push({x:e.clientX,y:e.clientY,color:palette[Math.floor(Math.random()*palette.length)]});});
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){animate=!animate;document.getElementById('animate').checked=animate;e.preventDefault();}
+  if(e.code==='KeyC'){sites=[];e.preventDefault();}
+  if(e.code==='KeyR'){sites=[];while(sites.length<targetSites)addRandomSite();e.preventDefault();}
+});
+function tick(){
+  frame++;
+  if(animate){
+    time+=0.01;
+    for(let i=0;i<relaxIter;i++)relax();
+  }
+  voronoi();
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

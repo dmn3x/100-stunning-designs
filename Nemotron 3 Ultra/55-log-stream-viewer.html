@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>55 — Log Stream Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);cursor:pointer}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.controls button{background:var(--card);border:1px solid var(--muted);color:var(--fg);padding:.3rem .75rem;font:inherit;font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer}
+.controls button:hover{border-color:var(--accent);color:var(--accent)}
+.controls button.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.main{padding:2rem;max-width:1600px;margin:0 auto}
+.log-container{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden;display:flex;flex-direction:column;height:70vh}
+.log-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.log-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.log-stats{display:flex;gap:1rem;font-size:.7rem;color:var(--muted)}
+.log-stream{flex:1;overflow:auto;padding:1rem;font-size:.75rem;line-height:1.7;background:var(--bg)}
+.log-entry{padding:.2rem 0;border-bottom:1px solid var(--border);display:flex;gap:.75rem;animation:fadeIn .3s}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.log-entry.hidden{display:none}
+.log-time{color:var(--muted);white-space:nowrap;flex-shrink:0}
+.log-level{padding:0 .4rem;border-radius:3px;font-size:.6rem;font-weight:700;text-transform:uppercase;flex-shrink:0}
+.log-level.trace{background:rgba(139,148,158,.2);color:var(--muted)}
+.log-level.debug{background:rgba(139,148,158,.2);color:var(--muted)}
+.log-level.info{background:rgba(88,166,255,.2);color:var(--accent)}
+.log-level.warn{background:rgba(210,153,34,.2);color:var(--accent3)}
+.log-level.error{background:rgba(248,81,73,.2);color:var(--accent4)}
+.log-level.fatal{background:rgba(248,81,73,.3);color:var(--accent4);animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.log-source{color:var(--accent3);font-size:.65rem;flex-shrink:0}
+.log-message{color:var(--fg);flex:1;word-break:break-word}
+.log-message .key{color:var(--accent)}
+.log-message .val{color:var(--accent2)}
+.log-message .num{color:#79c0ff}
+.filters{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;margin-top:1rem}
+.filter-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center}
+.filter-group{display:flex;align-items:center;gap:.5rem}
+.filter-group label{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.filter-group select,.filter-group input{background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.highlight{background:rgba(210,153,34,.3);padding:0 .2rem;border-radius:2px}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Log <span>Stream</span> Viewer</h1><div class="controls"><label><input type="checkbox" id="autoScroll" checked> Auto-scroll</label><label><input type="checkbox" id="showTimestamp"> Timestamps</label><button id="clearBtn">Clear</button><button id="pauseBtn">Pause</button><button class="primary" id="exportBtn">Export</button></div></header>
+<main class="main">
+<div class="log-container">
+<div class="log-header"><h2>Live Log Stream</h2><div class="log-stats"><span>Total: <span id="totalCount">0</span></span><span>Visible: <span id="visCount">0</span></span><span>Errors: <span id="errCount">0</span></span><span>Warnings: <span id="warnCount">0</span></span></div></div>
+<div class="log-stream" id="logStream"></div>
+</div>
+<div class="filters">
+<div class="filter-row">
+<div class="filter-group"><label>Level</label><select id="levelFilter"><option value="">All</option><option value="trace">Trace</option><option value="debug">Debug</option><option value="info">Info</option><option value="warn">Warn</option><option value="error">Error</option><option value="fatal">Fatal</option></select></div>
+<div class="filter-group"><label>Source</label><select id="sourceFilter"><option value="">All</option></select></div>
+<div class="filter-group"><label>Search</label><input type="text" id="searchInput" placeholder="Filter messages..."></div>
+<div class="filter-group"><label>Highlight</label><input type="text" id="highlightInput" placeholder="Highlight terms..."></div>
+</div>
+</div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 055 / 100 · Log Stream Viewer</footer>
+<script>
+const stream=document.getElementById('logStream');
+const levelFilter=document.getElementById('levelFilter');
+const sourceFilter=document.getElementById('sourceFilter');
+const searchInput=document.getElementById('searchInput');
+const highlightInput=document.getElementById('highlightInput');
+const autoScroll=document.getElementById('autoScroll');
+const totalCount=document.getElementById('totalCount');
+const visCount=document.getElementById('visCount');
+const errCount=document.getElementById('errCount');
+const warnCount=document.getElementById('warnCount');
+const levels=['trace','debug','info','warn','error','fatal'];
+const sources=['nginx','postgres','redis','api','worker','scheduler','auth','gateway','cdn','db'];
+const messages=[
+  {level:'info',source:'nginx',msg:'GET /api/health 200 12ms'},
+  {level:'info',source:'api',msg:'User login successful',meta:{user:'dhafin',ip:'192.168.1.50'}},
+  {level:'debug',source:'redis',msg:'Cache hit for key:session:abc123'},
+  {level:'warn',source:'nginx',msg:'Rate limit exceeded for IP 10.0.0.1',meta:{limit:100,window:'1m'}},
+  {level:'error',source:'postgres',msg:'Connection pool exhausted',meta:{active:20,max:20}},
+  {level:'info',source:'worker',msg:'Job completed',meta:{job:'email-digest',duration:'2.3s'}},
+  {level:'fatal',source:'api',msg:'Unhandled exception in request handler',meta:{error:'TypeError: Cannot read property of undefined'}},
+  {level:'trace',source:'gateway',msg:'Routing request to upstream',meta:{service:'user-service',path:'/users/123'}},
+  {level:'info',source:'cdn',msg:'Cache miss, fetching from origin',meta:{url:'/assets/app.js'}},
+  {level:'warn',source:'scheduler',msg:'Cron job running behind schedule',meta:{job:'cleanup','delay':'45s'}},
+  {level:'debug',source:'auth',msg:'Token validation',meta:{sub:'user:456',exp:'2026-07-30T15:00:00Z'}},
+  {level:'info',source:'db',msg:'Migration applied',meta:{version:'20260730_add_index'}},
+  {level:'error',source:'worker',msg:'Job failed, retrying',meta:{job:'image-process',attempt:2,error:'OOM killed'}},
+  {level:'info',source:'api',msg:'Request completed',meta:{method:'POST',path:'/api/upload',status:201,size:'4.2MB'}},
+  {level:'debug',source:'redis',msg:'Cache miss, querying database',meta:{key:'user:profile:789'}},
+];
+let logs=[],paused=false,logId=0;
+function formatMeta(meta){
+  if(!meta)return '';
+  return ' '+JSON.stringify(meta).replace(/"/g,'').replace(/{|}/g,'').replace(/,/g,', ');
+}
+function createLogEntry(entry){
+  const div=document.createElement('div');
+  div.className='log-entry';
+  div.dataset.level=entry.level;
+  div.dataset.source=entry.source;
+  div.dataset.id=entry.id;
+  const time=new Date().toLocaleTimeString();
+  const metaStr=formatMeta(entry.meta);
+  div.innerHTML=`<span class="log-time">${time}</span><span class="log-level ${entry.level}">${entry.level.toUpperCase()}</span><span class="log-source">${entry.source}</span><span class="log-message">${escapeHtml(entry.msg)}${metaStr?`<span class="key">${metaStr}</span>`:''}</span>`;
+  return div;
+}
+function escapeHtml(str){return str.replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>');}
+function addLog(){
+  if(paused)return;
+  const base=messages[Math.floor(Math.random()*messages.length)];
+  const entry={...base,id:++logId,level:base.level,source:base.source,msg:base.msg,meta:base.meta};
+  logs.push(entry);
+  const div=createLogEntry(entry);
+  stream.appendChild(div);
+  updateStats();
+  updateSourceFilter();
+  applyFilters();
+  if(autoScroll.checked)stream.scrollTop=stream.scrollHeight;
+}
+function updateStats(){
+  totalCount.textContent=logs.length;
+  const visible=stream.querySelectorAll('.log-entry:not(.hidden)').length;
+  visCount.textContent=visible;
+  errCount.textContent=logs.filter(l=>l.level==='error'||l.level==='fatal').length;
+  warnCount.textContent=logs.filter(l=>l.level==='warn').length;
+}
+function updateSourceFilter(){
+  const srcs=[...new Set(logs.map(l=>l.source))].sort();
+  sourceFilter.innerHTML='<option value="">All</option>'+srcs.map(s=>`<option value="${s}">${s}</option>`).join('');
+}
+function applyFilters(){
+  const level=levelFilter.value;
+  const source=sourceFilter.value;
+  const search=searchInput.value.toLowerCase();
+  const highlight=highlightInput.value.toLowerCase();
+  document.querySelectorAll('.log-entry').forEach(el=>{
+    const matchLevel=!level||el.dataset.level===level;
+    const matchSource=!source||el.dataset.source===source;
+    const text=el.textContent.toLowerCase();
+    const matchSearch=!search||text.includes(search);
+    const show=matchLevel&&matchSource&&matchSearch;
+    el.classList.toggle('hidden',!show);
+    // Highlight
+    const msgEl=el.querySelector('.log-message');
+    if(highlight&&msgEl){
+      const original=msgEl.dataset.original||msgEl.innerHTML;
+      msgEl.dataset.original=original;
+      if(highlight){
+        msgEl.innerHTML=original.replace(new RegExp(escapeRegex(highlight),'gi'),m=>`<span class="highlight">${m}</span>`);
+      }else{msgEl.innerHTML=original;}
+    }
+  });
+  updateStats();
+}
+function escapeRegex(str){return str.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');}
+levelFilter.onchange=applyFilters;
+sourceFilter.onchange=applyFilters;
+searchInput.oninput=applyFilters;
+highlightInput.oninput=applyFilters;
+document.getElementById('clearBtn').onclick=()=>{logs=[];stream.innerHTML='';updateStats();};
+document.getElementById('pauseBtn').onclick=e=>{paused=!paused;e.target.textContent=paused?'Resume':'Pause';};
+document.getElementById('exportBtn').onclick=()=>{const blob=new Blob([logs.map(l=>`[${l.level.toUpperCase()}] ${l.source}: ${l.msg}${l.meta?' '+JSON.stringify(l.meta):''}`).join('\n')],{type:'text/plain'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='logs.txt';a.click();};
+setInterval(addLog,800);
+addLog();
+</script>
+</body>
+</html>

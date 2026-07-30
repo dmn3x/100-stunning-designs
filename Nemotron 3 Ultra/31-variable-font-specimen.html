@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>31 — Variable Font Specimen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f8f8f0;--fg:#1a1a1a;--muted:#888;--accent:#d4a500}
+@media (prefers-color-scheme:dark){:root{--bg:#121212;--fg:#f0f0f0;--muted:#888;--accent:#e8c500}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:16px/1.6 system-ui,sans-serif;overflow:auto}
+.controls{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--bg);border:1px solid var(--muted);padding:1rem;display:flex;flex-direction:column;gap:.75rem;font-size:.75rem}
+.controls label{display:flex;flex-direction:column;gap:.3rem}
+.controls input[type=range]{width:200px;accent-color:var(--accent)}
+.controls .val{font-family:monospace;color:var(--accent)}
+.main{padding:3rem;max-width:1200px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,5rem);font-weight:800;line-height:1.1;margin-bottom:2rem;font-family:'Syne',sans-serif}
+.specimen{font-family:'Syne',sans-serif;font-size:clamp(1.5rem,3vw,3rem);line-height:1.2;margin-bottom:3rem}
+.axes{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:2rem;margin-bottom:3rem}
+.axis-card{padding:1.5rem;border:1px solid var(--muted);background:var(--bg)}
+.axis-card h3{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.axis-card .sample{font-family:'Syne',sans-serif;font-size:2.5rem;line-height:1.2;transition:font-variation-settings .3s}
+.axis-card .labels{display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-top:.5rem;font-family:monospace}
+.weight-scale{display:flex;flex-wrap:wrap;gap:.5rem;align-items:flex-end;height:200px;margin-bottom:3rem}
+.weight-bar{flex:1;min-width:40px;background:var(--accent);transition:height .3s;position:relative}
+.weight-bar::after{content:attr(data-w);position:absolute;bottom:-1.5rem;left:50%;transform:translateX(-50%);font-size:.6rem;color:var(--muted);font-family:monospace;white-space:nowrap}
+.width-scale{display:flex;gap:1rem;align-items:center;margin-bottom:3rem}
+.width-sample{font-family:'Syne',sans-serif;font-size:2.5rem;line-height:1.2;transition:font-variation-settings .3s}
+.pairing{display:grid;grid-template-columns:1fr 1fr;gap:3rem}
+.pair-card h3{font-size:.75rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.pair-card .headline{font-family:'Syne',sans-serif;font-size:2.5rem;line-height:1.2;margin-bottom:1rem}
+.pair-card .body{font-family:system-ui,sans-serif;font-size:1.125rem;line-height:1.7}
+@media (max-width:800px){
+  .controls{position:static;margin:1rem;padding:1rem;flex-direction:row;flex-wrap:wrap}
+  .controls input[type=range]{width:120px}
+  .main{padding:2rem 1rem}
+  .pairing{grid-template-columns:1fr}
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400..800&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="controls">
+<label>Weight <input type="range" id="wght" min="400" max="800" value="600"><span class="val" id="wghtVal">600</span></label>
+<label>Width <input type="range" id="wdth" min="50" max="200" value="100"><span class="val" id="wdthVal">100</span></label>
+<label>Tracking <input type="range" id="track" min="-0.05" max="0.3" step="0.01" value="0"><span class="val" id="trackVal">0em</span></label>
+</div>
+<main class="main">
+<h1>Syne — Variable Font Specimen</h1>
+<div class="specimen" id="specimen">Nemotron 3 Ultra</div>
+<div class="axes">
+<div class="axis-card"><h3>Weight Axis (wght)</h3><div class="sample" id="wghtSample">Weight</div><div class="labels"><span>400</span><span>800</span></div></div>
+<div class="axis-card"><h3>Width Axis (wdth)</h3><div class="sample" id="wdthSample">Width</div><div class="labels"><span>50</span><span>200</span></div></div>
+</div>
+<div class="weight-scale" id="weightScale"></div>
+<div class="width-scale">
+<label>Width <input type="range" id="wdth2" min="50" max="200" value="100"></label>
+<div class="width-sample" id="wdthSample2">Condensed ← → Extended</div>
+</div>
+<div class="pairing">
+<div class="pair-card"><h3>Syne + System UI</h3><div class="headline" id="pairHeadline">Syne Display</div><div class="body">System UI body text provides excellent readability at small sizes while Syne handles the display duty with character. A pragmatic pairing for modern interfaces.</div></div>
+<div class="pair-card"><h3>Syne + Syne</h3><div class="headline" id="pairHeadline2" style="font-weight:800;font-variation-settings:'wdth' 120">Syne Bold Extended</div><div class="body" style="font-family:'Syne',sans-serif;font-weight:400;font-variation-settings:'wdth' 80">Syne paired with itself across weights and widths. Variable fonts enable this — one file, infinite styles. Efficient. Elegant.</div></div>
+</div>
+</main>
+<script>
+const specimen=document.getElementById('specimen');
+const wghtSample=document.getElementById('wghtSample');
+const wdthSample=document.getElementById('wdthSample');
+const wdthSample2=document.getElementById('wdthSample2');
+const pairHeadline=document.getElementById('pairHeadline');
+const pairHeadline2=document.getElementById('pairHeadline2');
+const weightScale=document.getElementById('weightScale');
+let wght=600,wdth=100,track=0;
+for(let w=400;w<=800;w+=50){
+  const bar=document.createElement('div');
+  bar.className='weight-bar';
+  bar.dataset.w=w;
+  bar.style.height=(w-300)/5+'px';
+  bar.style.fontVariationSettings=`'wght' ${w}, 'wdth' ${wdth}`;
+  bar.textContent=w;
+  bar.style.fontSize='.6rem';
+  bar.style.color='var(--bg)';
+  bar.style.display='flex';
+  bar.style.alignItems='flex-end';
+  bar.style.justifyContent='center';
+  bar.style.paddingBottom='.2rem';
+  weightScale.appendChild(bar);
+}
+function update(){
+  const vs=`'wght' ${wght}, 'wdth' ${wdth}`;
+  specimen.style.fontVariationSettings=vs;
+  specimen.style.letterSpacing=`${track}em`;
+  wghtSample.style.fontVariationSettings=vs;
+  wdthSample.style.fontVariationSettings=vs;
+  wdthSample2.style.fontVariationSettings=`'wght' 600, 'wdth' ${wdth}`;
+  pairHeadline.style.fontVariationSettings=`'wght' ${wght}, 'wdth' ${wdth}`;
+  pairHeadline2.style.fontVariationSettings=`'wght' 800, 'wdth' ${wdth}`;
+  document.getElementById('wghtVal').textContent=wght;
+  document.getElementById('wdthVal').textContent=wdth;
+  document.getElementById('trackVal').textContent=track+'em';
+  document.querySelectorAll('.weight-bar').forEach(b=>{b.style.fontVariationSettings=`'wght' ${b.dataset.w}, 'wdth' ${wdth}`;});
+}
+document.getElementById('wght').addEventListener('input',e=>{wght=+e.target.value;update();});
+document.getElementById('wdth').addEventListener('input',e=>{wdth=+e.target.value;update();});
+document.getElementById('wdth2').addEventListener('input',e=>{wdth=+e.target.value;update();});
+document.getElementById('track').addEventListener('input',e=>{track=+e.target.value;update();});
+update();
+</script>
+</body>
+</html>

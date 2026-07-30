@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Perlin Noise Terrain — Nemotron 3 Ultra #92</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.terrain-selector { pointer-events: auto; }
+.terrain-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.terrain-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>PERLIN TERRAIN</h1>
+<p class="subtitle">Procedural Landscape</p>
+</div>
+<div class="controls">
+<div class="terrain-selector"><select id="terrainSelect" aria-label="Select terrain type"></select></div>
+<div class="slider-group"><label>Octaves</label><input type="range" id="octSlider" min="1" max="8" step="1" value="4"></div>
+<div class="slider-group"><label>Scale</label><input type="range" id="scaleSlider" min="0.001" max="0.02" step="0.001" value="0.005"></div>
+<div class="slider-group"><label>Height</label><input type="range" id="heightSlider" min="50" max="400" step="10" value="200"></div>
+<button class="btn primary" id="btnRegenerate" aria-label="Regenerate terrain"><span>Regenerate</span></button>
+<button class="btn" id="btnAnimate" aria-label="Toggle animation"><span>Animate</span></button>
+<button class="btn" id="btnWireframe" aria-label="Toggle wireframe"><span>Wireframe</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Elevation</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to rotate • Scroll to zoom • Keys: R regenerate • A animate • W wireframe • C color</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="octCount">4</div><div class="stat-label">Octaves</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const terrains = [
+    { name: 'Mountains', color: (h) => h < 0.3 ? [0, 100, 200] : h < 0.5 ? [34, 139, 34] : h < 0.7 ? [139, 137, 112] : [200, 200, 200] },
+    { name: 'Mars', color: (h) => h < 0.3 ? [120, 40, 20] : h < 0.5 ? [180, 60, 30] : h < 0.7 ? [200, 100, 50] : [220, 150, 100] },
+    { name: 'Ocean', color: (h) => h < 0.4 ? [0, 50, 150] : h < 0.6 ? [0, 150, 200] : h < 0.8 ? [200, 200, 150] : [100, 200, 100] },
+    { name: 'Volcanic', color: (h) => h < 0.2 ? [50, 0, 0] : h < 0.4 ? [150, 30, 0] : h < 0.6 ? [255, 100, 0] : h < 0.8 ? [255, 200, 0] : [255, 255, 200] },
+    { name: 'Ice', color: (h) => h < 0.3 ? [100, 150, 255] : h < 0.5 ? [150, 200, 255] : h < 0.7 ? [200, 230, 255] : [255, 255, 255] },
+    { name: 'Alien', color: (h) => h < 0.2 ? [50, 0, 100] : h < 0.4 ? [100, 0, 150] : h < 0.6 ? [150, 50, 200] : h < 0.8 ? [200, 100, 255] : [255, 200, 255] },
+];
+let terrainIdx = 0, octaves = 4, scale = 0.005, heightScale = 200, animated = false, wireframe = false, colorMode = 0, time = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null, running = true;
+const camera = { rotX: 0.5, rotY: 0.3, scale: 1, targetRotX: 0.5, targetRotY: 0.3, targetScale: 1 };
+const mouse = { down: false, lastX: 0, lastY: 0 };
+const perm = new Array(512);
+const grad3 = [[1,1,0],[-1,1,0],[1,-1,0],[-1,-1,0],[1,0,1],[-1,0,1],[1,0,-1],[-1,0,-1],[0,1,1],[0,-1,1],[0,1,-1],[0,-1,-1]];
+function initPerm() { for(let i=0;i<256;i++) perm[i]=i; for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]];} for(let i=0;i<256;i++) perm[i+256]=perm[i]; }
+function fade(t){return t*t*t*(t*(t*6-15)+10);}
+function lerp(a,b,t){return a+t*(b-a);}
+function grad(hash,x,y,z){const g=grad3[hash%12];return g[0]*x+g[1]*y+g[2]*z;}
+function noise3d(x,y,z){const X=Math.floor(x)&255,Y=Math.floor(y)&255,Z=Math.floor(z)&255;x-=Math.floor(x);y-=Math.floor(y);z-=Math.floor(z);const u=fade(x),v=fade(y),w=fade(z);const A=perm[X]+Y,AA=perm[A]+Z,AB=perm[A+1]+Z;const B=perm[X+1]+Y,BA=perm[B]+Z,BB=perm[B+1]+Z;return lerp(lerp(lerp(grad(perm[AA],x,y,z),grad(perm[BA],x-1,y,z),u),lerp(grad(perm[AB],x,y-1,z),grad(perm[BB],x-1,y-1,z),u),v),lerp(lerp(lerp(grad(perm[AA+1],x,y,z-1),grad(perm[BA+1],x-1,y,z-1),u),lerp(grad(perm[AB+1],x,y-1,z-1),grad(perm[BB+1],x-1,y-1,z-1),u),v),w);}
+function fbm(x, y, oct) { let value = 0, amplitude = 1, frequency = 1, max = 0; for (let i = 0; i < oct; i++) { value += amplitude * noise3d(x * frequency, y * frequency, time * 0.1); max += amplitude; amplitude *= 0.5; frequency *= 2; } return value / max; }
+initPerm();
+const select = document.getElementById('terrainSelect');
+terrains.forEach((t, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${t.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); }
+function generateMesh() { const w = width / dpr, h = height / dpr; const cols = 80, rows = 60; const mesh = []; for (let z = 0; z < rows; z++) { mesh[z] = []; for (let x = 0; x < cols; x++) { const wx = (x - cols / 2) * (w / cols); const wz = (z - rows / 2) * (h / rows); const n = fbm(wx * scale, wz * scale, octaves); mesh[z][x] = { x: wx, z: wz, y: n * heightScale }; } } return mesh; }
+let mesh = generateMesh();
+function project(x, y, z) { let X = x, Y = y, Z = z; const cosX = Math.cos(camera.rotX), sinX = Math.sin(camera.rotX); const cosY = Math.cos(camera.rotY), sinY = Math.sin(camera.rotY); const rX = X * cosY + Z * sinY; Z = -X * sinY + Z * cosY; X = rX; const rY = Y * cosX - Z * sinX; Z = Y * sinX + Z * cosX; Y = rY; const scale = 400 / (400 + Z); return { x: X * scale * camera.scale + width / dpr / 2, y: Y * scale * camera.scale + height / dpr / 2, z: Z }; }
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); const projected = mesh.map(row => row.map(p => project(p.x, p.y, p.z))); ctx.lineWidth = 1; for (let z = 0; z < projected.length - 1; z++) { for (let x = 0; x < projected[0].length - 1; x++) { const p1 = projected[z][x], p2 = projected[z][x+1], p3 = projected[z+1][x], p4 = projected[z+1][x+1]; const avgY = (p1.y + p2.y + p3.y + p4.y) / 4; const avgZ = (p1.z + p2.z + p3.z + p4.z) / 4; if (avgZ > 800) continue; const terrain = terrains[terrainIdx]; const hNorm = (avgY + heightScale) / (heightScale * 2); let color; if (colorMode === 0) { const [r, g, b] = terrain.color(hNorm); color = `rgb(${r},${g},${b})`; } else if (colorMode === 1) { const hue = (1 - hNorm) * 120; color = `hsl(${hue}, 80%, ${30 + hNorm * 40}%)`; } else { const v = Math.floor(255 * hNorm); color = `rgb(${v},${v},${v})`; } if (wireframe) { ctx.strokeStyle = color; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.stroke(); } else { ctx.fillStyle = color; ctx.beginPath(); ctx.moveTo(p1.x, p1.y); ctx.lineTo(p2.x, p2.y); ctx.lineTo(p4.x, p4.y); ctx.lineTo(p3.x, p3.y); ctx.closePath(); ctx.fill(); ctx.strokeStyle = 'rgba(0,0,0,0.3)'; ctx.stroke(); } } } }
+function loop(t) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (t - lastTime) / 1000; lastTime = t; frameCount++; if (t - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (t - fpsTime)); frameCount = 0; fpsTime = t; document.getElementById('fps').textContent = fps; } if (animated) time += dt * 0.5; camera.rotX += (camera.targetRotX - camera.rotX) * 0.05; camera.rotY += (camera.targetRotY - camera.rotY) * 0.05; camera.scale += (camera.targetScale - camera.scale) * 0.05; if (animated) mesh = generateMesh(); render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('octSlider').addEventListener('input', e => { octaves = parseInt(e.target.value); document.getElementById('octCount').textContent = octaves; mesh = generateMesh(); }); document.getElementById('scaleSlider').addEventListener('input', e => { scale = parseFloat(e.target.value); mesh = generateMesh(); }); document.getElementById('heightSlider').addEventListener('input', e => { heightScale = parseFloat(e.target.value); mesh = generateMesh(); }); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { camera.targetRotY -= (e.clientX - mouse.lastX) * 0.005; camera.targetRotX = Math.max(-1.3, Math.min(1.3, camera.targetRotX - (e.clientY - mouse.lastY) * 0.005)); mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetScale = Math.max(0.3, Math.min(3, camera.targetScale * (e.deltaY > 0 ? 0.9 : 1.1))); }, { passive: false });
+select.addEventListener('change', e => { terrainIdx = parseInt(e.target.value); });
+document.getElementById('btnRegenerate').addEventListener('click', () => { initPerm(); mesh = generateMesh(); });
+document.getElementById('btnAnimate').addEventListener('click', () => { animated = !animated; document.getElementById('btnAnimate').classList.toggle('primary', animated); document.getElementById('btnAnimate').querySelector('span').textContent = animated ? 'Animating' : 'Animate'; });
+document.getElementById('btnWireframe').addEventListener('click', () => { wireframe = !wireframe; document.getElementById('btnWireframe').classList.toggle('primary', wireframe); });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Elevation', 'Color: Slope', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === 'r' || e.key === 'R') { initPerm(); mesh = generateMesh(); } else if (e.key === 'a' || e.key === 'A') { animated = !animated; document.getElementById('btnAnimate').classList.toggle('primary', animated); document.getElementById('btnAnimate').querySelector('span').textContent = animated ? 'Animating' : 'Animate'; } else if (e.key === 'w' || e.key === 'W') { wireframe = !wireframe; document.getElementById('btnWireframe').classList.toggle('primary', wireframe); } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Elevation', 'Color: Slope', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key >= '1' && e.key <= '6') { terrainIdx = parseInt(e.key) - 1; select.value = terrainIdx; } else if (e.key === 'ArrowUp') { octaves = Math.min(8, octaves + 1); document.getElementById('octSlider').value = octaves; document.getElementById('octCount').textContent = octaves; mesh = generateMesh(); } else if (e.key === 'ArrowDown') { octaves = Math.max(1, octaves - 1); document.getElementById('octSlider').value = octaves; document.getElementById('octCount').textContent = octaves; mesh = generateMesh(); } });
+init();
+</script>
+</body>
+</html>

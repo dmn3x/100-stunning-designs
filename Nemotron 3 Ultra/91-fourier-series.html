@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fourier Series — Nemotron 3 Ultra #91</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.wave-selector { pointer-events: auto; }
+.wave-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.wave-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>FOURIER SERIES</h1>
+<p class="subtitle">Harmonic Decomposition</p>
+</div>
+<div class="controls">
+<div class="wave-selector"><select id="waveSelect" aria-label="Select waveform"></select></div>
+<div class="slider-group"><label>Harmonics</label><input type="range" id="harmSlider" min="1" max="50" step="1" value="10"></div>
+<div class="slider-group"><label>Speed</label><input type="range" id="speedSlider" min="0.1" max="3" step="0.1" value="1"></div>
+<button class="btn primary" id="btnAnimate" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnMode" aria-label="Toggle view mode"><span>Mode: Sum</span></button>
+<button class="btn" id="btnCircles" aria-label="Toggle circles"><span>Circles: On</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to pan • Scroll to zoom • Keys: Space pause • M mode • C circles • ↑↓ harmonics</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="harmCount">10</div><div class="stat-label">Harmonics</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const waves = [
+    { name: 'Square', coeffs: (n) => n % 2 === 1 ? 4 / (Math.PI * n) : 0, phase: (n) => 0 },
+    { name: 'Sawtooth', coeffs: (n) => 2 / (Math.PI * n) * (n % 2 === 0 ? -1 : 1), phase: (n) => 0 },
+    { name: 'Triangle', coeffs: (n) => n % 2 === 1 ? 8 / (Math.PI * Math.PI * n * n) * (Math.floor(n/2) % 2 === 0 ? 1 : -1) : 0, phase: (n) => 0 },
+    { name: 'Half-Rectified', coeffs: (n) => n === 1 ? 0.5 : n % 2 === 0 ? -2 / (Math.PI * (n*n - 1)) : 0, phase: (n) => 0 },
+    { name: 'Full-Rectified', coeffs: (n) => n === 1 ? 2/Math.PI : n % 2 === 0 ? -4 / (Math.PI * (n*n - 1)) : 0, phase: (n) => 0 },
+];
+let waveIdx = 0, harmonics = 10, speed = 1, paused = false, running = true, showSum = true, showCircles = true;
+let time = 0, lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const camera = { x: 0, y: 0, scale: 1, targetX: 0, targetY: 0, targetScale: 1 };
+const mouse = { down: false, lastX: 0, lastY: 0 };
+const select = document.getElementById('waveSelect');
+waves.forEach((w, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${w.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); camera.targetX = width / dpr / 2; camera.targetY = height / dpr / 2; }
+function fourierSum(x, t, maxN) { const wave = waves[waveIdx]; let sum = 0; for (let n = 1; n <= maxN; n++) { const c = wave.coeffs(n); if (c !== 0) sum += c * Math.sin(n * x - t * speed + wave.phase(n)); } return sum; }
+function fourierCircle(x, t, maxN) { const wave = waves[waveIdx]; const circles = []; let cx = 0, cy = 0; for (let n = 1; n <= maxN; n++) { const c = wave.coeffs(n); if (c !== 0) { const radius = Math.abs(c); const angle = n * x - t * speed + wave.phase(n); const nx = cx + radius * Math.cos(angle); const ny = cy + radius * Math.sin(angle); circles.push({ x: cx, y: cy, r: radius, nx, ny }); cx = nx; cy = ny; } } return { circles, finalX: cx, finalY: cy };
+}
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(w / 2 - camera.x * camera.scale, h / 2 - camera.y * camera.scale); ctx.scale(camera.scale, camera.scale); const scaleX = w / (4 * Math.PI); const scaleY = h / 4; if (showCircles) { const circles = fourierCircle(0, time, harmonics); ctx.strokeStyle = 'rgba(0, 255, 200, 0.3)'; ctx.lineWidth = 1 / camera.scale; circles.circles.forEach(c => { ctx.beginPath(); ctx.arc(c.x * scaleX, c.y * scaleY, c.r * scaleY, 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(c.x * scaleX, c.y * scaleY); ctx.lineTo(c.nx * scaleX, c.ny * scaleY); ctx.stroke(); }); } ctx.strokeStyle = '#00ffc8'; ctx.lineWidth = 2 / camera.scale; ctx.beginPath(); for (let px = -2 * Math.PI; px <= 2 * Math.PI; px += 0.02) { const y = fourierSum(px, time, harmonics); const sx = px * scaleX; const sy = -y * scaleY; if (px === -2 * Math.PI) ctx.moveTo(sx, sy); else ctx.lineTo(sx, sy); } ctx.stroke(); const wave = waves[waveIdx]; let exactSum = 0; for (let n = 1; n <= 100; n++) exactSum += wave.coeffs(n) * Math.sin(n * 0); ctx.fillStyle = '#ff3366'; ctx.beginPath(); ctx.arc(0, -exactSum * scaleY, 6 / camera.scale, 0, Math.PI * 2); ctx.fill(); ctx.restore(); }
+function loop(t) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (t - lastTime) / 1000; lastTime = t; frameCount++; if (t - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (t - fpsTime)); frameCount = 0; fpsTime = t; document.getElementById('fps').textContent = fps; } if (!paused) time += dt * speed; camera.x += (camera.targetX - camera.x) * 0.08; camera.y += (camera.targetY - camera.y) * 0.08; camera.scale += (camera.targetScale - camera.scale) * 0.08; render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('harmSlider').addEventListener('input', e => { harmonics = parseInt(e.target.value); document.getElementById('harmCount').textContent = harmonics; }); document.getElementById('speedSlider').addEventListener('input', e => speed = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { camera.targetX -= (e.clientX - mouse.lastX) / camera.scale; camera.targetY -= (e.clientY - mouse.lastY) / camera.scale; mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetScale = Math.max(0.3, Math.min(5, camera.targetScale * (e.deltaY > 0 ? 0.9 : 1.1))); }, { passive: false });
+select.addEventListener('change', e => { waveIdx = parseInt(e.target.value); });
+document.getElementById('btnAnimate').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnMode').addEventListener('click', () => { showSum = !showSum; document.getElementById('btnMode').querySelector('span').textContent = showSum ? 'Mode: Sum' : 'Mode: Circles'; });
+document.getElementById('btnCircles').addEventListener('click', () => { showCircles = !showCircles; document.getElementById('btnCircles').classList.toggle('primary', showCircles); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'm' || e.key === 'M') { showSum = !showSum; document.getElementById('btnMode').querySelector('span').textContent = showSum ? 'Mode: Sum' : 'Mode: Circles'; } else if (e.key === 'c' || e.key === 'C') { showCircles = !showCircles; document.getElementById('btnCircles').classList.toggle('primary', showCircles); } else if (e.key === 'ArrowUp') { harmonics = Math.min(50, harmonics + 1); document.getElementById('harmSlider').value = harmonics; document.getElementById('harmCount').textContent = harmonics; } else if (e.key === 'ArrowDown') { harmonics = Math.max(1, harmonics - 1); document.getElementById('harmSlider').value = harmonics; document.getElementById('harmCount').textContent = harmonics; } else if (e.key >= '1' && e.key <= '5') { waveIdx = parseInt(e.key) - 1; select.value = waveIdx; } });
+init();
+</script>
+</body>
+</html>

@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>80 — Markdown Editor</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.editor-actions{display:flex;gap:.5rem}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:1rem;min-height:calc(100vh - 120px);resize:none;font-family:'JetBrains Mono',monospace;font-size:.8rem;line-height:1.6;tab-size:2}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.preview{padding:1.5rem;overflow:auto;background:var(--card);border-left:1px solid var(--border)}
+.preview-header{margin-bottom:1rem}
+.preview-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.preview-content{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1.5rem;line-height:1.8}
+.preview-content h1,.preview-content h2,.preview-content h3,.preview-content h4{color:var(--accent);margin:1rem 0 .5rem}
+.preview-content h1{font-size:1.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+.preview-content h2{font-size:1.25rem}
+.preview-content h3{font-size:1rem}
+.preview-content p{margin:.75rem 0}
+.preview-content code{background:var(--card);padding:.15rem .4rem;border-radius:3px;color:var(--accent3);font-size:.85em}
+.preview-content pre{background:var(--card);border:1px solid var(--border);border-radius:4px;padding:1rem;overflow:auto;margin:1rem 0}
+.preview-content pre code{background:none;padding:0;color:var(--fg)}
+.preview-content blockquote{border-left:3px solid var(--accent);padding-left:1rem;margin:1rem 0;color:var(--muted);font-style:italic}
+.preview-content ul,.preview-content ol{margin:1rem 0;padding-left:1.5rem}
+.preview-content li{margin:.25rem 0}
+.preview-content a{color:var(--accent);text-decoration:none}
+.preview-content a:hover{text-decoration:underline}
+.preview-content table{border-collapse:collapse;width:100%;margin:1rem 0}
+.preview-content th,.preview-content td{border:1px solid var(--border);padding:.5rem;text-align:left}
+.preview-content th{background:var(--card);font-weight:600}
+.preview-content hr{border:none;border-top:1px solid var(--border);margin:1.5rem 0}
+.preview-content img{max-width:100%;border-radius:4px}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Editor</h2><div class="editor-actions"><button class="btn primary" id="previewBtn">Preview</button><button class="btn" id="exportHtml">Export HTML</button><button class="btn" id="exportPdf">Export PDF</button><button class="btn" id="clearBtn">Clear</button></div></div>
+<textarea id="editor" spellcheck="false" placeholder="# Markdown Editor
+
+Start typing your markdown here...
+
+## Features
+- **Bold** and *italic* text
+- \`Inline code\` and code blocks
+- Lists, tables, blockquotes
+- Live preview
+
+```javascript
+function hello() {
+  console.log('Hello, World!');
+}
+```
+
+| Table | Header |
+|-------|--------|
+| Cell  | Data   |
+
+> Blockquote example
+
+[Link](https://example.com)
+
+![Image](https://via.placeholder.com/300)
+
+---
+
+Horizontal rule"></textarea>
+</div>
+<div class="preview">
+<div class="preview-header"><h3>Preview</h3></div>
+<div class="preview-content" id="preview"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 080 / 100 · Markdown Editor</footer>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+const editor=document.getElementById('editor');
+const preview=document.getElementById('preview');
+marked.setOptions({breaks:true,gfm:true,highlight:(code,lang)=>{try{return hljs.highlightAuto(code,lang?[lang]:undefined).value;}catch{return code;}}});
+function render(){preview.innerHTML=marked.parse(editor.value);}
+editor.oninput=()=>{clearTimeout(editor.timer);editor.timer=setTimeout(render,150);};
+document.getElementById('previewBtn').onclick=()=>{render();document.querySelector('.preview').scrollIntoView();};
+document.getElementById('exportHtml').onclick=()=>{const html=`<!DOCTYPE html><html><head><meta charset="utf-8"><style>body{font-family:system-ui;max-width:800px;margin:2rem auto;padding:0 1rem;line-height:1.6}pre{background:#f4f4f4;padding:1rem;overflow:auto}code{background:#f4f4f4;padding:.2rem .4rem}pre code{background:none;padding:0}blockquote{border-left:4px solid #ddd;padding-left:1rem;color:#666}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ddd;padding:.5rem}</style></head><body>${marked.parse(editor.value)}</body></html>`;const blob=new Blob([html],{type:'text/html'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='markdown-export.html';a.click();};
+document.getElementById('exportPdf').onclick=()=>{alert('Print to PDF using browser print dialog (Ctrl+P)');window.print();};
+document.getElementById('clearBtn').onclick=()=>{editor.value='';render();};
+render();
+</script>
+<script src="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/lib/highlight.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/highlight.js@11.9.0/styles/github-dark.min.css">
+</body>
+</html>

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>05 — Aurora Veil</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#06061a;--fg:#e8f0f8;--muted:#2a3a4a;--accent:#00ff88;--accent2:#8a2be2}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.5rem;left:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;line-height:1.8}
+.hint{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.6;text-align:right}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .stats{bottom:1rem;left:1rem;font-size:.55rem}
+  .hint{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Aurora Veil</div>
+<div class="ui subtitle">multi-layer perlin curtains</div>
+<div class="ui stats">
+Layers: <span id="layers">5</span><br>
+Speed: <span id="speed">1.0x</span><br>
+Intensity: <span id="intensity">1.0</span>
+</div>
+<div class="ui hint">move to distort field<br><kbd>↑↓</kbd> layers · <kbd>←→</kbd> speed · <kbd>Space</kbd> reset</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let layers=5,speed=1,intensity=1,time=0;
+let mouse={x:0,y:0,down:false};
+const noiseCache={};
+function noise2d(x,y){
+  const X=Math.floor(x)&255,Y=Math.floor(y)&255;
+  const xf=x-Math.floor(x),yf=y-Math.floor(y);
+  const u=fade(xf),v=fade(yf);
+  const a=perm[X]+Y,b=perm[X+1]+Y;
+  return lerp(lerp(grad(perm[a],xf,yf),grad(perm[b],xf-1,yf),u),
+              lerp(grad(perm[a+1],xf,yf-1),grad(perm[b+1],xf-1,yf-1),u),v);
+}
+function fade(t){return t*t*t*(t*(t*6-15)+10)}
+function lerp(a,b,t){return a+t*(b-a)}
+function grad(hash,x,y){
+  const h=hash&3;return ((h&1)?-x:x)+((h&2)?-y:y);
+}
+const perm=[];
+for(let i=0;i<256;i++)perm[i]=i;
+for(let i=255;i>0;i--){const j=Math.floor(Math.random()*(i+1));[perm[i],perm[j]]=[perm[j],perm[i]]}
+for(let i=0;i<256;i++)perm[i+256]=perm[i];
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+}
+window.addEventListener('resize',resize);
+window.addEventListener('mousemove',e=>{mouse.x=e.clientX;mouse.y=e.clientY;});
+window.addEventListener('mousedown',()=>mouse.down=true);
+window.addEventListener('mouseup',()=>mouse.down=false);
+window.addEventListener('touchmove',e=>{e.preventDefault();const t=e.touches[0];mouse.x=t.clientX;mouse.y=t.clientY;},{passive:false});
+window.addEventListener('keydown',e=>{
+  if(e.code==='ArrowUp'){layers=Math.min(12,layers+1);document.getElementById('layers').textContent=layers;e.preventDefault();}
+  if(e.code==='ArrowDown'){layers=Math.max(1,layers-1);document.getElementById('layers').textContent=layers;e.preventDefault();}
+  if(e.code==='ArrowRight'){speed=Math.min(3,speed+0.1);document.getElementById('speed').textContent=speed.toFixed(1)+'x';e.preventDefault();}
+  if(e.code==='ArrowLeft'){speed=Math.max(0.1,speed-0.1);document.getElementById('speed').textContent=speed.toFixed(1)+'x';e.preventDefault();}
+  if(e.code==='Space'){time=0;e.preventDefault();}
+});
+function tick(){
+  time+=0.008*speed;
+  ctx.fillStyle='rgba(6,6,26,0.15)';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const cx=mouse.x/(W/DPR)*2-1,cy=mouse.y/(H/DPR)*2-1;
+  for(let layer=0;layer<layers;layer++){
+    const ly=layer/layers;
+    const phase=time*0.3+layer*2.5;
+    const offset=mouse.down?Math.sin(phase*0.7)*30*(1-ly):0;
+    ctx.beginPath();
+    for(let x=0;x<=W/DPR;x+=3){
+      let n=0;
+      for(let o=0;o<4;o++){
+        const freq=0.003*Math.pow(2,o);
+        const amp=Math.pow(0.5,o);
+        n+=noise2d(x*freq+phase*0.5+o*100,ly*10+phase*0.2)*amp;
+      }
+      const y=H/DPR*(0.2+ly*0.6)+n*H/DPR*0.15*intensity+offset*Math.sin(x*0.02);
+      if(x===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    const hue=120+ly*180+Math.sin(time+layer)*30;
+    const opacity=0.15+ly*0.1;
+    ctx.strokeStyle=`hsla(${hue},80%,55%,${opacity})`;
+    ctx.lineWidth=1.5+ly*1;
+    ctx.shadowColor=`hsla(${hue},80%,55%,${opacity*2})`;
+    ctx.shadowBlur=10+ly*15;
+    ctx.stroke();
+    ctx.shadowBlur=0;
+  }
+  document.getElementById('intensity').textContent=intensity.toFixed(1);
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

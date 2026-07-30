@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>81 — Code Diff Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.editor{padding:1.5rem;overflow:auto}
+.editor-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;flex-wrap:wrap;gap:1rem}
+.editor-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.editor textarea{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:1rem;min-height:calc(50vh - 80px);resize:vertical;font-family:'JetBrains Mono',monospace;font-size:.75rem;line-height:1.6}
+textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.btn{padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.diff-output{padding:1.5rem;overflow:auto;background:var(--card);border-left:1px solid var(--border)}
+.diff-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+.diff-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.diff-stats{display:flex;gap:1.5rem;font-size:.7rem}
+.diff-stat{display:flex;align-items:center;gap:.35rem}
+.diff-stat.add{color:var(--accent2)}
+.diff-stat.del{color:var(--accent4)}
+.diff-content{background:var(--bg);border:1px solid var(--border);border-radius:8px;padding:1rem;font-size:.75rem;line-height:1.6;max-height:70vh;overflow:auto}
+.diff-line{display:flex;padding:.15rem 0;white-space:pre-wrap;word-break:break-word}
+.diff-line.add{background:rgba(63,185,80,.15)}
+.diff-line.del{background:rgba(248,81,73,.15)}
+.diff-line.ctx{color:var(--muted)}
+.diff-num{width:50px;text-align:right;padding-right:1rem;color:var(--muted);font-size:.65rem;user-select:none;flex-shrink:0}
+.diff-num.add{color:var(--accent2)}
+.diff-num.del{color:var(--accent4)}
+.diff-text{flex:1;font-family:'JetBrains Mono',monospace}
+.diff-text.add{color:var(--accent2)}
+.diff-text.del{color:var(--accent4)}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor">
+<div class="editor-header"><h2>Original</h2></div>
+<textarea id="oldCode" spellcheck="false" placeholder="Paste original code here..."></textarea>
+<div class="editor-header" style="margin-top:1rem"><h2>Modified</h2></div>
+<textarea id="newCode" spellcheck="false" placeholder="Paste modified code here..."></textarea>
+<div style="margin-top:1rem;display:flex;gap:.5rem"><button class="btn primary" id="diffBtn">Generate Diff</button><button class="btn" id="loadSample">Load Sample</button><button class="btn" id="clearBtn">Clear</button></div>
+</div>
+<div class="diff-output">
+<div class="diff-header"><h3>Diff</h3><div class="diff-stats"><div class="diff-stat add"><span>+</span><span id="statAdd">0</span></div><div class="diff-stat del"><span>-</span><span id="statDel">0</span></div></div></div>
+<div class="diff-content" id="diffContent"></div>
+</div>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 081 / 100 · Code Diff Viewer</footer>
+<script>
+const oldCode=document.getElementById('oldCode');
+const newCode=document.getElementById('newCode');
+const diffContent=document.getElementById('diffContent');
+const statAdd=document.getElementById('statAdd');
+const statDel=document.getElementById('statDel');
+const sampleOld=`function fetchUser(id) {
+  const user = database.get(id);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  return user;
+}
+
+function renderUser(user) {
+  console.log('Name:', user.name);
+  console.log('Email:', user.email);
+}
+
+function main() {
+  const user = fetchUser(123);
+  renderUser(user);
+}
+
+main();`;
+const sampleNew=`async function fetchUser(id) {
+  const user = await database.get(id);
+  if (!user) {
+    throw new Error('User not found');
+  }
+  return user;
+}
+
+function renderUser(user) {
+  console.log('Name:', user.name);
+  console.log('Email:', user.email);
+  console.log('Role:', user.role || 'guest');
+}
+
+async function main() {
+  try {
+    const user = await fetchUser(123);
+    renderUser(user);
+  } catch (error) {
+    console.error('Failed to fetch user:', error.message);
+  }
+}
+
+main();`;
+oldCode.value=sampleOld;
+newCode.value=sampleNew;
+function computeDiff(oldStr,newStr){
+  const oldLines=oldStr.split('\n');
+  const newLines=newStr.split('\n');
+  const m=oldLines.length,n=newLines.length;
+  const dp=Array(m+1).fill().map(()=>Array(n+1).fill(0));
+  for(let i=m-1;i>=0;i--){
+    for(let j=n-1;j>=0;j--){
+      if(oldLines[i]===newLines[j])dp[i][j]=1+dp[i+1][j+1];
+      else dp[i][j]=Math.max(dp[i+1][j],dp[i][j+1]);
+    }
+  }
+  const result=[];
+  let i=0,j=0,oldLineNum=1,newLineNum=1;
+  let additions=0,deletions=0;
+  while(i<m||j<n){
+    if(i<m&&j<n&&oldLines[i]===newLines[j]){
+      result.push({type:'ctx',text:oldLines[i],oldNum:oldLineNum++,newNum:newLineNum++});
+      i++;j++;
+    }else if(j<n&&(i>=m||dp[i][j+1]>=dp[i+1][j])){
+      result.push({type:'add',text:newLines[j],newNum:newLineNum++});
+      j++;additions++;
+    }else{
+      result.push({type:'del',text:oldLines[i],oldNum:oldLineNum++});
+      i++;deletions++;
+    }
+  }
+  return {result,additions,deletions};
+}
+function renderDiff(){
+  const oldVal=oldCode.value;
+  const newVal=newCode.value;
+  const {result,additions,deletions}=computeDiff(oldVal,newVal);
+  statAdd.textContent=additions;
+  statDel.textContent=deletions;
+  diffContent.innerHTML=result.map(line=>{
+    const cls=line.type;
+    const oldNum=line.oldNum!==undefined?line.oldNum:'';
+    const newNum=line.newNum!==undefined?line.newNum:'';
+    const numHtml=cls==='add'?`<span class="diff-num add">+${newNum}</span>`:cls==='del'?`<span class="diff-num del">-${oldNum}</span>`:`<span class="diff-num">${oldNum}</span><span class="diff-num">${newNum}</span>`;
+    const text=line.text===''?' ' :escapeHtml(line.text);
+    return `<div class="diff-line ${cls}">${numHtml}<span class="diff-text ${cls}">${text}</span></div>`;
+  }).join('');
+}
+function escapeHtml(str){return String(str).replace(/&/g,'&').replace(/</g,'<').replace(/>/g,'>').replace(/ /g,'&nbsp;');}
+document.getElementById('diffBtn').onclick=renderDiff;
+document.getElementById('loadSample').onclick=()=>{oldCode.value=sampleOld;newCode.value=sampleNew;renderDiff();};
+document.getElementById('clearBtn').onclick=()=>{oldCode.value='';newCode.value='';diffContent.innerHTML='';statAdd.textContent=statDel.textContent='0';};
+renderDiff();
+</script>
+</body>
+</html>

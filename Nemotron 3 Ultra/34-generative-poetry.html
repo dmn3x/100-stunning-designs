@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>34 — Generative Poetry Engine</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0a12;--fg:#e8e8f0;--muted:#3a3a5a;--accent:#00ffaa;--accent2:#ff6b6b;--accent3:#ffd93d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:18px/1.8 'DM Serif Display',Georgia,serif;overflow:auto}
+.controls{position:fixed;top:1rem;left:1rem;right:1rem;z-index:10;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center;justify-content:center;background:rgba(10,10,18,0.95);border:1px solid var(--muted);padding:1rem;border-radius:8px;font-size:.7rem}
+.controls label{display:flex;align-items:center;gap:.3rem;cursor:pointer;color:var(--muted)}
+.controls select,.controls input{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.main{padding:5rem 2rem 3rem;max-width:900px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,4rem);font-weight:300;letter-spacing:-.02em;margin-bottom:3rem;text-align:center}
+h1 span{font-weight:700;color:var(--accent)}
+.poem{font-size:clamp(1.2rem,2.5vw,1.8rem);line-height:2.2;text-align:center;margin-bottom:3rem;min-height:200px}
+.poem .word{display:inline-block;transition:all .3s ease;cursor:default}
+.poem .word:hover{color:var(--accent);transform:scale(1.05)}
+.poem .noun{color:var(--accent)}
+.poem .verb{color:var(--accent2)}
+.poem .adj{color:var(--accent3)}
+.viz{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.5rem;margin-bottom:3rem}
+.viz-card{background:rgba(255,255,255,0.02);border:1px solid var(--muted);border-radius:8px;padding:1.5rem;position:relative;overflow:hidden}
+.viz-card::before{content:attr(data-label);position:absolute;top:.75rem;right:.75rem;font-size:.55rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.6}
+.viz-card canvas{display:block;width:100%;height:160px}
+.legend{display:flex;flex-wrap:wrap;gap:.75rem;justify-content:center;margin-top:1rem;font-size:.7rem}
+.legend span{display:flex;align-items:center;gap:.3rem;color:var(--muted)}
+.legend i{width:12px;height:12px;border-radius:2px;display:inline-block}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--muted);color:var(--muted);font-size:.75rem;letter-spacing:.1em;text-transform:uppercase}
+@media (max-width:600px){
+  .controls{left:.5rem;right:.5rem;top:.5rem;padding:.75rem;font-size:.65rem}
+  .main{padding:4rem 1rem 2rem}
+  .viz{grid-template-columns:1fr}
+}
+</style>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&display=swap" rel="stylesheet">
+</head>
+<body>
+<div class="controls">
+<label>Structure <select id="structure"><option value="haiku">Haiku (5-7-5)</option><option value="tanka">Tanka (5-7-5-7-7)</option><option value="sonnet">Sonnet (14 lines)</option><option value="free">Free Verse</option><option value="acrostic">Acrostic</option></select></label>
+<label>Theme <select id="theme"><option value="nature">Nature</option><option value="tech">Technology</option><option value="love">Love & Loss</option><option value="philosophy">Philosophy</option><option value="cosmic">Cosmic</option></select></label>
+<label>Complexity <input type="range" id="complexity" min="1" max="10" value="5"><span id="complexityVal">5</span></label>
+<label><input type="checkbox" id="pos" checked> Color by POS</label>
+<label><input type="checkbox" id="animate" checked> Animate</label>
+</div>
+<main class="main">
+<h1>Generative <span>Poetry</span> Engine</h1>
+<div class="poem" id="poem" aria-live="polite">Click generate to begin...</div>
+<div class="viz">
+<div class="viz-card" data-label="Syllable Structure"><canvas id="syllableChart"></canvas></div>
+<div class="viz-card" data-label="POS Distribution"><canvas id="posChart"></canvas></div>
+<div class="viz-card" data-label="Sentiment Flow"><canvas id="sentimentChart"></canvas></div>
+<div class="viz-card" data-label="Rhythm Pattern"><canvas id="rhythmChart"></canvas></div>
+</div>
+<div class="legend">
+<span><i style="background:var(--accent)"></i>Nouns</span>
+<span><i style="background:var(--accent2)"></i>Verbs</span>
+<span><i style="background:var(--accent3)"></i>Adjectives</span>
+<span><i style="background:#6b5bff"></i>Adverbs</span>
+<span><i style="background:#888"></i>Other</span>
+</div>
+<div class="footer">Nemotron 3 Ultra · 034 / 100 · Computational poetry</div>
+</main>
+<script>
+const lexicon={
+  nature:{noun:['mountain','river','forest','meadow','ocean','sky','cloud','stone','leaf','root','seed','bloom','thorn','petal','branch','nest','horizon','dawn','dusk','tide'],verb:['flows','blooms','grows','whispers','sleeps','awakens','dances','falls','rises','breathes','sings','dreams','waits','endures','transforms'],adj:['ancient','wild','gentle','fierce','silent','vibrant','patient','eternal','fragile','resilient','luminous','shadowed','verdant','crystalline','sacred'],adv:['slowly','swiftly','quietly','boldly','patiently','eternally','gently','fiercely','softly','wildly']},
+  tech:{noun:['circuit','algorithm','signal','network','node','packet','latency','bandwidth','server','protocol','cache','kernel','process','thread','memory','register','bus','clock','gate','bit'],verb:['processes','compiles','executes','optimizes','synchronizes','transmits','encrypts','decrypts','allocates','deallocates','iterates','recurses','converges','diverges','scales'],adj:['distributed','parallel','asynchronous','deterministic','recursive','modular','scalable','latent','concurrent','atomic','idempotent','stateless','virtual','logical','physical'],adv:['recursively','atomically','concurrently','deterministically','asynchronously','lazily','eagerly','optimistically','pessimistically','idempotently']},
+  love:{noun:['heart','soul','embrace','whisper','promise','memory','longing','absence','presence','touch','gaze','silence','distance','reunion','farewell','eternity','moment','breath','pulse','rhythm'],verb:['loves','aches','yearns','remembers','forgets','waits','finds','loses','holds','releases','breaks','heals','burns','freezes','transcends'],adj:['tender','fierce','eternal','fleeting','gentle','consuming','patient','restless','faithful','wandering','broken','whole','lost','found','infinite'],adv:['deeply','softly','fiercely','patiently','eternally','tenderly','desperately','hopefully','faithfully','completely']},
+  philosophy:{noun:['truth','meaning','existence','consciousness','void','essence','being','becoming','time','space','causality','freedom','necessity','chance','order','chaos','self','other','knowledge','wisdom'],verb:['questions','doubts','affirms','denies','seeks','finds','contemplates','transcends','embraces','rejects','synthesizes','dialects','unfolds','reveals','conceals'],adj:['profound','elusive','self-evident','paradoxical','necessary','contingent','absolute','relative','finite','infinite','implicit','explicit','a priori','a posteriori','transcendent'],adv:['necessarily','contingently','dialectically','phenomenologically','ontologically','epistemologically','existentially','teleologically','hermeneutically','apophatically']},
+  cosmic:{noun:['star','galaxy','nebula','quasar','pulsar','black hole','supernova','cosmos','universe','void','light year','gravity','spacetime','singularity','event horizon','dark matter','dark energy','cosmic dust','radiation','entropy'],verb:['expands','collapses','rotates','orbits','fuses','radiates','gravitates','warps','bends','accelerates','cools','ignites','explodes','implodes','transcends'],adj:['infinite','vast','ancient','nascent','luminous','dark','curved','flat','expanding','contracting','entropic','ordered','chaotic','fine-tuned','inevitable'],adv:['infinitely','eternally','relentlessly','inexorably','gracefully','violently','silently','thunderously','patiently','urgently']}
+};
+const structures={
+  haiku:[5,7,5],
+  tanka:[5,7,5,7,7],
+  sonnet:[10,10,10,10,10,10,10,10,10,10,10,10,10,10],
+  free:null,
+  acrostic:null
+};
+let currentStructure='haiku',currentTheme='nature',complexity=5,showPOS=true,animate=true;
+let lastPoem=[],lastPOS=[],lastSyllables=[];
+function countSyllables(word){
+  word=word.toLowerCase();
+  if(word.length<=3)return 1;
+  word=word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/,'');
+  word=word.replace(/^y/,'');
+  const matches=word.match(/[aeiouy]{1,2}/g);
+  return matches?matches.length:1;
+}
+function getWords(theme,pos,count){
+  const pool=lexicon[theme][pos]||[];
+  const result=[];
+  for(let i=0;i<count;i++)result.push(pool[Math.floor(Math.random()*pool.length)]);
+  return result;
+}
+function generateLine(targetSyllables,theme,availableWords){
+  const line=[],posTags=[],syllables=[];
+  let remaining=targetSyllables;
+  while(remaining>0){
+    const pos=Math.random()<0.4?'noun':Math.random()<0.5?'verb':Math.random()<0.7?'adj':'adv';
+    const word=getWords(theme,pos,1)[0];
+    const syl=countSyllables(word);
+    if(syl<=remaining||remaining===targetSyllables){
+      line.push(word);
+      posTags.push(pos);
+      syllables.push(syl);
+      remaining-=syl;
+    }
+    if(line.length>targetSyllables)break;
+  }
+  while(remaining>0&&line.length>0){
+    const word=getWords(theme,'adj',1)[0];
+    const syl=countSyllables(word);
+    if(syl<=remaining){
+      line.push(word);
+      posTags.push('adj');
+      syllables.push(syl);
+      remaining-=syl;
+    }else break;
+  }
+  return {words:line,pos:posTags,syllables:syllables};
+}
+function generatePoem(){
+  const struct=structures[currentStructure];
+  const theme=currentTheme;
+  lastPoem=[];lastPOS=[];lastSyllables=[];
+  if(currentStructure==='free'){
+    const lines=3+Math.floor(Math.random()*5);
+    for(let i=0;i<lines;i++){
+      const syl=5+Math.floor(Math.random()*8);
+      const line=generateLine(syl,theme);
+      lastPoem.push(line.words);
+      lastPOS.push(line.pos);
+      lastSyllables.push(line.syllables);
+    }
+  }else if(currentStructure==='acrostic'){
+    const word='NEMOTRON';
+    for(let i=0;i<word.length;i++){
+      const syl=5+Math.floor(Math.random()*5);
+      const line=generateLine(syl,theme);
+      if(line.words.length>0)line.words[0]=word[i]+line.words[0].slice(1);
+      lastPoem.push(line.words);
+      lastPOS.push(line.pos);
+      lastSyllables.push(line.syllables);
+    }
+  }else{
+    for(const syl of struct){
+      const line=generateLine(syl,theme);
+      lastPoem.push(line.words);
+      lastPOS.push(line.pos);
+      lastSyllables.push(line.syllables);
+    }
+  }
+  renderPoem();
+  drawCharts();
+}
+function renderPoem(){
+  const container=document.getElementById('poem');
+  container.innerHTML='';
+  lastPoem.forEach((line,li)=>{
+    const lineDiv=document.createElement('div');
+    lineDiv.style.marginBottom='1.5rem';
+    line.forEach((word,wi)=>{
+      const pos=lastPOS[li][wi];
+      const span=document.createElement('span');
+      span.className='word '+(pos||'');
+      span.textContent=word+' ';
+      if(animate){
+        span.style.opacity='0';
+        span.style.transform='translateY(20px)';
+        setTimeout(()=>{span.style.transition='all .5s cubic-bezier(.16,1,.3,1)';span.style.opacity='1';span.style.transform='translateY(0)';},(li*200)+(wi*50));
+      }
+      lineDiv.appendChild(span);
+    });
+    container.appendChild(lineDiv);
+  });
+}
+function drawCharts(){
+  drawSyllableChart();
+  drawPOSChart();
+  drawSentimentChart();
+  drawRhythmChart();
+}
+function drawSyllableChart(){
+  const canvas=document.getElementById('syllableChart'),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.fillStyle='rgba(255,255,255,0.02)';ctx.fillRect(0,0,w/2,h/2);
+  const maxLines=lastSyllables.length,maxSyl=Math.max(...lastSyllables.map(a=>a.reduce((s,v)=>s+v,0)),1);
+  const barW=(w/2-40)/Math.max(1,maxLines);
+  lastSyllables.forEach((line,i)=>{
+    const total=line.reduce((s,v)=>s+v,0);
+    const bh=(h/2-40)*(total/maxSyl);
+    const x=20+i*(barW+5);
+    const y=h/2-20-bh;
+    const grad=ctx.createLinearGradient(0,h/2-20,0,y);
+    grad.addColorStop(0,'#00ffaa');grad.addColorStop(1,'#00ffaa33');
+    ctx.fillStyle=grad;ctx.fillRect(x,y,barW,bh);
+    ctx.fillStyle='#00ffaa';ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText(total,x+barW/2,h/2-5);
+  });
+}
+function drawPOSChart(){
+  const canvas=document.getElementById('posChart'),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.fillStyle='rgba(255,255,255,0.02)';ctx.fillRect(0,0,w/2,h/2);
+  const counts={noun:0,verb:0,adj:0,adv:0,other:0};
+  lastPOS.forEach(line=>line.forEach(p=>counts[p]?counts[p]++:counts.other++));
+  const total=Object.values(counts).reduce((a,b)=>a+b,0)||1;
+  const colors={noun:'#00ffaa',verb:'#ff6b6b',adj:'#ffd93d',adv:'#6b5bff',other:'#888'};
+  let angle=-Math.PI/2;
+  Object.entries(counts).forEach(([k,v])=>{
+    if(v===0)return;
+    const slice=(v/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(w/4,h/4);ctx.arc(w/4,h/4,Math.min(w,h)/4-20,angle,angle+slice);ctx.closePath();
+    ctx.fillStyle=colors[k]+'80';ctx.fill();
+    ctx.strokeStyle=colors[k];ctx.lineWidth=2;ctx.stroke();
+    const mid=angle+slice/2;
+    const lx=w/4+Math.cos(mid)*(Math.min(w,h)/4-40);
+    const ly=h/4+Math.sin(mid)*(Math.min(w,h)/4-40);
+    ctx.fillStyle=colors[k];ctx.font='10px monospace';ctx.textAlign='center';
+    ctx.fillText(`${k}: ${v}`,lx,ly);
+    angle+=slice;
+  });
+}
+function drawSentimentChart(){
+  const canvas=document.getElementById('sentimentChart'),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.fillStyle='rgba(255,255,255,0.02)';ctx.fillRect(0,0,w/2,h/2);
+  const sentiments=lastPoem.map(line=>line.reduce((s,w)=>{const hash=w.split('').reduce((a,c)=>a+c.charCodeAt(0),0);return s+(hash%3-1);},0));
+  const maxS=Math.max(1,Math.max(...sentiments.map(Math.abs)));
+  ctx.strokeStyle='#ff6b6b';ctx.lineWidth=2;ctx.lineCap='round';ctx.beginPath();
+  sentiments.forEach((s,i)=>{const x=(i+0.5)*(w/2-40)/sentiments.length+20;const y=h/4-s/maxS*(h/4-40);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  ctx.strokeStyle='#00ffaa';ctx.beginPath();
+  sentiments.forEach((s,i)=>{const x=(i+0.5)*(w/2-40)/sentiments.length+20;const y=h/4; i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+}
+function drawRhythmChart(){
+  const canvas=document.getElementById('rhythmChart'),ctx=canvas.getContext('2d');
+  const w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.fillStyle='rgba(255,255,255,0.02)';ctx.fillRect(0,0,w/2,h/2);
+  let idx=0;
+  lastSyllables.forEach((line,li)=>{
+    line.forEach((syl,wi)=>{
+      const x=20+idx*(w/2-40)/(lastSyllables.flat().length||1);
+      const bh=(h/2-40)*(syl/7);
+      ctx.fillStyle=`hsl(${(li*60+wi*20)%360},80%,60%)`;
+      ctx.fillRect(x,h/2-20-bh,Math.max(1,(w/2-40)/(lastSyllables.flat().length||1)-2),bh);
+      idx++;
+    });
+  });
+}
+document.getElementById('structure').addEventListener('change',e=>{currentStructure=e.target.value;generatePoem();});
+document.getElementById('theme').addEventListener('change',e=>{currentTheme=e.target.value;generatePoem();});
+document.getElementById('complexity').addEventListener('input',e=>{complexity=+e.target.value;document.getElementById('complexityVal').textContent=complexity;generatePoem();});
+document.getElementById('pos').addEventListener('change',e=>{showPOS=e.target.checked;renderPoem();});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+generatePoem();
+</script>
+</body>
+</html>

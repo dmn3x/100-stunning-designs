@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>30 — Kinetic Typography</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d0d0d;--fg:#f0f0f0;--muted:#333;--accent:#ff3366;--accent2:#33ffaa}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:16px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Kinetic Typography</div>
+<div class="ui subtitle">text as particles, motion as meaning</div>
+<div class="ui controls">
+<label class="ctrl">Text <input type="text" id="textInput" value="NEMOTRON 3 ULTRA" style="background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem;width:140px"></label>
+<label class="ctrl">Mode <select id="mode"><option value="explode">Explode</option><option value="wave">Wave</option><option value="orbit">Orbit</option><option value="trail">Trail</option><option value="morph">Morph</option></select></label>
+<label class="ctrl">Count <input type="range" id="count" min="50" max="2000" step="50" value="400"><span class="stat" id="countVal">400</span></label>
+<label class="ctrl">Speed <input type="range" id="speed" min="0.1" max="3" step="0.1" value="1"><span class="stat" id="speedVal">1.0</span></label>
+<label class="ctrl"><input type="checkbox" id="trails" checked> Trails</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> pause · <kbd>Enter</kbd> reset · type to change text</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let particles=[],text='NEMOTRON 3 ULTRA',mode='explode',targetCount=400,speed=1,trails=true;
+let frame=0,time=0,basePositions=[],fontSize=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+  fontSize=Math.min(W/DPR,H/DPR)*0.15;
+  generateBase();
+}
+function generateBase(){
+  const temp=document.createElement('canvas');
+  temp.width=W/DPR;temp.height=H/DPR;
+  const tctx=temp.getContext('2d');
+  tctx.fillStyle='#fff';
+  tctx.font=`bold ${fontSize}px 'Space Mono',monospace`;
+  tctx.textAlign='center';tctx.textBaseline='middle';
+  tctx.fillText(text,W/DPR/2,H/DPR/2);
+  const data=tctx.getImageData(0,0,W/DPR,H/DPR).data;
+  basePositions=[];
+  for(let y=0;y<H/DPR;y+=3)for(let x=0;x<W/DPR;x+=3){
+    const i=(y*W/DPR+x)*4;
+    if(data[i+3]>128)basePositions.push({x,y});
+  }
+  initParticles();
+}
+function initParticles(){
+  particles=[];
+  for(let i=0;i<Math.min(targetCount,basePositions.length);i++){
+    const bp=basePositions[Math.floor(Math.random()*basePositions.length)];
+    particles.push({x:bp.x,y:bp.y,ox:bp.x,oy:bp.y,vx:0,vy:0,angle:Math.random()*Math.PI*2,radius:Math.random()*50+20,phase:Math.random()*Math.PI*2,size:1+Math.random()*2,hue:Math.random()*60+330});
+  }
+}
+function explode(){
+  const cx=W/DPR/2,cy=H/DPR/2;
+  for(const p of particles){
+    const dx=p.ox-cx,dy=p.oy-cy,dist=Math.hypot(dx,dy)||1;
+    p.vx+=dx/dist*0.3;p.vy+=dy/dist*0.3;
+    p.vx*=0.95;p.vy*=0.95;
+    p.x+=p.vx;p.y+=p.vy;
+    const hx=p.ox-p.x,hy=p.oy-p.y;
+    p.vx+=hx*0.002;p.vy+=hy*0.002;
+  }
+}
+function wave(){
+  for(const p of particles){
+    p.x=p.ox+Math.sin(time*2+p.phase+p.oy*0.02)*30;
+    p.y=p.oy+Math.cos(time*1.5+p.phase+p.ox*0.01)*20;
+  }
+}
+function orbit(){
+  const cx=W/DPR/2,cy=H/DPR/2;
+  for(const p of particles){
+    p.angle+=0.005*speed*(1+p.radius/100);
+    p.x=cx+Math.cos(p.angle)*p.radius;
+    p.y=cy+Math.sin(p.angle)*p.radius*0.5;
+  }
+}
+function trail(){
+  for(const p of particles){
+    const dx=p.ox-p.x,dy=p.oy-p.y;
+    p.vx+=dx*0.02+Math.sin(time+p.phase)*0.5;
+    p.vy+=dy*0.02+Math.cos(time+p.phase)*0.5;
+    p.vx*=0.9;p.vy*=0.9;
+    p.x+=p.vx*speed;p.y+=p.vy*speed;
+  }
+}
+function morph(){
+  const cx=W/DPR/2,cy=H/DPR/2;
+  const t=(Math.sin(time*0.5)+1)/2;
+  for(const p of particles){
+    const tx=cx+Math.cos(p.phase*10)*W/DPR*0.4*t;
+    const ty=cy+Math.sin(p.phase*10)*H/DPR*0.3*t;
+    p.x+=((1-t)*p.ox+t*tx-p.x)*0.05;
+    p.y+=((1-t)*p.oy+t*ty-p.y)*0.05;
+  }
+}
+const modes={explode,wave,orbit,trail,morph};
+document.getElementById('textInput').addEventListener('change',e=>{text=e.target.value.toUpperCase();generateBase();});
+document.getElementById('mode').addEventListener('change',e=>mode=e.target.value);
+document.getElementById('count').addEventListener('input',e=>{targetCount=+e.target.value;document.getElementById('countVal').textContent=targetCount;initParticles();});
+document.getElementById('speed').addEventListener('input',e=>{speed=+e.target.value;document.getElementById('speedVal').textContent=speed.toFixed(1);});
+document.getElementById('trails').addEventListener('change',e=>trails=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){/* handled by text input */}
+  if(e.code==='Enter'){initParticles();e.preventDefault();}
+});
+function tick(){
+  frame++;
+  time+=0.016*speed;
+  const cw=W/DPR,ch=H/DPR;
+  if(trails){
+    ctx.fillStyle='rgba(13,13,13,0.15)';
+    ctx.fillRect(0,0,cw,ch);
+  }else{
+    ctx.fillStyle='#0d0d0d';
+    ctx.fillRect(0,0,cw,ch);
+  }
+  modes[mode]();
+  for(const p of particles){
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,p.size,0,Math.PI*2);
+    ctx.fillStyle=`hsla(${p.hue},100%,60%,0.8)`;
+    ctx.fill();
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

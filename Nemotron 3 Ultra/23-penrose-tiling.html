@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>23 — Penrose Tiling</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#f5f5f0;--fg:#3d3d3d;--muted:#a8a898;--accent:#c9b037}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:200;letter-spacing:.08em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(0,0,0,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Penrose Tiling</div>
+<div class="ui subtitle">infinite non-periodic pattern</div>
+<div class="ui controls">
+<label class="ctrl">Generations <input type="range" id="gen" min="0" max="7" step="1" value="5"><span class="stat" id="genVal">5</span></label>
+<label class="ctrl">Scale <input type="range" id="scale" min="10" max="100" step="5" value="40"><span class="stat" id="scaleVal">40</span></label>
+<label class="ctrl"><input type="checkbox" id="thick" checked> Thick Rhombs</label>
+<label class="ctrl"><input type="checkbox" id="thin" checked> Thin Rhombs</label>
+<label class="ctrl"><input type="checkbox" id="edges" checked> Gold Veins</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> regenerate · <kbd>←→</kbd> gen · <kbd>↑↓</kbd> scale</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let generations=5,scale=40,showThick=true,showThin=true,showEdges=true;
+let tiles=[],frame=0;
+const PHI=(1+Math.sqrt(5))/2;
+const ANGLE36=Math.PI/5,ANGLE72=2*Math.PI/5;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+  generate();
+}
+function rotate(x,y,angle){
+  const c=Math.cos(angle),s=Math.sin(angle);
+  return [x*c-y*s,x*s+y*c];
+}
+function thickRhomb(x,y,size,rot){
+  const h=size*Math.sin(ANGLE72);
+  const pts=[[-size/2,-h/2],[size/2,-h/2],[size/2,h/2],[-size/2,h/2]];
+  return pts.map(p=>rotate(p[0],p[1],rot)).map(p=>[p[0]+x,p[1]+y]);
+}
+function thinRhomb(x,y,size,rot){
+  const h=size*Math.sin(ANGLE36);
+  const pts=[[-size/2,-h/2],[size/2,-h/2],[size/2,h/2],[-size/2,h/2]];
+  return pts.map(p=>rotate(p[0],p[1],rot)).map(p=>[p[0]+x,p[1]+y]);
+}
+function inflate(tiles){
+  const newTiles=[];
+  for(const t of tiles){
+    const {type,x,y,size,rot}=t;
+    if(type==='thick'){
+      const s=size/PHI;
+      const h=size*Math.sin(ANGLE72);
+      const h2=s*Math.sin(ANGLE72);
+      const dx=(h-h2)/2;
+      newTiles.push({type:'thick',x:x+dx,y:y,size:s,rot:rot});
+      newTiles.push({type:'thick',x:x-dx,y:y,size:s,rot:rot});
+      newTiles.push({type:'thin',x:x,y:y+h2/2,size:s,rot:rot+ANGLE36});
+      newTiles.push({type:'thin',x:x,y:y-h2/2,size:s,rot:rot-ANGLE36});
+    }else{
+      const s=size/PHI;
+      const h=size*Math.sin(ANGLE36);
+      const h2=s*Math.sin(ANGLE36);
+      const dx=(h-h2)/2;
+      newTiles.push({type:'thin',x:x+dx,y:y,size:s,rot:rot});
+      newTiles.push({type:'thin',x:x-dx,y:y,size:s,rot:rot});
+      newTiles.push({type:'thick',x:x,y:y+h2/2,size:s,rot:rot+ANGLE72});
+      newTiles.push({type:'thick',x:x,y:y-h2/2,size:s,rot:rot-ANGLE72});
+    }
+  }
+  return newTiles;
+}
+function generate(){
+  tiles=[{type:'thick',x:0,y:0,size:scale,rot:0}];
+  for(let i=0;i<generations;i++)tiles=inflate(tiles);
+}
+function draw(){
+  const cw=W/DPR,ch=H/DPR;
+  ctx.fillStyle='#f5f5f0';
+  ctx.fillRect(0,0,cw,ch);
+  ctx.save();
+  ctx.translate(cw/2,ch/2);
+  for(const t of tiles){
+    const pts=t.type==='thick'?thickRhomb(t.x,t.y,t.size,t.rot):thinRhomb(t.x,t.y,t.size,t.rot);
+    if(t.type==='thick'&&!showThick)continue;
+    if(t.type==='thin'&&!showThin)continue;
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0],pts[0][1]);
+    for(let i=1;i<4;i++)ctx.lineTo(pts[i][0],pts[i][1]);
+    ctx.closePath();
+    ctx.fillStyle=t.type==='thick'?'rgba(245,245,240,0.9)':'rgba(230,230,220,0.9)';
+    ctx.fill();
+    if(showEdges){
+      ctx.strokeStyle='#c9b037';
+      ctx.lineWidth=0.5;
+      ctx.stroke();
+    }
+  }
+  ctx.restore();
+}
+document.getElementById('gen').addEventListener('input',e=>{generations=+e.target.value;document.getElementById('genVal').textContent=generations;generate();});
+document.getElementById('scale').addEventListener('input',e=>{scale=+e.target.value;document.getElementById('scaleVal').textContent=scale;generate();});
+document.getElementById('thick').addEventListener('change',e=>showThick=e.target.checked);
+document.getElementById('thin').addEventListener('change',e=>showThin=e.target.checked);
+document.getElementById('edges').addEventListener('change',e=>showEdges=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){generate();e.preventDefault();}
+  if(e.code==='ArrowLeft'){generations=Math.max(0,generations-1);document.getElementById('gen').value=generations;document.getElementById('genVal').textContent=generations;generate();e.preventDefault();}
+  if(e.code==='ArrowRight'){generations=Math.min(7,generations+1);document.getElementById('gen').value=generations;document.getElementById('genVal').textContent=generations;generate();e.preventDefault();}
+  if(e.code==='ArrowUp'){scale=Math.min(100,scale+5);document.getElementById('scale').value=scale;document.getElementById('scaleVal').textContent=scale;generate();e.preventDefault();}
+  if(e.code==='ArrowDown'){scale=Math.max(10,scale-5);document.getElementById('scale').value=scale;document.getElementById('scaleVal').textContent=scale;generate();e.preventDefault();}
+});
+function tick(){
+  frame++;
+  draw();
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>72 — Particle Network</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#canvas{width:100%;height:100%;display:block}
+.ui{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;min-width:200px}
+.ui h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.ui-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.7rem}
+.ui-row label{color:var(--muted);min-width:90px}
+.ui-row input,.ui-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.title{position:fixed;top:1rem;left:1rem;z-index:10}
+.title h1{font-size:1.5rem;font-weight:300}
+.title h1 span{font-weight:700;color:var(--accent)}
+.stats{position:fixed;bottom:1rem;left:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.footer{position:fixed;bottom:1rem;right:1rem;z-index:10;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="title"><h1>Particle <span>Network</span></h1></div>
+<div class="ui"><h3>Controls</h3><div class="ui-row"><label>Mode</label><select id="modeSelect"><option value="connections">Connections</option><option value="flow">Flow Field</option><option value="attract">Attractors</option><option value="repulse">Repulsion</option></select></div><div class="ui-row"><label>Particles</label><input type="range" id="particleCount" min="100" max="1000" step="50" value="300"></div><div class="ui-row"><label>Connection Dist</label><input type="range" id="connDist" min="50" max="300" step="10" value="150"></div><div class="ui-row"><label>Speed</label><input type="range" id="speed" min="0.1" max="3" step="0.1" value="1"></div><div class="ui-row"><label>Color</label><select id="colorMode"><option value="single">Single</option><option value="velocity">By Velocity</option><option value="cluster">By Cluster</option><option value="rainbow">Rainbow</option></select></div><div class="ui-row"><label><input type="checkbox" id="trails" checked> Trails</label></div></div>
+<div class="stats"><div class="stat"><div class="stat-value" id="statParticles">0</div><div class="stat-label">Particles</div></div><div class="stat"><div class="stat-value" id="statConnections">0</div><div class="stat-label">Connections</div></div><div class="stat"><div class="stat-value" id="statFps">60</div><div class="stat-label">FPS</div></div></div>
+<div class="footer">Nemotron 3 Ultra · 072 / 100 · Particle Network</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let particles=[],animationId,lastTime=0;
+const trailCanvas=document.createElement('canvas');
+const trailCtx=trailCanvas.getContext('2d');
+function resize(){
+  canvas.width=window.innerWidth;
+  canvas.height=window.innerHeight;
+  trailCanvas.width=window.innerWidth;
+  trailCanvas.height=window.innerHeight;
+}
+function createParticles(count){
+  particles=[];
+  for(let i=0;i<count;i++){
+    particles.push({x:Math.random()*canvas.width,y:Math.random()*canvas.height,vx:(Math.random()-0.5)*2,vy:(Math.random()-0.5)*2,ax:0,ay:0,cluster:Math.floor(Math.random()*5),age:0,maxAge:Math.random()*1000+500});
+  }
+}
+function getColor(p,mode){
+  const colors=['#58a6ff','#3fb950','#d29922','#f85149','#a371f7'];
+  if(mode==='single')return colors[0];
+  if(mode==='cluster')return colors[p.cluster%colors.length];
+  if(mode==='velocity'){
+    const speed=Math.hypot(p.vx,p.vy);
+    const idx=Math.min(Math.floor(speed*2),colors.length-1);
+    return colors[idx];
+  }
+  // rainbow
+  const hue=(p.age*0.5)%360;
+  return `hsl(${hue},70%,60%)`;
+}
+function update(){
+  const mode=document.getElementById('modeSelect').value;
+  const connDist=parseFloat(document.getElementById('connDist').value);
+  const speed=parseFloat(document.getElementById('speed').value);
+  let connections=0;
+  particles.forEach((p,i)=>{
+    p.age++;
+    if(p.age>p.maxAge){
+      p.x=Math.random()*canvas.width;
+      p.y=Math.random()*canvas.height;
+      p.age=0;
+      p.maxAge=Math.random()*1000+500;
+    }
+    // Mode behaviors
+    if(mode==='flow'){
+      const angle=Math.sin(p.x*0.005+Date.now()*0.001)*Math.PI*2;
+      p.ax+=Math.cos(angle)*0.01;
+      p.ay+=Math.sin(angle)*0.01;
+    }else if(mode==='attract'){
+      particles.forEach((other,j)=>{
+        if(i!==j){
+          const dx=other.x-p.x,dy=other.y-p.y;
+          const dist=Math.hypot(dx,dy);
+          if(dist<connDist&&dist>0){
+            const force=0.0001/dist;
+            p.ax+=dx*force;p.ay+=dy*force;
+          }
+        }
+      });
+    }else if(mode==='repulse'){
+      particles.forEach((other,j)=>{
+        if(i!==j){
+          const dx=other.x-p.x,dy=other.y-p.y;
+          const dist=Math.hypot(dx,dy);
+          if(dist<80&&dist>0){
+            const force=0.01/dist;
+            p.ax-=dx*force;p.ay-=dy*force;
+          }
+        }
+      });
+    }
+    p.vx+=p.ax;p.vy+=p.ay;
+    p.vx*=0.99;p.vy*=0.99;
+    p.x+=p.vx*speed;p.y+=p.vy*speed;
+    p.ax=0;p.ay=0;
+    // Wrap
+    if(p.x<0)p.x=canvas.width;if(p.x>canvas.width)p.x=0;
+    if(p.y<0)p.y=canvas.height;if(p.y>canvas.height)p.y=0;
+  });
+  // Count connections
+  if(mode==='connections'||mode==='flow'){
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[j].x-particles[i].x,dy=particles[j].y-particles[i].y;
+        if(Math.hypot(dx,dy)<connDist)connections++;
+      }
+    }
+  }
+  document.getElementById('statConnections').textContent=connections;
+}
+function draw(){
+  const trails=document.getElementById('trails').checked;
+  const colorMode=document.getElementById('colorMode').value;
+  if(trails){
+    trailCtx.fillStyle='rgba(13,17,23,0.15)';
+    trailCtx.fillRect(0,0,canvas.width,canvas.height);
+    ctx.drawImage(trailCanvas,0,0);
+  }else{
+    ctx.fillStyle='var(--bg)';
+    ctx.fillRect(0,0,canvas.width,canvas.height);
+  }
+  const mode=document.getElementById('modeSelect').value;
+  const connDist=parseFloat(document.getElementById('connDist').value);
+  // Draw connections
+  if(mode==='connections'||mode==='flow'){
+    ctx.lineWidth=0.5;
+    for(let i=0;i<particles.length;i++){
+      for(let j=i+1;j<particles.length;j++){
+        const dx=particles[j].x-particles[i].x,dy=particles[j].y-particles[i].y;
+        const dist=Math.hypot(dx,dy);
+        if(dist<connDist){
+          const alpha=1-dist/connDist;
+          ctx.strokeStyle=`rgba(88,166,255,${alpha*0.3})`;
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x,particles[i].y);
+          ctx.lineTo(particles[j].x,particles[j].y);
+          ctx.stroke();
+        }
+      }
+    }
+  }
+  // Draw particles
+  particles.forEach(p=>{
+    const color=getColor(p,colorMode);
+    ctx.fillStyle=color;
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fill();
+  });
+  // Draw to trail canvas
+  if(trails){
+    trailCtx.drawImage(canvas,0,0);
+  }
+}
+function animate(time){
+  const delta=(time-lastTime)/1000;
+  lastTime=time;
+  document.getElementById('statFps').textContent=Math.round(1/delta);
+  document.getElementById('statParticles').textContent=particles.length;
+  update();
+  draw();
+  animationId=requestAnimationFrame(animate);
+}
+resize();
+createParticles(300);
+animate(0);
+window.addEventListener('resize',()=>{resize();createParticles(parseInt(document.getElementById('particleCount').value));});
+document.getElementById('particleCount').oninput=e=>{createParticles(parseInt(e.target.value));};
+document.getElementById('modeSelect').onchange=()=>{createParticles(parseInt(document.getElementById('particleCount').value));};
+</script>
+</body>
+</html>

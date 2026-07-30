@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40 — Design Token Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#fafafa;--fg:#1a1a1a;--muted:#666;--accent:#0066cc;--card:#fff;--border:#e0e0e0}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--card:#161b22;--border:#30363d}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.controls{display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.controls select,.controls input{background:var(--card);border:1px solid var(--border);color:var(--fg);padding:.3rem .5rem;font:inherit;font-size:.7rem}
+.main{padding:2rem;max-width:1400px;margin:0 auto}
+.category{margin-bottom:3rem}
+.category-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;padding-bottom:.5rem;border-bottom:1px solid var(--border)}
+.category-header h2{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.category-header .count{font-size:.7rem;color:var(--muted)}
+.token-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.75rem}
+.token{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;transition:box-shadow .2s,border-color .2s}
+.token:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);border-color:var(--accent)}
+@media (prefers-color-scheme:dark){.token:hover{box-shadow:0 4px 16px rgba(0,0,0,0.3)}}
+.token-name{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;word-break:break-all}
+.token-value{font-family:'JetBrains Mono',monospace;font-size:.8rem;color:var(--fg);margin-bottom:.5rem;word-break:break-all}
+.token-preview{height:24px;border-radius:4px;border:1px solid var(--border);margin-bottom:.5rem}
+.token-meta{display:flex;gap:1rem;font-size:.6rem;color:var(--muted);flex-wrap:wrap}
+.token-meta span{display:flex;align-items:center;gap:.25rem}
+.token-type{padding:.1rem .4rem;background:var(--accent);color:var(--bg);font-weight:700;border-radius:2px}
+.token-actions{display:flex;gap:.5rem;margin-top:.5rem;padding-top:.5rem;border-top:1px solid var(--border)}
+.token-actions button{flex:1;padding:.3rem .5rem;font:inherit;font-size:.6rem;background:var(--bg);border:1px solid var(--border);color:var(--fg);cursor:pointer;border-radius:3px;transition:all .1s}
+.token-actions button:hover{border-color:var(--accent);color:var(--accent)}
+.search-box{width:100%;max-width:400px;padding:.5rem 1rem;border:1px solid var(--border);background:var(--card);color:var(--fg);font:inherit;border-radius:6px;margin-bottom:2rem}
+.search-box:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Design <span>Token</span> Visualizer</h1><div class="controls"><label>Format <select id="format"><option value="css">CSS Custom Props</option><option value="json">JSON</option><option value="scss">SCSS Variables</option><option value="js">JS/TS Module</option></select></label><label><input type="checkbox" id="showRefs" checked> Show References</label><button id="exportBtn">Export</button></div></header>
+<main class="main">
+<input type="search" class="search-box" id="search" placeholder="Search tokens... (name, value, type)">
+<div id="categories"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 040 / 100 · Design Token Visualizer</footer>
+<script>
+const tokens={
+  color:[
+    {name:'color-primary',value:'#0066cc',type:'color',desc:'Primary brand color'},
+    {name:'color-primary-hover',value:'#0052a3',type:'color',desc:'Primary hover state'},
+    {name:'color-primary-active',value:'#003d7a',type:'color',desc:'Primary active state'},
+    {name:'color-secondary',value:'#6b7280',type:'color',desc:'Secondary brand color'},
+    {name:'color-success',value:'#22863a',type:'color',desc:'Success state'},
+    {name:'color-warning',value:'#bf8700',type:'color',desc:'Warning state'},
+    {name:'color-danger',value:'#cb2431',type:'color',desc:'Danger/error state'},
+    {name:'color-info',value:'#0969da',type:'color',desc:'Informational state'},
+    {name:'color-bg',value:'#ffffff',type:'color',desc:'Page background'},
+    {name:'color-bg-secondary',value:'#f6f8fa',type:'color',desc:'Secondary background'},
+    {name:'color-bg-tertiary',value:'#f3f4f6',type:'color',desc:'Tertiary background'},
+    {name:'color-fg',value:'#1a1a1a',type:'color',desc:'Primary text'},
+    {name:'color-fg-muted',value:'#666666',type:'color',desc:'Muted text'},
+    {name:'color-fg-subtle',value:'#9ca3af',type:'color',desc:'Subtle text'},
+    {name:'color-border',value:'#d0d7de',type:'color',desc:'Default border'},
+    {name:'color-border-muted',value:'#e5e7eb',type:'color',desc:'Subtle border'},
+    {name:'color-focus',value:'#0066cc',type:'color',desc:'Focus ring'},
+    {name:'color-overlay',value:'#00000080',type:'color',desc:'Modal overlay'}
+  ],
+  spacing:[
+    {name:'space-1',value:'0.25rem',type:'spacing',desc:'4px'},
+    {name:'space-2',value:'0.5rem',type:'spacing',desc:'8px'},
+    {name:'space-3',value:'0.75rem',type:'spacing',desc:'12px'},
+    {name:'space-4',value:'1rem',type:'spacing',desc:'16px'},
+    {name:'space-5',value:'1.5rem',type:'spacing',desc:'24px'},
+    {name:'space-6',value:'2rem',type:'spacing',desc:'32px'},
+    {name:'space-7',value:'3rem',type:'spacing',desc:'48px'},
+    {name:'space-8',value:'4rem',type:'spacing',desc:'64px'},
+    {name:'space-9',value:'6rem',type:'spacing',desc:'96px'},
+    {name:'space-10',value:'8rem',type:'spacing',desc:'128px'}
+  ],
+  typography:[
+    {name:'font-sans',value:'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',type:'font-family',desc:'UI sans-serif stack'},
+    {name:'font-mono',value:'"JetBrains Mono", "Fira Code", "SF Mono", monospace',type:'font-family',desc:'UI monospace stack'},
+    {name:'font-display',value:'"Syne", "Inter", sans-serif',type:'font-family',desc:'Display/heading font'},
+    {name:'font-editorial',value:'"Playfair Display", Georgia, serif',type:'font-family',desc:'Editorial/long-form font'},
+    {name:'text-xs',value:'0.75rem',type:'font-size',desc:'12px'},
+    {name:'text-sm',value:'0.875rem',type:'font-size',desc:'14px'},
+    {name:'text-base',value:'1rem',type:'font-size',desc:'16px'},
+    {name:'text-lg',value:'1.125rem',type:'font-size',desc:'18px'},
+    {name:'text-xl',value:'1.25rem',type:'font-size',desc:'20px'},
+    {name:'text-2xl',value:'1.5rem',type:'font-size',desc:'24px'},
+    {name:'text-3xl',value:'2rem',type:'font-size',desc:'32px'},
+    {name:'text-4xl',value:'3rem',type:'font-size',desc:'48px'},
+    {name:'text-5xl',value:'4rem',type:'font-size',desc:'64px'},
+    {name:'leading-none',value:'1',type:'line-height',desc:'No leading'},
+    {name:'leading-tight',value:'1.25',type:'line-height',desc:'Tight leading'},
+    {name:'leading-normal',value:'1.5',type:'line-height',desc:'Normal leading'},
+    {name:'leading-relaxed',value:'1.75',type:'line-height',desc:'Relaxed leading'},
+    {name:'leading-loose',value:'2',type:'line-height',desc:'Loose leading'},
+    {name:'font-hairline',value:'100',type:'font-weight',desc:'Hairline'},
+    {name:'font-thin',value:'200',type:'font-weight',desc:'Thin'},
+    {name:'font-light',value:'300',type:'font-weight',desc:'Light'},
+    {name:'font-normal',value:'400',type:'font-weight',desc:'Normal'},
+    {name:'font-medium',value:'500',type:'font-weight',desc:'Medium'},
+    {name:'font-semibold',value:'600',type:'font-weight',desc:'Semibold'},
+    {name:'font-bold',value:'700',type:'font-weight',desc:'Bold'},
+    {name:'font-extrabold',value:'800',type:'font-weight',desc:'Extrabold'},
+    {name:'font-black',value:'900',type:'font-weight',desc:'Black'}
+  ],
+  border:[
+    {name:'radius-none',value:'0',type:'border-radius',desc:'No radius'},
+    {name:'radius-sm',value:'0.125rem',type:'border-radius',desc:'2px'},
+    {name:'radius-md',value:'0.25rem',type:'border-radius',desc:'4px'},
+    {name:'radius-lg',value:'0.5rem',type:'border-radius',desc:'8px'},
+    {name:'radius-xl',value:'0.75rem',type:'border-radius',desc:'12px'},
+    {name:'radius-2xl',value:'1rem',type:'border-radius',desc:'16px'},
+    {name:'radius-full',value:'9999px',type:'border-radius',desc:'Full/pill'},
+    {name:'border-none',value:'0',type:'border-width',desc:'No border'},
+    {name:'border-thin',value:'1px',type:'border-width',desc:'Thin border'},
+    {name:'border-medium',value:'2px',type:'border-width',desc:'Medium border'},
+    {name:'border-thick',value:'4px',type:'border-width',desc:'Thick border'}
+  ],
+  shadow:[
+    {name:'shadow-xs',value:'0 1px 2px rgba(0,0,0,0.05)',type:'shadow',desc:'Extra small'},
+    {name:'shadow-sm',value:'0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06)',type:'shadow',desc:'Small'},
+    {name:'shadow-md',value:'0 4px 6px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.06)',type:'shadow',desc:'Medium'},
+    {name:'shadow-lg',value:'0 10px 15px rgba(0,0,0,0.1), 0 4px 6px rgba(0,0,0,0.05)',type:'shadow',desc:'Large'},
+    {name:'shadow-xl',value:'0 20px 25px rgba(0,0,0,0.1), 0 10px 10px rgba(0,0,0,0.04)',type:'shadow',desc:'Extra large'},
+    {name:'shadow-2xl',value:'0 25px 50px rgba(0,0,0,0.15)',type:'shadow',desc:'2X large'},
+    {name:'shadow-inner',value:'inset 0 2px 4px rgba(0,0,0,0.06)',type:'shadow',desc:'Inner shadow'},
+    {name:'shadow-focus',value:'0 0 0 3px rgba(0,102,204,0.4)',type:'shadow',desc:'Focus ring'}
+  ],
+  motion:[
+    {name:'duration-fast',value:'150ms',type:'duration',desc:'Fast transition'},
+    {name:'duration-normal',value:'250ms',type:'duration',desc:'Normal transition'},
+    {name:'duration-slow',value:'350ms',type:'duration',desc:'Slow transition'},
+    {name:'duration-slower',value:'500ms',type:'duration',desc:'Slower transition'},
+    {name:'ease-linear',value:'linear',type:'easing',desc:'Linear easing'},
+    {name:'ease-in',value:'cubic-bezier(0.4, 0, 1, 1)',type:'easing',desc:'Ease in'},
+    {name:'ease-out',value:'cubic-bezier(0, 0, 0.2, 1)',type:'easing',desc:'Ease out'},
+    {name:'ease-in-out',value:'cubic-bezier(0.4, 0, 0.2, 1)',type:'easing',desc:'Ease in-out'},
+    {name:'ease-spring',value:'cubic-bezier(0.16, 1, 0.3, 1)',type:'easing',desc:'Spring easing'},
+    {name:'ease-bounce',value:'cubic-bezier(0.68, -0.55, 0.27, 1.55)',type:'easing',desc:'Bounce easing'}
+  ],
+  zIndex:[
+    {name:'z-dropdown',value:'100',type:'z-index',desc:'Dropdowns'},
+    {name:'z-sticky',value:'200',type:'z-index',desc:'Sticky elements'},
+    {name:'z-fixed',value:'300',type:'z-index',desc:'Fixed headers'},
+    {name:'z-modal-backdrop',value:'400',type:'z-index',desc:'Modal backdrop'},
+    {name:'z-modal',value:'500',type:'z-index',desc:'Modal dialog'},
+    {name:'z-popover',value:'600',type:'z-index',desc:'Popovers'},
+    {name:'z-tooltip',value:'700',type:'z-index',desc:'Tooltips'},
+    {name:'z-toast',value:'800',type:'z-index',desc:'Toasts/alerts'}
+  ],
+  breakpoint:[
+    {name:'bp-xs',value:'320px',type:'breakpoint',desc:'Extra small'},
+    {name:'bp-sm',value:'640px',type:'breakpoint',desc:'Small'},
+    {name:'bp-md',value:'768px',type:'breakpoint',desc:'Medium'},
+    {name:'bp-lg',value:'1024px',type:'breakpoint',desc:'Large'},
+    {name:'bp-xl',value:'1280px',type:'breakpoint',desc:'Extra large'},
+    {name:'bp-2xl',value:'1536px',type:'breakpoint',desc:'2X large'}
+  ]
+};
+function getPreviewStyle(token){
+  if(token.type==='color')return `background:${token.value}`;
+  if(token.type==='shadow')return `box-shadow:${token.value}`;
+  if(token.type==='border-radius')return `border-radius:${token.value};background:var(--fg);width:60px;height:60px;display:inline-block`;
+  return '';
+}
+function renderCategory(cat,tokens){
+  const filtered=tokens.filter(t=>t.name.toLowerCase().includes(search.value.toLowerCase())||t.value.toLowerCase().includes(search.value.toLowerCase())||t.type.toLowerCase().includes(search.value.toLowerCase())||t.desc.toLowerCase().includes(search.value.toLowerCase()));
+  if(filtered.length===0)return '';
+  return `<div class="category"><div class="category-header"><h2>${cat}</h2><span class="count">${filtered.length} tokens</span></div><div class="token-grid">${filtered.map(t=>`<div class="token"><div class="token-name">${t.name}</div><div class="token-value">${t.value}</div><div class="token-preview" style="${getPreviewStyle(t)}"></div><div class="token-meta"><span class="token-type">${t.type}</span><span>${t.desc}</span></div><div class="token-actions"><button onclick="copyToken('${t.name}','${t.value.replace(/'/g,"\\'")}')">Copy Value</button><button onclick="copyToken('${t.name}','--${t.name}: ${t.value};')">Copy CSS</button></div></div>`).join('')}</div></div>`;
+}
+function copyToken(name,value){
+  navigator.clipboard.writeText(value);
+  const btn=event.target;const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1000);
+}
+function render(){
+  document.getElementById('categories').innerHTML=Object.entries(tokens).map(([cat,ts])=>renderCategory(cat,ts)).join('');
+}
+const search=document.getElementById('search');
+search.addEventListener('input',render);
+document.getElementById('exportBtn').onclick=()=>{
+  const fmt=document.getElementById('format').value;
+  let out='';
+  if(fmt==='css'){
+    out=':root{\n';
+    Object.values(tokens).flat().forEach(t=>{out+=`  --${t.name}: ${t.value};\n`;});
+    out+='}';
+  }else if(fmt==='json'){
+    const obj={};
+    Object.entries(tokens).forEach(([cat,ts])=>{obj[cat]=ts.reduce((a,t)=>{a[t.name]=t.value;return a;},{});});
+    out=JSON.stringify(obj,null,2);
+  }else if(fmt==='scss'){
+    Object.values(tokens).flat().forEach(t=>{out+=`$${t.name}: ${t.value};\n`;});
+  }else if(fmt==='js'){
+    out='export const tokens = {\n';
+    Object.entries(tokens).forEach(([cat,ts])=>{out+=`  ${cat}: {\n`;ts.forEach(t=>{out+=`    ${t.name}: '${t.value}',\n`;});out+=`  },\n`;});
+    out+='};\n';
+  }
+  navigator.clipboard.writeText(out);
+  const btn=document.getElementById('exportBtn');const o=btn.textContent;btn.textContent='Copied!';setTimeout(()=>btn.textContent=o,1000);
+};
+render();
+</script>
+</body>
+</html>

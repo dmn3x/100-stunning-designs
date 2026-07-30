@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>50 — Color Contrast Checker</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:1fr 400px;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:1fr auto}}
+.main{padding:2rem;max-width:800px;margin:0 auto}
+.color-picker{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem;margin-bottom:1.5rem}
+.picker-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media (max-width:600px){.picker-row{grid-template-columns:1fr}}
+.picker-group label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.color-input{display:flex;align-items:center;gap:.5rem}
+.color-input input[type=color]{width:60px;height:40px;border:none;border-radius:4px;cursor:pointer}
+.color-input input[type=text]{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.5rem;border-radius:4px;font:inherit;font-size:.8rem}
+.color-input input[type=text]:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.swatch-preview{height:120px;display:flex;gap:1rem;margin-top:1rem;border-radius:8px;overflow:hidden}
+.swatch{flex:1;display:flex;align-items:center;justify-content:center;font-weight:500;position:relative}
+.swatch.fg{border:2px solid var(--border)}
+.swatch.bg{border:2px solid var(--border)}
+.results{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1.5rem}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:1rem 0;border-bottom:1px solid var(--border)}
+.result-row:last-child{border-bottom:none}
+.result-label{font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.result-value{font-size:1.5rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.result-value.pass{color:var(--accent2)}
+.result-value.fail{color:var(--accent4)}
+.result-value.warn{color:var(--accent3)}
+.result-badge{font-size:.6rem;padding:.2rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.badge-pass{background:rgba(63,185,80,.2);color:var(--accent2)}
+.badge-fail{background:rgba(248,81,73,.2);color:var(--accent4)}
+.badge-aa{background:rgba(88,166,255,.2);color:var(--accent)}
+.badge-aaa{background:rgba(63,185,81,.2);color:var(--accent2)}
+.levels{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem;margin-top:1rem}
+.level{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem}
+.level-header{display:flex;justify-content:space-between;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+.level-ratio{font-size:1.25rem;font-weight:700;font-family:'JetBrains Mono',monospace}
+.sidebar{background:var(--card);border-left:1px solid var(--border);padding:1.5rem;overflow:auto}
+.sidebar h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.palette{display:grid;grid-template-columns:repeat(2,1fr);gap:.5rem}
+.palette-color{aspect-ratio:1;border-radius:4px;border:1px solid var(--border);cursor:pointer;transition:transform .1s}
+.palette-color:hover{transform:scale(1.05);border-color:var(--accent)}
+.palette-color.active{box-shadow:0 0 0 2px var(--accent),0 0 0 4px var(--bg)}
+.info{font-size:.7rem;color:var(--muted);line-height:1.8;margin-top:2rem}
+.info h3{font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;margin-bottom:.5rem;color:var(--fg)}
+.footer{grid-column:1/-1;text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<main class="main">
+<div class="color-picker">
+<div class="picker-row">
+<div class="picker-group"><label>Foreground Color</label><div class="color-input"><input type="color" id="fgColor" value="#ffffff"><input type="text" id="fgHex" value="#ffffff"></div></div>
+<div class="picker-group"><label>Background Color</label><div class="color-input"><input type="color" id="bgColor" value="#0d1117"><input type="text" id="bgHex" value="#0d1117"></div></div>
+</div>
+<div class="swatch-preview">
+<div class="swatch fg" id="fgSwatch">Text</div>
+<div class="swatch bg" id="bgSwatch">Background</div>
+</div>
+</div>
+<div class="results">
+<div class="result-row"><span class="result-label">Contrast Ratio</span><span class="result-value" id="ratio">1.00</span></div>
+<div class="result-row"><span class="result-label">WCAG AA (Normal)</span><span class="result-value" id="aaNormal">—</span><span class="result-badge" id="aaNormalBadge">—</span></div>
+<div class="result-row"><span class="result-label">WCAG AA (Large)</span><span class="result-value" id="aaLarge">—</span><span class="result-badge" id="aaLargeBadge">—</span></div>
+<div class="result-row"><span class="result-label">WCAG AAA (Normal)</span><span class="result-value" id="aaaNormal">—</span><span class="result-badge" id="aaaNormalBadge">—</span></div>
+<div class="result-row"><span class="result-label">WCAG AAA (Large)</span><span class="result-value" id="aaaLarge">—</span><span class="result-badge" id="aaaLargeBadge">—</span></div>
+<div class="levels">
+<div class="level"><div class="level-header"><span>AA Normal</span><span>≥ 4.5:1</span></div><div class="level-ratio" id="levelAaNormal">—</div></div>
+<div class="level"><div class="level-header"><span>AA Large</span><span>≥ 3:1</span></div><div class="level-ratio" id="levelAaLarge">—</div></div>
+<div class="level"><div class="level-header"><span>AAA Normal</span><span>≥ 7:1</span></div><div class="level-ratio" id="levelAaaNormal">—</div></div>
+<div class="level"><div class="level-header"><span>AAA Large</span><span>≥ 4.5:1</span></div><div class="level-ratio" id="levelAaaLarge">—</div></div>
+</div>
+</div>
+</main>
+<aside class="sidebar">
+<h2>Accessible Palettes</h2>
+<div class="palette" id="palette"></div>
+<div class="info">
+<h3>WCAG Guidelines</h3>
+<strong>AA Normal:</strong> 4.5:1 for text < 18pt/14pt bold<br>
+<strong>AA Large:</strong> 3:1 for text ≥ 18pt or 14pt bold<br>
+<strong>AAA Normal:</strong> 7:1 for text < 18pt/14pt bold<br>
+<strong>AAA Large:</strong> 4.5:1 for text ≥ 18pt or 14pt bold<br><br>
+<strong>Large text:</strong> ≥ 18pt (24px) or ≥ 14pt (18.5px) bold
+</div>
+</aside>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 050 / 100 · Color Contrast Checker</footer>
+<script>
+const fgColor=document.getElementById('fgColor');
+const bgColor=document.getElementById('bgColor');
+const fgHex=document.getElementById('fgHex');
+const bgHex=document.getElementById('bgHex');
+const fgSwatch=document.getElementById('fgSwatch');
+const bgSwatch=document.getElementById('bgSwatch');
+const ratioEl=document.getElementById('ratio');
+const aaNormal=document.getElementById('aaNormal');
+const aaLarge=document.getElementById('aaLarge');
+const aaaNormal=document.getElementById('aaaNormal');
+const aaaLarge=document.getElementById('aaaLarge');
+const aaNormalBadge=document.getElementById('aaNormalBadge');
+const aaLargeBadge=document.getElementById('aaLargeBadge');
+const aaaNormalBadge=document.getElementById('aaaNormalBadge');
+const aaaLargeBadge=document.getElementById('aaaLargeBadge');
+const levelAaNormal=document.getElementById('levelAaNormal');
+const levelAaLarge=document.getElementById('levelAaLarge');
+const levelAaaNormal=document.getElementById('levelAaaNormal');
+const levelAaaLarge=document.getElementById('levelAaaLarge');
+const palette=document.getElementById('palette');
+const presets=[
+  {fg:'#ffffff',bg:'#0d1117',name:'GitHub Dark'},
+  {fg:'#1a1a1a',bg:'#ffffff',name:'GitHub Light'},
+  {fg:'#000000',bg:'#ffffff',name:'Black on White'},
+  {fg:'#ffffff',bg:'#000000',name:'White on Black'},
+  {fg:'#58a6ff',bg:'#0d1117',name:'Blue Accent'},
+  {fg:'#3fb950',bg:'#0d1117',name:'Green Success'},
+  {fg:'#d29922',bg:'#0d1117',name:'Yellow Warning'},
+  {fg:'#f85149',bg:'#0d1117',name:'Red Danger'},
+  {fg:'#ffffff',bg:'#161b22',name:'Card Dark'},
+  {fg:'#1a1a1a',bg:'#f6f8fa',name:'Card Light'},
+  {fg:'#8b949e',bg:'#0d1117',name:'Muted Dark'},
+  {fg:'#666666',bg:'#ffffff',name:'Muted Light'}
+];
+function hexToRgb(hex){
+  const h=hex.replace('#','');
+  const r=parseInt(h.slice(0,2),16),g=parseInt(h.slice(2,4),16),b=parseInt(h.slice(4,6),16);
+  return{r,g,b};
+}
+function luminance(r,g,b){
+  const srgb=[r,g,b].map(c=>{c/=255;return c<=0.03928?c/12.92:Math.pow((c+0.055)/1.055,2.4)});
+  return 0.2126*srgb[0]+0.7152*srgb[1]+0.0722*srgb[2];
+}
+function contrastRatio(fg,bg){
+  const L1=luminance(...fg),L2=luminance(...bg);
+  return (Math.max(L1,L2)+0.05)/(Math.min(L1,L2)+0.05);
+}
+function update(){
+  const fg=hexToRgb(fgColor.value);
+  const bg=hexToRgb(bgColor.value);
+  fgHex.value=fgColor.value;bgHex.value=bgColor.value;
+  fgSwatch.style.color=fgColor.value;fgSwatch.style.background=bgColor.value;
+  bgSwatch.style.color=fgColor.value;bgSwatch.style.background=bgColor.value;
+  const ratio=contrastRatio([fg.r,fg.g,fg.b],[bg.r,bg.g,bg.b]);
+  ratioEl.textContent=ratio.toFixed(2)+':1';
+  const checks=[
+    {el:aaNormal,badge:aaNormalBadge,thresh:4.5,label:'Pass',levelEl:levelAaNormal},
+    {el:aaLarge,badge:aaLargeBadge,thresh:3,label:'Pass',levelEl:levelAaLarge},
+    {el:aaaNormal,badge:aaaNormalBadge,thresh:7,label:'Pass',levelEl:levelAaaNormal},
+    {el:aaaLarge,badge:aaaLargeBadge,thresh:4.5,label:'Pass',levelEl:levelAaaLarge}
+  ];
+  checks.forEach(c=>{
+    const pass=ratio>=c.thresh;
+    c.el.textContent=pass?'Pass':'Fail';
+    c.el.className='result-value '+(pass?'pass':'fail');
+    c.badge.textContent=pass?'Pass':'Fail';
+    c.badge.className='result-badge '+(pass?'badge-pass':'badge-fail');
+    c.levelEl.textContent=ratio.toFixed(2)+':1';
+    c.levelEl.style.color=pass?'var(--accent2)':'var(--accent4)';
+  });
+}
+function renderPalette(){
+  palette.innerHTML=presets.map((p,i)=>`<div class="palette-color${i===0?' active':''}" style="background:${p.bg}" data-fg="${p.fg}" data-bg="${p.bg}" title="${p.name}"></div>`).join('');
+  document.querySelectorAll('.palette-color').forEach(el=>{el.onclick=()=>{document.querySelectorAll('.palette-color').forEach(c=>c.classList.remove('active'));el.classList.add('active');fgColor.value=el.dataset.fg;bgColor.value=el.dataset.bg;update();};});
+}
+[fgColor,bgColor,fgHex,bgHex].forEach(el=>el.addEventListener('input',update));
+update();
+renderPalette();
+</script>
+</body>
+</html>

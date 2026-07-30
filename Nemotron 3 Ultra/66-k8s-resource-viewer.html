@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>66 — Kubernetes Resource Viewer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--border);padding:1rem 2rem;z-index:10;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem}
+.header h1{font-size:1.5rem;font-weight:300}
+.header h1 span{font-weight:700;color:var(--accent)}
+.main{padding:2rem;max-width:1600px;margin:0 auto}
+.resource-tabs{display:flex;gap:.5rem;margin-bottom:1.5rem;flex-wrap:wrap}
+.resource-tab{padding:.5rem 1rem;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);background:var(--card);border:1px solid var(--border);border-radius:4px;cursor:pointer}
+.resource-tab:hover{border-color:var(--accent);color:var(--accent)}
+.resource-tab.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.resource-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:1.5rem}
+.resource-card{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.resource-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.resource-header h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.resource-status{font-size:.6rem;padding:.2rem .5rem;border-radius:3px;font-weight:700;text-transform:uppercase}
+.resource-status.running{background:rgba(63,185,80,.2);color:var(--accent2)}
+.resource-status.pending{background:rgba(210,153,34,.2);color:var(--accent3)}
+.resource-status.failed{background:rgba(248,81,73,.2);color:var(--accent4)}
+.resource-status.unknown{background:rgba(139,148,158,.2);color:var(--muted)}
+.resource-body{padding:1rem}
+.resource-meta{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;font-size:.7rem;margin-bottom:1rem}
+.resource-meta .label{color:var(--muted)}
+.resource-meta .value{font-weight:500;font-family:'JetBrains Mono',monospace}
+.resource-labels{display:flex;flex-wrap:wrap;gap:.35rem;margin-bottom:1rem}
+.label-tag{font-size:.55rem;padding:.1rem .4rem;background:rgba(88,166,255,.1);border:1px solid var(--accent);border-radius:3px;color:var(--accent)}
+.resource-containers{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem}
+.container{padding:.5rem 0;border-bottom:1px solid var(--border);font-size:.7rem}
+.container:last-child{border-bottom:none}
+.container-name{font-weight:500}
+.container-image{color:var(--muted);font-size:.65rem}
+.container-status{display:flex;align-items:center;gap:.35rem;margin-top:.25rem}
+.container-status .dot{width:6px;height:6px;border-radius:50%}
+.container-status.running .dot{background:var(--accent2)}
+.container-status.waiting .dot{background:var(--accent3)}
+.container-status.terminated .dot{background:var(--accent4)}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<header class="header"><h1>Kubernetes <span>Resource</span> Viewer</h1><div style="font-size:.7rem;color:var(--muted)">Cluster: <span style="color:var(--accent)">kind-control-plane</span> | Namespace: <span style="color:var(--accent)" id="nsFilter">all</span></div></header>
+<main class="main">
+<div class="resource-tabs" id="resourceTabs"></div>
+<div class="resource-grid" id="resourceGrid"></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 066 / 100 · Kubernetes Resource Viewer</footer>
+<script>
+const resourceTabs=document.getElementById('resourceTabs');
+const resourceGrid=document.getElementById('resourceGrid');
+const resourceTypes=['pods','deployments','services','configmaps','secrets','ingresses','pvcs','nodes'];
+const sampleData={
+  pods:[
+    {name:'nginx-7f5d9b5c8-abc12',namespace:'default',status:'Running',node:'kind-worker',ip:'10.244.1.5',age:'2d',containers:[{name:'nginx',image:'nginx:1.25',status:'Running'}]},
+    {name:'api-deploy-6b4f8c7d9-xyz78',namespace:'production',status:'Running',node:'kind-worker2',ip:'10.244.2.10',age:'5h',containers:[{name:'api',image:'myapp:v2.3.1',status:'Running'},{name:'sidecar',image:'istio/proxyv2:1.20',status:'Running'}]},
+    {name:'redis-master-0',namespace:'databases',status:'Running',node:'kind-worker',ip:'10.244.1.8',age:'10d',containers:[{name:'redis',image:'redis:7-alpine',status:'Running'}]},
+    {name:'failing-pod',namespace:'staging',status:'CrashLoopBackOff',node:'kind-worker2',ip:'<none>',age:'30m',containers:[{name:'app',image:'broken:v1',status:'CrashLoopBackOff'}]}
+  ],
+  deployments:[
+    {name:'nginx',namespace:'default',replicas:'3/3',ready:3,upToDate:3,available:3,age:'2d',image:'nginx:1.25'},
+    {name:'api',namespace:'production',replicas:'5/5',ready:5,upToDate:5,available:5,age:'5h',image:'myapp:v2.3.1'},
+    {name:'frontend',namespace:'production',replicas:'3/3',ready:3,upToDate:3,available:3,age:'1d',image:'frontend:v1.2.0'},
+    {name:'worker',namespace:'background',replicas:'2/3',ready:2,upToDate:2,available:2,age:'4h',image:'worker:v0.9.0'}
+  ],
+  services:[
+    {name:'nginx',namespace:'default',type:'ClusterIP',clusterIP:'10.96.1.50',ports:'80/TCP',age:'2d'},
+    {name:'api',namespace:'production',type:'LoadBalancer',clusterIP:'10.96.2.100',ports:'80:30080/TCP,443:30443/TCP',age:'5h',externalIP:'35.123.45.67'},
+    {name:'redis',namespace:'databases',type:'ClusterIP',clusterIP:'10.96.3.20',ports:'6379/TCP',age:'10d'},
+    {name:'frontend',namespace:'production',type:'NodePort',clusterIP:'10.96.4.30',ports:'80:30080/TCP',age:'1d'}
+  ],
+  configmaps:[
+    {name:'nginx-config',namespace:'default',data:3,age:'2d'},
+    {name:'api-config',namespace:'production',data:5,age:'5h'},
+    {name:'feature-flags',namespace:'production',data:12,age:'3d'}
+  ],
+  secrets:[
+    {name:'tls-secret',namespace:'default',type:'kubernetes.io/tls',data:2,age:'2d'},
+    {name:'db-credentials',namespace:'production',type:'Opaque',data:4,age:'5h'},
+    {name:'api-keys',namespace:'production',type:'Opaque',data:8,age:'1d'},
+    {name:'docker-registry',namespace:'default',type:'kubernetes.io/dockerconfigjson',data:1,age:'30d'}
+  ],
+  ingresses:[
+    {name:'api-ingress',namespace:'production',class:'nginx',hosts:'api.example.com',address:'35.123.45.67',age:'5h'},
+    {name:'web-ingress',namespace:'production',class:'nginx',hosts:'app.example.com,www.example.com',address:'35.123.45.67',age:'1d'}
+  ],
+  pvcs:[
+    {name:'redis-data',namespace:'databases',status:'Bound',volume:'pvc-abc123',capacity:'10Gi',storageClass:'standard',age:'10d'},
+    {name:'postgres-data',namespace:'databases',status:'Bound',volume:'pvc-def456',capacity:'50Gi',storageClass:'fast',age:'8d'},
+    {name:'logs-pvc',namespace:'monitoring',status:'Pending',volume:'',capacity:'',storageClass:'standard',age:'2h'}
+  ],
+  nodes:[
+    {name:'kind-control-plane',status:'Ready',roles:'control-plane',version:'v1.28.0',age:'15d',cpu:'2/2',memory:'4Gi/4Gi'},
+    {name:'kind-worker',status:'Ready',roles:'worker',version:'v1.28.0',age:'15d',cpu:'1.5/2',memory:'3Gi/4Gi'},
+    {name:'kind-worker2',status:'Ready',roles:'worker',version:'v1.28.0',age:'14d',cpu:'1.8/2',memory:'3.5Gi/4Gi'}
+  ]
+};
+function getStatusClass(status){
+  const s=status.toLowerCase();
+  if(s.includes('running')||s==='ready'||s==='bound')return 'running';
+  if(s.includes('pending')||s.includes('waiting')||s.includes('crashloop')||s.includes('creating'))return 'pending';
+  if(s.includes('failed')||s.includes('error')||s.includes('crash')||s.includes('terminated'))return 'failed';
+  return 'unknown';
+}
+function renderTabs(){
+  resourceTabs.innerHTML=resourceTypes.map((t,i)=>`<button class="resource-tab${i===0?' active':''}" data-type="${t}">${t.charAt(0).toUpperCase()+t.slice(1)}</button>`).join('');
+  document.querySelectorAll('.resource-tab').forEach(btn=>btn.onclick=()=>{document.querySelectorAll('.resource-tab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderResources(btn.dataset.type);});
+  renderResources('pods');
+}
+function renderResources(type){
+  const data=sampleData[type]||[];
+  const renderers={
+    pods:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status ${getStatusClass(d.status)}">${d.status}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Node</span><span class="value">${d.node}</span></div><div><span class="label">Pod IP</span><span class="value">${d.ip}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div></div><div class="resource-containers">${d.containers.map(c=>`<div class="container"><div class="container-name">${c.name}</div><div class="container-image">${c.image}</div><div class="container-status ${getStatusClass(c.status)}"><span class="dot"></span><span>${c.status}</span></div></div>`).join('')}</div></div></div>`,
+    deployments:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status ${d.ready===parseInt(d.replicas)?'running':'pending'}">${d.replicas}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Ready</span><span class="value">${d.ready}</div><div><span class="label">Up-to-date</span><span class="value">${d.upToDate}</span></div><div><span class="label">Available</span><span class="value">${d.available}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div><div><span class="label">Image</span><span class="value">${d.image}</span></div></div></div></div>`,
+    services:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status running">${d.type}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Cluster IP</span><span class="value">${d.clusterIP}</span></div><div><span class="label">Ports</span><span class="value">${d.ports}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div>${d.externalIP?`<div><span class="label">External IP</span><span class="value">${d.externalIP}</span></div>`:''}</div></div></div>`,
+    configmaps:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status running">${d.data} keys</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div></div></div></div>`,
+    secrets:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status running">${d.type}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Data</span><span class="value">${d.data} keys</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div></div></div></div>`,
+    ingresses:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status running">${d.class}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Hosts</span><span class="value">${d.hosts}</span></div><div><span class="label">Address</span><span class="value">${d.address}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div></div></div></div>`,
+    pvcs:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status ${getStatusClass(d.status)}">${d.status}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Namespace</span><span class="value">${d.namespace}</span></div><div><span class="label">Volume</span><span class="value">${d.volume||'—'}</span></div><div><span class="label">Capacity</span><span class="value">${d.capacity||'—'}</span></div><div><span class="label">StorageClass</span><span class="value">${d.storageClass}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div></div></div></div>`,
+    nodes:d=>`<div class="resource-card"><div class="resource-header"><h3>${d.name}</h3><span class="resource-status running">${d.status}</span></div><div class="resource-body"><div class="resource-meta"><div><span class="label">Roles</span><span class="value">${d.roles}</span></div><div><span class="label">Version</span><span class="value">${d.version}</span></div><div><span class="label">Age</span><span class="value">${d.age}</span></div><div><span class="label">CPU</span><span class="value">${d.cpu}</span></div><div><span class="label">Memory</span><span class="value">${d.memory}</span></div></div></div></div>`
+  };
+  const renderer=renderers[type]||(d=>`<div>${JSON.stringify(d)}</div>`);
+  resourceGrid.innerHTML=data.map(renderer).join('');
+}
+renderTabs();
+</script>
+</body>
+</html>

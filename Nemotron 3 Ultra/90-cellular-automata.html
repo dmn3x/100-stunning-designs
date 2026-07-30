@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cellular Automata — Nemotron 3 Ultra #90</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.ca-selector { pointer-events: auto; }
+.ca-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.ca-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>CELLULAR AUTOMATA</h1>
+<p class="subtitle">Elementary & Totalistic Rules</p>
+</div>
+<div class="controls">
+<div class="ca-selector"><select id="ruleSelect" aria-label="Select rule"></select></div>
+<button class="btn primary" id="btnRandom" aria-label="Random initial state"><span>Randomize</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle simulation"><span>Pause</span></button>
+<button class="btn" id="btnWrap" aria-label="Toggle wrapping"><span>Wrap: On</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Age</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click cells to toggle • Keys: Space pause • R random • W wrap • C color • 0-9 rules</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="genCount">0</div><div class="stat-label">Generation</div></div>
+<div class="stat"><div class="stat-value" id="liveCount">0</div><div class="stat-label">Live Cells</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const rules = [
+    { name: 'Rule 30', type: 'elementary', rule: 30 },
+    { name: 'Rule 90', type: 'elementary', rule: 90 },
+    { name: 'Rule 110', type: 'elementary', rule: 110 },
+    { name: 'Rule 184', type: 'elementary', rule: 184 },
+    { name: 'Game of Life', type: 'totalistic', birth: [3], survive: [2,3] },
+    { name: 'HighLife', type: 'totalistic', birth: [3,6], survive: [2,3] },
+    { name: 'Day & Night', type: 'totalistic', birth: [3,6,7,8], survive: [3,4,6,7,8] },
+    { name: 'Replicator', type: 'totalistic', birth: [1,3,5,7], survive: [1,3,5,7] },
+    { name: 'Seeds', type: 'totalistic', birth: [2], survive: [] },
+    { name: 'Maze', type: 'totalistic', birth: [3], survive: [1,2,3,4,5] },
+];
+let grid = [], nextGrid = [], ruleIdx = 0, cellSize = 3, wrap = true, paused = false, running = true, colorMode = 0;
+let generation = 0, lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false };
+const select = document.getElementById('ruleSelect');
+rules.forEach((r, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i} ${r.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); initGrid(); }
+function initGrid() { const cols = Math.ceil(width / dpr / cellSize); const rows = Math.ceil(height / dpr / cellSize); grid = new Array(rows).fill(0).map(() => new Array(cols).fill(0)); nextGrid = new Array(rows).fill(0).map(() => new Array(cols).fill(0)); generation = 0; document.getElementById('genCount').textContent = generation; }
+function randomize() { const rows = grid.length, cols = grid[0].length; for (let y = 0; y < rows; y++) for (let x = 0; x < cols; x++) grid[y][x] = Math.random() < 0.5 ? 1 : 0; generation = 0; document.getElementById('genCount').textContent = generation; }
+function countNeighbors(x, y) { const rows = grid.length, cols = grid[0].length; let count = 0; for (let dy = -1; dy <= 1; dy++) { for (let dx = -1; dx <= 1; dx++) { if (dx === 0 && dy === 0) continue; let nx = x + dx, ny = y + dy; if (wrap) { nx = (nx + cols) % cols; ny = (ny + rows) % rows; } else { if (nx < 0 || nx >= cols || ny < 0 || ny >= rows) continue; } count += grid[ny][nx]; } } return count; }
+function stepElementary(rule) { const rows = grid.length, cols = grid[0].length; const bits = [(rule>>7)&1, (rule>>6)&1, (rule>>5)&1, (rule>>4)&1, (rule>>3)&1, (rule>>2)&1, (rule>>1)&1, rule&1]; for (let y = 0; y < rows - 1; y++) { for (let x = 0; x < cols; x++) { let left = x > 0 ? grid[y][x-1] : (wrap ? grid[y][cols-1] : 0); let center = grid[y][x]; let right = x < cols-1 ? grid[y][x+1] : (wrap ? grid[y][0] : 0); const idx = (left << 2) | (center << 1) | right; nextGrid[y+1][x] = bits[7-idx]; } } if (!wrap) { for (let x = 0; x < cols; x++) nextGrid[0][x] = 0; } }
+function stepTotalistic(birth, survive) { const rows = grid.length, cols = grid[0].length; for (let y = 0; y < rows; y++) { for (let x = 0; x < cols; x++) { const n = countNeighbors(x, y); const alive = grid[y][x]; if (alive) nextGrid[y][x] = survive.includes(n) ? 1 : 0; else nextGrid[y][x] = birth.includes(n) ? 1 : 0; } } }
+function step() { const rule = rules[ruleIdx]; if (rule.type === 'elementary') stepElementary(rule.rule); else stepTotalistic(rule.birth, rule.survive); [grid, nextGrid] = [nextGrid, grid]; generation++; document.getElementById('genCount').textContent = generation; let live = 0; grid.forEach(row => row.forEach(c => live += c)); document.getElementById('liveCount').textContent = live.toLocaleString(); }
+function render() { const w = width / dpr, h = height / dpr; const rows = grid.length, cols = grid[0].length; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); for (let y = 0; y < rows; y++) { for (let x = 0; x < cols; x++) { if (grid[y][x]) { const px = x * cellSize, py = y * cellSize; if (colorMode === 0) { ctx.fillStyle = `hsla(${(generation * 2) % 360}, 100%, 50%, 0.8)`; } else if (colorMode === 1) { const age = generation - y; ctx.fillStyle = `hsla(${(age * 5) % 360}, 100%, 50%, 0.8)`; } else { ctx.fillStyle = '#00ffc8'; } ctx.fillRect(px, py, cellSize, cellSize); } } } }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) { for (let i = 0; i < 5; i++) step(); } render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); randomize(); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; const x = Math.floor(e.clientX / cellSize), y = Math.floor(e.clientY / cellSize); if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) grid[y][x] = 1 - grid[y][x]; });
+window.addEventListener('mousemove', e => { if (mouse.down) { const x = Math.floor(e.clientX / cellSize), y = Math.floor(e.clientY / cellSize); if (x >= 0 && x < grid[0].length && y >= 0 && y < grid.length) grid[y][x] = 1; } });
+window.addEventListener('mouseup', () => mouse.down = false);
+select.addEventListener('change', e => { ruleIdx = parseInt(e.target.value); initGrid(); });
+document.getElementById('btnRandom').addEventListener('click', randomize);
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnWrap').addEventListener('click', () => { wrap = !wrap; document.getElementById('btnWrap').querySelector('span').textContent = wrap ? 'Wrap: On' : 'Wrap: Off'; });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Generation', 'Color: Age', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') randomize(); else if (e.key === 'w' || e.key === 'W') { wrap = !wrap; document.getElementById('btnWrap').querySelector('span').textContent = wrap ? 'Wrap: On' : 'Wrap: Off'; } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Generation', 'Color: Age', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key >= '0' && e.key <= '9') { ruleIdx = parseInt(e.key); select.value = ruleIdx; initGrid(); } });
+init();
+</script>
+</body>
+</html>

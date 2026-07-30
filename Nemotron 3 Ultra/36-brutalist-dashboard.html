@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>36 — Brutalist Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#ffffff;--fg:#000000;--muted:#666;--accent:#ff0000;--card:#f5f5f5}
+@media (prefers-color-scheme:dark){:root{--bg:#000000;--fg:#ffffff;--muted:#999;--accent:#ff3333;--card:#1a1a1a}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'Space Mono','SF Mono',monospace;overflow:auto}
+.header{padding:2rem;border-bottom:4px solid var(--fg);position:sticky;top:0;background:var(--bg);z-index:10}
+.header h1{font-size:clamp(2rem,5vw,4rem);font-weight:800;line-height:1;letter-spacing:-0.04em}
+.header .sub{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-top:.5rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1rem;padding:2rem;max-width:1400px;margin:0 auto}
+.card{background:var(--card);border:2px solid var(--fg);padding:1.5rem;transition:transform .1s}
+.card:hover{transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--fg)}
+.card.large{grid-column:span 2}
+.card.wide{grid-column:span 3}
+@media (max-width:900px){.card.large,.card.wide{grid-column:span 1}}
+.card h3{font-size:.7rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem;border-bottom:1px solid var(--muted);padding-bottom:.5rem}
+.metric{font-size:clamp(2rem,5vw,4rem);font-weight:800;line-height:1;letter-spacing:-0.03em}
+.metric.accent{color:var(--accent)}
+.metric small{font-size:.3em;font-weight:400;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.sparkline{height:60px;width:100%;margin-top:1rem}
+.status{display:flex;gap:1rem;flex-wrap:wrap;margin-top:1rem}
+.badge{padding:.25rem .75rem;border:1px solid var(--fg);font-size:.6rem;letter-spacing:.1em;text-transform:uppercase}
+.badge.active{background:var(--fg);color:var(--bg)}
+.badge.warning{border-color:var(--accent);color:var(--accent)}
+.badge.critical{background:var(--accent);color:var(--bg);border-color:var(--accent)}
+.table{width:100%;border-collapse:collapse;margin-top:1rem;font-size:.75rem}
+.table th,.table td{padding:.5rem;text-align:left;border-bottom:1px solid var(--muted)}
+.table th{font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.table tr:hover{background:rgba(0,0,0,0.03)}
+@media (prefers-color-scheme:dark){.table tr:hover{background:rgba(255,255,255,0.03)}}
+.progress{height:4px;background:var(--muted);border-radius:2px;overflow:hidden;margin:.5rem 0}
+.progress-bar{height:100%;background:var(--fg);transition:width .3s}
+.progress-bar.accent{background:var(--accent)}
+.footer{padding:2rem;border-top:4px solid var(--fg);text-align:center;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+</style>
+</head>
+<body>
+<header class="header"><h1>BRUTALIST<br>DASHBOARD</h1><div class="sub">System Monitoring · Raw Data · No Fluff</div></header>
+<main class="grid">
+<div class="card large"><h3>CPU Utilization</h3><div class="metric" id="cpuVal">42<small>%</small></div><canvas class="sparkline" id="cpuSpark"></canvas><div class="status"><span class="badge active">Nominal</span><span class="badge">8 cores</span><span class="badge">3.2 GHz</span></div></div>
+<div class="card large"><h3>Memory Usage</h3><div class="metric" id="memVal">68<small>%</small></div><canvas class="sparkline" id="memSpark"></canvas><div class="status"><span class="badge active">16 GB</span><span class="badge">10.9 GB used</span><span class="badge warning">High</span></div></div>
+<div class="card"><h3>Disk I/O</h3><div class="metric">2.4<small>GB/s</small></div><canvas class="sparkline" id="diskSpark"></canvas><div class="status"><span class="badge active">Read</span><span class="badge">Write</span></div></div>
+<div class="card"><h3>Network</h3><div class="metric">127<small>Mbps</small></div><canvas class="sparkline" id="netSpark"></canvas><div class="status"><span class="badge">▲ 89 Mbps</span><span class="badge">▼ 38 Mbps</span></div></div>
+<div class="card wide"><h3>Process Table</h3><table class="table"><thead><tr><th>PID</th><th>Process</th><th>CPU</th><th>MEM</th><th>Status</th></tr></thead><tbody id="procTable"></tbody></table></div>
+<div class="card"><h3>GPU Load</h3><div class="metric" id="gpuVal">23<small>%</small></div><canvas class="sparkline" id="gpuSpark"></canvas><div class="status"><span class="badge active">RTX 4090</span><span class="badge">42°C</span></div></div>
+<div class="card"><h3>Temperature</h3><div class="metric">48<small>°C</small></div><canvas class="sparkline" id="tempSpark"></canvas><div class="status"><span class="badge">CPU</span><span class="badge">GPU</span><span class="badge">Ambient</span></div></div>
+<div class="card"><h3>Uptime</h3><div class="metric" id="uptimeVal">14d 6h</div><div class="status"><span class="badge active">Linux 6.8</span><span class="badge">Last boot: Jul 16</span></div></div>
+<div class="card"><h3>Load Average</h3><div class="metric">2.34</div><canvas class="sparkline" id="loadSpark"></canvas><div class="status"><span class="badge">1m: 2.34</span><span class="badge">5m: 2.11</span><span class="badge">15m: 1.89</span></div></div>
+<div class="card wide"><h3>Service Status</h3><div id="services"></div></div>
+</main>
+<footer class="footer">Nemotron 3 Ultra · 036 / 100 · Brutalist Dashboard · Refreshes every 2s</footer>
+<script>
+const sparkData={cpu:[],mem:[],disk:[],net:[],gpu:[],temp:[],load:[]};
+const MAX=60;
+function drawSpark(canvas,data,color){
+  const ctx=canvas.getContext('2d'),w=canvas.width=canvas.offsetWidth*2,h=canvas.height=canvas.offsetHeight*2;
+  ctx.scale(2,2);
+  ctx.clearRect(0,0,w/2,h/2);
+  if(data.length<2)return;
+  ctx.strokeStyle=color;ctx.lineWidth=2;ctx.lineCap='round';ctx.lineJoin='round';
+  ctx.beginPath();
+  const step=(w/2)/(MAX-1);
+  data.forEach((v,i)=>{const x=i*step,y=(h/2)*(1-v/100);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.stroke();
+  const grad=ctx.createLinearGradient(0,h/2,0,0);
+  grad.addColorStop(0,'transparent');grad.addColorStop(1,color+'33');
+  ctx.fillStyle=grad;ctx.lineTo(w/2,h/2);ctx.lineTo(0,h/2);ctx.closePath();ctx.fill();
+}
+const processes=[
+  {pid:1234,name:'chrome',cpu:12.3,mem:18.2,status:'Running'},
+  {pid:5678,name:'code',cpu:8.7,mem:22.1,status:'Running'},
+  {pid:9012,name:'node',cpu:5.2,mem:8.4,status:'Running'},
+  {pid:3456,name:'docker',cpu:3.1,mem:5.6,status:'Running'},
+  {pid:7890,name:'postgres',cpu:2.8,mem:12.3,status:'Running'},
+  {pid:2345,name:'redis',cpu:0.5,mem:1.2,status:'Running'},
+  {pid:6789,name:'nginx',cpu:0.3,mem:0.8,status:'Running'},
+  {pid:1111,name:'systemd',cpu:0.1,mem:0.3,status:'Running'}
+];
+const services=[
+  {name:'nginx',status:'active',port:80},
+  {name:'postgresql',status:'active',port:5432},
+  {name:'redis',status:'active',port:6379},
+  {name:'docker',status:'active',port:'—'},
+  {name:'ssh',status:'active',port:22},
+  {name:'prometheus',status:'inactive',port:9090},
+  {name:'grafana',status:'inactive',port:3000},
+  {name:'elasticsearch',status:'active',port:9200}
+];
+function renderProcesses(){
+  const tbody=document.getElementById('procTable');
+  tbody.innerHTML=processes.map(p=>`<tr><td>${p.pid}</td><td>${p.name}</td><td>${p.cpu}%</td><td>${p.mem}%</td><td><span class="badge active">${p.status}</span></td></tr>`).join('');
+}
+function renderServices(){
+  const container=document.getElementById('services');
+  container.innerHTML=services.map(s=>`<div style="display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid var(--muted)"><span>${s.name}</span><span style="display:flex;align-items:center;gap:.5rem"><span class="badge ${s.status==='active'?'active':''}">${s.status}</span><span style="font-size:.7rem;color:var(--muted)">${s.port}</span></span></div>`).join('');
+}
+function update(){
+  const cpu=Math.random()*30+20,mem=Math.random()*20+55,disk=Math.random()*100,net=Math.random()*200,gpu=Math.random()*40,temp=Math.random()*30+35,load=Math.random()*2+1;
+  [cpuData,memData,diskData,netData,gpuData,tempData,loadData]=[cpu,mem,disk,net,gpu,temp,load];
+  sparkData.cpu.push(cpu);sparkData.mem.push(mem);sparkData.disk.push(disk);sparkData.net.push(Math.min(100,net/2));sparkData.gpu.push(gpu);sparkData.temp.push(temp/80*100);sparkData.load.push(load/4*100);
+  Object.values(sparkData).forEach(d=>{while(d.length>MAX)d.shift();});
+  document.getElementById('cpuVal').innerHTML=`${cpu.toFixed(1)}<small>%</small>`;
+  document.getElementById('memVal').innerHTML=`${mem.toFixed(1)}<small>%</small>`;
+  document.getElementById('gpuVal').innerHTML=`${gpu.toFixed(1)}<small>%</small>`;
+  document.getElementById('uptimeVal').textContent=`${Math.floor(Math.random()*30)}d ${Math.floor(Math.random()*24)}h`;
+  drawSpark(document.getElementById('cpuSpark'),sparkData.cpu,'#000');
+  drawSpark(document.getElementById('memSpark'),sparkData.mem,'#000');
+  drawSpark(document.getElementById('diskSpark'),sparkData.disk,'#000');
+  drawSpark(document.getElementById('netSpark'),sparkData.net,'#000');
+  drawSpark(document.getElementById('gpuSpark'),sparkData.gpu,'#000');
+  drawSpark(document.getElementById('tempSpark'),sparkData.temp,'#000');
+  drawSpark(document.getElementById('loadSpark'),sparkData.load,'#000');
+  processes.forEach(p=>{p.cpu=Math.max(0.1,Math.min(100,p.cpu+(Math.random()-0.5)*2));p.mem=Math.max(0.1,Math.min(100,p.mem+(Math.random()-0.5)*0.5));});
+  renderProcesses();
+}
+renderProcesses();
+renderServices();
+setInterval(update,2000);
+update();
+</script>
+</body>
+</html>

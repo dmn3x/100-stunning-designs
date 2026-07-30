@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Wavefunction — Nemotron 3 Ultra #93</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.qm-selector { pointer-events: auto; }
+.qm-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.qm-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>QUANTUM WAVEFUNCTION</h1>
+<p class="subtitle">Schrödinger Evolution</p>
+</div>
+<div class="controls">
+<div class="qm-selector"><select id="potentialSelect" aria-label="Select potential"></select></div>
+<div class="slider-group"><label>Resolution</label><input type="range" id="resSlider" min="128" max="1024" step="64" value="512"></div>
+<div class="slider-group"><label>dt</label><input type="range" id="dtSlider" min="0.001" max="0.05" step="0.001" value="0.01"></div>
+<button class="btn primary" id="btnReset" aria-label="Reset wavefunction"><span>Reset</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle evolution"><span>Pause</span></button>
+<button class="btn" id="btnView" aria-label="Toggle view"><span>View: |Ψ|²</span></button>
+<button class="btn" id="btnPotential" aria-label="Toggle potential"><span>V(x): On</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click to add wavepacket • Keys: Space pause • R reset • V view • P potential • 1-6 potentials</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="normValue">1.000</div><div class="stat-label">Norm</div></div>
+<div class="stat"><div class="stat-value" id="energyValue">0.00</div><div class="stat-label">Energy</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const potentials = [
+    { name: 'Free Particle', v: (x) => 0 },
+    { name: 'Infinite Well', v: (x) => (x < -0.45 || x > 0.45) ? 1000 : 0 },
+    { name: 'Harmonic Oscillator', v: (x) => 200 * x * x },
+    { name: 'Double Well', v: (x) => 50 * (x*x - 0.2)*(x*x - 0.2) },
+    { name: 'Step Barrier', v: (x) => x > 0 ? 100 : 0 },
+    { name: 'Periodic', v: (x) => 20 * Math.sin(10 * x) },
+];
+let N = 512, dx, dt = 0.01, potentialIdx = 0;
+let psiR = [], psiI = [], V = [];
+let paused = false, running = true, viewMode = 0, showPotential = true;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { down: false };
+const select = document.getElementById('potentialSelect');
+potentials.forEach((p, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${p.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); initSimulation(); }
+function initSimulation() { dx = 2 / N; psiR = new Array(N).fill(0); psiI = new Array(N).fill(0); V = new Array(N).fill(0); for (let i = 0; i < N; i++) { const x = (i - N/2) * dx; V[i] = potentials[potentialIdx].v(x); const x0 = -0.2, sigma = 0.05, k0 = 50; const envelope = Math.exp(-(x - x0)*(x - x0) / (2*sigma*sigma)); psiR[i] = envelope * Math.cos(k0 * x); psiI[i] = envelope * Math.sin(k0 * x); } normalize(); }
+function normalize() { let norm = 0; for (let i = 0; i < N; i++) norm += (psiR[i]*psiR[i] + psiI[i]*psiI[i]) * dx; norm = Math.sqrt(norm); if (norm > 0) { for (let i = 0; i < N; i++) { psiR[i] /= norm; psiI[i] /= norm; } } document.getElementById('normValue').textContent = norm.toFixed(3); }
+function hamiltonian(psiR, psiI, outR, outI) { for (let i = 1; i < N-1; i++) { const laplacianR = (psiR[i+1] - 2*psiR[i] + psiR[i-1]) / (dx*dx); const laplacianI = (psiI[i+1] - 2*psiI[i] + psiI[i-1]) / (dx*dx); outR[i] = -0.5 * laplacianI + V[i] * psiI[i]; outI[i] = 0.5 * laplacianR + V[i] * psiR[i]; } outR[0] = outR[N-1] = outI[0] = outI[N-1] = 0; }
+function step() { const k1R = new Array(N), k1I = new Array(N); const k2R = new Array(N), k2I = new Array(N); const k3R = new Array(N), k3I = new Array(N); const k4R = new Array(N), k4I = new Array(N); const tmpR = new Array(N), tmpI = new Array(N); hamiltonian(psiR, psiI, k1R, k1I); for (let i = 0; i < N; i++) { tmpR[i] = psiR[i] + 0.5 * dt * k1R[i]; tmpI[i] = psiI[i] + 0.5 * dt * k1I[i]; } hamiltonian(tmpR, tmpI, k2R, k2I); for (let i = 0; i < N; i++) { tmpR[i] = psiR[i] + 0.5 * dt * k2R[i]; tmpI[i] = psiI[i] + 0.5 * dt * k2I[i]; } hamiltonian(tmpR, tmpI, k3R, k3I); for (let i = 0; i < N; i++) { tmpR[i] = psiR[i] + dt * k3R[i]; tmpI[i] = psiI[i] + dt * k3I[i]; } hamiltonian(tmpR, tmpI, k4R, k4I); for (let i = 0; i < N; i++) { psiR[i] += dt/6 * (k1R[i] + 2*k2R[i] + 2*k3R[i] + k4R[i]); psiI[i] += dt/6 * (k1I[i] + 2*k2I[i] + 2*k3I[i] + k4I[i]); } normalize(); }
+function computeEnergy() { let energy = 0; for (let i = 1; i < N-1; i++) { const laplacianR = (psiR[i+1] - 2*psiR[i] + psiR[i-1]) / (dx*dx); const laplacianI = (psiI[i+1] - 2*psiI[i] + psiI[i-1]) / (dx*dx); const kin = -0.5 * (psiR[i]*laplacianR + psiI[i]*laplacianI); const pot = V[i] * (psiR[i]*psiR[i] + psiI[i]*psiI[i]); energy += (kin + pot) * dx; } return energy; }
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); const centerY = h / 2; const scaleY = h * 0.4; const scaleX = w / N; if (showPotential) { ctx.strokeStyle = 'rgba(255, 51, 102, 0.5)'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < N; i++) { const x = i * scaleX; const y = centerY - V[i] * 0.001 * scaleY; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); } const prob = new Array(N); for (let i = 0; i < N; i++) { const pr = psiR[i], pi = psiI[i]; if (viewMode === 0) prob[i] = pr*pr + pi*pi; else if (viewMode === 1) prob[i] = pr; else prob[i] = pi; } ctx.fillStyle = 'rgba(0, 255, 200, 0.3)'; ctx.beginPath(); ctx.moveTo(0, centerY); for (let i = 0; i < N; i++) { const x = i * scaleX; const y = centerY - prob[i] * scaleY * 10; ctx.lineTo(x, y); } ctx.lineTo(w, centerY); ctx.closePath(); ctx.fill(); ctx.strokeStyle = '#00ffc8'; ctx.lineWidth = 2; ctx.beginPath(); for (let i = 0; i < N; i++) { const x = i * scaleX; const y = centerY - prob[i] * scaleY * 10; if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y); } ctx.stroke(); ctx.fillStyle = '#ff3366'; for (let i = 0; i < N; i += 4) { const x = i * scaleX; const pr = psiR[i], pi = psiI[i]; const yR = centerY - pr * scaleY * 3; const yI = centerY - pi * scaleY * 3; ctx.fillRect(x, yR, 2, 2); ctx.fillRect(x, yI, 2, 2); } }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dtFrame = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) { for (let i = 0; i < 3; i++) step(); document.getElementById('energyValue').textContent = computeEnergy().toFixed(2); } render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('resSlider').addEventListener('input', e => { N = parseInt(e.target.value); initSimulation(); }); document.getElementById('dtSlider').addEventListener('input', e => { dt = parseFloat(e.target.value); }); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; const x = e.clientX / (width / dpr); const idx = Math.floor(x * N); if (idx >= 0 && idx < N) { const x0 = (idx - N/2) * dx, sigma = 0.05, k0 = 50; for (let i = 0; i < N; i++) { const xi = (i - N/2) * dx; const envelope = Math.exp(-(xi - x0)*(xi - x0) / (2*sigma*sigma)); psiR[i] += envelope * Math.cos(k0 * xi) * 0.3; psiI[i] += envelope * Math.sin(k0 * xi) * 0.3; } normalize(); } });
+window.addEventListener('mouseup', () => mouse.down = false);
+select.addEventListener('change', e => { potentialIdx = parseInt(e.target.value); initSimulation(); });
+document.getElementById('btnReset').addEventListener('click', initSimulation);
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnView').addEventListener('click', () => { viewMode = (viewMode + 1) % 3; const labels = ['View: |Ψ|²', 'View: Re(Ψ)', 'View: Im(Ψ)']; document.getElementById('btnView').querySelector('span').textContent = labels[viewMode]; });
+document.getElementById('btnPotential').addEventListener('click', () => { showPotential = !showPotential; document.getElementById('btnPotential').classList.toggle('primary', showPotential); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') initSimulation(); else if (e.key === 'v' || e.key === 'V') { viewMode = (viewMode + 1) % 3; const labels = ['View: |Ψ|²', 'View: Re(Ψ)', 'View: Im(Ψ)']; document.getElementById('btnView').querySelector('span').textContent = labels[viewMode]; } else if (e.key === 'p' || e.key === 'P') { showPotential = !showPotential; document.getElementById('btnPotential').classList.toggle('primary', showPotential); } else if (e.key >= '1' && e.key <= '6') { potentialIdx = parseInt(e.key) - 1; select.value = potentialIdx; initSimulation(); } });
+init();
+</script>
+</body>
+</html>

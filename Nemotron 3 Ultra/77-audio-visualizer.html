@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>77 — Audio Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:hidden}
+#canvas{width:100%;height:100%;display:block}
+.ui{position:fixed;top:1rem;right:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;min-width:200px}
+.ui h3{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.75rem}
+.ui-row{display:flex;align-items:center;gap:.5rem;margin-bottom:.5rem;font-size:.7rem}
+.ui-row label{color:var(--muted);min-width:90px}
+.ui-row input,.ui-row select{flex:1;background:var(--bg);border:1px solid var(--border);color:var(--fg);padding:.35rem .5rem;border-radius:3px;font:inherit;font-size:.7rem}
+.title{position:fixed;top:1rem;left:1rem;z-index:10}
+.title h1{font-size:1.5rem;font-weight:300}
+.title h1 span{font-weight:700;color:var(--accent)}
+.stats{position:fixed;bottom:1rem;left:1rem;z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;gap:2rem}
+.stat{text-align:center}
+.stat-value{font-size:1.5rem;font-weight:700;color:var(--accent)}
+.stat-label{font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.footer{position:fixed;bottom:1rem;right:1rem;z-index:10;color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+.audio-controls{position:fixed;bottom:50%;left:1rem;transform:translateY(50%);z-index:10;background:var(--card);border:1px solid var(--border);border-radius:8px;padding:1rem;display:flex;flex-direction:column;gap:.5rem}
+.audio-controls button{padding:.5rem 1rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:inherit;font-size:.65rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;border-radius:4px;cursor:pointer}
+.audio-controls button:hover{border-color:var(--accent);color:var(--accent)}
+.audio-controls button.active{background:var(--accent);border-color:var(--accent);color:var(--bg)}
+.audio-controls input[type="range"]{width:150px;accent-color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="title"><h1>Audio <span>Visualizer</span></h1></div>
+<div class="ui"><h3>Controls</h3><div class="ui-row"><label>Mode</label><select id="modeSelect"><option value="bars">Frequency Bars</option><option value="circular">Circular</option><option value="waveform">Waveform</option><option value="particles">Particles</option><option value="radial">Radial</option></select></div><div class="ui-row"><label>Sensitivity</label><input type="range" id="sensitivity" min="0.5" max="3" step="0.1" value="1.5"></div><div class="ui-row"><label>Smoothing</label><input type="range" id="smoothing" min="0" max="0.99" step="0.01" value="0.8"></div><div class="ui-row"><label>Color Scheme</label><select id="colorScheme"><option value="rainbow">Rainbow</option><option value="mono">Monochrome</option><option value="fire">Fire</option><option value="ocean">Ocean</option></select></div><div class="ui-row"><label><input type="checkbox" id="mirror" checked> Mirror</label></div></div>
+<div class="stats"><div class="stat"><div class="stat-value" id="statFps">60</div><div class="stat-label">FPS</div></div><div class="stat"><div class="stat-value" id="statFreq">0</div><div class="stat-label">Peak Freq</div></div></div>
+<div class="audio-controls"><button id="micBtn">Start Mic</button><button id="fileBtn">Load File</button><input type="file" id="fileInput" accept="audio/*" style="display:none"><label>Volume: <input type="range" id="volume" min="0" max="1" step="0.01" value="0.5"></label></div>
+<div class="footer">Nemotron 3 Ultra · 077 / 100 · Audio Visualizer</div>
+<canvas id="canvas"></canvas>
+<script>
+const canvas=document.getElementById('canvas');
+const ctx=canvas.getContext('2d');
+let audioCtx,analyser,dataArray,source,animationId,lastTime=0;
+let mode='bars',sensitivity=1.5,smoothing=0.8,colorScheme='rainbow',mirror=true;
+function resize(){canvas.width=window.innerWidth;canvas.height=window.innerHeight;}
+async function startMic(){
+  try{
+    const stream=await navigator.mediaDevices.getUserMedia({audio:true});
+    initAudio(stream);
+    document.getElementById('micBtn').textContent='Stop Mic';
+    document.getElementById('micBtn').classList.add('active');
+    document.getElementById('micBtn').onclick=stopAudio;
+  }catch(e){alert('Microphone access denied');}
+}
+function loadFile(){document.getElementById('fileInput').click();}
+document.getElementById('fileInput').onchange=e=>{
+  const file=e.target.files[0];
+  if(file){
+    const url=URL.createObjectURL(file);
+    const audio=new Audio(url);
+    audio.crossOrigin='anonymous';
+    audio.loop=true;
+    audio.volume=parseFloat(document.getElementById('volume').value);
+    initAudio(audio.captureStream?audio.captureStream():audio);
+    document.getElementById('fileBtn').textContent='Stop File';
+    document.getElementById('fileBtn').onclick=stopAudio;
+  }
+};
+function initAudio(input){
+  if(audioCtx)audioCtx.close();
+  audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  analyser=audioCtx.createAnalyser();
+  analyser.fftSize=2048;
+  analyser.smoothingTimeConstant=smoothing;
+  dataArray=new Uint8Array(analyser.frequencyBinCount);
+  if(input instanceof MediaStream){
+    source=audioCtx.createMediaStreamSource(input);
+  }else{
+    source=audioCtx.createMediaElementSource(input);
+  }
+  source.connect(analyser);
+  analyser.connect(audioCtx.destination);
+  animate(0);
+}
+function stopAudio(){
+  if(source)source.disconnect();
+  if(audioCtx)audioCtx.close();
+  cancelAnimationFrame(animationId);
+  document.getElementById('micBtn').textContent='Start Mic';
+  document.getElementById('micBtn').classList.remove('active');
+  document.getElementById('micBtn').onclick=startMic;
+  document.getElementById('fileBtn').textContent='Load File';
+  document.getElementById('fileBtn').onclick=loadFile;
+  ctx.fillStyle='var(--bg)';ctx.fillRect(0,0,canvas.width,canvas.height);
+}
+function animate(time){
+  const delta=(time-lastTime)/1000;lastTime=time;
+  document.getElementById('statFps').textContent=Math.round(1/delta);
+  analyser.smoothingTimeConstant=smoothing;
+  analyser.getByteFrequencyData(dataArray);
+  draw(dataArray);
+  animationId=requestAnimationFrame(animate);
+}
+function draw(data){
+  const w=canvas.width,h=canvas.height;
+  ctx.fillStyle='rgba(13,17,23,0.3)';
+  ctx.fillRect(0,0,w,h);
+  const len=data.length;
+  const centerX=w/2,centerY=h/2;
+  let peak=0,peakIdx=0;
+  data.forEach((v,i)=>{if(v>peak){peak=v;peakIdx=i;}});
+  document.getElementById('statFreq').textContent=Math.round(peakIdx*audioCtx.sampleRate/analyser.fftSize);
+  const getColor=(i,val)=>{
+    const ratio=i/len;
+    if(colorScheme==='rainbow')return `hsl(${ratio*360},80%,${30+val/255*50}%)`;
+    if(colorScheme==='mono')return `rgba(88,166,255,${val/255})`;
+    if(colorScheme==='fire')return `hsl(${30-ratio*30},100%,${30+val/255*50}%)`;
+    if(colorScheme==='ocean')return `hsl(${180+ratio*60},80%,${30+val/255*50}%)`;
+  };
+  if(mode==='bars'){
+    const barW=w/len;
+    for(let i=0;i<len;i+=2){
+      const val=data[i]*sensitivity;
+      const h=val/255*h*0.8;
+      const x=i*barW;
+      ctx.fillStyle=getColor(i,val);
+      ctx.fillRect(x,h/2,barW*2,h);
+      if(mirror)ctx.fillRect(w-x-barW*2,h/2,barW*2,h);
+    }
+  }else if(mode==='circular'){
+    const radius=Math.min(w,h)*0.35;
+    ctx.lineWidth=3;ctx.lineCap='round';
+    for(let i=0;i<len;i+=4){
+      const val=data[i]*sensitivity;
+      const r=radius+val/255*radius*0.8;
+      const angle=(i/len)*Math.PI*2-Math.PI/2;
+      const x1=centerX+Math.cos(angle)*radius;
+      const y1=centerY+Math.sin(angle)*radius;
+      const x2=centerX+Math.cos(angle)*r;
+      const y2=centerY+Math.sin(angle)*r;
+      ctx.strokeStyle=getColor(i,val);
+      ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.stroke();
+    }
+  }else if(mode==='waveform'){
+    analyser.getByteTimeDomainData(data);
+    ctx.strokeStyle='var(--accent)';ctx.lineWidth=2;ctx.lineCap='round';
+    ctx.beginPath();
+    for(let i=0;i<len;i++){
+      const x=(i/len)*w;
+      const y=centerY+(data[i]-128)/128*centerY*0.8;
+      if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+  }else if(mode==='particles'){
+    // Particle mode
+    for(let i=0;i<len;i+=8){
+      const val=data[i]*sensitivity;
+      const r=val/255*10+2;
+      const angle=(i/len)*Math.PI*2;
+      const dist=radius+val/255*radius;
+      const x=centerX+Math.cos(angle)*dist;
+      const y=centerY+Math.sin(angle)*dist;
+      ctx.fillStyle=getColor(i,val);
+      ctx.beginPath();ctx.arc(x,y,r,0,Math.PI*2);ctx.fill();
+    }
+  }else if(mode==='radial'){
+    const rings=64;
+    for(let ring=0;ring<rings;ring++){
+      const ringData=[];
+      for(let i=0;i<len;i+=len/rings){ringData.push(data[Math.min(i+ring,len-1)]);}
+      const avg=ringData.reduce((a,b)=>a+b,0)/ringData.length;
+      const r=(ring/rings)*Math.min(w,h)*0.4;
+      const val=avg*sensitivity;
+      ctx.strokeStyle=getColor(ring,val);
+      ctx.lineWidth=2;
+      ctx.beginPath();ctx.arc(centerX,centerY,r+val/255*20,0,Math.PI*2);ctx.stroke();
+    }
+  }
+}
+document.getElementById('modeSelect').onchange=e=>mode=e.target.value;
+document.getElementById('sensitivity').oninput=e=>sensitivity=parseFloat(e.target.value);
+document.getElementById('smoothing').oninput=e=>smoothing=parseFloat(e.target.value);
+document.getElementById('colorScheme').onchange=e=>colorScheme=e.target.value;
+document.getElementById('mirror').onchange=e=>mirror=e.target.checked;
+document.getElementById('micBtn').onclick=startMic;
+document.getElementById('fileBtn').onclick=loadFile;
+document.getElementById('volume').oninput=e=>{if(source&&source.mediaElement)source.mediaElement.volume=parseFloat(e.target.value);};
+resize();window.addEventListener('resize',resize);
+</script>
+</body>
+</html>

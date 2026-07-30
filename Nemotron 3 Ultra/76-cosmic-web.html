@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmic Web — Nemotron 3 Ultra #76</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #03040a; --fg: #e8e6e3; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0d1a; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.4); }
+@media (prefers-color-scheme: light) { :root { --bg: #f8f7f3; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow-x: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.content { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 2rem; text-align: center; }
+h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(2.5rem, 8vw, 6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; margin-bottom: 1.5rem; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; text-shadow: 0 0 60px var(--glow); animation: titleGlow 4s ease-in-out infinite; }
+@keyframes titleGlow { 0%, 100% { filter: drop-shadow(0 0 20px var(--glow)); } 50% { filter: drop-shadow(0 0 40px var(--glow)) drop-shadow(0 0 60px var(--accent2)); } }
+.subtitle { font-family: 'JetBrainsMono', monospace; font-size: clamp(0.9rem, 2vw, 1.2rem); color: var(--accent); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 1rem; opacity: 0.8; }
+.description { max-width: 60ch; font-size: clamp(1rem, 1.5vw, 1.25rem); line-height: 1.7; color: var(--fg); opacity: 0.7; margin-bottom: 2.5rem; font-weight: 300; }
+.stats { display: flex; gap: 3rem; flex-wrap: wrap; justify-content: center; margin-bottom: 3rem; }
+.stat { text-align: center; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.2em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.25rem; }
+.controls { display: flex; gap: 1rem; flex-wrap: wrap; justify-content: center; margin-bottom: 3rem; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.8rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.875rem 1.75rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.2s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.2s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 30px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+@media (max-width: 480px) { .stats { gap: 1.5rem; } .btn { padding: 0.75rem 1.25rem; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="content" role="main">
+<h1>COSMIC WEB</h1>
+<p class="subtitle">Large-Scale Structure</p>
+<p class="description">A living simulation of the cosmic web — the vast filamentary network of dark matter and galaxies that spans the observable universe. Witness gravity weaving structure from primordial fluctuations across billions of light-years.</p>
+<div class="stats" role="list" aria-label="Simulation statistics">
+<div class="stat" role="listitem"><div class="stat-value" id="nodeCount">0</div><div class="stat-label">Nodes</div></div>
+<div class="stat" role="listitem"><div class="stat-value" id="edgeCount">0</div><div class="stat-label">Filaments</div></div>
+<div class="stat" role="listitem"><div class="stat-value" id="clusterCount">0</div><div class="stat-label">Clusters</div></div>
+<div class="stat" role="listitem"><div class="stat-value" id="fps">0</div><div class="stat-label">FPS</div></div>
+</div>
+<div class="controls">
+<button class="btn primary" id="btnRestart" aria-label="Restart simulation"><span>Regenerate Universe</span></button>
+<button class="btn" id="btnToggle" aria-label="Pause simulation"><span>Pause</span></button>
+<button class="btn" id="btnDensity" aria-label="Increase density"><span>Increase Density</span></button>
+<button class="btn" id="btnGravity" aria-label="Toggle gravity"><span>Toggle Gravity</span></button>
+</div>
+<p class="info" aria-live="polite" id="infoText">Click nodes to inspect • Drag to rotate • Scroll to zoom</p>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const params = { nodeCount: 300, connectDist: 180, gravityStrength: 0.0003, repulsionStrength: 0.5, dampening: 0.985, nodeSizeMin: 1.5, nodeSizeMax: 5, clusterChance: 0.15 };
+let nodes = [], edges = [], clusters = [], animationId = null, running = true, lastTime = 0, frameCount = 0, fps = 60;
+const mouse = { x: 0, y: 0, down: false, lastX: 0, lastY: 0 };
+const camera = { x: 0, y: 0, scale: 1, targetX: 0, targetY: 0, targetScale: 1 };
+const colors = { node: '#00ffc8', nodeGlow: 'rgba(0,255,200,0.6)', edge: 'rgba(0,255,200,0.15)', edgeStrong: 'rgba(0,255,200,0.4)', cluster: '#ff3366', clusterGlow: 'rgba(255,51,102,0.5)', accent: '#ffcc00', bg: '#03040a' };
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = window.innerWidth * dpr; height = canvas.height = window.innerHeight * dpr; ctx.scale(dpr, dpr); camera.targetX = width / dpr / 2; camera.targetY = height / dpr / 2; }
+function createNodes() { nodes = []; clusters = []; const cx = width / dpr / 2, cy = height / dpr / 2; const clusterCount = 3 + Math.floor(Math.random() * 3); for (let i = 0; i < clusterCount; i++) { const angle = (i / clusterCount) * Math.PI * 2 + Math.random() * 0.5; const dist = Math.min(width, height) / dpr * 0.25; clusters.push({ x: cx + Math.cos(angle) * dist, y: cy + Math.sin(angle) * dist, mass: 500 + Math.random() * 500, radius: 150 + Math.random() * 100 }); } for (let i = 0; i < params.nodeCount; i++) { let x, y; if (Math.random() < params.clusterChance && clusters.length > 0) { const c = clusters[Math.floor(Math.random() * clusters.length)]; const r = Math.random() * c.radius; const a = Math.random() * Math.PI * 2; x = c.x + Math.cos(a) * r; y = c.y + Math.sin(a) * r; } else { x = Math.random() * width / dpr; y = Math.random() * height / dpr; } const isCluster = Math.random() < 0.05; nodes.push({ x, y, vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2, mass: isCluster ? 50 + Math.random() * 50 : 1 + Math.random() * 3, radius: isCluster ? params.nodeSizeMax * 1.5 : params.nodeSizeMin + Math.random() * (params.nodeSizeMax - params.nodeSizeMin), isCluster, connections: [], clusterId: -1, hue: Math.random() * 60 + 150 }); } assignClusters(); buildEdges(); }
+function assignClusters() { clusters.forEach((c, ci) => { nodes.forEach(n => { const dx = n.x - c.x, dy = n.y - c.y; if (dx*dx + dy*dy < c.radius*c.radius) n.clusterId = ci; }); }); }
+function buildEdges() { edges = []; nodes.forEach(n => n.connections = []); for (let i = 0; i < nodes.length; i++) { for (let j = i + 1; j < nodes.length; j++) { const dx = nodes[j].x - nodes[i].x, dy = nodes[j].y - nodes[i].y; const dist2 = dx*dx + dy*dy; if (dist2 < params.connectDist * params.connectDist) { edges.push({ source: i, target: j, dist2, strength: 1 - dist2 / (params.connectDist * params.connectDist) }); nodes[i].connections.push(j); nodes[j].connections.push(i); } } } }
+function physics(dt) { nodes.forEach((n, i) => { if (n.isCluster) return; let fx = 0, fy = 0; n.connections.forEach(j => { const m = nodes[j]; const dx = m.x - n.x, dy = m.y - n.y; const dist2 = dx*dx + dy*dy + 0.001; const dist = Math.sqrt(dist2); const force = params.gravityStrength * n.mass * m.mass / dist2; fx += dx / dist * force; fy += dy / dist * force; }); nodes.forEach((m, j) => { if (i === j || n.isCluster) return; const dx = n.x - m.x, dy = n.y - m.y; const dist2 = dx*dx + dy*dy + 1; const force = params.repulsionStrength * n.mass * m.mass / dist2; const dist = Math.sqrt(dist2); fx += dx / dist * force; fy += dy / dist * force; }); clusters.forEach(c => { const dx = c.x - n.x, dy = c.y - n.y; const dist2 = dx*dx + dy*dy + 1; const force = params.gravityStrength * n.mass * c.mass / dist2; const dist = Math.sqrt(dist2); fx += dx / dist * force; fy += dy / dist * force; }); n.vx = (n.vx + fx * dt) * params.dampening; n.vy = (n.vy + fy * dt) * params.dampening; n.x += n.vx * dt; n.y += n.vy * dt; }); buildEdges(); updateStats(); }
+function updateStats() { document.getElementById('nodeCount').textContent = nodes.length.toLocaleString(); document.getElementById('edgeCount').textContent = edges.length.toLocaleString(); document.getElementById('clusterCount').textContent = clusters.filter(c => nodes.some(n => n.clusterId === clusters.indexOf(c))).length; }
+function render(timestamp) { if (!running) { animationId = requestAnimationFrame(render); return; } const dt = Math.min((timestamp - lastTime) / 16.67, 3); lastTime = timestamp; frameCount++; if (timestamp - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (timestamp - fpsTime)); frameCount = 0; fpsTime = timestamp; document.getElementById('fps').textContent = fps; } camera.x += (camera.targetX - camera.x) * 0.08; camera.y += (camera.targetY - camera.y) * 0.08; camera.scale += (camera.targetScale - camera.scale) * 0.08; ctx.setTransform(dpr, 0, 0, dpr, 0, 0); ctx.fillStyle = colors.bg; ctx.fillRect(0, 0, width, height); const tx = width/dpr/2 - camera.x * camera.scale; const ty = height/dpr/2 - camera.y * camera.scale; ctx.save(); ctx.translate(tx, ty); ctx.scale(camera.scale, camera.scale); edges.forEach(e => { const a = nodes[e.source], b = nodes[e.target]; const dx = b.x - a.x, dy = b.y - a.y; const dist = Math.sqrt(dx*dx + dy*dy); if (dist > params.connectDist * 1.2) return; const alpha = e.strength * 0.35; ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.strokeStyle = `rgba(0,255,200,${alpha})`; ctx.lineWidth = Math.max(0.5, e.strength * 1.5 / camera.scale); ctx.stroke(); }); nodes.forEach(n => { const r = Math.max(0.5, n.radius / camera.scale); const gx = n.x, gy = n.y; const gradient = ctx.createRadialGradient(gx, gy, 0, gx, gy, r * 3); if (n.isCluster) { gradient.addColorStop(0, '#ff3366'); gradient.addColorStop(0.5, 'rgba(255,51,102,0.3)'); gradient.addColorStop(1, 'rgba(255,51,102,0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(gx, gy, r * 3, 0, Math.PI * 2); ctx.fill(); ctx.shadowColor = '#ff3366'; ctx.shadowBlur = 20 / camera.scale; ctx.fillStyle = '#ff3366'; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.fill(); ctx.shadowBlur = 0; } else { const hue = 150 + n.hue; gradient.addColorStop(0, `hsl(${hue}, 100%, 50%)`); gradient.addColorStop(0.5, `hsla(${hue}, 100%, 50%, 0.2)`); gradient.addColorStop(1, `hsla(${hue}, 100%, 50%, 0)`); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(gx, gy, r * 3, 0, Math.PI * 2); ctx.fill(); ctx.fillStyle = `hsl(${hue}, 100%, 50%)`; ctx.beginPath(); ctx.arc(gx, gy, r, 0, Math.PI * 2); ctx.fill(); } }); clusters.forEach(c => { const r = c.radius / camera.scale; const gradient = ctx.createRadialGradient(c.x, c.y, 0, c.x, c.y, r); gradient.addColorStop(0, 'rgba(255,51,102,0.08)'); gradient.addColorStop(1, 'rgba(255,51,102,0)'); ctx.fillStyle = gradient; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.fill(); ctx.strokeStyle = 'rgba(255,51,102,0.15)'; ctx.lineWidth = 1 / camera.scale; ctx.beginPath(); ctx.arc(c.x, c.y, r, 0, Math.PI * 2); ctx.stroke(); }); ctx.restore(); animationId = requestAnimationFrame(render); }
+let fpsTime = 0;
+function init() { resize(); createNodes(); lastTime = performance.now(); fpsTime = performance.now(); render(lastTime); }
+function restart() { createNodes(); }
+function togglePause() { running = !running; document.getElementById('btnToggle').querySelector('span').textContent = running ? 'Pause' : 'Resume'; if (running) { lastTime = performance.now(); render(lastTime); } }
+function increaseDensity() { params.nodeCount = Math.min(800, params.nodeCount + 100); restart(); }
+function toggleGravity() { params.gravityStrength = params.gravityStrength > 0 ? 0 : 0.0003; document.getElementById('btnGravity').querySelector('span').textContent = params.gravityStrength > 0 ? 'Disable Gravity' : 'Enable Gravity'; }
+window.addEventListener('resize', () => { const oldW = width/dpr, oldH = height/dpr; resize(); camera.targetX *= width/dpr/oldW; camera.targetY *= height/dpr/oldH; });
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { const dx = (e.clientX - mouse.lastX) / camera.scale; const dy = (e.clientY - mouse.lastY) / camera.scale; camera.targetX -= dx; camera.targetY -= dy; mouse.lastX = e.clientX; mouse.lastY = e.clientY; } mouse.x = e.clientX; mouse.y = e.clientY; });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); const zoom = e.deltaY > 0 ? 0.9 : 1.1; camera.targetScale = Math.max(0.3, Math.min(3, camera.targetScale * zoom)); }, { passive: false });
+document.getElementById('btnRestart').addEventListener('click', restart);
+document.getElementById('btnToggle').addEventListener('click', togglePause);
+document.getElementById('btnDensity').addEventListener('click', increaseDensity);
+document.getElementById('btnGravity').addEventListener('click', toggleGravity);
+document.getElementById('btnRestart').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); restart(); } });
+document.getElementById('btnToggle').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); togglePause(); } });
+document.getElementById('btnDensity').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); increaseDensity(); } });
+document.getElementById('btnGravity').addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleGravity(); } });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); togglePause(); } else if (e.key === 'r' || e.key === 'R') { restart(); } else if (e.key === 'g' || e.key === 'G') { toggleGravity(); } else if (e.key === 'd' || e.key === 'D') { increaseDensity(); } });
+init();
+</script>
+</body>
+</html>

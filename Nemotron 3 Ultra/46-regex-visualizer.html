@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>46 — Regex Visualizer</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0d1117;--fg:#e6edf3;--muted:#484f58;--accent:#58a6ff;--accent2:#3fb950;--accent3:#d29922;--accent4:#f85149;--card:#161b22;--border:#30363d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 'JetBrains Mono','SF Mono',monospace;overflow:auto}
+.layout{display:grid;grid-template-columns:400px 1fr;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr;grid-template-rows:auto 1fr}}
+.sidebar{background:var(--card);border-right:1px solid var(--border);padding:1rem;overflow:auto}
+.sidebar-header{position:sticky;top:0;background:var(--card);padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem;z-index:10}
+.sidebar-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem}
+.input-group{margin-bottom:1rem}
+.input-group label{display:block;font-size:.65rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.25rem}
+.input-group input,.input-group textarea,.input-group select{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.5rem;border-radius:4px;font-size:.75rem;font-family:inherit}
+.input-group textarea{min-height:100px;resize:vertical;font-family:'JetBrains Mono',monospace}
+.input-group input:focus,.input-group textarea:focus,.input-group select:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.checkboxes{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem}
+.checkboxes label{display:flex;align-items:center;gap:.3rem;font-size:.7rem;color:var(--muted);cursor:pointer}
+.cheatsheet{font-size:.65rem;color:var(--muted);line-height:1.8}
+.cheatsheet code{background:var(--bg);padding:.1rem .3rem;border-radius:3px;color:var(--accent2)}
+.main{padding:1rem;overflow:auto}
+.visualization{background:var(--card);border:1px solid var(--border);border-radius:8px;overflow:hidden}
+.viz-header{display:flex;justify-content:space-between;align-items:center;padding:1rem;border-bottom:1px solid var(--border)}
+.viz-header h2{font-size:.7rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.viz-body{padding:1rem;min-height:400px}
+.pattern-display{font-family:'JetBrains Mono',monospace;font-size:1.2rem;line-height:2;background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:1rem;margin-bottom:1rem;overflow:auto;white-space:pre-wrap;word-break:break-all}
+.pattern-display .match{background:var(--accent2);color:var(--bg);padding:0 .2rem;border-radius:2px}
+.pattern-display .group{background:var(--accent3);color:var(--bg);padding:0 .2rem;border-radius:2px}
+.pattern-display .anchor{color:var(--accent4)}
+.pattern-display .quantifier{color:var(--accent)}
+.pattern-display .charclass{color:var(--accent2)}
+.pattern-display .escape{color:var(--accent3)}
+.test-area{margin-top:1rem}
+.test-input{width:100%;background:var(--bg);border:1px solid var(--border);color:var(--fg);font:inherit;padding:.75rem;border-radius:4px;font-size:.85rem;min-height:100px;resize:vertical;font-family:inherit}
+.test-input:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.matches-list{margin-top:1rem}
+.match-item{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:.75rem;margin-bottom:.5rem}
+.match-item .match-full{font-weight:500;margin-bottom:.5rem}
+.match-item .match-groups{display:flex;flex-wrap:wrap;gap:.5rem;font-size:.7rem}
+.match-item .group{background:var(--accent3);color:var(--bg);padding:.1rem .4rem;border-radius:3px}
+.match-item .group-name{color:var(--muted)}
+.explanation{margin-top:1rem;padding:1rem;background:var(--bg);border:1px solid var(--border);border-radius:4px;font-size:.75rem;line-height:1.8;white-space:pre-wrap}
+.footer{text-align:center;padding:2rem;border-top:1px solid var(--border);color:var(--muted);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase}
+</style>
+</head>
+<body>
+<div class="layout">
+<aside class="sidebar">
+<div class="sidebar-header"><h2>Pattern</h2></div>
+<div class="input-group"><label>Regular Expression</label><input type="text" id="regexInput" placeholder="/pattern/flags" value="/\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}\\b/gi"></div>
+<div class="input-group"><label>Flags</label><div class="checkboxes"><label><input type="checkbox" id="flagG" checked> Global (g)</label><label><input type="checkbox" id="flagI" checked> Ignore Case (i)</label><label><input type="checkbox" id="flagM"> Multiline (m)</label><label><input type="checkbox" id="flagS"> DotAll (s)</label><label><input type="checkbox" id="flagU"> Unicode (u)</label><label><input type="checkbox" id="flagY"> Sticky (y)</label></div></div>
+<div class="input-group"><label>Test String</label><textarea id="testInput" placeholder="Enter text to test against...">Contact us at support@example.com or sales@company.org for more info.
+Invalid: user@, @domain.com, user@domain
+Also: john.doe+tag@sub.domain.co.uk</textarea></div>
+<div class="cheatsheet"><strong>Quick Reference:</strong><br><code>.</code> Any char <code>\\d</code> Digit <code>\\w</code> Word <code>\\s</code> Space<br><code>^</code> Start <code>$</code> End <code>\\b</code> Boundary<br><code>*</code> 0+ <code>+</code> 1+ <code>?</code> 0/1 <code>{n,m}</code> Range<br><code>(...)</code> Capture <code>(?:...)</code> Non-capture <code>|</code> Or<br><code>[abc]</code> Class <code>[^abc]</code> Negated <code>[a-z]</code> Range</div>
+</aside>
+<main class="main">
+<div class="visualization">
+<div class="viz-header"><h2>Visualization</h2><span id="matchCount" style="font-size:.7rem;color:var(--muted)">0 matches</span></div>
+<div class="viz-body">
+<div class="pattern-display" id="patternDisplay"></div>
+<div class="test-area">
+<label class="input-group" style="margin-bottom:.5rem"><label>Live Test</label><textarea class="test-input" id="liveTest" placeholder="Type to test regex in real-time..."></textarea></label>
+<div class="matches-list" id="matchesList"></div>
+</div>
+<div class="explanation" id="explanation"></div>
+</div>
+</div>
+</main>
+</div>
+<footer class="footer">Nemotron 3 Ultra · 046 / 100 · Regex Visualizer</footer>
+<script>
+const regexInput=document.getElementById('regexInput');
+const testInput=document.getElementById('testInput');
+const liveTest=document.getElementById('liveTest');
+const patternDisplay=document.getElementById('patternDisplay');
+const matchesList=document.getElementById('matchesList');
+const matchCount=document.getElementById('matchCount');
+const explanation=document.getElementById('explanation');
+const flagInputs=['flagG','flagI','flagM','flagS','flagU','flagY'];
+function getFlags(){return flagInputs.filter(id=>document.getElementById(id).checked).map(id=>id.slice(4).toLowerCase()).join('');}
+function parseRegex(str){
+  const m=str.match(/^\/(.+)\/([gimsuyd]*)$/);
+  if(m)return{pattern:m[1],flags:m[2]};
+  return{pattern:str,flags:''};
+}
+function highlightRegex(pattern){
+  return pattern.replace(/(\\\.)/g,'<span class="escape">$1</span>')
+    .replace(/(\\?[\[\]])/g,'<span class="charclass">$1</span>')
+    .replace(/([*+?{}])/g,'<span class="quantifier">$1</span>')
+    .replace(/(\^|\$|\\b|\\B)/g,'<span class="anchor">$1</span>')
+    .replace(/(\((?!\?:)[^)]*\))/g,'<span class="group">$1</span>');
+}
+function explainRegex(pattern){
+  const parts=[];
+  let p=pattern;
+  if(/\^/.test(p))parts.push('• <span class="anchor">^</span> — Matches start of string/line');
+  if(/\$/.test(p))parts.push('• <span class="anchor">$</span> — Matches end of string/line');
+  if(/\\b/.test(p))parts.push('• <span class="anchor">\\b</span> — Word boundary');
+  if(/\\B/.test(p))parts.push('• <span class="anchor">\\B</span> — Non-word boundary');
+  if(/\./.test(p))parts.push('• <span class="escape">.</span> — Any character (except newline)');
+  if(/\\d/.test(p))parts.push('• <span class="escape">\\d</span> — Digit [0-9]');
+  if(/\\w/.test(p))parts.push('• <span class="escape">\\w</span> — Word character [a-zA-Z0-9_]');
+  if(/\\s/.test(p))parts.push('• <span class="escape">\\s</span> — Whitespace');
+  if(/\[\^?[^\]]+\]/.test(p))parts.push('• <span class="charclass">[...]</span> — Character class');
+  if(/[|]/.test(p))parts.push('• <span class="quantifier">|</span> — Alternation (OR)');
+  if(/\((?!\?:)/.test(p))parts.push('• <span class="group">(...)</span> — Capturing group');
+  if(/\(\?:/.test(p))parts.push('• <span class="group">(?:...)</span> — Non-capturing group');
+  if(/[*+?]/.test(p))parts.push('• <span class="quantifier">* + ?</span> — Quantifiers (0+, 1+, 0/1)');
+  if(/\{\d+,?\d*\}/.test(p))parts.push('• <span class="quantifier">{n,m}</span> — Explicit quantifier');
+  return parts.length?parts.join('\n'):'No special constructs detected.';
+}
+function runRegex(regexStr,testStr,globalFlag){
+  try{
+    const parsed=parseRegex(regexStr);
+    const flags=parsed.flags||getFlags();
+    const regex=new RegExp(parsed.pattern,flags);
+    const matches=[];
+    let match;
+    if(globalFlag||flags.includes('g')){
+      while((match=regex.exec(testStr))!==null){
+        matches.push({full:match[0],groups:match.slice(1),index:match.index,input:match.input});
+        if(!flags.includes('g'))break;
+      }
+    }else{
+      match=regex.exec(testStr);
+      if(match)matches.push({full:match[0],groups:match.slice(1),index:match.index,input:match.input});
+    }
+    return {regex,matches,error:null};
+  }catch(e){return{regex:null,matches:[],error:e.message};}
+}
+function render(){
+  const regexStr=regexInput.value;
+  const testStr=testInput.value;
+  const {regex,matches,error}=runRegex(regexStr,testStr,true);
+  if(error){
+    patternDisplay.innerHTML=`<span style="color:var(--accent4)">Error: ${error}</span>`;
+    matchesList.innerHTML='';
+    matchCount.textContent='Error';
+    explanation.textContent='';
+    return;
+  }
+  const parsed=parseRegex(regexStr);
+  patternDisplay.innerHTML=highlightRegex(parsed.pattern);
+  matchCount.textContent=`${matches.length} match${matches.length!==1?'es':''}`;
+  if(matches.length===0){
+    matchesList.innerHTML='<div style="color:var(--muted);text-align:center;padding:2rem">No matches found</div>';
+  }else{
+    matchesList.innerHTML=matches.map(m=>`<div class="match-item"><div class="match-full">${m.full}</div><div class="match-groups">${m.groups.map((g,i)=>`<span class="group"><span class="group-name">$${i+1}:</span> ${g}</span>`).join('')||'<span style="color:var(--muted)">No capture groups</span>'}</div></div>`).join('');
+  }
+  explanation.innerHTML=explainRegex(parsed.pattern);
+  // Live test highlighting
+  const liveStr=liveTest.value;
+  if(liveStr){
+    const {matches:liveMatches}=runRegex(regexStr,liveStr,true);
+    // Could add highlighting here
+  }
+}
+regexInput.addEventListener('input',render);
+testInput.addEventListener('input',render);
+liveTest.addEventListener('input',render);
+flagInputs.forEach(id=>document.getElementById(id).addEventListener('change',render));
+render();
+</script>
+</body>
+</html>

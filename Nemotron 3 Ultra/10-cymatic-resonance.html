@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10 — Cymatic Resonance</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#1a1a1a;--fg:#f0f0e0;--muted:#4a4a3a;--accent:#ffd700;--accent2:#e83e30}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Cymatic Resonance</div>
+<div class="ui subtitle">chladni plate patterns</div>
+<div class="ui controls">
+<label class="ctrl">Frequency <input type="range" id="freq" min="1" max="20" step="1" value="7"><span class="stat" id="freqVal">7</span></label>
+<label class="ctrl">Mode <select id="mode"><option value="0">(m,n)=(1,1)</option><option value="1">(2,1)</option><option value="2" selected>(2,2)</option><option value="3">(3,2)</option><option value="4">(3,3)</option><option value="5">(4,3)</option><option value="6">(4,4)</option><option value="7">(5,4)</option><option value="8">(5,5)</option></select></label>
+<label class="ctrl"><input type="checkbox" id="animate" checked> Animate</label>
+<label class="ctrl"><input type="checkbox" id="color" checked> Color</label>
+<label class="ctrl"><input type="checkbox" id="grid"> Grid</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> pause · <kbd>R</kbd> random · <kbd>↑↓</kbd> freq</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let freq=7,mode=2,animate=true,colorMode=true,showGrid=false;
+const modes=[[1,1],[2,1],[2,2],[3,2],[3,3],[4,3],[4,4],[5,4],[5,5]];
+let mouse={x:0,y:0,down:false},time=0,frame=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  ctx.scale(DPR,DPR);
+}
+document.getElementById('freq').addEventListener('input',e=>{freq=+e.target.value;document.getElementById('freqVal').textContent=freq;});
+document.getElementById('mode').addEventListener('change',e=>{mode=+e.target.value;});
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+document.getElementById('color').addEventListener('change',e=>colorMode=e.target.checked);
+document.getElementById('grid').addEventListener('change',e=>showGrid=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){animate=!animate;document.getElementById('animate').checked=animate;e.preventDefault();}
+  if(e.code==='KeyR'){freq=Math.floor(Math.random()*20)+1;mode=Math.floor(Math.random()*modes.length);document.getElementById('freq').value=freq;document.getElementById('freqVal').textContent=freq;document.getElementById('mode').value=mode;e.preventDefault();}
+  if(e.code==='ArrowUp'){freq=Math.min(20,freq+1);document.getElementById('freq').value=freq;document.getElementById('freqVal').textContent=freq;e.preventDefault();}
+  if(e.code==='ArrowDown'){freq=Math.max(1,freq-1);document.getElementById('freq').value=freq;document.getElementById('freqVal').textContent=freq;e.preventDefault();}
+});
+function chladni(x,y,m,n){
+  const X=x*Math.PI*2,Y=y*Math.PI*2;
+  return Math.cos(m*X)*Math.cos(n*Y)-Math.cos(n*X)*Math.cos(m*Y);
+}
+function tick(){
+  frame++;
+  if(animate)time+=0.02;
+  ctx.fillStyle='#1a1a1a';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  const [m,n]=modes[mode];
+  const size=Math.min(W/DPR,H/DPR)*0.9;
+  const ox=(W/DPR-size)/2,oy=(H/DPR-size)/2;
+  const res=3;
+  for(let py=0;py<size;py+=res){
+    for(let px=0;px<size;px+=res){
+      const nx=px/size,ny=py/size;
+      let v=chladni(nx,ny,m,n);
+      if(mouse.down){
+        const dx=(mouse.x-ox-px)/size,dy=(mouse.y-oy-py)/size;
+        const dist=Math.hypot(dx,dy);
+        if(dist<0.15)v+=Math.sin(time*5+dist*30)*(1-dist/0.15)*0.5;
+      }
+      const a=Math.abs(v);
+      if(a<0.08){
+        if(colorMode){
+          const h=(v+1)*120+time*30;
+          ctx.fillStyle=`hsla(${h},80%,${40+a*40}%,${0.3+a*0.7})`;
+        }else{
+          ctx.fillStyle=`rgba(240,240,224,${0.2+a*0.8})`;
+        }
+        ctx.fillRect(ox+px,oy+py,res,res);
+      }
+    }
+  }
+  if(showGrid){
+    ctx.strokeStyle='rgba(255,215,0,0.1)';
+    ctx.lineWidth=0.5;
+    for(let i=0;i<=10;i++){
+      const pos=ox+size*i/10;
+      ctx.beginPath();ctx.moveTo(pos,oy);ctx.lineTo(pos,oy+size);ctx.stroke();
+      ctx.beginPath();ctx.moveTo(ox,pos);ctx.lineTo(ox+size,pos);ctx.stroke();
+    }
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>

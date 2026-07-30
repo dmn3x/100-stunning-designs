@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>38 — Markdown Preview</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#ffffff;--fg:#1a1a1a;--muted:#666;--accent:#0066cc;--code-bg:#f6f8fa;--border:#d0d7de}
+@media (prefers-color-scheme:dark){:root{--bg:#0d1117;--fg:#e6edf3;--muted:#8b949e;--accent:#58a6ff;--code-bg:#161b22;--border:#30363d}}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:16px/1.7 -apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif}
+.layout{display:grid;grid-template-columns:1fr 1fr;gap:0;height:100%}
+@media (max-width:1000px){.layout{grid-template-columns:1fr}}
+.pane{height:100%;overflow:auto;padding:2rem;background:var(--bg);border-right:1px solid var(--border)}
+.pane:last-child{border-right:none}
+.pane-header{position:sticky;top:0;background:var(--bg);padding:1rem 0 1rem 2rem;border-bottom:1px solid var(--border);z-index:10}
+.pane-header h2{font-size:.75rem;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.editor{font-family:'JetBrains Mono','Fira Code',monospace;font-size:14px;line-height:1.7;background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:1rem;min-height:calc(100% - 80px);outline:none;resize:none;width:100%;color:var(--fg)}
+.editor:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent)33}
+.preview{font-size:16px;line-height:1.8}
+.preview h1,.preview h2,.preview h3,.preview h4{font-weight:600;line-height:1.3;margin-top:2rem;margin-bottom:1rem}
+.preview h1{font-size:2rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+.preview h2{font-size:1.5rem;border-bottom:1px solid var(--border);padding-bottom:.5rem}
+.preview h3{font-size:1.25rem}
+.preview p{margin-bottom:1rem}
+.preview a{color:var(--accent);text-decoration:none}
+.preview a:hover{text-decoration:underline}
+.preview code{font-family:'JetBrains Mono','Fira Code',monospace;background:var(--code-bg);padding:.1rem .3rem;border-radius:3px;font-size:.9em}
+.preview pre{background:var(--code-bg);border:1px solid var(--border);border-radius:6px;padding:1rem;overflow:auto;margin:1rem 0}
+.preview pre code{background:none;padding:0;font-size:.9rem}
+.preview blockquote{border-left:4px solid var(--accent);padding-left:1rem;margin:1rem 0;color:var(--muted);font-style:italic}
+.preview ul,.preview ol{margin:1rem 0;padding-left:2rem}
+.preview li{margin:.25rem 0}
+.preview table{border-collapse:collapse;width:100%;margin:1rem 0}
+.preview th,.preview td{border:1px solid var(--border);padding:.5rem .75rem;text-align:left}
+.preview th{background:var(--code-bg);font-weight:600}
+.preview img{max-width:100%;border-radius:6px}
+.preview hr{border:none;border-top:1px solid var(--border);margin:2rem 0}
+.preview kbd{background:var(--code-bg);border:1px solid var(--border);border-radius:3px;padding:.1rem .4rem;font-family:inherit;font-size:.85rem}
+.preview details{margin:1rem 0}
+.preview summary{cursor:pointer;font-weight:500}
+.preview details[open] summary{margin-bottom:.5rem}
+.toolbar{position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:.75rem 2rem;display:flex;gap:.5rem;flex-wrap:wrap}
+.toolbar button{padding:.4rem .75rem;border:1px solid var(--border);background:var(--bg);color:var(--fg);font:inherit;border-radius:4px;cursor:pointer;font-size:.75rem}
+.toolbar button:hover{border-color:var(--accent);color:var(--accent)}
+.word-count{margin-left:auto;color:var(--muted);font-size:.75rem}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="pane">
+<div class="pane-header"><h2>Editor</h2></div>
+<textarea class="editor" id="editor" spellcheck="false"># Nemotron 3 Ultra — Design System
+
+> **A living document** describing the visual language, components, and principles behind the 100 HTML designs in this collection.
+
+---
+
+## Design Principles
+
+### 1. Zero Repetition
+Every design is unique. No two files share the same visual DNA. This forces creative exploration and prevents template thinking.
+
+### 2. Native First
+Zero dependencies. Vanilla HTML, CSS, and JavaScript only. Browser APIs are our framework.
+
+### 3. Performance as Aesthetic
+60fps is not optional. Animations use `requestAnimationFrame`, transforms, and opacity. No layout thrashing.
+
+### 4. Accessibility Built-in
+Semantic HTML, ARIA labels, keyboard navigation, reduced motion support, and WCAG AA contrast ratios.
+
+### 5. Dark Mode Native
+Every design respects `prefers-color-scheme`. No flash of wrong theme.
+
+---
+
+## Color Philosophy
+
+Colors are not decorative—they communicate state, hierarchy, and brand.
+
+| Role | Light | Dark | Usage |
+|------|-------|------|-------|
+| Background | `#ffffff` | `#0d1117` | Page canvas |
+| Foreground | `#1a1a1a` | `#e6edf3` | Primary text |
+| Muted | `#666666` | `#8b949e` | Secondary text |
+| Accent | `#0066cc` | `#58a6ff` | Links, focus, primary actions |
+| Success | `#22863a` | `#3fb950` | Confirmations |
+| Warning | `#bf8700` | `#d29922` | Caution states |
+| Danger | `#cb2431` | `#f85149` | Errors, destructive actions |
+
+---
+
+## Typography Scale
+
+```css
+:root {
+  --text-xs: 0.75rem;    /* 12px */
+  --text-sm: 0.875rem;   /* 14px */
+  --text-base: 1rem;     /* 16px */
+  --text-lg: 1.125rem;   /* 18px */
+  --text-xl: 1.25rem;    /* 20px */
+  --text-2xl: 1.5rem;    /* 24px */
+  --text-3xl: 2rem;      /* 32px */
+  --text-4xl: 3rem;      /* 48px */
+  --text-5xl: 4rem;      /* 64px */
+}
+```
+
+### Font Stacks
+
+- **UI Sans**: `system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif`
+- **UI Mono**: `'JetBrains Mono', 'Fira Code', 'SF Mono', monospace`
+- **Display**: `'Syne', 'Inter', sans-serif` (variable)
+- **Editorial**: `'Playfair Display', Georgia, serif`
+
+---
+
+## Spacing System
+
+Based on 4px base unit:
+
+```css
+:root {
+  --space-1: 0.25rem;  /* 4px */
+  --space-2: 0.5rem;   /* 8px */
+  --space-3: 1rem;     /* 16px */
+  --space-4: 1.5rem;   /* 24px */
+  --space-5: 2rem;     /* 32px */
+  --space-6: 3rem;     /* 48px */
+  --space-7: 4rem;     /* 64px */
+  --space-8: 6rem;     /* 96px */
+}
+```
+
+---
+
+## Component Library
+
+### Buttons
+
+| Variant | Example |
+|---------|---------|
+| Primary | `[ Primary Action ]` |
+| Secondary | `[ Secondary ]` |
+| Ghost | `[ Ghost Button ]` |
+| Danger | `[ Delete ]` |
+
+### Cards
+
+```html
+<article class="card">
+  <header class="card-header">
+    <h3>Card Title</h3>
+  </header>
+  <div class="card-body">
+    <p>Content goes here...</p>
+  </div>
+  <footer class="card-footer">
+    <a href="#">Action</a>
+  </footer>
+</article>
+```
+
+### Forms
+
+```html
+<label class="field">
+  <span class="field-label">Email</span>
+  <input type="email" class="field-input" placeholder="you@example.com">
+</label>
+```
+
+---
+
+## Animation Guidelines
+
+- **Duration**: 150ms (fast), 250ms (normal), 350ms (slow)
+- **Easing**: `cubic-bezier(0.16, 1, 0.3, 1)` (material)
+- **Reduced Motion**: Always respect `prefers-reduced-motion`
+
+```css
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+```
+
+---
+
+## Grid System
+
+12-column fluid grid with CSS Grid:
+
+```css
+.grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: var(--space-4);
+}
+@media (max-width: 768px) {
+  .grid { grid-template-columns: 1fr; }
+}
+```
+
+---
+
+## File Naming Convention
+
+```
+NN-descriptive-name.html
+```
+
+- `NN`: Zero-padded number (01-100)
+- `descriptive-name`: Kebab-case, lowercase
+- Examples: `01-neural-bloom.html`, `27-swiss-grid-poster.html`
+
+---
+
+## Quality Checklist
+
+Before committing any design:
+
+- [ ] Unique visual identity (no reuse of patterns)
+- [ ] Works at 320px, 768px, 1024px, 1440px+
+- [ ] Dark mode tested
+- [ ] Keyboard navigable
+- [ ] Screen reader friendly
+- [ ] 60fps animations
+- [ ] No console errors
+- [ ] Valid HTML5
+- [ ] Self-contained (no external deps except Google Fonts)
+
+---
+
+## The Philosophy
+
+> *"Design is not just what it looks like and feels like. Design is how it works."*
+> — Steve Jobs
+
+> *"Perfection is achieved, not when there is nothing more to add, but when there is nothing left to take away."*
+> — Antoine de Saint-Exupéry
+
+---
+
+*Generated by Nemotron 3 Ultra · 100 Designs · 2026*</textarea>
+<div class="toolbar">
+<button onclick="insertText('# ')">H1</button>
+<button onclick="insertText('## ')">H2</button>
+<button onclick="insertText('### ')">H3</button>
+<button onclick="insertText('> ')">Quote</button>
+<button onclick="insertText('- ')">List</button>
+<button onclick="insertText('1. ')">Ordered</button>
+<button onclick="insertText('`')">Code</button>
+<button onclick="insertText('```\\n\\n```')">Block</button>
+<button onclick="insertText('[text](url)')">Link</button>
+<button onclick="insertText('![alt](url)')">Image</button>
+<button onclick="insertText('---')">HR</button>
+<button onclick="insertText('| |\\n|---|')">Table</button>
+<span class="word-count" id="wordCount">0 words</span>
+</div>
+</div>
+<div class="pane">
+<div class="pane-header"><h2>Preview</h2></div>
+<div class="preview" id="preview"></div>
+</div>
+</div>
+<script>
+const editor=document.getElementById('editor');
+const preview=document.getElementById('preview');
+const wordCount=document.getElementById('wordCount');
+function render(){
+  const text=editor.value;
+  preview.innerHTML=marked.parse(text);
+  const words=text.trim().split(/\s+/).filter(w=>w.length>0).length;
+  wordCount.textContent=`${words} words`;
+}
+function insertText(s){
+  const start=editor.selectionStart,end=editor.selectionEnd;
+  const text=editor.value;
+  editor.value=text.slice(0,start)+s+text.slice(end);
+  editor.selectionStart=editor.selectionEnd=start+s.length;
+  editor.focus();
+  render();
+}
+editor.addEventListener('input',render);
+if(typeof marked==='undefined'){
+  const s=document.createElement('script');
+  s.src='https://cdn.jsdelivr.net/npm/marked/marked.min.js';
+  s.onload=render;
+  document.head.appendChild(s);
+}else{appendChild(s);}
+else{render();}
+</script>
+</body>
+</html>

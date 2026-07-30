@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>19 — String Art Generator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#8b6914;--fg:#ffffff;--muted:#a08040;--accent:#ffd700}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Space Mono','SF Mono',monospace;overflow:hidden}
+canvas{display:block;position:fixed;top:0;left:0;z-index:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.ui *{pointer-events:auto}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1rem,2.5vw,1.3rem);font-weight:300;letter-spacing:.06em}
+.subtitle{top:3rem;left:1.5rem;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.controls{bottom:1.5rem;left:1.5rem;display:flex;flex-wrap:wrap;gap:.75rem;align-items:center}
+.ctrl{display:flex;align-items:center;gap:.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.ctrl input[type=range]{width:100px;accent-color:var(--accent)}
+.ctrl select{background:transparent;border:1px solid var(--muted);color:var(--fg);padding:.2rem .5rem;font:inherit;font-size:.6rem}
+.stat{color:var(--accent);font-weight:500;font-size:.75rem}
+.mode{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);opacity:.7;text-align:right}
+.mode kbd{background:rgba(255,255,255,0.06);padding:.15rem .4rem;border-radius:3px;font-family:inherit;font-size:.75em;margin:0 .2rem}
+@media (max-width:600px){
+  .title{top:1rem;left:1rem;font-size:1rem}
+  .subtitle{top:2.5rem;left:1rem}
+  .controls{bottom:1rem;left:1rem;gap:.5rem}
+  .ctrl input[type=range]{width:70px}
+  .mode{bottom:1rem;right:1rem;font-size:.55rem}
+}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">String Art Generator</div>
+<div class="ui subtitle">parametric nail & thread patterns</div>
+<div class="ui controls">
+<label class="ctrl">Nails <input type="range" id="nails" min="50" max="500" step="10" value="200"><span class="stat" id="nailsVal">200</span></label>
+<label class="ctrl">Multiplier <input type="range" id="mult" min="1" max="200" step="1" value="37"><span class="stat" id="multVal">37</span></label>
+<label class="ctrl">Skip <input type="range" id="skip" min="0" max="50" step="1" value="0"><span class="stat" id="skipVal">0</span></label>
+<label class="ctrl"><select id="pattern"><option value="0">Modular</option><option value="1">Epicycloid</option><option value="2">Hypocycloid</option><option value="3">Rose</option><option value="4">Lissajous</option></select></label>
+<label class="ctrl"><input type="checkbox" id="animate" checked> Animate</label>
+<label class="ctrl"><input type="checkbox" id="wood" checked> Wood Grain</label>
+</div>
+<div class="ui mode"><kbd>Space</kbd> pause · <kbd>S</kbd> save SVG · <kbd>R</kbd> random</div>
+<script>
+const canvas=document.getElementById('c'),ctx=canvas.getContext('2d');
+let W=0,H=0,DPR=Math.min(window.devicePixelRatio||1,2);
+let nails=200,multiplier=37,skip=0,pattern=0,animate=true,wood=true;
+let frame=0,time=0,cx=0,cy=0,radius=0;
+function resize(){
+  W=canvas.width=innerWidth*DPR;H=canvas.height=innerHeight*DPR;
+  canvas.style.width=innerWidth+'px';canvas.style.height=innerHeight+'px';
+  cx=W/DPR/2;cy=H/DPR/2;radius=Math.min(cx,cy)*0.85;
+  ctx.scale(DPR,DPR);
+}
+function woodGrain(){
+  for(let y=0;y<H/DPR;y+=2){
+    ctx.strokeStyle=`rgba(139,105,20,${0.03+Math.random()*0.02})`;
+    ctx.lineWidth=1;
+    ctx.beginPath();
+    ctx.moveTo(0,y);
+    for(let x=0;x<W/DPR;x+=10){
+      ctx.lineTo(x+Math.random()*3,y+Math.random()*2);
+    }
+    ctx.stroke();
+  }
+}
+document.getElementById('nails').addEventListener('input',e=>{nails=+e.target.value;document.getElementById('nailsVal').textContent=nails;});
+document.getElementById('mult').addEventListener('input',e=>{multiplier=+e.target.value;document.getElementById('multVal').textContent=multiplier;});
+document.getElementById('skip').addEventListener('input',e=>{skip=+e.target.value;document.getElementById('skipVal').textContent=skip;});
+document.getElementById('pattern').addEventListener('change',e=>pattern=+e.target.value);
+document.getElementById('animate').addEventListener('change',e=>animate=e.target.checked);
+document.getElementById('wood').addEventListener('change',e=>wood=e.target.checked);
+window.addEventListener('resize',resize);
+window.addEventListener('keydown',e=>{
+  if(e.code==='Space'){animate=!animate;document.getElementById('animate').checked=animate;e.preventDefault();}
+  if(e.code==='KeyS'){saveSVG();e.preventDefault();}
+  if(e.code==='KeyR'){
+    nails=Math.floor(Math.random()*300)+100;
+    multiplier=Math.floor(Math.random()*150)+20;
+    document.getElementById('nails').value=nails;document.getElementById('nailsVal').textContent=nails;
+    document.getElementById('mult').value=multiplier;document.getElementById('multVal').textContent=multiplier;
+    e.preventDefault();
+  }
+});
+function getPoint(i,total){
+  const angle=(i/total)*Math.PI*2;
+  switch(pattern){
+    case 0: return {x:cx+radius*Math.cos(angle),y:cy+radius*Math.sin(angle)};
+    case 1:{
+      const R=radius*0.8,r=radius*0.3;
+      const theta=angle*multiplier;
+      return {x:cx+(R-r)*Math.cos(theta)+r*Math.cos((R-r)/r*theta),y:cy+(R-r)*Math.sin(theta)-r*Math.sin((R-r)/r*theta)};
+    }
+    case 2:{
+      const R=radius*0.8,r=radius*0.3;
+      const theta=angle*multiplier;
+      return {x:cx+(R-r)*Math.cos(theta)-r*Math.cos((R-r)/r*theta),y:cy+(R-r)*Math.sin(theta)+r*Math.sin((R-r)/r*theta)};
+    }
+    case 3:{
+      const k=multiplier/10;
+      const r=radius*Math.cos(k*angle);
+      return {x:cx+r*Math.cos(angle),y:cy+r*Math.sin(angle)};
+    }
+    case 4:{
+      const a=multiplier/20,b=1;
+      return {x:cx+radius*Math.sin(a*angle+time),y:cy+radius*Math.sin(b*angle)};
+    }
+  }
+}
+function saveSVG(){
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.setAttribute('width',W/DPR);
+  svg.setAttribute('height',H/DPR);
+  svg.setAttribute('viewBox',`0 0 ${W/DPR} ${H/DPR}`);
+  const bg=document.createElementNS('http://www.w3.org/2000/svg','rect');
+  bg.setAttribute('width','100%');bg.setAttribute('height','100%');bg.setAttribute('fill','#8b6914');
+  svg.appendChild(bg);
+  const group=document.createElementNS('http://www.w3.org/2000/svg','g');
+  group.setAttribute('stroke','#ffd700');
+  group.setAttribute('stroke-width','0.5');
+  group.setAttribute('fill','none');
+  group.setAttribute('opacity','0.7');
+  for(let i=0;i<nails;i++){
+    const from=getPoint(i,nails);
+    const to=getPoint((i*multiplier+skip)%nails,nails);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',from.x);line.setAttribute('y1',from.y);
+    line.setAttribute('x2',to.x);line.setAttribute('y2',to.y);
+    group.appendChild(line);
+  }
+  svg.appendChild(group);
+  const blob=new Blob([svg.outerHTML],{type:'image/svg+xml'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url;a.download='string-art.svg';a.click();
+  URL.revokeObjectURL(url);
+}
+function tick(){
+  frame++;
+  if(animate)time+=0.01;
+  ctx.fillStyle='#8b6914';
+  ctx.fillRect(0,0,W/DPR,H/DPR);
+  if(wood)woodGrain();
+  ctx.strokeStyle='#ffd700';
+  ctx.lineWidth=0.5;
+  ctx.globalAlpha=0.6;
+  for(let i=0;i<nails;i++){
+    const from=getPoint(i,nails);
+    const to=getPoint((i*multiplier+skip)%nails,nails);
+    ctx.beginPath();
+    ctx.moveTo(from.x,from.y);
+    ctx.lineTo(to.x,to.y);
+    ctx.stroke();
+  }
+  ctx.globalAlpha=1;
+  ctx.fillStyle='#ffffff';
+  for(let i=0;i<nails;i++){
+    const p=getPoint(i,nails);
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,2,0,Math.PI*2);
+    ctx.fill();
+  }
+  requestAnimationFrame(tick);
+}
+resize();
+tick();
+</script>
+</body>
+</html>
