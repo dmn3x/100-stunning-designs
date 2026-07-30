@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Supernova</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .explosion-container {
+    position: relative;
+    width: 800px;
+    height: 800px;
+  }
+  .shockwave {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border: 2px solid rgba(255,100,0,0.3);
+    border-radius: 50%;
+    animation: expand 10s ease-out infinite;
+  }
+  .shockwave:nth-child(1) { animation-delay: 0s; }
+  .shockwave:nth-child(2) { animation-delay: -2s; }
+  .shockwave:nth-child(3) { animation-delay: -4s; }
+  .shockwave:nth-child(4) { animation-delay: -6s; }
+  .shockwave:nth-child(5) { animation-delay: -8s; }
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100px;
+    height: 100px;
+    background: radial-gradient(circle, #ff6600 0%, #ff3300 50%, #aa0000 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 60px #ff6600, 0 0 120px #ff3300;
+    animation: core-pulse 3s ease-in-out infinite;
+  }
+  .debris {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: #ff9900;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #ff9900;
+    animation: fly 8s ease-out infinite;
+  }
+  @keyframes expand {
+    0% { width: 0; height: 0; opacity: 0.8; }
+    50% { width: 600px; height: 600px; opacity: 0.4; }
+    100% { width: 800px; height: 800px; opacity: 0; }
+  }
+  @keyframes core-pulse {
+    0%, 100% { box-shadow: 0 0 60px #ff6600; }
+    50% { box-shadow: 0 0 100px #ff9900, 0 0 200px #ff6600; }
+  }
+  @keyframes fly {
+    0% { transform: translate(-50%, -50%) translate(0, 0); opacity: 1; }
+    100% { transform: translate(-50%, -50%) translate(200px, -150px); opacity: 0; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #ffd9b3;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,100,0,0.5);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="explosion-container">
+    <div class="core"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+    <div class="shockwave"></div>
+  </div>
+  <div class="content">
+    <h1>Supernova</h1>
+    <p class="subtitle">A star's catastrophic death, outshining entire galaxies for weeks in a blinding flash.</p>
+  </div>
+</body>
+</html>

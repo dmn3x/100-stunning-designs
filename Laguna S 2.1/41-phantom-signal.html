@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Phantom Signal</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Courier New', monospace;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .signal-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .wave {
+    position: absolute;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(90deg, rgba(0,255,255,0) 0%, rgba(0,255,255,0.8) 50%, rgba(0,255,255,0) 100%);
+    box-shadow: 0 0 10px #00ffff;
+    animation: pulse 4s ease-in-out infinite;
+  }
+  .wave:nth-child(1) { top: 100px; animation-delay: 0s; }
+  .wave:nth-child(2) { top: 200px; animation-delay: -0.5s; }
+  .wave:nth-child(3) { top: 300px; animation-delay: -1s; }
+  .wave:nth-child(4) { top: 400px; animation-delay: -1.5s; }
+  .wave:nth-child(5) { top: 500px; animation-delay: -2s; }
+  .blip {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffff;
+    animation: ping 3s ease-in-out infinite;
+  }
+  .blip:nth-child(6) { left: 200px; top: 100px; animation-delay: 0s; }
+  .blip:nth-child(7) { left: 500px; top: 200px; animation-delay: -0.8s; }
+  .blip:nth-child(8) { left: 300px; top: 300px; animation-delay: -1.5s; }
+  .blip:nth-child(9) { left: 600px; top: 400px; animation-delay: -2.2s; }
+  .blip:nth-child(10) { left: 150px; top: 500px; animation-delay: -3s; }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 0.8; }
+  }
+  @keyframes ping {
+    0%, 100% { opacity: 0; transform: scale(1); }
+    50% { opacity: 1; transform: scale(1.5); }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+  <div class="signal-container">
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="wave"></div>
+    <div class="blip"></div>
+    <div class="blip"></div>
+    <div class="blip"></div>
+    <div class="blip"></div>
+    <div class="blip"></div>
+  </div>
+  <div class="content">
+    <h1>Phantom Signal</h1>
+    <p class="subtitle">Radio waves from deep space, carrying patterns that shouldn't exist.</p>
+  </div>
+</body>
+</html>

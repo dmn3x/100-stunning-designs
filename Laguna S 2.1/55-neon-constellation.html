@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neon Constellation</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .constellation-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .node {
+    position: absolute;
+    width: 12px;
+    height: 12px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 15px #00ffff;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .node:nth-child(1) { top: 100px; left: 200px; animation-delay: 0s; }
+  .node:nth-child(2) { top: 150px; left: 400px; animation-delay: -0.5s; }
+  .node:nth-child(3) { top: 200px; left: 600px; animation-delay: -1s; }
+  .node:nth-child(4) { top: 300px; left: 300px; animation-delay: -1.5s; }
+  .node:nth-child(5) { top: 400px; left: 500px; animation-delay: -2s; }
+  .node:nth-child(6) { top: 500px; left: 200px; animation-delay: -2.5s; }
+  .node:nth-child(7) { top: 350px; left: 600px; animation-delay: -3s; }
+  .node:nth-child(8) { top: 250px; left: 100px; animation-delay: -3.5s; }
+  .connection {
+    position: absolute;
+    height: 2px;
+    background: rgba(0,255,255,0.3);
+    box-shadow: 0 0 10px #00ffff;
+    transform-origin: left center;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: 0.1em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.1rem;
+    opacity: 0.7;
+    letter-spacing: 0.05em;
+  }
+</style>
+</head>
+<body>
+  <div class="constellation-container">
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+    <div class="node"></div>
+  </div>
+  <div class="content">
+    <h1>Neon Constellation</h1>
+    <p class="subtitle">Electric star maps glowing in the dark, each node a beacon in the cosmic network.</p>
+  </div>
+</body>
+</html>

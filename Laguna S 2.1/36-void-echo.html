@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Void Echo</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .echo-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .echo-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border: 1px solid rgba(200,100,255,0.2);
+    border-radius: 50%;
+    animation: expand 10s ease-out infinite;
+  }
+  .echo-ring:nth-child(1) { animation-delay: 0s; }
+  .echo-ring:nth-child(2) { animation-delay: -2s; }
+  .echo-ring:nth-child(3) { animation-delay: -4s; }
+  .echo-ring:nth-child(4) { animation-delay: -6s; }
+  .echo-ring:nth-child(5) { animation-delay: -8s; }
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, #cc00ff 0%, #6600cc 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 30px #cc00ff;
+    animation: pulse 3s ease-in-out infinite;
+  }
+  @keyframes expand {
+    0% { width: 0; height: 0; opacity: 0.8; }
+    50% { width: 600px; height: 600px; opacity: 0.3; }
+    100% { width: 800px; height: 800px; opacity: 0; }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 30px #cc00ff; }
+    50% { box-shadow: 0 0 60px #ff66ff, 0 0 120px #cc00ff; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #e6ccff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(200,100,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="echo-container">
+    <div class="core"></div>
+    <div class="echo-ring"></div>
+    <div class="echo-ring"></div>
+    <div class="echo-ring"></div>
+    <div class="echo-ring"></div>
+    <div class="echo-ring"></div>
+  </div>
+  <div class="content">
+    <h1>Void Echo</h1>
+    <p class="subtitle">A pulse of energy expanding through the vacuum, rippling the fabric of nothingness.</p>
+  </div>
+</body>
+</html>

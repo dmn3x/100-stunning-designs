@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Geometric Storm</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .storm-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .shape {
+    position: absolute;
+    animation: spin 20s linear infinite;
+  }
+  .triangle {
+    width: 0;
+    height: 0;
+    border-left: 50px solid transparent;
+    border-right: 50px solid transparent;
+    border-bottom: 100px solid rgba(255,100,200,0.4);
+    filter: blur(2px);
+    box-shadow: 0 0 15px rgba(255,100,200,0.3);
+  }
+  .square {
+    width: 80px;
+    height: 80px;
+    background: rgba(100,200,255,0.3);
+    box-shadow: 0 0 15px rgba(100,200,255,0.3);
+  }
+  .pentagon {
+    width: 60px;
+    height: 60px;
+    background: rgba(200,100,255,0.4);
+    clip-path: polygon(50% 0%, 100% 35%, 80% 100%, 20% 100%, 0% 35%);
+    box-shadow: 0 0 15px rgba(200,100,255,0.3);
+  }
+  .hexagon {
+    width: 70px;
+    height: 60px;
+    background: rgba(255,200,100,0.4);
+    clip-path: polygon(10% 0%, 90% 0%, 100% 50%, 90% 100%, 10% 100%, 0% 50%);
+    box-shadow: 0 0 15px rgba(255,200,100,0.3);
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #fff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+</style>
+</head>
+<body>
+  <div class="storm-container">
+    <div class="shape triangle" style="top:100px; left:200px; animation-duration:15s;"></div>
+    <div class="shape square" style="top:200px; left:400px; animation-duration:18s; animation-direction:reverse;"></div>
+    <div class="shape pentagon" style="top:300px; left:100px; animation-duration:12s;"></div>
+    <div class="shape hexagon" style="top:150px; left:500px; animation-duration:20s; animation-direction:reverse;"></div>
+    <div class="shape triangle" style="top:400px; left:300px; animation-duration:16s;"></div>
+    <div class="shape square" style="top:250px; left:150px; animation-duration:14s; animation-direction:reverse;"></div>
+  </div>
+  <div class="content">
+    <h1>Geometric Storm</h1>
+    <p class="subtitle">Polygonal forms spinning in chaotic orbit, defying Euclidean geometry.</p>
+  </div>
+</body>
+</html>

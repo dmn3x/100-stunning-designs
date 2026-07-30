@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fractal Bloom</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .fractal-container {
+    position: relative;
+    width: 800px;
+    height: 800px;
+  }
+  .branch {
+    position: absolute;
+    background: linear-gradient(135deg,
+      rgba(255,100,200,0.6),
+      rgba(100,200,255,0.6),
+      rgba(200,100,255,0.6));
+    box-shadow: 0 0 15px rgba(255,100,200,0.4);
+    transform-origin: center left;
+    animation: grow 8s ease-in-out infinite;
+  }
+  .branch:nth-child(1) { width: 200px; height: 4px; top: 50%; left: 50%; transform: rotate(-30deg); }
+  .branch:nth-child(2) { width: 200px; height: 4px; top: 50%; left: 50%; transform: rotate(30deg); }
+  .branch:nth-child(3) { width: 150px; height: 3px; top: 30%; left: 50%; transform: rotate(-15deg); animation-delay: -1s; }
+  .branch:nth-child(4) { width: 150px; height: 3px; top: 70%; left: 50%; transform: rotate(15deg); animation-delay: -2s; }
+  .branch:nth-child(5) { width: 100px; height: 2px; top: 20%; left: 50%; transform: rotate(-45deg); animation-delay: -3s; }
+  .branch:nth-child(6) { width: 100px; height: 2px; top: 80%; left: 50%; transform: rotate(45deg); animation-delay: -4s; }
+  .branch:nth-child(7) { width: 120px; height: 2px; top: 10%; left: 50%; transform: rotate(-60deg); animation-delay: -5s; }
+  .branch:nth-child(8) { width: 120px; height: 2px; top: 90%; left: 50%; transform: rotate(60deg); animation-delay: -6s; }
+  @keyframes grow {
+    0%, 100% { width: 0; opacity: 0; }
+    50% { width: 200px; opacity: 1; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #ffd9ff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 3.5rem;
+    font-weight: 200;
+    letter-spacing: -0.02em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,100,200,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="fractal-container">
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+    <div class="branch"></div>
+  </div>
+  <div class="content">
+    <h1>Fractal Bloom</h1>
+    <p class="subtitle">Self-similar patterns unfolding infinitely, each iteration more complex than the last.</p>
+  </div>
+</body>
+</html>

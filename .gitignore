@@ -13,6 +13,9 @@ Thumbs.db
 __pycache__/
 *.log
 
+# Build generators (one-time use)
+_gen_*.py
+
 # Secrets
 .env
 *.pem

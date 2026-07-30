@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cosmic Dust</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Georgia', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .stars {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background:
+      radial-gradient(white 1px, transparent 1px),
+      radial-gradient(white 1px, transparent 1px),
+      radial-gradient(rgba(255,255,255,0.3) 1px, transparent 1px);
+    background-size: 50px 50px, 20px 20px, 100px 100px;
+    z-index: 1;
+  }
+  .nebula {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 800px;
+    height: 800px;
+    background: radial-gradient(circle,
+      rgba(138,43,226,0.3) 0%,
+      rgba(255,20,147,0.2) 25%,
+      rgba(0,191,255,0.25) 50%,
+      rgba(255,140,0,0.15) 75%,
+      transparent 100%);
+    filter: blur(40px);
+    animation: pulse 20s ease-in-out infinite;
+    z-index: 2;
+  }
+  .dust {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: white;
+    border-radius: 50%;
+    animation: float 15s linear infinite;
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #fff;
+    max-width: 600px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 300;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,255,255,0.3);
+    line-height: 1.1;
+  }
+  .subtitle {
+    font-size: 1.3rem;
+    font-weight: 300;
+    opacity: 0.8;
+    letter-spacing: 0.05em;
+    line-height: 1.6;
+  }
+  @keyframes pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); opacity: 0.7; }
+    50% { transform: translate(-50%, -50%) scale(1.1); opacity: 0.8; }
+  }
+  @keyframes float {
+    0% { transform: translateY(0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="stars"></div>
+  <div class="nebula"></div>
+  <div class="content">
+    <h1>Cosmic Dust</h1>
+    <p class="subtitle">Billions of stardust particles adrift in the interstellar medium, each a seed of future worlds.</p>
+  </div>
+  <script>
+    // Create floating dust particles
+    const container = document.querySelector('body');
+    for (let i = 0; i < 100; i++) {
+      const dust = document.createElement('div');
+      dust.className = 'dust';
+      dust.style.left = Math.random() * 100 + 'vw';
+      dust.style.top = Math.random() * 100 + 'vh';
+      dust.style.animationDuration = (10 + Math.random() * 10) + 's';
+      dust.style.animationDelay = Math.random() * 5 + 's';
+      container.appendChild(dust);
+    }
+  </script>
+</body>
+</html>

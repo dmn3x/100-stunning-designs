@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Neural Network</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .network-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .layer {
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+  }
+  .layer:nth-child(1) { left: 100px; top: 100px; }
+  .layer:nth-child(2) { left: 300px; top: 50px; }
+  .layer:nth-child(3) { left: 500px; top: 100px; }
+  .layer:nth-child(4) { left: 700px; top: 150px; }
+  .neuron {
+    width: 16px;
+    height: 16px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffff;
+    margin: 10px;
+    animation: pulse 2s ease-in-out infinite;
+  }
+  .neuron:nth-child(1) { animation-delay: 0s; }
+  .neuron:nth-child(2) { animation-delay: -0.3s; }
+  .neuron:nth-child(3) { animation-delay: -0.6s; }
+  .connection {
+    position: absolute;
+    background: rgba(0,255,255,0.2);
+    box-shadow: 0 0 5px #00ffff;
+    animation: flow 3s linear infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  @keyframes flow {
+    0% { opacity: 0; }
+    10% { opacity: 0.5; }
+    90% { opacity: 0.3; }
+    100% { opacity: 0; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="network-container">
+    <div class="layer">
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+    </div>
+    <div class="layer">
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+    </div>
+    <div class="layer">
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+    </div>
+    <div class="layer">
+      <div class="neuron"></div>
+      <div class="neuron"></div>
+    </div>
+  </div>
+  <div class="content">
+    <h1>Neural Network</h1>
+    <p class="subtitle">Layers of artificial neurons firing in synchronized patterns, learning from the void.</p>
+  </div>
+</body>
+</html>

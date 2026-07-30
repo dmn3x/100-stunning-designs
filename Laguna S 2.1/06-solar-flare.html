@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solar Flare</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .solar {
+    position: relative;
+    width: 500px;
+    height: 500px;
+  }
+  .sun {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 200px;
+    height: 200px;
+    background: radial-gradient(circle,
+      #ff9900 0%,
+      #ff6600 30%,
+      #ff3300 60%,
+      #aa0000 90%,
+      #550000 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 80px #ff6600;
+    animation: pulse 3s ease-in-out infinite;
+  }
+  .flare {
+    position: absolute;
+    top: 50%; left: 50%;
+    width: 300px;
+    height: 30px;
+    background: linear-gradient(90deg,
+      rgba(255,153,0,0) 0%,
+      rgba(255,255,255,0.8) 50%,
+      rgba(255,153,0,0) 100%);
+    transform-origin: center left;
+    animation: flare-anim 5s ease-in-out infinite;
+  }
+  .flare:nth-child(1) { transform: rotate(-20deg) translate(-50%, -50%); animation-delay: 0s; }
+  .flare:nth-child(2) { transform: rotate(15deg) translate(-50%, -50%); animation-delay: -1s; }
+  .flare:nth-child(3) { transform: rotate(45deg) translate(-50%, -50%); animation-delay: -2s; }
+  .flare:nth-child(4) { transform: rotate(-50deg) translate(-50%, -50%); animation-delay: -3s; }
+  .flare:nth-child(5) { transform: rotate(70deg) translate(-50%, -50%); animation-delay: -4s; }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 80px #ff6600; }
+    50% { box-shadow: 0 0 120px #ff9900, 0 0 200px #ff6600; }
+  }
+  @keyframes flare-anim {
+    0%, 100% { transform: translate(-50%, -50%) rotate(0deg) scaleX(0.5); opacity: 0.3; }
+    50% { transform: translate(-50%, -50%) rotate(0deg) scaleX(1); opacity: 0.8; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #ffd9b3;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(255,153,0,0.5);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="solar">
+    <div class="sun"></div>
+    <div class="flare"></div>
+    <div class="flare"></div>
+    <div class="flare"></div>
+    <div class="flare"></div>
+    <div class="flare"></div>
+  </div>
+  <div class="content">
+    <h1>Solar Flare</h1>
+    <p class="subtitle">Magnetic reconnection unleashes plasma storms 100,000 km into the solar corona.</p>
+  </div>
+</body>
+</html>

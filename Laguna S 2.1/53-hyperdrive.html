@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hyperdrive</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .drive-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    border: 2px solid rgba(0,255,255,0.3);
+    border-radius: 50%;
+    animation: spin 10s linear infinite;
+    filter: blur(1px);
+    box-shadow: 0 0 20px rgba(0,255,255,0.3);
+  }
+  .ring:nth-child(1) { width: 300px; height: 300px; animation-duration: 10s; }
+  .ring:nth-child(2) { width: 200px; height: 200px; animation-duration: 7s; animation-direction: reverse; }
+  .ring:nth-child(3) { width: 100px; height: 100px; animation-duration: 4s; }
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffff;
+    animation: travel 5s linear infinite;
+  }
+  @keyframes spin {
+    0% { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+  }
+  @keyframes travel {
+    0% { transform: translate(-50%, -50%) translate(100px, 0) rotate(0deg); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.8; }
+    100% { transform: translate(-50%, -50%) translate(150px, 0) rotate(360deg); opacity: 0; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="drive-container">
+    <div class="ring"></div>
+    <div class="ring"></div>
+    <div class="ring"></div>
+  </div>
+  <div class="content">
+    <h1>Hyperdrive</h1>
+    <p class="subtitle">Space-time compressed ahead, expanded behind — faster than light through the cosmic void.</p>
+  </div>
+</body>
+</html>

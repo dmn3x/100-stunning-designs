@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Luminous Abyss</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .abyss-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .depth {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border: 2px solid transparent;
+    border-top-color: rgba(0,255,255,0.2);
+    border-right-color: rgba(0,255,255,0.2);
+    border-radius: 50%;
+    animation: expand 15s ease-out infinite;
+  }
+  .depth:nth-child(1) { animation-delay: 0s; }
+  .depth:nth-child(2) { animation-delay: -3s; }
+  .depth:nth-child(3) { animation-delay: -6s; }
+  .depth:nth-child(4) { animation-delay: -9s; }
+  .depth:nth-child(5) { animation-delay: -12s; }
+  .core {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    background: radial-gradient(circle, #00ffff 0%, #0066ff 100%);
+    border-radius: 50%;
+    box-shadow: 0 0 40px #00ffff;
+    animation: pulse 4s ease-in-out infinite;
+  }
+  @keyframes expand {
+    0% { width: 0; height: 0; opacity: 0.8; }
+    50% { width: 600px; height: 600px; opacity: 0.3; }
+    100% { width: 800px; height: 800px; opacity: 0; }
+  }
+  @keyframes pulse {
+    0%, 100% { box-shadow: 0 0 40px #00ffff; }
+    50% { box-shadow: 0 0 80px #00ffff, 0 0 160px #00ffff; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="abyss-container">
+    <div class="core"></div>
+    <div class="depth"></div>
+    <div class="depth"></div>
+    <div class="depth"></div>
+    <div class="depth"></div>
+    <div class="depth"></div>
+  </div>
+  <div class="content">
+    <h1>Luminous Abyss</h1>
+    <p class="subtitle">A bottomless void radiating cyan light, its depths concealing unknown dimensions.</p>
+  </div>
+</body>
+</html>

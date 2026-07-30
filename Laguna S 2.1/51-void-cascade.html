@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Void Cascade</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .cascade-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .particle {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(100,200,255,0.5);
+    border-radius: 50%;
+    box-shadow: 0 0 10px rgba(100,200,255,0.3);
+    animation: fall linear infinite;
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+  @keyframes fall {
+    0% { transform: translateY(-50px); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.7; }
+    100% { transform: translateY(600px); opacity: 0; }
+  }
+</style>
+</head>
+<body>
+  <div class="cascade-container"></div>
+  <div class="content">
+    <h1>Void Cascade</h1>
+    <p class="subtitle">Particles of pure darkness falling through the void, each one a tiny singularity.</p>
+  </div>
+</body>
+</html>

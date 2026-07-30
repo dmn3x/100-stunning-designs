@@ -2,219 +2,696 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>100 Stunning Designs — An AI Creative Benchmark</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>stunning-html — 470 Generative Designs</title>
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-:root {
-  --bg: #06060a;
-  --fg: #e8e4dc;
-  --accent: #00ffc8;
-  --accent2: #ff3366;
-  --accent3: #ffcc00;
-  --card: #0c0e16;
-  --border: #1a1d2e;
-  --muted: #6a6d7a;
-  --glow: rgba(0, 255, 200, 0.15);
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #faf9f5;
-    --fg: #1a1815;
-    --accent: #00b88a;
-    --accent2: #cc1a44;
-    --accent3: #b8860b;
-    --card: #ffffff;
-    --border: #d0cec8;
-    --muted: #8a8d9a;
-    --glow: rgba(0, 184, 138, 0.1);
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
-}
-html { background: var(--bg); }
-body {
-  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--fg);
-  min-height: 100vh;
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-}
-a { color: var(--accent); text-decoration: none; transition: color 0.2s, transform 0.15s; }
-a:hover { color: #33ffdd; transform: translateX(2px); }
-a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wrap { max-width: 1400px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem); }
-.skip-link { position: absolute; top: -100%; left: 1rem; padding: 0.75rem 1rem; background: var(--accent); color: var(--bg); font-weight: 600; z-index: 1000; }
-.skip-link:focus { top: 1rem; }
-header.hero { text-align: center; padding: clamp(2rem, 6vw, 4rem) 0 clamp(1.5rem, 4vw, 2.5rem); }
-.hero h1 { font-size: clamp(2.2rem, 7vw, 4.5rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 40%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-.hero .tagline { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: clamp(0.7rem, 1.5vw, 0.85rem); letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 1rem; }
-.hero .desc { max-width: 700px; margin: 1.5rem auto 0; font-size: clamp(0.9rem, 1.8vw, 1.1rem); color: rgba(232, 228, 220, 0.55); line-height: 1.7; }
-.stats-bar { display: flex; justify-content: center; gap: clamp(1.5rem, 4vw, 3.5rem); padding: clamp(1.5rem, 3vw, 2rem) 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: clamp(1.5rem, 3vw, 2rem) 0; flex-wrap: wrap; }
-.stat { text-align: center; }
-.stat .val { font-family: 'Space Grotesk', system-ui; font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
-.stat .label { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.6rem, 1vw, 0.7rem); letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
-.collections { margin-top: clamp(2rem, 4vw, 3rem); }
-.collections h2 { font-size: clamp(0.7rem, 1.2vw, 0.8rem); letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; font-weight: 500; }
-.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
-.collection-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
-.collection-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
-.collection-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 20px 40px -20px var(--glow); }
-.collection-card:hover::before { opacity: 0.03; }
-.collection-card:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
-.collection-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
-.collection-num { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.7; font-weight: 600; }
-.collection-title { font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 600; letter-spacing: -0.01em; color: var(--fg); line-height: 1.3; }
-.collection-desc { font-size: 0.85rem; color: rgba(232, 228, 220, 0.55); line-height: 1.6; margin-bottom: 1rem; }
-.collection-meta { display: flex; gap: 1rem; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
-.collection-link { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); font-weight: 600; transition: gap 0.2s; }
-.collection-link:hover { gap: 0.75rem; }
-.collection-link::after { content: '→'; font-size: 0.85rem; }
-footer.footer { margin-top: clamp(3rem, 6vw, 5rem); padding-top: clamp(1.5rem, 3vw, 2rem); border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.8rem; }
-.footer p + p { margin-top: 0.5rem; }
-.footer a { color: var(--muted); }
-.footer a:hover { color: var(--accent); }
-.footer span[aria-hidden] { margin: 0 0.5rem; opacity: 0.5; }
-@media (max-width: 640px) {
-  .collection-grid { grid-template-columns: 1fr; }
-  .stats-bar { gap: 1.5rem; }
-}
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box }
+html { scroll-behavior:smooth; scrollbar-width:thin; scrollbar-color:#333 #0a0a0f }
+body { background:#0a0a0f; color:#e0e0e0; font-family:system-ui,-apple-system,sans-serif; min-height:100vh; display:flex; flex-direction:column }
+a { color:inherit; text-decoration:none }
+
+/* ── Hero ── */
+.hero { padding:4rem 2rem 2rem; text-align:center; position:relative; overflow:hidden }
+.hero::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse at 50% 0%,rgba(99,102,241,.08),transparent 70%); pointer-events:none }
+.hero h1 { font-size:clamp(2.5rem,8vw,5rem); font-weight:900; letter-spacing:-.03em; line-height:1; margin-bottom:.5rem }
+.hero h1 .gradient { background:linear-gradient(135deg,#667eea,#764ba2,#f472b6,#fbbf24); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.hero p { color:#888; font-size:1.1rem; max-width:600px; margin:0 auto 2rem }
+.hero .tagline { color:#555; font-size:.9rem; display:flex; align-items:center; justify-content:center; gap:.75rem; flex-wrap:wrap }
+
+/* ── Stats Bar ── */
+.stats { display:flex; justify-content:center; gap:2rem; padding:1.5rem 2rem; flex-wrap:wrap; border-top:1px solid #181818; border-bottom:1px solid #181818; max-width:900px; margin:0 auto 2rem }
+.stat-item { text-align:center }
+.stat-item .num { font-size:1.5rem; font-weight:800; background:linear-gradient(135deg,#667eea,#764ba2); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text }
+.stat-item .label { font-size:.75rem; color:#666; text-transform:uppercase; letter-spacing:.05em; margin-top:2px }
+
+/* ── Tabs ── */
+.tabs { display:flex; justify-content:center; gap:.5rem; padding:0 2rem; flex-wrap:wrap; margin-bottom:2rem }
+.tab { background:#111; border:1px solid #222; border-radius:2rem; padding:.6rem 1.25rem; font-size:.875rem; cursor:pointer; transition:all .25s; color:#666; display:flex; align-items:center; gap:.5rem; user-select:none }
+.tab:hover { border-color:#444; color:#ccc }
+.tab .dot { width:8px; height:8px; border-radius:50%; display:inline-block }
+.tab.active { background:transparent; border-color:currentColor; color:#e0e0e0; box-shadow:0 0 20px rgba(99,102,241,.1) }
+.tab .badge { background:#222; color:#888; font-size:.65rem; padding:2px 6px; border-radius:99px; font-weight:600 }
+
+/* ── Panels ── */
+.collections { flex:1; padding:0 2rem 4rem; max-width:1400px; margin:0 auto; width:100% }
+.panel { display:none }
+.panel.active { display:block }
+
+/* ── Grid & Cards ── */
+.grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(280px,1fr)); gap:1rem }
+.card { background:#111; border:1px solid #222; border-radius:1rem; padding:1.25rem; display:flex; align-items:center; gap:1rem; text-decoration:none; color:#e0e0e0; transition:all .25s; cursor:pointer }
+.card:hover { background:#1a1a2e; border-color:#4f46e5; transform:translateY(-2px); box-shadow:0 8px 30px rgba(99,102,241,.12) }
+.card .num { width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:.9rem; flex-shrink:0; color:#fff }
+.card .info { min-width:0; flex:1 }
+.card .info .name { font-weight:600; font-size:.9rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; color:#e0e0e0 }
+.card .info .desc { font-size:.78rem; color:#666; margin-top:2px; line-height:1.3; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden }
+
+/* ── Filter Bar ── */
+.filter-bar { margin-bottom:1.5rem; display:flex; flex-wrap:wrap; gap:.4rem }
+.filter-tag { background:#111; border:1px solid #222; border-radius:99px; padding:.3rem .75rem; font-size:.75rem; cursor:pointer; color:#666; transition:all .2s; user-select:none }
+.filter-tag:hover { border-color:#444; color:#aaa }
+.filter-tag.active { background:rgba(99,102,241,.15); border-color:#667eea; color:#a5b4fc }
+
+/* ── Search ── */
+.search-bar { margin-bottom:1.5rem; position:relative }
+.search-bar input { width:100%; background:#111; border:1px solid #222; border-radius:2rem; padding:.75rem 1.25rem; color:#e0e0e0; font-size:.9rem; outline:none; transition:border-color .2s }
+.search-bar input:focus { border-color:#667eea; box-shadow:0 0 0 3px rgba(102,126,234,.1) }
+.search-bar input::placeholder { color:#444 }
+
+/* ── Footer ── */
+.footer { text-align:center; padding:3rem 2rem; color:#333; font-size:.8rem; border-top:1px solid #111 }
+.footer a { color:#667eea }
+
+/* ── Empty State ── */
+.empty-state { text-align:center; padding:3rem; color:#555; font-size:.9rem }
 </style>
 </head>
 <body>
-<a href="#main" class="skip-link">Skip to main content</a>
-<div class="wrap" id="main">
+
 <header class="hero">
-<h1>100 <em>STUNNING</em> DESIGNS</h1>
-<p class="tagline">AI Creative Benchmark</p>
-<p class="desc">One hundred hand-crafted HTML visualizations spanning generative art, mathematical simulations, interactive physics, and algorithmic geometry. Built without generators—each file authored individually as a testament to creative coding craft.</p>
+  <h1><span class="gradient">stunning-html</span></h1>
+  <p>470 generative UI & design experiments crafted with pure HTML/CSS/JS — no frameworks, no libraries, no limits.</p>
+  <div class="tagline">
+    <span>🎨 5 collections</span>
+    <span>·</span>
+    <span>🌙 dark-first design</span>
+    <span>·</span>
+    <span>⚡ zero dependencies</span>
+  </div>
 </header>
-<div class="stats-bar" role="list" aria-label="Collection statistics">
-<div class="stat" role="listitem"><div class="val">100</div><div class="label">Designs</div></div>
-<div class="stat" role="listitem"><div class="val">1</div><div class="label">Theme</div></div>
-<div class="stat" role="listitem"><div class="val">0</div><div class="label">Generators</div></div>
-<div class="stat" role="listitem"><div class="val">100%</div><div class="label">Hand-coded</div></div>
+
+<div class="stats">
+  <div class="stat-item"><div class="num">470</div><div class="label">Designs</div></div>
+  <div class="stat-item"><div class="num">5</div><div class="label">Collections</div></div>
+  <div class="stat-item"><div class="num">350k+</div><div class="label">Lines of Code</div></div>
 </div>
-<section class="collections" aria-labelledby="collections-heading">
-<h2 id="collections-heading">The Collection</h2>
-<div class="collection-grid" id="grid"></div>
+
+<div class="tabs" id="tabs">
+<button class="tab active" data-model="mimo"><span class="dot" style="background:#8b5cf6"></span>🔮 MiMo V2.5 Pro<span class="badge">100</span></button>
+<button class="tab" data-model="nemotron"><span class="dot" style="background:#f59e0b"></span>⚡ Nemotron 3 Ultra<span class="badge">100</span></button>
+<button class="tab" data-model="deepseek"><span class="dot" style="background:#10b981"></span>🌀 Deepseek V4 Pro<span class="badge">100</span></button>
+<button class="tab" data-model="minimax"><span class="dot" style="background:#ec4899"></span>🎭 MiniMax M3<span class="badge">100</span></button>
+<button class="tab" data-model="laguna"><span class="dot" style="background:#06b6d4"></span>🌊 Laguna S 2.1<span class="badge">70</span></button>
+</div>
+
+<section class="collections" id="collections">
+<div class="panel active" id="panel-mimo"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🔮 A creative powerhouse of 100 generative UI concepts — from brutalism to particle physics — designed for maximum visual impact.</p></div>
+<div class="panel" id="panel-nemotron"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">⚡ 100 high-intensity generative explorations — neural blossoms, quantum foam, kinetic typography, and beyond.</p></div>
+<div class="panel" id="panel-deepseek"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌀 100 generative UI design experiments — from glitch terminals to fractal landscapes. Pure HTML/CSS/JS.</p></div>
+<div class="panel" id="panel-minimax"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🎭 100 design concepts — generative art, interactive tools, and avant-garde UI experiments.</p></div>
+<div class="panel" id="panel-laguna"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌊 70 fluid, organic, and generative design pieces — aurora borealis, crystal caverns, and ethereal motion.</p></div>
 </section>
+
 <footer class="footer">
-<p>Benchmark by <a href="https://nousresearch.com" target="_blank" rel="noopener">Nous Research</a> · Built on <a href="https://github.com/nousresearch/hermes-agent" target="_blank" rel="noopener">Hermes Agent</a></p>
-<p><a href="https://github.com/nousresearch/hermes-agent" target="_blank" rel="noopener">Source Code</a><span aria-hidden="true">·</span><a href="https://nousresearch.com" target="_blank" rel="noopener">Nous Research</a></p>
+  <p>stunning-html · built with ❤️ · <a href="https://github.com/dmn3x/stunning-html">GitHub</a></p>
 </footer>
-</div>
+
 <script>
-const designs = [
-  {num:"01",title:"Neural Field Visualizer",desc:"Interactive 3D neural field with ray-marched isosurfaces and real-time parameter control.",tags:["WebGL","3D","Raymarching"]},
-  {num:"02",title:"Fluid Dynamics Solver",desc:"Navier-Stokes simulation with vorticity confinement and dye advection.",tags:["WebGL","Physics","Simulation"]},
-  {num:"03",title:"Fractal Explorer",desc:"Mandelbrot and Julia set explorer with smooth coloring and deep zoom.",tags:["Canvas","Fractals","Math"]},
-  {num:"04",title:"Wave Interference",desc:"Multi-source wave interference patterns with phase control.",tags:["Canvas","Waves","Physics"]},
-  {num:"05",title:"Particle Life",desc:"Emergent behavior from simple attraction/repulsion rules between particle species.",tags:["Canvas","Emergence","ALife"]},
-  {num:"06",title:"Reaction Diffusion",desc:"Gray-Scott model with multiple parameter presets and brush painting.",tags:["WebGL","RD","Patterns"]},
-  {num:"07",title:"Boids Flocking",desc:"Craig Reynolds' boids with separation, alignment, cohesion, and obstacles.",tags:["Canvas","Flocking","AI"]},
-  {num:"08",title:"Strange Attractors",desc:"Lorenz, Rössler, Aizawa, and Clifford attractors in interactive 3D.",tags:["WebGL","Chaos","3D"]},
-  {num:"09",title:"L-System Fractals",desc:"Recursive plant generation with stochastic rules and wind simulation.",tags:["Canvas","L-Systems","Generative"]},
-  {num:"10",title:"Cellular Automata",desc:"Elementary, Game of Life, and custom rules with brush tools.",tags:["Canvas","CA","Grid"]},
-  {num:"11",title:"Fourier Series Visualizer",desc:"Interactive Fourier series with harmonic sliders and waveform synthesis.",tags:["Canvas","Math","Audio"]},
-  {num:"12",title:"Perlin Terrain",desc:"Procedural terrain with multi-octave noise, erosion, and water simulation.",tags:["WebGL","Noise","Terrain"]},
-  {num:"13",title:"Quantum Wavefunction",desc:"Schrödinger equation solver with potential barriers and superposition.",tags:["WebGL","Quantum","Physics"]},
-  {num:"14",title:"Raymarching Volumetric",desc:"Signed distance fields with volumetric lighting and fractal primitives.",tags:["WebGL","Raymarching","SDF"]},
-  {num:"15",title:"Particle Gravity",desc:"N-body gravity simulation with trails, collisions, and preset configurations.",tags:["Canvas","N-Body","Physics"]},
-  {num:"16",title:"Hopf Fibration",desc:"S³→S² fiber bundle visualization with stereographic projection.",tags:["WebGL","Topology","4D"]},
-  {num:"17",title:"Voronoi Mosaic",desc:"Animated Voronoi diagrams with multiple distance metrics.",tags:["Canvas","Voronoi","Geometry"]},
-  {num:"18",title:"Centennial Finale",desc:"The 100th design—harmonic particle network with golden ratio resonance.",tags:["Canvas","Generative","Finale"]},
-  {num:"19",title:"Recursive Geometry",desc:"Self-similar geometric patterns with depth control and color cycling.",tags:["Canvas","Recursion","Geometry"]},
-  {num:"20",title:"Magnetic Field Lines",desc:"Interactive magnetic dipole field visualization with iron filings mode.",tags:["Canvas","Physics","Fields"]},
-  {num:"21",title:"Double Pendulum Chaos",desc:"Chaotic double pendulum with phase space trajectory and energy plot.",tags:["Canvas","Chaos","Physics"]},
-  {num:"22",title:"Diffusion Limited Aggregation",desc:"DLA growth simulation with multiple walkers and stickiness parameters.",tags:["Canvas","DLA","Growth"]},
-  {num:"23",title:"Kaleidoscope Mirror",desc:"Real-time kaleidoscope with adjustable symmetry and camera input.",tags:["Canvas","Symmetry","Webcam"]},
-  {num:"24",title:"Supershapes Explorer",desc:"Gielis superformula with interactive parameter space exploration.",tags:["Canvas","Math","Shapes"]},
-  {num:"25",title:"Barnsley Fern",desc:"Iterated function system with probability controls and mutation.",tags:["Canvas","IFS","Fractals"]},
-  {num:"26",title:"Sierpinski Triangle",desc:"Chaos game and deterministic construction with dimension controls.",tags:["Canvas","Fractals","Math"]},
-  {num:"27",title:"Swiss Grid Poster",desc:"Typography-driven poster generator with modular grid system.",tags:["Canvas","Typography","Design"]},
-  {num:"28",title:"Recursive Geometry",desc:"Self-similar geometric patterns with depth control and color cycling.",tags:["Canvas","Recursion","Geometry"]},
-  {num:"29",title:"Fire Simulation",desc:"Cellular automaton fire with wind, fuel, and temperature controls.",tags:["Canvas","CA","Fire"]},
-  {num:"30",title:"Water Ripples",desc:"2D wave equation with droplet impacts and boundary reflection.",tags:["Canvas","Waves","Physics"]},
-  {num:"31",title:"Gravity Wells",desc:"Orbital mechanics with multiple bodies and trajectory prediction.",tags:["Canvas","Orbital","Physics"]},
-  {num:"32",title:"Mandelbrot 3D",desc:"3D Mandelbulb with distance estimation and ambient occlusion.",tags:["WebGL","3D","Fractals"]},
-  {num:"33",title:"Flow Field Particles",desc:"Particles following Perlin noise flow fields with color trails.",tags:["Canvas","Flow Field","Particles"]},
-  {num:"34",title:"Conway's Game of Life",desc:"Infinite grid Life with HashLife algorithm and pattern library.",tags:["Canvas","CA","Life"]},
-  {num:"35",title:"Bézier Curve Designer",desc:"Interactive cubic Bézier curves with handle manipulation and export.",tags:["Canvas","Curves","Design"]},
-  {num:"36",title:"Voronoi Stippling",desc:"Lloyd relaxation stippling from images with weight maps.",tags:["Canvas","Stippling","Art"]},
-  {num:"37",title:"Poisson Disc Sampling",desc:"Blue noise sampling with Bridson's algorithm and animation.",tags:["Canvas","Sampling","Algorithm"]},
-  {num:"38",title:"Delaunay Triangulation",desc:"Bowyer-Watson algorithm with incremental insertion visualization.",tags:["Canvas","Triangulation","Geometry"]},
-  {num:"39",title:"Marching Squares",desc:"Isocontour extraction with metaballs and resolution control.",tags:["Canvas","Marching Squares","Contours"]},
-  {num:"40",title:"Harmonograph",desc:"Multi-pendulum harmonograph with damping and phase controls.",tags:["Canvas","Harmonograph","Art"]},
-  {num:"41",title:"Lissajous Curves",desc:"Parametric Lissajous figures with frequency ratio exploration.",tags:["Canvas","Math","Curves"]},
-  {num:"42",title:"Spirograph",desc:"Hypotrochoid and epitrochoid generator with gear ratio presets.",tags:["Canvas","Spirograph","Geometry"]},
-  {num:"43",title:"Rose Curves",desc:"Rhodonea curves with rational and irrational frequency ratios.",tags:["Canvas","Polar","Math"]},
-  {num:"44",title:"Epicycles Fourier",desc:"Fourier series as rotating epicycles—draw any closed curve.",tags:["Canvas","Fourier","Epicycles"]},
-  {num:"45",title:"Wave Function Collapse",desc:"Constraint-based tile generation with entropy visualization.",tags:["Canvas","WFC","Generation"]},
-  {num:"46",title:"Truchet Tiles",desc:"Animated Truchet tile patterns with rotation and arc variants.",tags:["Canvas","Truchet","Patterns"]},
-  {num:"47",title:"Penrose Tiling",desc:"Aperiodic Penrose P2/P3 tilings with inflation/deflation.",tags:["Canvas","Tiling","Math"]},
-  {num:"48",title:"Apollonian Gasket",desc:"Circle packing with Descartes' theorem and recursive depth.",tags:["Canvas","Circle Packing","Geometry"]},
-  {num:"49",title:"Ford Circles",desc:"Fractional Ford circles with Farey sequence navigation.",tags:["Canvas","Number Theory","Geometry"]},
-  {num:"50",title:"Ulam Spiral",desc:"Prime number spiral with quadratic polynomial highlights.",tags:["Canvas","Primes","Number Theory"]},
-  {num:"51",title:"Collatz Conjecture",desc:"Collatz sequence visualization with stopping time heatmap.",tags:["Canvas","Collatz","Math"]},
-  {num:"52",title:"Dragon Curve",desc:"Heighway dragon with iterative folding and turn angle control.",tags:["Canvas","Dragon Curve","Fractals"]},
-  {num:"53",title:"Koch Snowflake",desc:"Koch curve construction with variant generators and dimension.",tags:["Canvas","Koch","Fractals"]},
-  {num:"54",title:"Hilbert Curve",desc:"Space-filling Hilbert curve with order animation and locality.",tags:["Canvas","Hilbert","Space-Filling"]},
-  {num:"55",title:"Z-Order Curve",desc:"Morton order curve with quadtree visualization and bit interleaving.",tags:["Canvas","Z-Order","Quadtree"]},
-  {num:"56",title:"Quadtree Visualization",desc:"Dynamic quadtree with insertion, subdivision, and query demo.",tags:["Canvas","Quadtree","Data Structure"]},
-  {num:"57",title:"Barnsley Fern",desc:"Affine IFS with probability weights and real-time mutation.",tags:["Canvas","IFS","Fractals"]},
-  {num:"58",title:"Sierpinski Carpet",desc:"Multi-dimensional Sierpinski carpet with box-counting dimension.",tags:["Canvas","Carpet","Fractals"]},
-  {num:"59",title:"Menger Sponge",desc:"3D Menger sponge with cross-section slicing and raycasting.",tags:["WebGL","3D","Fractals"]},
-  {num:"60",title:"Julia Set Explorer",desc:"Julia sets for quadratic and cubic polynomials with orbit traps.",tags:["Canvas","Julia","Fractals"]},
-  {num:"61",title:"Newton Fractals",desc:"Newton's method basins of attraction for complex polynomials.",tags:["Canvas","Newton","Fractals"]},
-  {num:"62",title:"Burning Ship",desc:"Burning Ship fractal variant with absolute value iterations.",tags:["Canvas","Fractals","Variants"]},
-  {num:"63",title:"Tricorn Fractal",desc:"Mandelbar (tricorn) with anti-analytic iteration and symmetry.",tags:["Canvas","Tricorn","Fractals"]},
-  {num:"64",title:"Multibrot Sets",desc:"Generalized Mandelbrot z→z^d+c for real and complex powers.",tags:["Canvas","Multibrot","Fractals"]},
-  {num:"65",title:"Buddhabrot",desc:"Buddhabrot and Anti-Buddhabrot with Metropolis sampling.",tags:["Canvas","Buddhabrot","Fractals"]},
-  {num:"66",title:"Orbit Traps",desc:"Fractal coloring with geometric orbit traps and distance fields.",tags:["Canvas","Orbit Traps","Fractals"]},
-  {num:"67",title:"Domain Coloring",desc:"Complex function visualization with HSV domain coloring.",tags:["Canvas","Complex","Visualization"]},
-  {num:"68",title:"Riemann Zeta",desc:"Riemann zeta function on critical line with zero tracking.",tags:["Canvas","Zeta","Number Theory"]},
-  {num:"69",title:"Modular Forms",desc:"Modular form visualization on fundamental domain.",tags:["Canvas","Modular Forms","Math"]},
-  {num:"70",title:"Elliptic Curves",desc:"Weierstrass elliptic curves with group law visualization.",tags:["Canvas","Elliptic Curves","Crypto"]},
-  {num:"71",title:"Flow Visualization",desc:"Vector field visualization with streamlines and LIC.",tags:["Canvas","Flow","Vector Field"]},
-  {num:"72",title:"Turbulence Simulation",desc:"2D turbulence with energy cascade and vortex merging.",tags:["WebGL","Turbulence","Physics"]},
-  {num:"73",title:"Smoke Simulation",desc:"Stable fluids with buoyancy, vorticity confinement, and obstacles.",tags:["WebGL","Fluids","Simulation"]},
-  {num:"74",title:"Cloth Simulation",desc:"Verlet integration cloth with tearing, wind, and collision.",tags:["Canvas","Verlet","Physics"]},
-  {num:"75",title:"Rope Physics",desc:"Verlet rope with constraints, grabbing, and soft body coupling.",tags:["Canvas","Verlet","Physics"]},
-  {num:"76",title:"Soft Body Physics",desc:"Pressure-based soft bodies with volume conservation.",tags:["Canvas","Soft Body","Physics"]},
-  {num:"77",title:"Rigid Body Dynamics",desc:"SAT collision detection with contact caching and stacking.",tags:["Canvas","Rigid Body","Physics"]},
-  {num:"78",title:"Ragdoll Physics",desc:"Articulated ragdoll with joint constraints and muscle actuation.",tags:["Canvas","Ragdoll","Physics"]},
-  {num:"79",title:"Vehicle Simulation",desc:"Car physics with suspension, differential, and tire friction curves.",tags:["Canvas","Vehicle","Physics"]},
-  {num:"80",title:"Boid Predators",desc:"Flocking with predator-prey dynamics and fear response.",tags:["Canvas","Boids","AI"]},
-  {num:"81",title:"Ant Colony Optimization",desc:"ACO pathfinding with pheromone evaporation and heuristic weights.",tags:["Canvas","ACO","Optimization"]},
-  {num:"82",title:"Genetic Algorithm",desc:"Real-time GA with crossover, mutation, and fitness landscape.",tags:["Canvas","GA","Evolution"]},
-  {num:"83",title:"Particle Swarm",desc:"PSO optimization with inertia, cognitive, and social components.",tags:["Canvas","PSO","Optimization"]},
-  {num:"84",title:"Simulated Annealing",desc:"SA with temperature schedules and energy landscape viz.",tags:["Canvas","SA","Optimization"]},
-  {num:"85",title:"Strange Attractors",desc:"3D strange attractors gallery with parameter morphing.",tags:["WebGL","Chaos","3D"]},
-  {num:"86",title:"Reaction Diffusion",desc:"Extended Gray-Scott with multiple species and feed/kill maps.",tags:["WebGL","RD","Patterns"]},
-  {num:"87",title:"Boids Flocking 3D",desc:"3D boids with obstacle avoidance and leader following.",tags:["WebGL","Flocking","3D"]},
-  {num:"88",title:"Wave Interference 3D",desc:"3D wave equation with multiple sources and caustics.",tags:["WebGL","Waves","3D"]},
-  {num:"89",title:"L-System 3D",desc:"3D L-systems with turtle graphics and branching rules.",tags:["WebGL","L-Systems","3D"]},
-  {num:"90",title:"Cellular Automata 3D",desc:"3D CA with Moore neighborhood and rule exploration.",tags:["WebGL","3D CA","Simulation"]},
-  {num:"91",title:"Fourier Series 3D",desc:"3D parametric surfaces from Fourier series coefficients.",tags:["WebGL","Fourier","3D"]},
-  {num:"92",title:"Perlin Terrain 3D",desc:"Infinite procedural terrain with LOD and biome blending.",tags:["WebGL","Terrain","Infinite"]},
-  {num:"93",title:"Quantum Wavefunction 3D",desc:"3D hydrogen orbitals with probability clouds and slicing.",tags:["WebGL","Quantum","3D"]},
-  {num:"94",title:"Raymarching Volumetric",desc:"Advanced SDF operations with soft shadows and subsurface.",tags:["WebGL","Raymarching","SDF"]},
-  {num:"95",title:"Typographic Playground",desc:"Variable font playground with axis interpolation and animation.",tags:["Canvas","Typography","Variable Fonts"]},
-  {num:"96",title:"Swiss Grid Poster",desc:"International Typographic Style poster generator with grid.",tags:["Canvas","Typography","Swiss Design"]},
-  {num:"97",title:"Particle Gravity",desc:"N-body simulation with gravitational merging and trails.",tags:["Canvas","N-Body","Gravity"]},
-  {num:"98",title:"Hopf Fibration",desc:"Hopf map S³→S² with fiber animation and stereo projection.",tags:["WebGL","Topology","4D"]},
-  {num:"99",title:"Voronoi Mosaic",desc:"Animated Voronoi with multiple metrics and site dynamics.",tags:["Canvas","Voronoi","Animation"]},
-  {num:"100",title:"Centennial",desc:"Harmonic particle network—golden ratio resonance finale.",tags:["Canvas","Generative","Finale"]}
+// ── Design Data ──
+const designsMimo = [
+  {num:"01",title:"Liquid Chrome",desc:"Liquid Chrome — a generative design exploration.",tags:["Liquid", "Chrome"],href:"MiMo V2.5 Pro/01-liquid-chrome.html"},
+  {num:"02",title:"Coral Reef",desc:"Coral Reef — a generative design exploration.",tags:["Coral", "Reef"],href:"MiMo V2.5 Pro/02-coral-reef.html"},
+  {num:"03",title:"Rain On Glass",desc:"Rain On Glass — a generative design exploration.",tags:["Rain", "Glass"],href:"MiMo V2.5 Pro/03-rain-on-glass.html"},
+  {num:"04",title:"Celestial Map",desc:"Celestial Map — a generative design exploration.",tags:["Celestial", "Map"],href:"MiMo V2.5 Pro/04-celestial-map.html"},
+  {num:"05",title:"Paper Theater",desc:"Paper Theater — a generative design exploration.",tags:["Paper", "Theater"],href:"MiMo V2.5 Pro/05-paper-theater.html"},
+  {num:"06",title:"Digital Loom",desc:"Digital Loom — a generative design exploration.",tags:["Digital", "Loom"],href:"MiMo V2.5 Pro/06-digital-loom.html"},
+  {num:"07",title:"Phosphor Crt",desc:"Phosphor Crt — a generative design exploration.",tags:["Phosphor", "Crt"],href:"MiMo V2.5 Pro/07-phosphor-crt.html"},
+  {num:"08",title:"Lunar Phases",desc:"Lunar Phases — a generative design exploration.",tags:["Lunar", "Phases"],href:"MiMo V2.5 Pro/08-lunar-phases.html"},
+  {num:"09",title:"Moss Garden",desc:"Moss Garden — a generative design exploration.",tags:["Moss", "Garden"],href:"MiMo V2.5 Pro/09-moss-garden.html"},
+  {num:"10",title:"Radio Waves",desc:"Radio Waves — a generative design exploration.",tags:["Radio", "Waves"],href:"MiMo V2.5 Pro/10-radio-waves.html"},
+  {num:"11",title:"Woodblock Print",desc:"Woodblock Print — a generative design exploration.",tags:["Woodblock", "Print"],href:"MiMo V2.5 Pro/11-woodblock-print.html"},
+  {num:"12",title:"Micro Seasons",desc:"Micro Seasons — a generative design exploration.",tags:["Micro", "Seasons"],href:"MiMo V2.5 Pro/12-micro-seasons.html"},
+  {num:"13",title:"Seed Vault",desc:"Seed Vault — a generative design exploration.",tags:["Seed", "Vault"],href:"MiMo V2.5 Pro/13-seed-vault.html"},
+  {num:"14",title:"Glass Terrarium",desc:"Glass Terrarium — a generative design exploration.",tags:["Glass", "Terrarium"],href:"MiMo V2.5 Pro/14-glass-terrarium.html"},
+  {num:"15",title:"Isobar Map",desc:"Isobar Map — a generative design exploration.",tags:["Isobar", "Map"],href:"MiMo V2.5 Pro/15-isobar-map.html"},
+  {num:"16",title:"Fossil Excavation",desc:"Fossil Excavation — a generative design exploration.",tags:["Fossil", "Excavation"],href:"MiMo V2.5 Pro/16-fossil-excavation.html"},
+  {num:"17",title:"Waveform",desc:"Waveform — a generative design exploration.",tags:["Waveform"],href:"MiMo V2.5 Pro/17-waveform.html"},
+  {num:"18",title:"Moth And Flame",desc:"Moth And Flame — a generative design exploration.",tags:["Moth", "And", "Flame"],href:"MiMo V2.5 Pro/18-moth-and-flame.html"},
+  {num:"19",title:"Tide Pool",desc:"Tide Pool — a generative design exploration.",tags:["Tide", "Pool"],href:"MiMo V2.5 Pro/19-tide-pool.html"},
+  {num:"20",title:"Clockwork",desc:"Clockwork — a generative design exploration.",tags:["Clockwork"],href:"MiMo V2.5 Pro/20-clockwork.html"},
+  {num:"21",title:"Ink Diffusion",desc:"Ink Diffusion — a generative design exploration.",tags:["Ink", "Diffusion"],href:"MiMo V2.5 Pro/21-ink-diffusion.html"},
+  {num:"22",title:"Prism Garden",desc:"Prism Garden — a generative design exploration.",tags:["Prism", "Garden"],href:"MiMo V2.5 Pro/22-prism-garden.html"},
+  {num:"23",title:"Signal Fires",desc:"Signal Fires — a generative design exploration.",tags:["Signal", "Fires"],href:"MiMo V2.5 Pro/23-signal-fires.html"},
+  {num:"24",title:"Shadow Box",desc:"Shadow Box — a generative design exploration.",tags:["Shadow", "Box"],href:"MiMo V2.5 Pro/24-shadow-box.html"},
+  {num:"25",title:"Lighthouse",desc:"Lighthouse — a generative design exploration.",tags:["Lighthouse"],href:"MiMo V2.5 Pro/25-lighthouse.html"},
+  {num:"26",title:"Sand Dunes",desc:"Sand Dunes — a generative design exploration.",tags:["Sand", "Dunes"],href:"MiMo V2.5 Pro/26-sand-dunes.html"},
+  {num:"27",title:"Copper Patina",desc:"Copper Patina — a generative design exploration.",tags:["Copper", "Patina"],href:"MiMo V2.5 Pro/27-copper-patina.html"},
+  {num:"28",title:"Seismograph",desc:"Seismograph — a generative design exploration.",tags:["Seismograph"],href:"MiMo V2.5 Pro/28-seismograph.html"},
+  {num:"29",title:"Blueprint",desc:"Blueprint — a generative design exploration.",tags:["Blueprint"],href:"MiMo V2.5 Pro/29-blueprint.html"},
+  {num:"30",title:"Smoke Wisps",desc:"Smoke Wisps — a generative design exploration.",tags:["Smoke", "Wisps"],href:"MiMo V2.5 Pro/30-smoke-wisps.html"},
+  {num:"31",title:"Frost Patterns",desc:"Frost Patterns — a generative design exploration.",tags:["Frost", "Patterns"],href:"MiMo V2.5 Pro/31-frost-patterns.html"},
+  {num:"32",title:"Depth Gauge",desc:"Depth Gauge — a generative design exploration.",tags:["Depth", "Gauge"],href:"MiMo V2.5 Pro/32-depth-gauge.html"},
+  {num:"33",title:"Comet Flyby",desc:"Comet Flyby — a generative design exploration.",tags:["Comet", "Flyby"],href:"MiMo V2.5 Pro/33-comet-flyby.html"},
+  {num:"34",title:"Tessellation",desc:"Tessellation — a generative design exploration.",tags:["Tessellation"],href:"MiMo V2.5 Pro/34-tessellation.html"},
+  {num:"35",title:"Vine Growth",desc:"Vine Growth — a generative design exploration.",tags:["Vine", "Growth"],href:"MiMo V2.5 Pro/35-vine-growth.html"},
+  {num:"36",title:"Light Spectrum",desc:"Light Spectrum — a generative design exploration.",tags:["Light", "Spectrum"],href:"MiMo V2.5 Pro/36-light-spectrum.html"},
+  {num:"37",title:"Fractal Tree",desc:"Fractal Tree — a generative design exploration.",tags:["Fractal", "Tree"],href:"MiMo V2.5 Pro/37-fractal-tree.html"},
+  {num:"38",title:"Butterfly Scales",desc:"Butterfly Scales — a generative design exploration.",tags:["Butterfly", "Scales"],href:"MiMo V2.5 Pro/38-butterfly-scales.html"},
+  {num:"39",title:"Rain Ripples",desc:"Rain Ripples — a generative design exploration.",tags:["Rain", "Ripples"],href:"MiMo V2.5 Pro/39-rain-ripples.html"},
+  {num:"40",title:"Soap Bubble",desc:"Soap Bubble — a generative design exploration.",tags:["Soap", "Bubble"],href:"MiMo V2.5 Pro/40-soap-bubble.html"},
+  {num:"41",title:"Hourglass",desc:"Hourglass — a generative design exploration.",tags:["Hourglass"],href:"MiMo V2.5 Pro/41-hourglass.html"},
+  {num:"42",title:"Wind Chimes",desc:"Wind Chimes — a generative design exploration.",tags:["Wind", "Chimes"],href:"MiMo V2.5 Pro/42-wind-chimes.html"},
+  {num:"43",title:"Compass Rose",desc:"Compass Rose — a generative design exploration.",tags:["Compass", "Rose"],href:"MiMo V2.5 Pro/43-compass-rose.html"},
+  {num:"44",title:"Crystal Growth",desc:"Crystal Growth — a generative design exploration.",tags:["Crystal", "Growth"],href:"MiMo V2.5 Pro/44-crystal-growth.html"},
+  {num:"45",title:"Patchwork Quilt",desc:"Patchwork Quilt — a generative design exploration.",tags:["Patchwork", "Quilt"],href:"MiMo V2.5 Pro/45-patchwork-quilt.html"},
+  {num:"46",title:"Solar Flare",desc:"Solar Flare — a generative design exploration.",tags:["Solar", "Flare"],href:"MiMo V2.5 Pro/46-solar-flare.html"},
+  {num:"47",title:"Ink Wash",desc:"Ink Wash — a generative design exploration.",tags:["Ink", "Wash"],href:"MiMo V2.5 Pro/47-ink-wash.html"},
+  {num:"48",title:"Circuit Board",desc:"Circuit Board — a generative design exploration.",tags:["Circuit", "Board"],href:"MiMo V2.5 Pro/48-circuit-board.html"},
+  {num:"49",title:"Aurora Borealis",desc:"Aurora Borealis — a generative design exploration.",tags:["Aurora", "Borealis"],href:"MiMo V2.5 Pro/49-aurora-borealis.html"},
+  {num:"50",title:"Mosaic Tiles",desc:"Mosaic Tiles — a generative design exploration.",tags:["Mosaic", "Tiles"],href:"MiMo V2.5 Pro/50-mosaic-tiles.html"},
+  {num:"51",title:"Calligraphy",desc:"Calligraphy — a generative design exploration.",tags:["Calligraphy"],href:"MiMo V2.5 Pro/51-calligraphy.html"},
+  {num:"52",title:"Cymatics",desc:"Cymatics — a generative design exploration.",tags:["Cymatics"],href:"MiMo V2.5 Pro/52-cymatics.html"},
+  {num:"53",title:"Nebula",desc:"Nebula — a generative design exploration.",tags:["Nebula"],href:"MiMo V2.5 Pro/53-nebula.html"},
+  {num:"54",title:"Canyon Layers",desc:"Canyon Layers — a generative design exploration.",tags:["Canyon", "Layers"],href:"MiMo V2.5 Pro/54-canyon-layers.html"},
+  {num:"55",title:"Wind Carved",desc:"Wind Carved — a generative design exploration.",tags:["Wind", "Carved"],href:"MiMo V2.5 Pro/55-wind-carved.html"},
+  {num:"56",title:"Sugar Crystals",desc:"Sugar Crystals — a generative design exploration.",tags:["Sugar", "Crystals"],href:"MiMo V2.5 Pro/56-sugar-crystals.html"},
+  {num:"57",title:"Rorschach",desc:"Rorschach — a generative design exploration.",tags:["Rorschach"],href:"MiMo V2.5 Pro/57-rorschach.html"},
+  {num:"58",title:"Salt Crystals",desc:"Salt Crystals — a generative design exploration.",tags:["Salt", "Crystals"],href:"MiMo V2.5 Pro/58-salt-crystals.html"},
+  {num:"59",title:"Phosphorescence",desc:"Phosphorescence — a generative design exploration.",tags:["Phosphorescence"],href:"MiMo V2.5 Pro/59-phosphorescence.html"},
+  {num:"60",title:"Standing Waves",desc:"Standing Waves — a generative design exploration.",tags:["Standing", "Waves"],href:"MiMo V2.5 Pro/60-standing-waves.html"},
+  {num:"61",title:"Cloud Atlas",desc:"Cloud Atlas — a generative design exploration.",tags:["Cloud", "Atlas"],href:"MiMo V2.5 Pro/61-cloud-atlas.html"},
+  {num:"62",title:"Vortex",desc:"Vortex — a generative design exploration.",tags:["Vortex"],href:"MiMo V2.5 Pro/62-vortex.html"},
+  {num:"63",title:"River Delta",desc:"River Delta — a generative design exploration.",tags:["River", "Delta"],href:"MiMo V2.5 Pro/63-river-delta.html"},
+  {num:"64",title:"Lightning",desc:"Lightning — a generative design exploration.",tags:["Lightning"],href:"MiMo V2.5 Pro/64-lightning.html"},
+  {num:"65",title:"Marble Texture",desc:"Marble Texture — a generative design exploration.",tags:["Marble", "Texture"],href:"MiMo V2.5 Pro/65-marble-texture.html"},
+  {num:"66",title:"Lava Flow",desc:"Lava Flow — a generative design exploration.",tags:["Lava", "Flow"],href:"MiMo V2.5 Pro/66-lava-flow.html"},
+  {num:"67",title:"Frosted Window",desc:"Frosted Window — a generative design exploration.",tags:["Frosted", "Window"],href:"MiMo V2.5 Pro/67-frosted-window.html"},
+  {num:"68",title:"Embers",desc:"Embers — a generative design exploration.",tags:["Embers"],href:"MiMo V2.5 Pro/68-embers.html"},
+  {num:"69",title:"Geode",desc:"Geode — a generative design exploration.",tags:["Geode"],href:"MiMo V2.5 Pro/69-geode.html"},
+  {num:"70",title:"Volcanic Glass",desc:"Volcanic Glass — a generative design exploration.",tags:["Volcanic", "Glass"],href:"MiMo V2.5 Pro/70-volcanic-glass.html"},
+  {num:"71",title:"Tectonic Plates",desc:"Tectonic Plates — a generative design exploration.",tags:["Tectonic", "Plates"],href:"MiMo V2.5 Pro/71-tectonic-plates.html"},
+  {num:"72",title:"Weathervane",desc:"Weathervane — a generative design exploration.",tags:["Weathervane"],href:"MiMo V2.5 Pro/72-weathervane.html"},
+  {num:"73",title:"Mirror Reflections",desc:"Mirror Reflections — a generative design exploration.",tags:["Mirror", "Reflections"],href:"MiMo V2.5 Pro/73-mirror-reflections.html"},
+  {num:"74",title:"Paper Airplane",desc:"Paper Airplane — a generative design exploration.",tags:["Paper", "Airplane"],href:"MiMo V2.5 Pro/74-paper-airplane.html"},
+  {num:"75",title:"Moss Spreading",desc:"Moss Spreading — a generative design exploration.",tags:["Moss", "Spreading"],href:"MiMo V2.5 Pro/75-moss-spreading.html"},
+  {num:"76",title:"Origami Crane",desc:"Origami Crane — a generative design exploration.",tags:["Origami", "Crane"],href:"MiMo V2.5 Pro/76-origami-crane.html"},
+  {num:"77",title:"Tide Ebb",desc:"Tide Ebb — a generative design exploration.",tags:["Tide", "Ebb"],href:"MiMo V2.5 Pro/77-tide-ebb.html"},
+  {num:"78",title:"Tidal Calendar",desc:"Tidal Calendar — a generative design exploration.",tags:["Tidal", "Calendar"],href:"MiMo V2.5 Pro/78-tidal-calendar.html"},
+  {num:"79",title:"Quartz Clarity",desc:"Quartz Clarity — a generative design exploration.",tags:["Quartz", "Clarity"],href:"MiMo V2.5 Pro/79-quartz-clarity.html"},
+  {num:"80",title:"Firefly Swarm",desc:"Firefly Swarm — a generative design exploration.",tags:["Firefly", "Swarm"],href:"MiMo V2.5 Pro/80-firefly-swarm.html"},
+  {num:"81",title:"Wood Grain",desc:"Wood Grain — a generative design exploration.",tags:["Wood", "Grain"],href:"MiMo V2.5 Pro/81-wood-grain.html"},
+  {num:"82",title:"Sand Timer",desc:"Sand Timer — a generative design exploration.",tags:["Sand", "Timer"],href:"MiMo V2.5 Pro/82-sand-timer.html"},
+  {num:"83",title:"Static Noise",desc:"Static Noise — a generative design exploration.",tags:["Static", "Noise"],href:"MiMo V2.5 Pro/83-static-noise.html"},
+  {num:"84",title:"Magnetic Field",desc:"Magnetic Field — a generative design exploration.",tags:["Magnetic", "Field"],href:"MiMo V2.5 Pro/84-magnetic-field.html"},
+  {num:"85",title:"Underwater Caustics",desc:"Underwater Caustics — a generative design exploration.",tags:["Underwater", "Caustics"],href:"MiMo V2.5 Pro/85-underwater-caustics.html"},
+  {num:"86",title:"Bokeh Lights",desc:"Bokeh Lights — a generative design exploration.",tags:["Bokeh", "Lights"],href:"MiMo V2.5 Pro/86-bokeh-lights.html"},
+  {num:"87",title:"Spirograph",desc:"Spirograph — a generative design exploration.",tags:["Spirograph"],href:"MiMo V2.5 Pro/87-spirograph.html"},
+  {num:"88",title:"Milky Way",desc:"Milky Way — a generative design exploration.",tags:["Milky", "Way"],href:"MiMo V2.5 Pro/88-milky-way.html"},
+  {num:"89",title:"Wave Interference",desc:"Wave Interference — a generative design exploration.",tags:["Wave", "Interference"],href:"MiMo V2.5 Pro/89-wave-interference.html"},
+  {num:"90",title:"Dendrite Growth",desc:"Dendrite Growth — a generative design exploration.",tags:["Dendrite", "Growth"],href:"MiMo V2.5 Pro/90-dendrite-growth.html"},
+  {num:"91",title:"Starfield",desc:"Starfield — a generative design exploration.",tags:["Starfield"],href:"MiMo V2.5 Pro/91-starfield.html"},
+  {num:"92",title:"Geometric Mandala",desc:"Geometric Mandala — a generative design exploration.",tags:["Geometric", "Mandala"],href:"MiMo V2.5 Pro/92-geometric-mandala.html"},
+  {num:"93",title:"Snow Globe",desc:"Snow Globe — a generative design exploration.",tags:["Snow", "Globe"],href:"MiMo V2.5 Pro/93-snow-globe.html"},
+  {num:"94",title:"Kaleidoscope",desc:"Kaleidoscope — a generative design exploration.",tags:["Kaleidoscope"],href:"MiMo V2.5 Pro/94-kaleidoscope.html"},
+  {num:"95",title:"Perlin Landscape",desc:"Perlin Landscape — a generative design exploration.",tags:["Perlin", "Landscape"],href:"MiMo V2.5 Pro/95-perlin-landscape.html"},
+  {num:"96",title:"Neural Network",desc:"Neural Network — a generative design exploration.",tags:["Neural", "Network"],href:"MiMo V2.5 Pro/96-neural-network.html"},
+  {num:"97",title:"Aurora Curtains",desc:"Aurora Curtains — a generative design exploration.",tags:["Aurora", "Curtains"],href:"MiMo V2.5 Pro/97-aurora-curtains.html"},
+  {num:"98",title:"Dna Helix",desc:"Dna Helix — a generative design exploration.",tags:["Dna", "Helix"],href:"MiMo V2.5 Pro/98-dna-helix.html"},
+  {num:"99",title:"Constellation Connect",desc:"Constellation Connect — a generative design exploration.",tags:["Constellation", "Connect"],href:"MiMo V2.5 Pro/99-constellation-connect.html"},
+  {num:"100",title:"Grand Finale",desc:"Grand Finale — a generative design exploration.",tags:["Grand", "Finale"],href:"MiMo V2.5 Pro/100-grand-finale.html"}
 ];
-const grid = document.getElementById('grid');
-designs.forEach(d => {
-  const card = document.createElement('article');
-  card.className = 'collection-card';
-  card.innerHTML = `<div class="collection-header"><span class="collection-num">${d.num}/100</span></div><h3 class="collection-title">${d.title}</h3><p class="collection-desc">${d.desc}</p><div class="collection-meta">${d.tags.map(t=>`<span>${t}</span>`).join('')}</div><a href="Nemotron 3 Ultra/${d.num.toLowerCase()}-${d.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+/g,'-').replace(/-$/,'')}.html" class="collection-link">View Design</a>`;
-  grid.appendChild(card);
+
+const designsNemotron = [
+  {num:"01",title:"Neural Bloom",desc:"Neural bloom: particles grow like synaptic connections, pulsing to cursor proximity",tags:["Neural", "Bloom"],href:"Nemotron 3 Ultra/01-neural-bloom.html"},
+  {num:"02",title:"Lattice Resonance",desc:"Mandelbrot zoom with mouse-driven coordinate drift, color cycling",tags:["Lattice", "Resonance"],href:"Nemotron 3 Ultra/02-lattice-resonance.html"},
+  {num:"03",title:"Chromatic Drift",desc:"Navier-Stokes fluid simulation, ink-in-water aesthetic, cursor stirs",tags:["Chromatic", "Drift"],href:"Nemotron 3 Ultra/03-chromatic-drift.html"},
+  {num:"04",title:"Void Blooms",desc:"Crystalline structures growing via diffusion-limited aggregation, click to seed",tags:["Void", "Blooms"],href:"Nemotron 3 Ultra/04-void-blooms.html"},
+  {num:"05",title:"Aurora Veil",desc:"Aurora curtains: layered Perlin noise sheets, mouse disturbs magnetic field",tags:["Aurora", "Veil"],href:"Nemotron 3 Ultra/05-aurora-veil.html"},
+  {num:"06",title:"Mycelium Network",desc:"Mycelium network growing across screen, nodes pulse, click spawns new hyphae",tags:["Mycelium", "Network"],href:"Nemotron 3 Ultra/06-mycelium-network.html"},
+  {num:"07",title:"Quantum Foam",desc:"Quantum foam: Planck-scale fluctuations, virtual particles popping in/out",tags:["Quantum", "Foam"],href:"Nemotron 3 Ultra/07-quantum-foam.html"},
+  {num:"08",title:"Sand Mandala",desc:"Tibetan sand mandala: symmetric particle deposition, breath clears sections",tags:["Sand", "Mandala"],href:"Nemotron 3 Ultra/08-sand-mandala.html"},
+  {num:"09",title:"Stellar Nursery",desc:"Star formation: gas clouds collapse, protostars ignite, supernova remnants",tags:["Stellar", "Nursery"],href:"Nemotron 3 Ultra/09-stellar-nursery.html"},
+  {num:"10",title:"Cymatic Resonance",desc:"Cymatics: frequency-driven geometric patterns on vibrating plate, audio reactive",tags:["Cymatic", "Resonance"],href:"Nemotron 3 Ultra/10-cymatic-resonance.html"},
+  {num:"11",title:"Ferrofluid Dreams",desc:"Ferrofluid spikes responding to invisible magnetic field, cursor = magnet",tags:["Ferrofluid", "Dreams"],href:"Nemotron 3 Ultra/11-ferrofluid-dreams.html"},
+  {num:"12",title:"Reaction Diffusion",desc:"Gray-Scott reaction-diffusion: spots, stripes, labyrinths evolving in real-time",tags:["Reaction", "Diffusion"],href:"Nemotron 3 Ultra/12-reaction-diffusion.html"},
+  {num:"13",title:"Lightning Storms",desc:"Procedural lightning: branching fractal bolts, thunder delay, screen shake",tags:["Lightning", "Storms"],href:"Nemotron 3 Ultra/13-lightning-storms.html"},
+  {num:"14",title:"Snow Globe",desc:"Interactive snow globe: shake device (or click), snow settles with physics",tags:["Snow", "Globe"],href:"Nemotron 3 Ultra/14-snow-globe.html"},
+  {num:"15",title:"Neon Sign Workshop",desc:"Neon sign builder: draw paths, gas tubes glow, flicker physics, color mixing",tags:["Neon", "Sign", "Workshop"],href:"Nemotron 3 Ultra/15-neon-sign-workshop.html"},
+  {num:"16",title:"Verlet Cloth",desc:"Verlet integration cloth simulation, tear with right-click, wind forces",tags:["Verlet", "Cloth"],href:"Nemotron 3 Ultra/16-verlet-cloth.html"},
+  {num:"17",title:"Flow Field Portraits",desc:"Flow field portraits: upload image (or built-in), particles trace contours",tags:["Flow", "Field", "Portraits"],href:"Nemotron 3 Ultra/17-flow-field-portraits.html"},
+  {num:"18",title:"Phyllotaxis Garden",desc:"Phyllotaxis spirals: sunflower seed packing, Fibonacci, interactive parameter sliders",tags:["Phyllotaxis", "Garden"],href:"Nemotron 3 Ultra/18-phyllotaxis-garden.html"},
+  {num:"19",title:"String Art",desc:"String art generator: nails on circle, parametric curves, exportable SVG",tags:["String", "Art"],href:"Nemotron 3 Ultra/19-string-art.html"},
+  {num:"20",title:"Kaleidoscope Camera",desc:"Live camera kaleidoscope (or fallback patterns), adjustable mirrors/symmetry",tags:["Kaleidoscope", "Camera"],href:"Nemotron 3 Ultra/20-kaleidoscope-camera.html"},
+  {num:"21",title:"Fractal Tree Forest",desc:"Procedural forest: L-system trees, seasonal cycles, wind sway, click to plant",tags:["Fractal", "Tree", "Forest"],href:"Nemotron 3 Ultra/21-fractal-tree-forest.html"},
+  {num:"22",title:"Voronoi Stained Glass",desc:"Voronoi stained glass: click to add sites, light passes through, color blending",tags:["Voronoi", "Stained", "Glass"],href:"Nemotron 3 Ultra/22-voronoi-stained-glass.html"},
+  {num:"23",title:"Penrose Tiling",desc:"Penrose tiling: infinite non-periodic pattern, zoom/pan, inflation/deflation",tags:["Penrose", "Tiling"],href:"Nemotron 3 Ultra/23-penrose-tiling.html"},
+  {num:"24",title:"Cellular Automata Zoo",desc:"CA zoo: Game of Life, WireWorld, Langton's Ant, Brian's Brain, custom rules",tags:["Cellular", "Automata", "Zoo"],href:"Nemotron 3 Ultra/24-cellular-automata-zoo.html"},
+  {num:"25",title:"Webgl Fluid",desc:"Harmonograph: decaying pendulums draw Lissajous figures, 3-4 pendulum harmony",tags:["Webgl", "Fluid"],href:"Nemotron 3 Ultra/25-webgl-fluid.html"},
+  {num:"26",title:"Brutalist Manifesto",desc:"Spirograph: hypotrochoid/epitrochoid generator, gear ratios, multi-color layers",tags:["Brutalist", "Manifesto"],href:"Nemotron 3 Ultra/26-brutalist-manifesto.html"},
+  {num:"27",title:"Swiss Grid Poster",desc:"Maze generator: recursive backtracker, Prim's, Kruskal's, Wilson's, solve animation",tags:["Swiss", "Grid", "Poster"],href:"Nemotron 3 Ultra/27-swiss-grid-poster.html"},
+  {num:"28",title:"Recursive Geometry",desc:"Procedural terrain: diamond-square, erosion simulation, water fill, biome colors",tags:["Recursive", "Geometry"],href:"Nemotron 3 Ultra/28-recursive-geometry.html"},
+  {num:"29",title:"Data Poetry",desc:"Wave interference: multiple sources, constructive/destructive, Doppler effect",tags:["Data", "Poetry"],href:"Nemotron 3 Ultra/29-data-poetry.html"},
+  {num:"30",title:"Kinetic Typography",desc:"Particle Life: artificial life, attraction/repulsion matrix, emergent structures",tags:["Kinetic", "Typography"],href:"Nemotron 3 Ultra/30-kinetic-typography.html"},
+  {num:"31",title:"Variable Font Specimen",desc:"Typographic specimen: variable font playground, axis sliders, specimen sheets",tags:["Variable", "Font", "Specimen"],href:"Nemotron 3 Ultra/31-variable-font-specimen.html"},
+  {num:"32",title:"Interactive Data Explorer",desc:"Concrete poetry engine: text shapes itself to meaning, drag words, physics",tags:["Interactive", "Data", "Explorer"],href:"Nemotron 3 Ultra/32-interactive-data-explorer.html"},
+  {num:"33",title:"Minimalist Blog",desc:"3D data sculpture: CSV/JSON → 3D form, rotate, slice, color by dimension",tags:["Minimalist", "Blog"],href:"Nemotron 3 Ultra/33-minimalist-blog.html"},
+  {num:"34",title:"Generative Poetry",desc:"Force-directed graph: nodes repel, links attract, communities, search/filter",tags:["Generative", "Poetry"],href:"Nemotron 3 Ultra/34-generative-poetry.html"},
+  {num:"35",title:"Ascii Art Gallery",desc:"Interactive timeline: zoomable, filterable, nested events, multiple scales",tags:["Ascii", "Art", "Gallery"],href:"Nemotron 3 Ultra/35-ascii-art-gallery.html"},
+  {num:"36",title:"Brutalist Dashboard",desc:"Chord diagram: matrix relationships, arc ribbons, hover highlights, animate",tags:["Brutalist", "Dashboard"],href:"Nemotron 3 Ultra/36-brutalist-dashboard.html"},
+  {num:"37",title:"Terminal Aesthetic",desc:"Treemap: hierarchical data, squarified, drill-down, breadcrumb navigation",tags:["Terminal", "Aesthetic"],href:"Nemotron 3 Ultra/37-terminal-aesthetic.html"},
+  {num:"38",title:"Markdown Preview",desc:"Sankey diagram: flow quantities, animated particles along paths, drag nodes",tags:["Markdown", "Preview"],href:"Nemotron 3 Ultra/38-markdown-preview.html"},
+  {num:"39",title:"Color System Builder",desc:"Radar/spider chart: multi-dim comparison, radar sweep animation, overlap modes",tags:["Color", "System", "Builder"],href:"Nemotron 3 Ultra/39-color-system-builder.html"},
+  {num:"40",title:"Design Token Visualizer",desc:"Parallel coordinates: high-dim data, brush filters, axis reorder, invert",tags:["Design", "Token", "Visualizer"],href:"Nemotron 3 Ultra/40-design-token-visualizer.html"},
+  {num:"41",title:"Timeline Explorer",desc:"Word cloud: spiral packing, frequency sizing, custom shapes, font variety",tags:["Timeline", "Explorer"],href:"Nemotron 3 Ultra/41-timeline-explorer.html"},
+  {num:"42",title:"Animated Type Specimen",desc:"ASCII art gallery: image→ASCII, FIGlet fonts, animation, gallery navigation",tags:["Animated", "Type", "Specimen"],href:"Nemotron 3 Ultra/42-animated-type-specimen.html"},
+  {num:"43",title:"Kinetic Poetry Canvas",desc:"Kinetic typography: text animates to audio/beat, physics-based letter motion",tags:["Kinetic", "Poetry", "Canvas"],href:"Nemotron 3 Ultra/43-kinetic-poetry-canvas.html"},
+  {num:"44",title:"Isometric Grid Builder",desc:"Glyph sculptor: drag control points, morph between fonts, export path data",tags:["Isometric", "Grid", "Builder"],href:"Nemotron 3 Ultra/44-isometric-grid-builder.html"},
+  {num:"45",title:"Shader Playground",desc:"Morse code: input text → visual/audio morse, learn mode, signal visualization",tags:["Shader", "Playground"],href:"Nemotron 3 Ultra/45-shader-playground.html"},
+  {num:"46",title:"Regex Visualizer",desc:"QR code art: embed logo, styled modules, colors, error correction, scan test",tags:["Regex", "Visualizer"],href:"Nemotron 3 Ultra/46-regex-visualizer.html"},
+  {num:"47",title:"Json Explorer",desc:"Barcode symphony: UPC/EAN/Code128 visualizer, scan simulation, product lookup",tags:["Json", "Explorer"],href:"Nemotron 3 Ultra/47-json-explorer.html"},
+  {num:"48",title:"Css Grid Garden",desc:"Isometric city builder: place blocks, procedural buildings, day/night cycle",tags:["Css", "Grid", "Garden"],href:"Nemotron 3 Ultra/48-css-grid-garden.html"},
+  {num:"49",title:"Component Playground",desc:"Subway map editor: Bezier curves, station labels, line colors, schematic geography",tags:["Component", "Playground"],href:"Nemotron 3 Ultra/49-component-playground.html"},
+  {num:"50",title:"Color Contrast Checker",desc:"Gantt chart: project timeline, drag tasks, dependencies, critical path, resources",tags:["Color", "Contrast", "Checker"],href:"Nemotron 3 Ultra/50-color-contrast-checker.html"},
+  {num:"51",title:"System Monitor",desc:"Retro terminal portfolio: command history, fake filesystem, themes, easter eggs",tags:["System", "Monitor"],href:"Nemotron 3 Ultra/51-system-monitor.html"},
+  {num:"52",title:"Api Request Builder",desc:"Mini code editor: Monaco-lite, syntax highlight, themes, run JS, export",tags:["Api", "Request", "Builder"],href:"Nemotron 3 Ultra/52-api-request-builder.html"},
+  {num:"53",title:"Terminal Dashboard",desc:"Regex debugger: visual railroad diagram, step-through matches, test cases",tags:["Terminal", "Dashboard"],href:"Nemotron 3 Ultra/53-terminal-dashboard.html"},
+  {num:"54",title:"Db Schema Designer",desc:"Color lab: space converter (RGB/HSL/LAB/OKLCH), harmony generator, accessibility",tags:["Schema", "Designer"],href:"Nemotron 3 Ultra/54-db-schema-designer.html"},
+  {num:"55",title:"Log Stream Viewer",desc:"Easing playground: graph, compare, compose, export CSS/JS, spring physics",tags:["Log", "Stream", "Viewer"],href:"Nemotron 3 Ultra/55-log-stream-viewer.html"},
+  {num:"56",title:"Metrics Dashboard",desc:"Bézier editor: add/remove points, handles, continuity, split/join, export SVG",tags:["Metrics", "Dashboard"],href:"Nemotron 3 Ultra/56-metrics-dashboard.html"},
+  {num:"57",title:"Feature Flag Console",desc:"Particle system designer: emitter params, forces, zones, export JSON/JS",tags:["Feature", "Flag", "Console"],href:"Nemotron 3 Ultra/57-feature-flag-console.html"},
+  {num:"58",title:"Queue Monitor",desc:"Mini Shadertoy: GLSL editor, live compile, uniforms (time, mouse, resolution), gallery",tags:["Queue", "Monitor"],href:"Nemotron 3 Ultra/58-queue-monitor.html"},
+  {num:"59",title:"Config Validator",desc:"Audio visualizer: mic/file input, FFT, multiple viz modes (bars, wave, circle, 3D)",tags:["Config", "Validator"],href:"Nemotron 3 Ultra/59-config-validator.html"},
+  {num:"60",title:"Cron Builder",desc:"MIDI visualizer: piano roll, falling notes, keyboard highlight, WebMIDI",tags:["Cron", "Builder"],href:"Nemotron 3 Ultra/60-cron-builder.html"},
+  {num:"61",title:"Rate Limit Tester",desc:"CSS Grid Garden: interactive grid layout builder, export code, responsive preview",tags:["Rate", "Limit", "Tester"],href:"Nemotron 3 Ultra/61-rate-limit-tester.html"},
+  {num:"62",title:"Websocket Client",desc:"Flexbox Froggy clone: game levels, frog reaches lily pad via flex properties",tags:["Websocket", "Client"],href:"Nemotron 3 Ultra/62-websocket-client.html"},
+  {num:"63",title:"Jwt Debugger",desc:"Animation timeline: keyframes, scrub, easing, layers, export CSS/JS/GSAP",tags:["Jwt", "Debugger"],href:"Nemotron 3 Ultra/63-jwt-debugger.html"},
+  {num:"64",title:"Graphql Playground",desc:"SVG path editor: pen tool, boolean ops, simplify, offset, morph, export",tags:["Graphql", "Playground"],href:"Nemotron 3 Ultra/64-graphql-playground.html"},
+  {num:"65",title:"Openapi Viewer",desc:"Icon generator: geometric primitives, boolean ops, style presets (iOS/Material/Win), ex...",tags:["Openapi", "Viewer"],href:"Nemotron 3 Ultra/65-openapi-viewer.html"},
+  {num:"66",title:"K8s Resource Viewer",desc:"Seamless pattern generator: wallpaper groups, motifs, export PNG/SVG/CSS",tags:["K8s", "Resource", "Viewer"],href:"Nemotron 3 Ultra/66-k8s-resource-viewer.html"},
+  {num:"67",title:"Terraform Plan",desc:"Gradient editor: mesh, conic, radial, linear, noise, mesh distortion, CSS export",tags:["Terraform", "Plan"],href:"Nemotron 3 Ultra/67-terraform-plan.html"},
+  {num:"68",title:"Docker Compose Viz",desc:"Shadow designer: layered shadows, neumorphism, material elevation, CSS copy",tags:["Docker", "Compose", "Viz"],href:"Nemotron 3 Ultra/68-docker-compose-viz.html"},
+  {num:"69",title:"Sql Analyzer",desc:"Loading spinner gallery: 50+ spinners, categories, copy CSS/JS, speed control",tags:["Sql", "Analyzer"],href:"Nemotron 3 Ultra/69-sql-analyzer.html"},
+  {num:"70",title:"Regex Tester",desc:"Micro-interaction lab: buttons, toggles, sliders, cards, hover/tap/press states",tags:["Regex", "Tester"],href:"Nemotron 3 Ultra/70-regex-tester.html"},
+  {num:"71",title:"3d Globe",desc:"WebGL fluid sim: Navier-Stokes, dye injection, obstacles, touch/mouse",tags:["Globe"],href:"Nemotron 3 Ultra/71-3d-globe.html"},
+  {num:"72",title:"Particle Network",desc:"Raymarching: SDF primitives, CSG, soft shadows, AO, multiple scenes",tags:["Particle", "Network"],href:"Nemotron 3 Ultra/72-particle-network.html"},
+  {num:"73",title:"Shader Toy",desc:"Voxel engine: chunked world, greedy meshing, block types, first-person",tags:["Shader", "Toy"],href:"Nemotron 3 Ultra/73-shader-toy.html"},
+  {num:"74",title:"Flow Field",desc:"GPU particles: 1M+ particles, compute-style (vertex texture), forces, trails",tags:["Flow", "Field"],href:"Nemotron 3 Ultra/74-flow-field.html"},
+  {num:"75",title:"Raymarching",desc:"GPU cloth: vertex shader position, constraint solve in fragment, wind/tear",tags:["Raymarching"],href:"Nemotron 3 Ultra/75-raymarching.html"},
+  {num:"76",title:"Cosmic Web",desc:"Ocean: FFT-based waves (Tessendorf), foam, caustics, buoyancy, boat",tags:["Cosmic", "Web"],href:"Nemotron 3 Ultra/76-cosmic-web.html"},
+  {num:"77",title:"Raymarching Sdfs",desc:"Infinite fractal zoom: Mandelbrot/Julia/Burning Ship, double-double precision",tags:["Raymarching", "Sdfs"],href:"Nemotron 3 Ultra/77-raymarching-sdfs.html"},
+  {num:"78",title:"Particle Life",desc:"Particle Life GPU: 256k particles, spatial hash in shader, attraction matrix",tags:["Particle", "Life"],href:"Nemotron 3 Ultra/78-particle-life.html"},
+  {num:"79",title:"Flow Fields",desc:"Raytraced spheres: reflections, refractions, soft shadows, DOF, materials",tags:["Flow", "Fields"],href:"Nemotron 3 Ultra/79-flow-fields.html"},
+  {num:"80",title:"Markdown Editor",desc:"SDF font rendering: crisp text at any scale, effects (outline, glow, shadow)",tags:["Markdown", "Editor"],href:"Nemotron 3 Ultra/80-markdown-editor.html"},
+  {num:"81",title:"Code Diff",desc:"Compute shader demo: Game of Life, prefix sum, particle sort, FFT steps",tags:["Code", "Diff"],href:"Nemotron 3 Ultra/81-code-diff.html"},
+  {num:"82",title:"Json Formatter",desc:"Point cloud city: LIDAR-style, scan effect, measurement tools, sections",tags:["Json", "Formatter"],href:"Nemotron 3 Ultra/82-json-formatter.html"},
+  {num:"83",title:"Color Palette",desc:"Volumetric clouds: raymarch noise, silver lining, weather, time of day",tags:["Color", "Palette"],href:"Nemotron 3 Ultra/83-color-palette.html"},
+  {num:"84",title:"Mandelbrot Explorer",desc:"Gravity well: spacetime fabric visualization, orbiting bodies, GR lensing",tags:["Mandelbrot", "Explorer"],href:"Nemotron 3 Ultra/84-mandelbrot-explorer.html"},
+  {num:"85",title:"Strange Attractors",desc:"Neural net visualizer: architecture graph, forward pass animation, weight heatmap",tags:["Strange", "Attractors"],href:"Nemotron 3 Ultra/85-strange-attractors.html"},
+  {num:"86",title:"Reaction Diffusion",desc:"Quantum circuit builder: gates, Bloch spheres, state vector, measurement probs",tags:["Reaction", "Diffusion"],href:"Nemotron 3 Ultra/86-reaction-diffusion.html"},
+  {num:"87",title:"Boids Flocking",desc:"Protein folding: 2D HP model, Monte Carlo, energy landscape, hydrophobic core",tags:["Boids", "Flocking"],href:"Nemotron 3 Ultra/87-boids-flocking.html"},
+  {num:"88",title:"Wave Interference",desc:"Orbital mechanics: n-body, patched conics, transfer planner, time warp",tags:["Wave", "Interference"],href:"Nemotron 3 Ultra/88-wave-interference.html"},
+  {num:"89",title:"Lsystem Fractals",desc:"Procedural planet: icosahedron subdivision, biomes, atmosphere, clouds",tags:["Lsystem", "Fractals"],href:"Nemotron 3 Ultra/89-lsystem-fractals.html"},
+  {num:"90",title:"Cellular Automata",desc:"Hologram deck: 3D models float, gesture/orbit control, scanline effect, glitch",tags:["Cellular", "Automata"],href:"Nemotron 3 Ultra/90-cellular-automata.html"},
+  {num:"91",title:"Fourier Series",desc:"Digital garden: linked notes, backlinks graph, bi-directional, grow over time",tags:["Fourier", "Series"],href:"Nemotron 3 Ultra/91-fourier-series.html"},
+  {num:"92",title:"Perlin Terrain",desc:"Dream journal: surreal imagery generator, text→image prompts, timestamp, tags",tags:["Perlin", "Terrain"],href:"Nemotron 3 Ultra/92-perlin-terrain.html"},
+  {num:"93",title:"Quantum Wavefunction",desc:"Tarot reader: 78 cards, shuffling animation, spreads, meanings, journal",tags:["Quantum", "Wavefunction"],href:"Nemotron 3 Ultra/93-quantum-wavefunction.html"},
+  {num:"94",title:"Raymarching Volumetric",desc:"Oracle bones: crack simulation, interpretation, ancient Chinese divination aesthetic",tags:["Raymarching", "Volumetric"],href:"Nemotron 3 Ultra/94-raymarching-volumetric.html"},
+  {num:"95",title:"Typographic Playground",desc:"Choose your adventure: branching narrative, inventory, stats, save/load, export",tags:["Typographic", "Playground"],href:"Nemotron 3 Ultra/95-typographic-playground.html"},
+  {num:"96",title:"Swiss Grid Poster",desc:"Generative music: algorithmic composition, scales, instruments, export MIDI/WAV",tags:["Swiss", "Grid", "Poster"],href:"Nemotron 3 Ultra/96-swiss-grid-poster.html"},
+  {num:"97",title:"Particle Gravity",desc:"3D Cellular Automata: 3D Game of Life, rule exploration, slice view, GPU",tags:["Particle", "Gravity"],href:"Nemotron 3 Ultra/97-particle-gravity.html"},
+  {num:"98",title:"Hopf Fibration",desc:"Mandelbulb 3D: ray-marched 3D fractal, navigation, lighting, julia mode",tags:["Hopf", "Fibration"],href:"Nemotron 3 Ultra/98-hopf-fibration.html"},
+  {num:"99",title:"Voronoi Mosaic",desc:"Time crystal simulation: Floquet driving, period doubling, phase diagram",tags:["Voronoi", "Mosaic"],href:"Nemotron 3 Ultra/99-voronoi-mosaic.html"},
+  {num:"100",title:"Centennial",desc:"GRAND FINALE: All 99 previous concepts as particles in a galaxy, click to visit",tags:["Centennial"],href:"Nemotron 3 Ultra/100-centennial.html"}
+];
+
+const designsDeepseek = [
+  {num:"01",title:"Particle Constellation",desc:"Particle Constellation — a generative design exploration.",tags:["Particle", "Constellation"],href:"Deepseek V4 Pro/01-particle-constellation.html"},
+  {num:"02",title:"Glitch Terminal",desc:"Glitch Terminal — a generative design exploration.",tags:["Glitch", "Terminal"],href:"Deepseek V4 Pro/02-glitch-terminal.html"},
+  {num:"03",title:"Morphing Blobs",desc:"Morphing Blobs — a generative design exploration.",tags:["Morphing", "Blobs"],href:"Deepseek V4 Pro/03-morphing-blobs.html"},
+  {num:"04",title:"Isometric Grid",desc:"Isometric Grid — a generative design exploration.",tags:["Isometric", "Grid"],href:"Deepseek V4 Pro/04-isometric-grid.html"},
+  {num:"05",title:"Neon Rain",desc:"Neon Rain — a generative design exploration.",tags:["Neon", "Rain"],href:"Deepseek V4 Pro/05-neon-rain.html"},
+  {num:"06",title:"Kaleidoscope",desc:"Kaleidoscope — a generative design exploration.",tags:["Kaleidoscope"],href:"Deepseek V4 Pro/06-kaleidoscope.html"},
+  {num:"07",title:"Typography Playground",desc:"Typography Playground — a generative design exploration.",tags:["Typography", "Playground"],href:"Deepseek V4 Pro/07-typography-playground.html"},
+  {num:"08",title:"Aurora Waves",desc:"Aurora Waves — a generative design exploration.",tags:["Aurora", "Waves"],href:"Deepseek V4 Pro/08-aurora-waves.html"},
+  {num:"09",title:"Glassmorphism Cards",desc:"Glassmorphism Cards — a generative design exploration.",tags:["Glassmorphism", "Cards"],href:"Deepseek V4 Pro/09-glassmorphism-cards.html"},
+  {num:"10",title:"Gravitational Orbits",desc:"Gravitational Orbits — a generative design exploration.",tags:["Gravitational", "Orbits"],href:"Deepseek V4 Pro/10-gravitational-orbits.html"},
+  {num:"11",title:"Split Reveal",desc:"Split Reveal — a generative design exploration.",tags:["Split", "Reveal"],href:"Deepseek V4 Pro/11-split-reveal.html"},
+  {num:"12",title:"Floating Geometry",desc:"Floating Geometry — a generative design exploration.",tags:["Floating", "Geometry"],href:"Deepseek V4 Pro/12-floating-geometry.html"},
+  {num:"13",title:"Newspaper Editorial",desc:"Newspaper Editorial — a generative design exploration.",tags:["Newspaper", "Editorial"],href:"Deepseek V4 Pro/13-newspaper-editorial.html"},
+  {num:"14",title:"Gradient Mesh",desc:"Gradient Mesh — a generative design exploration.",tags:["Gradient", "Mesh"],href:"Deepseek V4 Pro/14-gradient-mesh.html"},
+  {num:"15",title:"Clockwork",desc:"Clockwork — a generative design exploration.",tags:["Clockwork"],href:"Deepseek V4 Pro/15-clockwork.html"},
+  {num:"16",title:"Brutalist Grid",desc:"Brutalist Grid — a generative design exploration.",tags:["Brutalist", "Grid"],href:"Deepseek V4 Pro/16-brutalist-grid.html"},
+  {num:"17",title:"Perlin Landscape",desc:"Perlin Landscape — a generative design exploration.",tags:["Perlin", "Landscape"],href:"Deepseek V4 Pro/17-perlin-landscape.html"},
+  {num:"18",title:"Holographic Card",desc:"Holographic Card — a generative design exploration.",tags:["Holographic", "Card"],href:"Deepseek V4 Pro/18-holographic-card.html"},
+  {num:"19",title:"Minimalist Gallery",desc:"Minimalist Gallery — a generative design exploration.",tags:["Minimalist", "Gallery"],href:"Deepseek V4 Pro/19-minimalist-gallery.html"},
+  {num:"20",title:"Scribble Canvas",desc:"Scribble Canvas — a generative design exploration.",tags:["Scribble", "Canvas"],href:"Deepseek V4 Pro/20-scribble-canvas.html"},
+  {num:"21",title:"Magazine Flip",desc:"Magazine Flip — a generative design exploration.",tags:["Magazine", "Flip"],href:"Deepseek V4 Pro/21-magazine-flip.html"},
+  {num:"22",title:"Infinity Mirror",desc:"Infinity Mirror — a generative design exploration.",tags:["Infinity", "Mirror"],href:"Deepseek V4 Pro/22-infinity-mirror.html"},
+  {num:"23",title:"Data Dashboard",desc:"Data Dashboard — a generative design exploration.",tags:["Data", "Dashboard"],href:"Deepseek V4 Pro/23-data-dashboard.html"},
+  {num:"24",title:"Parallax Mountains",desc:"Parallax Mountains — a generative design exploration.",tags:["Parallax", "Mountains"],href:"Deepseek V4 Pro/24-parallax-mountains.html"},
+  {num:"25",title:"Svg Blobs",desc:"Svg Blobs — a generative design exploration.",tags:["Svg", "Blobs"],href:"Deepseek V4 Pro/25-svg-blobs.html"},
+  {num:"26",title:"Vaporwave",desc:"Vaporwave — a generative design exploration.",tags:["Vaporwave"],href:"Deepseek V4 Pro/26-vaporwave.html"},
+  {num:"27",title:"Mandelbrot Zoom",desc:"Mandelbrot Zoom — a generative design exploration.",tags:["Mandelbrot", "Zoom"],href:"Deepseek V4 Pro/27-mandelbrot-zoom.html"},
+  {num:"28",title:"Neon Sign",desc:"Neon Sign — a generative design exploration.",tags:["Neon", "Sign"],href:"Deepseek V4 Pro/28-neon-sign.html"},
+  {num:"29",title:"Kinetic Typography",desc:"Kinetic Typography — a generative design exploration.",tags:["Kinetic", "Typography"],href:"Deepseek V4 Pro/29-kinetic-typography.html"},
+  {num:"30",title:"Prism Light",desc:"Prism Light — a generative design exploration.",tags:["Prism", "Light"],href:"Deepseek V4 Pro/30-prism-light.html"},
+  {num:"31",title:"Staggered Gallery",desc:"Staggered Gallery — a generative design exploration.",tags:["Staggered", "Gallery"],href:"Deepseek V4 Pro/31-staggered-gallery.html"},
+  {num:"32",title:"Terminal Portfolio",desc:"Terminal Portfolio — a generative design exploration.",tags:["Terminal", "Portfolio"],href:"Deepseek V4 Pro/32-terminal-portfolio.html"},
+  {num:"33",title:"Fireflies",desc:"Fireflies — a generative design exploration.",tags:["Fireflies"],href:"Deepseek V4 Pro/33-fireflies.html"},
+  {num:"34",title:"Cyberpunk Ui",desc:"Cyberpunk Ui — a generative design exploration.",tags:["Cyberpunk"],href:"Deepseek V4 Pro/34-cyberpunk-ui.html"},
+  {num:"35",title:"Fluid Sim",desc:"Fluid Sim — a generative design exploration.",tags:["Fluid", "Sim"],href:"Deepseek V4 Pro/35-fluid-sim.html"},
+  {num:"36",title:"Memoji Showcase",desc:"Memoji Showcase — a generative design exploration.",tags:["Memoji", "Showcase"],href:"Deepseek V4 Pro/36-memoji-showcase.html"},
+  {num:"37",title:"Animated Counter",desc:"Animated Counter — a generative design exploration.",tags:["Animated", "Counter"],href:"Deepseek V4 Pro/37-animated-counter.html"},
+  {num:"38",title:"Origami Fold",desc:"Origami Fold — a generative design exploration.",tags:["Origami", "Fold"],href:"Deepseek V4 Pro/38-origami-fold.html"},
+  {num:"39",title:"Audio Visualizer",desc:"Audio Visualizer — a generative design exploration.",tags:["Audio", "Visualizer"],href:"Deepseek V4 Pro/39-audio-visualizer.html"},
+  {num:"40",title:"Gradient Text Reveal",desc:"Gradient Text Reveal — a generative design exploration.",tags:["Gradient", "Text", "Reveal"],href:"Deepseek V4 Pro/40-gradient-text-reveal.html"},
+  {num:"41",title:"Pricing Table",desc:"Pricing Table — a generative design exploration.",tags:["Pricing", "Table"],href:"Deepseek V4 Pro/41-pricing-table.html"},
+  {num:"42",title:"Timeline",desc:"Timeline — a generative design exploration.",tags:["Timeline"],href:"Deepseek V4 Pro/42-timeline.html"},
+  {num:"43",title:"Weather Widget",desc:"Weather Widget — a generative design exploration.",tags:["Weather", "Widget"],href:"Deepseek V4 Pro/43-weather-widget.html"},
+  {num:"44",title:"Morphing Menu",desc:"Morphing Menu — a generative design exploration.",tags:["Morphing", "Menu"],href:"Deepseek V4 Pro/44-morphing-menu.html"},
+  {num:"45",title:"Particle Burst",desc:"Particle Burst — a generative design exploration.",tags:["Particle", "Burst"],href:"Deepseek V4 Pro/45-particle-burst.html"},
+  {num:"46",title:"Scroll Reveal",desc:"Scroll Reveal — a generative design exploration.",tags:["Scroll", "Reveal"],href:"Deepseek V4 Pro/46-scroll-reveal.html"},
+  {num:"47",title:"Cursor Trail",desc:"Cursor Trail — a generative design exploration.",tags:["Cursor", "Trail"],href:"Deepseek V4 Pro/47-cursor-trail.html"},
+  {num:"48",title:"Dark Hero",desc:"Dark Hero — a generative design exploration.",tags:["Dark", "Hero"],href:"Deepseek V4 Pro/48-dark-hero.html"},
+  {num:"49",title:"Creative 404",desc:"Creative 404 — a generative design exploration.",tags:["Creative", "404"],href:"Deepseek V4 Pro/49-creative-404.html"},
+  {num:"50",title:"Split Flap",desc:"Split Flap — a generative design exploration.",tags:["Split", "Flap"],href:"Deepseek V4 Pro/50-split-flap.html"},
+  {num:"51",title:"Gradient Orb",desc:"Gradient Orb — a generative design exploration.",tags:["Gradient", "Orb"],href:"Deepseek V4 Pro/51-gradient-orb.html"},
+  {num:"52",title:"Wave Divider",desc:"Wave Divider — a generative design exploration.",tags:["Wave", "Divider"],href:"Deepseek V4 Pro/52-wave-divider.html"},
+  {num:"53",title:"Spotlight",desc:"Spotlight — a generative design exploration.",tags:["Spotlight"],href:"Deepseek V4 Pro/53-spotlight.html"},
+  {num:"54",title:"Color Grid",desc:"Color Grid — a generative design exploration.",tags:["Color", "Grid"],href:"Deepseek V4 Pro/54-color-grid.html"},
+  {num:"55",title:"Distorted Grid",desc:"Distorted Grid — a generative design exploration.",tags:["Distorted", "Grid"],href:"Deepseek V4 Pro/55-distorted-grid.html"},
+  {num:"56",title:"Polaroid Gallery",desc:"Polaroid Gallery — a generative design exploration.",tags:["Polaroid", "Gallery"],href:"Deepseek V4 Pro/56-polaroid-gallery.html"},
+  {num:"57",title:"Skeleton Loader",desc:"Skeleton Loader — a generative design exploration.",tags:["Skeleton", "Loader"],href:"Deepseek V4 Pro/57-skeleton-loader.html"},
+  {num:"58",title:"Radial Menu",desc:"Radial Menu — a generative design exploration.",tags:["Radial", "Menu"],href:"Deepseek V4 Pro/58-radial-menu.html"},
+  {num:"59",title:"Progress Ring",desc:"Progress Ring — a generative design exploration.",tags:["Progress", "Ring"],href:"Deepseek V4 Pro/59-progress-ring.html"},
+  {num:"60",title:"Glass Tabs",desc:"Glass Tabs — a generative design exploration.",tags:["Glass", "Tabs"],href:"Deepseek V4 Pro/60-glass-tabs.html"},
+  {num:"61",title:"Faq Accordion",desc:"Faq Accordion — a generative design exploration.",tags:["Faq", "Accordion"],href:"Deepseek V4 Pro/61-faq-accordion.html"},
+  {num:"62",title:"Testimonial Carousel",desc:"Testimonial Carousel — a generative design exploration.",tags:["Testimonial", "Carousel"],href:"Deepseek V4 Pro/62-testimonial-carousel.html"},
+  {num:"63",title:"Stats Grid",desc:"Stats Grid — a generative design exploration.",tags:["Stats", "Grid"],href:"Deepseek V4 Pro/63-stats-grid.html"},
+  {num:"64",title:"Newsletter Form",desc:"Newsletter Form — a generative design exploration.",tags:["Newsletter", "Form"],href:"Deepseek V4 Pro/64-newsletter-form.html"},
+  {num:"65",title:"Cookie Banner",desc:"Cookie Banner — a generative design exploration.",tags:["Cookie", "Banner"],href:"Deepseek V4 Pro/65-cookie-banner.html"},
+  {num:"66",title:"Bento Grid",desc:"Bento Grid — a generative design exploration.",tags:["Bento", "Grid"],href:"Deepseek V4 Pro/66-bento-grid.html"},
+  {num:"67",title:"Onboarding Steps",desc:"Onboarding Steps — a generative design exploration.",tags:["Onboarding", "Steps"],href:"Deepseek V4 Pro/67-onboarding-steps.html"},
+  {num:"68",title:"Search Bar",desc:"Search Bar — a generative design exploration.",tags:["Search", "Bar"],href:"Deepseek V4 Pro/68-search-bar.html"},
+  {num:"69",title:"File Upload",desc:"File Upload — a generative design exploration.",tags:["File", "Upload"],href:"Deepseek V4 Pro/69-file-upload.html"},
+  {num:"70",title:"Toggle Darkmode",desc:"Toggle Darkmode — a generative design exploration.",tags:["Toggle", "Darkmode"],href:"Deepseek V4 Pro/70-toggle-darkmode.html"},
+  {num:"71",title:"Bouncing Balls",desc:"Bouncing Balls — a generative design exploration.",tags:["Bouncing", "Balls"],href:"Deepseek V4 Pro/71-bouncing-balls.html"},
+  {num:"72",title:"Galaxy Spiral",desc:"Galaxy Spiral — a generative design exploration.",tags:["Galaxy", "Spiral"],href:"Deepseek V4 Pro/72-galaxy-spiral.html"},
+  {num:"73",title:"Ripple Effect",desc:"Ripple Effect — a generative design exploration.",tags:["Ripple", "Effect"],href:"Deepseek V4 Pro/73-ripple-effect.html"},
+  {num:"74",title:"Hypnotic Rings",desc:"Hypnotic Rings — a generative design exploration.",tags:["Hypnotic", "Rings"],href:"Deepseek V4 Pro/74-hypnotic-rings.html"},
+  {num:"75",title:"Dna Helix",desc:"Dna Helix — a generative design exploration.",tags:["Dna", "Helix"],href:"Deepseek V4 Pro/75-dna-helix.html"},
+  {num:"76",title:"Wormhole",desc:"Wormhole — a generative design exploration.",tags:["Wormhole"],href:"Deepseek V4 Pro/76-wormhole.html"},
+  {num:"77",title:"Pixel Snow",desc:"Pixel Snow — a generative design exploration.",tags:["Pixel", "Snow"],href:"Deepseek V4 Pro/77-pixel-snow.html"},
+  {num:"78",title:"Lava Lamp",desc:"Lava Lamp — a generative design exploration.",tags:["Lava", "Lamp"],href:"Deepseek V4 Pro/78-lava-lamp.html"},
+  {num:"79",title:"Matrix Rain",desc:"Matrix Rain — a generative design exploration.",tags:["Matrix", "Rain"],href:"Deepseek V4 Pro/79-matrix-rain.html"},
+  {num:"80",title:"Hex Grid",desc:"Hex Grid — a generative design exploration.",tags:["Hex", "Grid"],href:"Deepseek V4 Pro/80-hex-grid.html"},
+  {num:"81",title:"Card Hover 3d",desc:"Card Hover 3d — a generative design exploration.",tags:["Card", "Hover"],href:"Deepseek V4 Pro/81-card-hover-3d.html"},
+  {num:"82",title:"Gradient Border",desc:"Gradient Border — a generative design exploration.",tags:["Gradient", "Border"],href:"Deepseek V4 Pro/82-gradient-border.html"},
+  {num:"83",title:"Command Palette",desc:"Command Palette — a generative design exploration.",tags:["Command", "Palette"],href:"Deepseek V4 Pro/83-command-palette.html"},
+  {num:"84",title:"Notification Toast",desc:"Notification Toast — a generative design exploration.",tags:["Notification", "Toast"],href:"Deepseek V4 Pro/84-notification-toast.html"},
+  {num:"85",title:"Otp Input",desc:"Otp Input — a generative design exploration.",tags:["Otp", "Input"],href:"Deepseek V4 Pro/85-otp-input.html"},
+  {num:"86",title:"Live Chat",desc:"Live Chat — a generative design exploration.",tags:["Live", "Chat"],href:"Deepseek V4 Pro/86-live-chat.html"},
+  {num:"87",title:"Password Strength",desc:"Password Strength — a generative design exploration.",tags:["Password", "Strength"],href:"Deepseek V4 Pro/87-password-strength.html"},
+  {num:"88",title:"Kanban Board",desc:"Kanban Board — a generative design exploration.",tags:["Kanban", "Board"],href:"Deepseek V4 Pro/88-kanban-board.html"},
+  {num:"89",title:"Emoji Rating",desc:"Emoji Rating — a generative design exploration.",tags:["Emoji", "Rating"],href:"Deepseek V4 Pro/89-emoji-rating.html"},
+  {num:"90",title:"Tooltip Showcase",desc:"Tooltip Showcase — a generative design exploration.",tags:["Tooltip", "Showcase"],href:"Deepseek V4 Pro/90-tooltip-showcase.html"},
+  {num:"91",title:"Confetti Canvas",desc:"Confetti Canvas — a generative design exploration.",tags:["Confetti", "Canvas"],href:"Deepseek V4 Pro/91-confetti-canvas.html"},
+  {num:"92",title:"Typewriter",desc:"Typewriter — a generative design exploration.",tags:["Typewriter"],href:"Deepseek V4 Pro/92-typewriter.html"},
+  {num:"93",title:"Smoke Effect",desc:"Smoke Effect — a generative design exploration.",tags:["Smoke", "Effect"],href:"Deepseek V4 Pro/93-smoke-effect.html"},
+  {num:"94",title:"Glowing Dots",desc:"Glowing Dots — a generative design exploration.",tags:["Glowing", "Dots"],href:"Deepseek V4 Pro/94-glowing-dots.html"},
+  {num:"95",title:"Solar System",desc:"Solar System — a generative design exploration.",tags:["Solar", "System"],href:"Deepseek V4 Pro/95-solar-system.html"},
+  {num:"96",title:"Voice Wave",desc:"Voice Wave — a generative design exploration.",tags:["Voice", "Wave"],href:"Deepseek V4 Pro/96-voice-wave.html"},
+  {num:"97",title:"Floating Island",desc:"Floating Island — a generative design exploration.",tags:["Floating", "Island"],href:"Deepseek V4 Pro/97-floating-island.html"},
+  {num:"98",title:"Ai Chat",desc:"Ai Chat — a generative design exploration.",tags:["Chat"],href:"Deepseek V4 Pro/98-ai-chat.html"},
+  {num:"99",title:"Gradient Flow",desc:"Gradient Flow — a generative design exploration.",tags:["Gradient", "Flow"],href:"Deepseek V4 Pro/99-gradient-flow.html"},
+  {num:"100",title:"Grand Finale",desc:"Grand Finale — a generative design exploration.",tags:["Grand", "Finale"],href:"Deepseek V4 Pro/100-grand-finale.html"}
+];
+
+const designsMinimax = [
+  {num:"01",title:"Paper Moon Observatory",desc:"Paper Moon Observatory — a generative design exploration.",tags:["Paper", "Moon", "Observatory"],href:"MiniMax M3/01-paper-moon-observatory.html"},
+  {num:"02",title:"Monsoon Radio",desc:"Monsoon Radio — a generative design exploration.",tags:["Monsoon", "Radio"],href:"MiniMax M3/02-monsoon-radio.html"},
+  {num:"03",title:"Sunken Library",desc:"Sunken Library — a generative design exploration.",tags:["Sunken", "Library"],href:"MiniMax M3/03-sunken-library.html"},
+  {num:"04",title:"Velvet Rope",desc:"Velvet Rope — a generative design exploration.",tags:["Velvet", "Rope"],href:"MiniMax M3/04-velvet-rope.html"},
+  {num:"05",title:"Orchard Almanac",desc:"Orchard Almanac — a generative design exploration.",tags:["Orchard", "Almanac"],href:"MiniMax M3/05-orchard-almanac.html"},
+  {num:"06",title:"The Quiet Museum",desc:"The Quiet Museum — a generative design exploration.",tags:["The", "Quiet", "Museum"],href:"MiniMax M3/06-the-quiet-museum.html"},
+  {num:"07",title:"Tidal Type",desc:"Tidal Type — a generative design exploration.",tags:["Tidal", "Type"],href:"MiniMax M3/07-tidal-type.html"},
+  {num:"08",title:"Moss Circuit",desc:"Moss Circuit — a generative design exploration.",tags:["Moss", "Circuit"],href:"MiniMax M3/08-moss-circuit.html"},
+  {num:"09",title:"Night Train 1978",desc:"Night Train 1978 — a generative design exploration.",tags:["Night", "Train", "1978"],href:"MiniMax M3/09-night-train-1978.html"},
+  {num:"10",title:"House Of Echoes",desc:"House Of Echoes — a generative design exploration.",tags:["House", "Echoes"],href:"MiniMax M3/10-house-of-echoes.html"},
+  {num:"11",title:"Citrus Press",desc:"Citrus Press — a generative design exploration.",tags:["Citrus", "Press"],href:"MiniMax M3/11-citrus-press.html"},
+  {num:"12",title:"Radioactive Picnic",desc:"Radioactive Picnic — a generative design exploration.",tags:["Radioactive", "Picnic"],href:"MiniMax M3/12-radioactive-picnic.html"},
+  {num:"13",title:"Desert Cinema",desc:"Desert Cinema — a generative design exploration.",tags:["Desert", "Cinema"],href:"MiniMax M3/13-desert-cinema.html"},
+  {num:"14",title:"Bloom Machine",desc:"Bloom Machine — a generative design exploration.",tags:["Bloom", "Machine"],href:"MiniMax M3/14-bloom-machine.html"},
+  {num:"15",title:"Blue Hour Motel",desc:"Blue Hour Motel — a generative design exploration.",tags:["Blue", "Hour", "Motel"],href:"MiniMax M3/15-blue-hour-motel.html"},
+  {num:"16",title:"Paleontology Desk",desc:"Paleontology Desk — a generative design exploration.",tags:["Paleontology", "Desk"],href:"MiniMax M3/16-paleontology-desk.html"},
+  {num:"17",title:"Glasshouse No 9",desc:"Glasshouse No 9 — a generative design exploration.",tags:["Glasshouse"],href:"MiniMax M3/17-glasshouse-no-9.html"},
+  {num:"18",title:"The Cartographer",desc:"The Cartographer — a generative design exploration.",tags:["The", "Cartographer"],href:"MiniMax M3/18-the-cartographer.html"},
+  {num:"19",title:"Moonbase Laundry",desc:"Moonbase Laundry — a generative design exploration.",tags:["Moonbase", "Laundry"],href:"MiniMax M3/19-moonbase-laundry.html"},
+  {num:"20",title:"Blackbird Dispatch",desc:"Blackbird Dispatch — a generative design exploration.",tags:["Blackbird", "Dispatch"],href:"MiniMax M3/20-blackbird-dispatch.html"},
+  {num:"21",title:"Salt Library",desc:"Salt Library — a generative design exploration.",tags:["Salt", "Library"],href:"MiniMax M3/21-salt-library.html"},
+  {num:"22",title:"Kite Works",desc:"Kite Works — a generative design exploration.",tags:["Kite", "Works"],href:"MiniMax M3/22-kite-works.html"},
+  {num:"23",title:"Hotel After Rain",desc:"Hotel After Rain — a generative design exploration.",tags:["Hotel", "After", "Rain"],href:"MiniMax M3/23-hotel-after-rain.html"},
+  {num:"24",title:"Antique Future",desc:"Antique Future — a generative design exploration.",tags:["Antique", "Future"],href:"MiniMax M3/24-antique-future.html"},
+  {num:"25",title:"Comet Tailor",desc:"Comet Tailor — a generative design exploration.",tags:["Comet", "Tailor"],href:"MiniMax M3/25-comet-tailor.html"},
+  {num:"26",title:"Railway Botanica",desc:"Railway Botanica — a generative design exploration.",tags:["Railway", "Botanica"],href:"MiniMax M3/26-railway-botanica.html"},
+  {num:"27",title:"Soft Machinery",desc:"Soft Machinery — a generative design exploration.",tags:["Soft", "Machinery"],href:"MiniMax M3/27-soft-machinery.html"},
+  {num:"28",title:"Coral Ledger",desc:"Coral Ledger — a generative design exploration.",tags:["Coral", "Ledger"],href:"MiniMax M3/28-coral-ledger.html"},
+  {num:"29",title:"The Last Arcade",desc:"The Last Arcade — a generative design exploration.",tags:["The", "Last", "Arcade"],href:"MiniMax M3/29-the-last-arcade.html"},
+  {num:"30",title:"Ink And Thunder",desc:"Ink And Thunder — a generative design exploration.",tags:["Ink", "And", "Thunder"],href:"MiniMax M3/30-ink-and-thunder.html"},
+  {num:"31",title:"Sunday Forecast",desc:"Sunday Forecast — a generative design exploration.",tags:["Sunday", "Forecast"],href:"MiniMax M3/31-sunday-forecast.html"},
+  {num:"32",title:"The Listening Room",desc:"The Listening Room — a generative design exploration.",tags:["The", "Listening", "Room"],href:"MiniMax M3/32-the-listening-room.html"},
+  {num:"33",title:"Mercury Post",desc:"Mercury Post — a generative design exploration.",tags:["Mercury", "Post"],href:"MiniMax M3/33-mercury-post.html"},
+  {num:"34",title:"Ceramic Weather",desc:"Ceramic Weather — a generative design exploration.",tags:["Ceramic", "Weather"],href:"MiniMax M3/34-ceramic-weather.html"},
+  {num:"35",title:"Afterimage",desc:"Afterimage — a generative design exploration.",tags:["Afterimage"],href:"MiniMax M3/35-afterimage.html"},
+  {num:"36",title:"Small Gods",desc:"Small Gods — a generative design exploration.",tags:["Small", "Gods"],href:"MiniMax M3/36-small-gods.html"},
+  {num:"37",title:"Blueprint Garden",desc:"Blueprint Garden — a generative design exploration.",tags:["Blueprint", "Garden"],href:"MiniMax M3/37-blueprint-garden.html"},
+  {num:"38",title:"The Wax Museum",desc:"The Wax Museum — a generative design exploration.",tags:["The", "Wax", "Museum"],href:"MiniMax M3/38-the-wax-museum.html"},
+  {num:"39",title:"Fever Dream Index",desc:"Fever Dream Index — a generative design exploration.",tags:["Fever", "Dream", "Index"],href:"MiniMax M3/39-fever-dream-index.html"},
+  {num:"40",title:"Analog Signal",desc:"Analog Signal — a generative design exploration.",tags:["Analog", "Signal"],href:"MiniMax M3/40-analog-signal.html"},
+  {num:"41",title:"Lemonade Stand Zero",desc:"Lemonade Stand Zero — a generative design exploration.",tags:["Lemonade", "Stand", "Zero"],href:"MiniMax M3/41-lemonade-stand-zero.html"},
+  {num:"42",title:"Arctic Semaphore",desc:"Arctic Semaphore — a generative design exploration.",tags:["Arctic", "Semaphore"],href:"MiniMax M3/42-arctic-semaphore.html"},
+  {num:"43",title:"Ribbon Atlas",desc:"Ribbon Atlas — a generative design exploration.",tags:["Ribbon", "Atlas"],href:"MiniMax M3/43-ribbon-atlas.html"},
+  {num:"44",title:"Museum Of Unsent Letters",desc:"Museum Of Unsent Letters — a generative design exploration.",tags:["Museum", "Unsent"],href:"MiniMax M3/44-museum-of-unsent-letters.html"},
+  {num:"45",title:"Clockmakers Apprentice",desc:"Clockmakers Apprentice — a generative design exploration.",tags:["Clockmakers", "Apprentice"],href:"MiniMax M3/45-clockmakers-apprentice.html"},
+  {num:"46",title:"Paper Aquarium",desc:"Paper Aquarium — a generative design exploration.",tags:["Paper", "Aquarium"],href:"MiniMax M3/46-paper-aquarium.html"},
+  {num:"47",title:"Urban Mycelium",desc:"Urban Mycelium — a generative design exploration.",tags:["Urban", "Mycelium"],href:"MiniMax M3/47-urban-mycelium.html"},
+  {num:"48",title:"Hearth And Histogram",desc:"Hearth And Histogram — a generative design exploration.",tags:["Hearth", "And", "Histogram"],href:"MiniMax M3/48-hearth-and-histogram.html"},
+  {num:"49",title:"Cobalt Cathedral",desc:"Cobalt Cathedral — a generative design exploration.",tags:["Cobalt", "Cathedral"],href:"MiniMax M3/49-cobalt-cathedral.html"},
+  {num:"50",title:"Field Notes From Mars",desc:"Field Notes From Mars — a generative design exploration.",tags:["Field", "Notes", "From"],href:"MiniMax M3/50-field-notes-from-mars.html"},
+  {num:"51",title:"The Green Room",desc:"The Green Room — a generative design exploration.",tags:["The", "Green", "Room"],href:"MiniMax M3/51-the-green-room.html"},
+  {num:"52",title:"Cloud Census",desc:"Cloud Census — a generative design exploration.",tags:["Cloud", "Census"],href:"MiniMax M3/52-cloud-census.html"},
+  {num:"53",title:"Lantern District",desc:"Lantern District — a generative design exploration.",tags:["Lantern", "District"],href:"MiniMax M3/53-lantern-district.html"},
+  {num:"54",title:"Commonplace Book",desc:"Commonplace Book — a generative design exploration.",tags:["Commonplace", "Book"],href:"MiniMax M3/54-commonplace-book.html"},
+  {num:"55",title:"Fossil Futures",desc:"Fossil Futures — a generative design exploration.",tags:["Fossil", "Futures"],href:"MiniMax M3/55-fossil-futures.html"},
+  {num:"56",title:"Indigo Ferry",desc:"Indigo Ferry — a generative design exploration.",tags:["Indigo", "Ferry"],href:"MiniMax M3/56-indigo-ferry.html"},
+  {num:"57",title:"Saffron Hotel",desc:"Saffron Hotel — a generative design exploration.",tags:["Saffron", "Hotel"],href:"MiniMax M3/57-saffron-hotel.html"},
+  {num:"58",title:"Static Garden",desc:"Static Garden — a generative design exploration.",tags:["Static", "Garden"],href:"MiniMax M3/58-static-garden.html"},
+  {num:"59",title:"Starling Parliament",desc:"Starling Parliament — a generative design exploration.",tags:["Starling", "Parliament"],href:"MiniMax M3/59-starling-parliament.html"},
+  {num:"60",title:"Warm Archive",desc:"Warm Archive — a generative design exploration.",tags:["Warm", "Archive"],href:"MiniMax M3/60-warm-archive.html"},
+  {num:"61",title:"Tin Toy City",desc:"Tin Toy City — a generative design exploration.",tags:["Tin", "Toy", "City"],href:"MiniMax M3/61-tin-toy-city.html"},
+  {num:"62",title:"Plume And Powder",desc:"Plume And Powder — a generative design exploration.",tags:["Plume", "And", "Powder"],href:"MiniMax M3/62-plume-and-powder.html"},
+  {num:"63",title:"Negative Space",desc:"Negative Space — a generative design exploration.",tags:["Negative", "Space"],href:"MiniMax M3/63-negative-space.html"},
+  {num:"64",title:"The Long Table",desc:"The Long Table — a generative design exploration.",tags:["The", "Long", "Table"],href:"MiniMax M3/64-the-long-table.html"},
+  {num:"65",title:"Solar Folklore",desc:"Solar Folklore — a generative design exploration.",tags:["Solar", "Folklore"],href:"MiniMax M3/65-solar-folklore.html"},
+  {num:"66",title:"Waterline",desc:"Waterline — a generative design exploration.",tags:["Waterline"],href:"MiniMax M3/66-waterline.html"},
+  {num:"67",title:"The Locksmith",desc:"The Locksmith — a generative design exploration.",tags:["The", "Locksmith"],href:"MiniMax M3/67-the-locksmith.html"},
+  {num:"68",title:"Apricot Fm",desc:"Apricot Fm — a generative design exploration.",tags:["Apricot"],href:"MiniMax M3/68-apricot-fm.html"},
+  {num:"69",title:"Black Ice Ballet",desc:"Black Ice Ballet — a generative design exploration.",tags:["Black", "Ice", "Ballet"],href:"MiniMax M3/69-black-ice-ballet.html"},
+  {num:"70",title:"Parcel Moon",desc:"Parcel Moon — a generative design exploration.",tags:["Parcel", "Moon"],href:"MiniMax M3/70-parcel-moon.html"},
+  {num:"71",title:"Garden Of Forking Paths",desc:"Garden Of Forking Paths — a generative design exploration.",tags:["Garden", "Forking"],href:"MiniMax M3/71-garden-of-forking-paths.html"},
+  {num:"72",title:"The Brass Index",desc:"The Brass Index — a generative design exploration.",tags:["The", "Brass", "Index"],href:"MiniMax M3/72-the-brass-index.html"},
+  {num:"73",title:"Lavender Observatory",desc:"Lavender Observatory — a generative design exploration.",tags:["Lavender", "Observatory"],href:"MiniMax M3/73-lavender-observatory.html"},
+  {num:"74",title:"Noise Complaint",desc:"Noise Complaint — a generative design exploration.",tags:["Noise", "Complaint"],href:"MiniMax M3/74-noise-complaint.html"},
+  {num:"75",title:"Paper Tiger Bureau",desc:"Paper Tiger Bureau — a generative design exploration.",tags:["Paper", "Tiger", "Bureau"],href:"MiniMax M3/75-paper-tiger-bureau.html"},
+  {num:"76",title:"The Rainmaker",desc:"The Rainmaker — a generative design exploration.",tags:["The", "Rainmaker"],href:"MiniMax M3/76-the-rainmaker.html"},
+  {num:"77",title:"Museum Of Small Weather",desc:"Museum Of Small Weather — a generative design exploration.",tags:["Museum", "Small"],href:"MiniMax M3/77-museum-of-small-weather.html"},
+  {num:"78",title:"Neon Sepia",desc:"Neon Sepia — a generative design exploration.",tags:["Neon", "Sepia"],href:"MiniMax M3/78-neon-sepia.html"},
+  {num:"79",title:"The Folded Coast",desc:"The Folded Coast — a generative design exploration.",tags:["The", "Folded", "Coast"],href:"MiniMax M3/79-the-folded-coast.html"},
+  {num:"80",title:"Charcoal Kitchen",desc:"Charcoal Kitchen — a generative design exploration.",tags:["Charcoal", "Kitchen"],href:"MiniMax M3/80-charcoal-kitchen.html"},
+  {num:"81",title:"Aurora Postcard",desc:"Aurora Postcard — a generative design exploration.",tags:["Aurora", "Postcard"],href:"MiniMax M3/81-aurora-postcard.html"},
+  {num:"82",title:"The Unbuilt City",desc:"The Unbuilt City — a generative design exploration.",tags:["The", "Unbuilt", "City"],href:"MiniMax M3/82-the-unbuilt-city.html"},
+  {num:"83",title:"Honeycomb Commons",desc:"Honeycomb Commons — a generative design exploration.",tags:["Honeycomb", "Commons"],href:"MiniMax M3/83-honeycomb-commons.html"},
+  {num:"84",title:"The Sleepwalker",desc:"The Sleepwalker — a generative design exploration.",tags:["The", "Sleepwalker"],href:"MiniMax M3/84-the-sleepwalker.html"},
+  {num:"85",title:"Public Works",desc:"Public Works — a generative design exploration.",tags:["Public", "Works"],href:"MiniMax M3/85-public-works.html"},
+  {num:"86",title:"The Blue Orchard",desc:"The Blue Orchard — a generative design exploration.",tags:["The", "Blue", "Orchard"],href:"MiniMax M3/86-the-blue-orchard.html"},
+  {num:"87",title:"Radio Silence",desc:"Radio Silence — a generative design exploration.",tags:["Radio", "Silence"],href:"MiniMax M3/87-radio-silence.html"},
+  {num:"88",title:"The Errant Compass",desc:"The Errant Compass — a generative design exploration.",tags:["The", "Errant", "Compass"],href:"MiniMax M3/88-the-errant-compass.html"},
+  {num:"89",title:"Library Of Light",desc:"Library Of Light — a generative design exploration.",tags:["Library", "Light"],href:"MiniMax M3/89-library-of-light.html"},
+  {num:"90",title:"Wild Type Specimen",desc:"Wild Type Specimen — a generative design exploration.",tags:["Wild", "Type", "Specimen"],href:"MiniMax M3/90-wild-type-specimen.html"},
+  {num:"91",title:"Saltwater Almanac",desc:"Saltwater Almanac — a generative design exploration.",tags:["Saltwater", "Almanac"],href:"MiniMax M3/91-saltwater-almanac.html"},
+  {num:"92",title:"The Tiny Planetarium",desc:"The Tiny Planetarium — a generative design exploration.",tags:["The", "Tiny", "Planetarium"],href:"MiniMax M3/92-the-tiny-planetarium.html"},
+  {num:"93",title:"Midnight Inventory",desc:"Midnight Inventory — a generative design exploration.",tags:["Midnight", "Inventory"],href:"MiniMax M3/93-midnight-inventory.html"},
+  {num:"94",title:"Houseplant Hotline",desc:"Houseplant Hotline — a generative design exploration.",tags:["Houseplant", "Hotline"],href:"MiniMax M3/94-houseplant-hotline.html"},
+  {num:"95",title:"The Red Thread",desc:"The Red Thread — a generative design exploration.",tags:["The", "Red", "Thread"],href:"MiniMax M3/95-the-red-thread.html"},
+  {num:"96",title:"Lantern Engine",desc:"Lantern Engine — a generative design exploration.",tags:["Lantern", "Engine"],href:"MiniMax M3/96-lantern-engine.html"},
+  {num:"97",title:"Aerial Postcards",desc:"Aerial Postcards — a generative design exploration.",tags:["Aerial", "Postcards"],href:"MiniMax M3/97-aerial-postcards.html"},
+  {num:"98",title:"Color Weather Bureau",desc:"Color Weather Bureau — a generative design exploration.",tags:["Color", "Weather", "Bureau"],href:"MiniMax M3/98-color-weather-bureau.html"},
+  {num:"99",title:"The Unfinished Museum",desc:"The Unfinished Museum — a generative design exploration.",tags:["The", "Unfinished", "Museum"],href:"MiniMax M3/99-the-unfinished-museum.html"},
+  {num:"100",title:"Grand Finale",desc:"Grand Finale — a generative design exploration.",tags:["Grand", "Finale"],href:"MiniMax M3/100-grand-finale.html"}
+];
+
+const designsLaguna = [
+  {num:"01",title:"Aurora Borealis",desc:"Aurora Borealis — a generative design exploration.",tags:["Aurora", "Borealis"],href:"Laguna S 2.1/01-aurora-borealis.html"},
+  {num:"02",title:"Neon Grid",desc:"Neon Grid — a generative design exploration.",tags:["Neon", "Grid"],href:"Laguna S 2.1/02-neon-grid.html"},
+  {num:"03",title:"Liquid Metal",desc:"Liquid Metal — a generative design exploration.",tags:["Liquid", "Metal"],href:"Laguna S 2.1/03-liquid-metal.html"},
+  {num:"04",title:"Cosmic Dust",desc:"Cosmic Dust — a generative design exploration.",tags:["Cosmic", "Dust"],href:"Laguna S 2.1/04-cosmic-dust.html"},
+  {num:"05",title:"Crystal Cavern",desc:"Crystal Cavern — a generative design exploration.",tags:["Crystal", "Cavern"],href:"Laguna S 2.1/05-crystal-cavern.html"},
+  {num:"06",title:"Solar Flare",desc:"Solar Flare — a generative design exploration.",tags:["Solar", "Flare"],href:"Laguna S 2.1/06-solar-flare.html"},
+  {num:"07",title:"Holographic Vortex",desc:"Holographic Vortex — a generative design exploration.",tags:["Holographic", "Vortex"],href:"Laguna S 2.1/07-holographic-vortex.html"},
+  {num:"08",title:"Volcanic Eruption",desc:"Volcanic Eruption — a generative design exploration.",tags:["Volcanic", "Eruption"],href:"Laguna S 2.1/08-volcanic-eruption.html"},
+  {num:"09",title:"Quantum Tunnel",desc:"Quantum Tunnel — a generative design exploration.",tags:["Quantum", "Tunnel"],href:"Laguna S 2.1/09-quantum-tunnel.html"},
+  {num:"10",title:"Nebula Nursery",desc:"Nebula Nursery — a generative design exploration.",tags:["Nebula", "Nursery"],href:"Laguna S 2.1/10-nebula-nursery.html"},
+  {num:"11",title:"Black Hole",desc:"Black Hole — a generative design exploration.",tags:["Black", "Hole"],href:"Laguna S 2.1/11-black-hole.html"},
+  {num:"12",title:"Galactic Spiral",desc:"Galactic Spiral — a generative design exploration.",tags:["Galactic", "Spiral"],href:"Laguna S 2.1/12-galactic-spiral.html"},
+  {num:"13",title:"Lightning Storm",desc:"Lightning Storm — a generative design exploration.",tags:["Lightning", "Storm"],href:"Laguna S 2.1/13-lightning-storm.html"},
+  {num:"14",title:"Tidal Wave",desc:"Tidal Wave — a generative design exploration.",tags:["Tidal", "Wave"],href:"Laguna S 2.1/14-tidal-wave.html"},
+  {num:"15",title:"Magnetic Storm",desc:"Magnetic Storm — a generative design exploration.",tags:["Magnetic", "Storm"],href:"Laguna S 2.1/15-magnetic-storm.html"},
+  {num:"16",title:"Supernova",desc:"Supernova — a generative design exploration.",tags:["Supernova"],href:"Laguna S 2.1/16-supernova.html"},
+  {num:"17",title:"Prismatic Labyrinth",desc:"Prismatic Labyrinth — a generative design exploration.",tags:["Prismatic", "Labyrinth"],href:"Laguna S 2.1/17-prismatic-labyrinth.html"},
+  {num:"18",title:"Binary Rain",desc:"Binary Rain — a generative design exploration.",tags:["Binary", "Rain"],href:"Laguna S 2.1/18-binary-rain.html"},
+  {num:"19",title:"Fractal Bloom",desc:"Fractal Bloom — a generative design exploration.",tags:["Fractal", "Bloom"],href:"Laguna S 2.1/19-fractal-bloom.html"},
+  {num:"20",title:"Crimson Tide",desc:"Crimson Tide — a generative design exploration.",tags:["Crimson", "Tide"],href:"Laguna S 2.1/20-crimson-tide.html"},
+  {num:"21",title:"Chrome Dome",desc:"Chrome Dome — a generative design exploration.",tags:["Chrome", "Dome"],href:"Laguna S 2.1/21-chrome-dome.html"},
+  {num:"22",title:"Neon Circuit",desc:"Neon Circuit — a generative design exploration.",tags:["Neon", "Circuit"],href:"Laguna S 2.1/22-neon-circuit.html"},
+  {num:"23",title:"Prismatic Particles",desc:"Prismatic Particles — a generative design exploration.",tags:["Prismatic", "Particles"],href:"Laguna S 2.1/23-prismatic-particles.html"},
+  {num:"24",title:"Obsidian Monolith",desc:"Obsidian Monolith — a generative design exploration.",tags:["Obsidian", "Monolith"],href:"Laguna S 2.1/24-obsidian-monolith.html"},
+  {num:"25",title:"Geometric Storm",desc:"Geometric Storm — a generative design exploration.",tags:["Geometric", "Storm"],href:"Laguna S 2.1/25-geometric-storm.html"},
+  {num:"26",title:"Crystalline Matrix",desc:"Crystalline Matrix — a generative design exploration.",tags:["Crystalline", "Matrix"],href:"Laguna S 2.1/26-crystalline-matrix.html"},
+  {num:"27",title:"Solar Flare Ii",desc:"Solar Flare Ii — a generative design exploration.",tags:["Solar", "Flare"],href:"Laguna S 2.1/27-solar-flare-ii.html"},
+  {num:"28",title:"Magnetic Vortex",desc:"Magnetic Vortex — a generative design exploration.",tags:["Magnetic", "Vortex"],href:"Laguna S 2.1/28-magnetic-vortex.html"},
+  {num:"29",title:"Quantum Entanglement",desc:"Quantum Entanglement — a generative design exploration.",tags:["Quantum", "Entanglement"],href:"Laguna S 2.1/29-quantum-entanglement.html"},
+  {num:"30",title:"Prismatic Storm",desc:"Prismatic Storm — a generative design exploration.",tags:["Prismatic", "Storm"],href:"Laguna S 2.1/30-prismatic-storm.html"},
+  {num:"31",title:"Digital Abyss",desc:"Digital Abyss — a generative design exploration.",tags:["Digital", "Abyss"],href:"Laguna S 2.1/31-digital-abyss.html"},
+  {num:"32",title:"Crystal Cascade",desc:"Crystal Cascade — a generative design exploration.",tags:["Crystal", "Cascade"],href:"Laguna S 2.1/32-crystal-cascade.html"},
+  {num:"33",title:"Nebula Drift",desc:"Nebula Drift — a generative design exploration.",tags:["Nebula", "Drift"],href:"Laguna S 2.1/33-nebula-drift.html"},
+  {num:"34",title:"Quantum Flux",desc:"Quantum Flux — a generative design exploration.",tags:["Quantum", "Flux"],href:"Laguna S 2.1/34-quantum-flux.html"},
+  {num:"35",title:"Plasma Vortex",desc:"Plasma Vortex — a generative design exploration.",tags:["Plasma", "Vortex"],href:"Laguna S 2.1/35-plasma-vortex.html"},
+  {num:"36",title:"Void Echo",desc:"Void Echo — a generative design exploration.",tags:["Void", "Echo"],href:"Laguna S 2.1/36-void-echo.html"},
+  {num:"37",title:"Hyperbolic Garden",desc:"Hyperbolic Garden — a generative design exploration.",tags:["Hyperbolic", "Garden"],href:"Laguna S 2.1/37-hyperbolic-garden.html"},
+  {num:"38",title:"Luminous Abyss",desc:"Luminous Abyss — a generative design exploration.",tags:["Luminous", "Abyss"],href:"Laguna S 2.1/38-luminous-abyss.html"},
+  {num:"39",title:"Fractal Dimension",desc:"Fractal Dimension — a generative design exploration.",tags:["Fractal", "Dimension"],href:"Laguna S 2.1/39-fractal-dimension.html"},
+  {num:"40",title:"Chrono Shift",desc:"Chrono Shift — a generative design exploration.",tags:["Chrono", "Shift"],href:"Laguna S 2.1/40-chrono-shift.html"},
+  {num:"41",title:"Phantom Signal",desc:"Phantom Signal — a generative design exploration.",tags:["Phantom", "Signal"],href:"Laguna S 2.1/41-phantom-signal.html"},
+  {num:"42",title:"Crimson Eclipse",desc:"Crimson Eclipse — a generative design exploration.",tags:["Crimson", "Eclipse"],href:"Laguna S 2.1/42-crimson-eclipse.html"},
+  {num:"43",title:"Neural Network",desc:"Neural Network — a generative design exploration.",tags:["Neural", "Network"],href:"Laguna S 2.1/43-neural-network.html"},
+  {num:"44",title:"Prismatic Dome",desc:"Prismatic Dome — a generative design exploration.",tags:["Prismatic", "Dome"],href:"Laguna S 2.1/44-prismatic-dome.html"},
+  {num:"45",title:"Event Horizon",desc:"Event Horizon — a generative design exploration.",tags:["Event", "Horizon"],href:"Laguna S 2.1/45-event-horizon.html"},
+  {num:"46",title:"Quantum Entanglement Ii",desc:"Quantum Entanglement Ii — a generative design exploration.",tags:["Quantum", "Entanglement"],href:"Laguna S 2.1/46-quantum-entanglement-ii.html"},
+  {num:"47",title:"Aurora Veil",desc:"Aurora Veil — a generative design exploration.",tags:["Aurora", "Veil"],href:"Laguna S 2.1/47-aurora-veil.html"},
+  {num:"48",title:"Digital Constellation",desc:"Digital Constellation — a generative design exploration.",tags:["Digital", "Constellation"],href:"Laguna S 2.1/48-digital-constellation.html"},
+  {num:"49",title:"Quantum Foam",desc:"Quantum Foam — a generative design exploration.",tags:["Quantum", "Foam"],href:"Laguna S 2.1/49-quantum-foam.html"},
+  {num:"50",title:"Prismatic Wave",desc:"Prismatic Wave — a generative design exploration.",tags:["Prismatic", "Wave"],href:"Laguna S 2.1/50-prismatic-wave.html"},
+  {num:"51",title:"Void Cascade",desc:"Void Cascade — a generative design exploration.",tags:["Void", "Cascade"],href:"Laguna S 2.1/51-void-cascade.html"},
+  {num:"52",title:"Crystalline Spire",desc:"Crystalline Spire — a generative design exploration.",tags:["Crystalline", "Spire"],href:"Laguna S 2.1/52-crystalline-spire.html"},
+  {num:"53",title:"Hyperdrive",desc:"Hyperdrive — a generative design exploration.",tags:["Hyperdrive"],href:"Laguna S 2.1/53-hyperdrive.html"},
+  {num:"54",title:"Gravitational Lens",desc:"Gravitational Lens — a generative design exploration.",tags:["Gravitational", "Lens"],href:"Laguna S 2.1/54-gravitational-lens.html"},
+  {num:"55",title:"Neon Constellation",desc:"Neon Constellation — a generative design exploration.",tags:["Neon", "Constellation"],href:"Laguna S 2.1/55-neon-constellation.html"},
+  {num:"56",title:"Prismatic Storm Ii",desc:"Prismatic Storm Ii — a generative design exploration.",tags:["Prismatic", "Storm"],href:"Laguna S 2.1/56-prismatic-storm-ii.html"},
+  {num:"57",title:"Quantum Singularity",desc:"Quantum Singularity — a generative design exploration.",tags:["Quantum", "Singularity"],href:"Laguna S 2.1/57-quantum-singularity.html"},
+  {num:"58",title:"Void Echo Ii",desc:"Void Echo Ii — a generative design exploration.",tags:["Void", "Echo"],href:"Laguna S 2.1/58-void-echo-ii.html"},
+  {num:"59",title:"Hyperbolic Garden Ii",desc:"Hyperbolic Garden Ii — a generative design exploration.",tags:["Hyperbolic", "Garden"],href:"Laguna S 2.1/59-hyperbolic-garden-ii.html"},
+  {num:"60",title:"Luminous Abyss Ii",desc:"Luminous Abyss Ii — a generative design exploration.",tags:["Luminous", "Abyss"],href:"Laguna S 2.1/60-luminous-abyss-ii.html"},
+  {num:"61",title:"Fractal Dimension Ii",desc:"Fractal Dimension Ii — a generative design exploration.",tags:["Fractal", "Dimension"],href:"Laguna S 2.1/61-fractal-dimension-ii.html"},
+  {num:"62",title:"Chrono Shift Ii",desc:"Chrono Shift Ii — a generative design exploration.",tags:["Chrono", "Shift"],href:"Laguna S 2.1/62-chrono-shift-ii.html"},
+  {num:"63",title:"Phantom Signal Ii",desc:"Phantom Signal Ii — a generative design exploration.",tags:["Phantom", "Signal"],href:"Laguna S 2.1/63-phantom-signal-ii.html"},
+  {num:"64",title:"Crimson Eclipse Ii",desc:"Crimson Eclipse Ii — a generative design exploration.",tags:["Crimson", "Eclipse"],href:"Laguna S 2.1/64-crimson-eclipse-ii.html"},
+  {num:"65",title:"Neural Network Ii",desc:"Neural Network Ii — a generative design exploration.",tags:["Neural", "Network"],href:"Laguna S 2.1/65-neural-network-ii.html"},
+  {num:"66",title:"Prismatic Dome Ii",desc:"Prismatic Dome Ii — a generative design exploration.",tags:["Prismatic", "Dome"],href:"Laguna S 2.1/66-prismatic-dome-ii.html"},
+  {num:"67",title:"Event Horizon Ii",desc:"Event Horizon Ii — a generative design exploration.",tags:["Event", "Horizon"],href:"Laguna S 2.1/67-event-horizon-ii.html"},
+  {num:"68",title:"Digital Abyss Ii",desc:"Digital Abyss Ii — a generative design exploration.",tags:["Digital", "Abyss"],href:"Laguna S 2.1/68-digital-abyss-ii.html"},
+  {num:"69",title:"Crystal Cascade Ii",desc:"Crystal Cascade Ii — a generative design exploration.",tags:["Crystal", "Cascade"],href:"Laguna S 2.1/69-crystal-cascade-ii.html"},
+  {num:"70",title:"Nebula Drift Ii",desc:"Nebula Drift Ii — a generative design exploration.",tags:["Nebula", "Drift"],href:"Laguna S 2.1/70-nebula-drift-ii.html"}
+];
+
+// ── Colors per model ──
+const MODEL_COLORS = {
+  "mimo": "#8b5cf6",
+  "nemotron": "#f59e0b",
+  "deepseek": "#10b981",
+  "minimax": "#ec4899",
+  "laguna": "#06b6d4"
+};
+
+// ── State ──
+let activeFilters = {};
+
+// ── Render ──
+function renderGrid(model) {
+  const data = window['designs' + model.charAt(0).toUpperCase() + model.slice(1)];
+  if (!data) return;
+  const panel = document.getElementById('panel-' + model);
+  if (!panel) return;
+
+  // Collect tags
+  const allTags = new Set();
+  data.forEach(d => d.tags && d.tags.forEach(t => allTags.add(t)));
+  const sortedTags = ['all', ...Array.from(allTags).sort()];
+  const activeTag = activeFilters[model] || 'all';
+
+  // Filter bar
+  let html = '<div class="filter-bar">';
+  html += sortedTags.map(t =>
+    '<span class="filter-tag' + (t === activeTag ? ' active' : '') + '" data-tag="' + t + '">' + (t === 'all' ? 'All' : t) + '</span>'
+  ).join('');
+  html += '</div>';
+
+  // Search bar
+  html += '<div class="search-bar"><input type="text" placeholder="Search designs…" id="search-' + model + '" /></div>';
+
+  // Filtered data
+  const filtered = activeTag === 'all' ? data : data.filter(d => d.tags && d.tags.includes(activeTag));
+  const color = MODEL_COLORS[model] || '#667eea';
+
+  // Grid
+  html += '<div class="grid">';
+  filtered.forEach(d => {
+    html += '<a class="card" href="' + d.href + '">' +
+      '<div class="num" style="background:linear-gradient(135deg,' + color + ',rgba(0,0,0,.3))">' + d.num + '</div>' +
+      '<div class="info"><div class="name">' + d.title + '</div><div class="desc">' + d.desc + '</div></div>' +
+      '</a>';
+  });
+  html += '</div>';
+
+  if (filtered.length === 0) {
+    html += '<div class="empty-state">✨ No designs match your filter.</div>';
+  }
+
+  panel.innerHTML = html;
+
+  // Bind filter clicks
+  panel.querySelectorAll('.filter-tag').forEach(function(el) {
+    el.addEventListener('click', function() {
+      activeFilters[model] = this.dataset.tag === 'all' ? 'all' : this.dataset.tag;
+      renderGrid(model);
+    });
+  });
+
+  // Bind search
+  var si = document.getElementById('search-' + model);
+  if (si) {
+    si.addEventListener('input', function() {
+      var q = this.value.toLowerCase().trim();
+      var cards = panel.querySelectorAll('.card');
+      for (var j = 0; j < cards.length; j++) {
+        var c = cards[j];
+        var name = (c.querySelector('.name')?.textContent || '').toLowerCase();
+        var desc = (c.querySelector('.desc')?.textContent || '').toLowerCase();
+        c.style.display = name.indexOf(q) !== -1 || desc.indexOf(q) !== -1 ? '' : 'none';
+      }
+    });
+  }
+}
+
+// ── Tab Switching ──
+function switchTab(model) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  var tab = document.querySelector('.tab[data-model="' + model + '"]');
+  if (tab) tab.classList.add('active');
+  var panel = document.getElementById('panel-' + model);
+  if (panel) {
+    panel.classList.add('active');
+    if (!panel.querySelector('.grid')) renderGrid(model);
+  }
+}
+
+// ── Init ──
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() { switchTab(this.dataset.model); });
+  });
+  ['mimo','nemotron','deepseek','minimax','laguna'].forEach(function(m) { renderGrid(m); });
+  switchTab('mimo');
 });
 </script>
 </body>

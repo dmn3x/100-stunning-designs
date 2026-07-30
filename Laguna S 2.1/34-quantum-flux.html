@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quantum Flux</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #000;
+    height: 100vh;
+    overflow: hidden;
+    font-family: 'Arial', sans-serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .flux-container {
+    position: relative;
+    width: 800px;
+    height: 600px;
+  }
+  .field-line {
+    position: absolute;
+    background: linear-gradient(90deg, rgba(0,255,255,0) 0%, rgba(0,255,255,0.8) 50%, rgba(0,255,255,0) 100%);
+    box-shadow: 0 0 10px #00ffff;
+    animation: pulse 3s ease-in-out infinite;
+  }
+  .field-line:nth-child(1) { width: 2px; height: 400px; top: 100px; left: 100px; transform: rotate(15deg); }
+  .field-line:nth-child(2) { width: 2px; height: 350px; top: 150px; left: 200px; transform: rotate(-10deg); }
+  .field-line:nth-child(3) { width: 2px; height: 450px; top: 75px; left: 300px; transform: rotate(25deg); }
+  .field-line:nth-child(4) { width: 2px; height: 380px; top: 120px; left: 400px; transform: rotate(-20deg); }
+  .field-line:nth-child(5) { width: 2px; height: 420px; top: 90px; left: 500px; transform: rotate(5deg); }
+  .field-line:nth-child(6) { width: 2px; height: 360px; top: 140px; left: 600px; transform: rotate(-15deg); }
+  .particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: #00ffff;
+    border-radius: 50%;
+    box-shadow: 0 0 10px #00ffff;
+    animation: travel 4s linear infinite;
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 0.3; }
+    50% { opacity: 1; }
+  }
+  @keyframes travel {
+    0% { transform: translateY(0) scale(1); opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 0.8; }
+    100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+  }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #b3ffff;
+    max-width: 500px;
+  }
+  h1 {
+    font-size: 4rem;
+    font-weight: 200;
+    letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+    text-shadow: 0 0 30px rgba(0,255,255,0.3);
+  }
+  .subtitle {
+    font-size: 1.2rem;
+    opacity: 0.8;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+  <div class="flux-container">
+    <div class="field-line"></div>
+    <div class="field-line"></div>
+    <div class="field-line"></div>
+    <div class="field-line"></div>
+    <div class="field-line"></div>
+    <div class="field-line"></div>
+  </div>
+  <div class="content">
+    <h1>Quantum Flux</h1>
+    <p class="subtitle">Charged particles spiral along field lines, creating auroras in the upper atmosphere.</p>
+  </div>
+</body>
+</html>
