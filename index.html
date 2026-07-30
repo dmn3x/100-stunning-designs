@@ -5,151 +5,217 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>100 Stunning Designs — An AI Creative Benchmark</title>
 <style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#08080c;--text:#d8d4cc;--accent:#a8a0ff;--muted:#555;--card:#101014;--border:#1a1a20;--glow:rgba(168,160,255,0.04)}
-html{background:var(--bg)}
-body{background:var(--bg);color:var(--text);font:'Inter','SF Mono','Fira Code','Courier New',monospace;min-height:100vh;-webkit-font-smoothing:antialiased}
-a{color:var(--accent);text-decoration:none;transition:color .2s}
-a:hover{color:#c8c0ff}
-
-.wrap{max-width:1200px;margin:0 auto;padding:clamp(1.5rem,4vw,3rem)}
-
-/* Hero */
-.hero{text-align:center;padding:4rem 0 3rem}
-.hero h1{font-size:clamp(2rem,6vw,4rem);font-weight:200;letter-spacing:.05em;line-height:1.1}
-.hero h1 em{font-style:normal;color:var(--accent)}
-.hero .tagline{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:1rem}
-.hero .desc{max-width:600px;margin:1.5rem auto 0;font-size:.85rem;color:rgba(200,196,188,0.5);line-height:1.7}
-
-/* Stats bar */
-.stats{display:flex;justify-content:center;gap:3rem;padding:2rem 0;border-top:1px solid var(--border);border-bottom:1px solid var(--border);margin:2rem 0;flex-wrap:wrap}
-.stat{text-align:center}
-.stat .val{font-size:1.5rem;font-weight:300;color:var(--accent)}
-.stat .label{font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
-
-/* Collections */
-.collections{margin-top:3rem}
-.collections h2{font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;font-weight:400}
-.collection-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1.5rem}
-
-.collection{background:var(--card);border:1px solid var(--border);padding:clamp(1.5rem,3vw,2rem);position:relative;overflow:hidden;transition:all .3s}
-.collection:hover{border-color:rgba(168,160,255,0.2);box-shadow:0 0 40px var(--glow)}
-.collection::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0;transition:opacity .3s}
-.collection:hover::before{opacity:0.3}
-
-.collection .badge{display:inline-block;font-size:.55rem;letter-spacing:.25em;text-transform:uppercase;padding:.3rem .8rem;border:1px solid var(--border);color:var(--muted);margin-bottom:1rem}
-.collection h3{font-size:1.2rem;font-weight:400;margin-bottom:.5rem}
-.collection .meta{font-size:.7rem;color:var(--muted);line-height:1.8}
-.collection .meta span{color:rgba(200,196,188,0.4)}
-.collection .link{display:inline-block;margin-top:1rem;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:var(--accent);opacity:0.6;transition:opacity .2s}
-.collection:hover .link{opacity:1}
-
-/* Methodology */
-.methodology{margin-top:4rem;padding:2rem 0;border-top:1px solid var(--border)}
-.methodology h2{font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:var(--muted);margin-bottom:1.5rem;font-weight:400;text-align:center}
-.method-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:2rem;margin-top:1.5rem}
-.method{text-align:center}
-.method .icon{font-size:1.5rem;margin-bottom:.5rem;opacity:0.4}
-.method h4{font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;font-weight:400;margin-bottom:.5rem}
-.method p{font-size:.7rem;color:var(--muted);line-height:1.6}
-
-/* Footer */
-footer{text-align:center;padding:3rem 0 2rem;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:rgba(100,100,120,0.3)}
-footer a{color:rgba(100,100,120,0.4)}
-
-@media(max-width:600px){
-  .stats{gap:1.5rem}
-  .collection-grid{grid-template-columns:1fr}
-  .method-grid{grid-template-columns:1fr 1fr}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --bg: #06060a;
+  --fg: #e8e4dc;
+  --accent: #00ffc8;
+  --accent2: #ff3366;
+  --accent3: #ffcc00;
+  --card: #0c0e16;
+  --border: #1a1d2e;
+  --muted: #6a6d7a;
+  --glow: rgba(0, 255, 200, 0.15);
+}
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #faf9f5;
+    --fg: #1a1815;
+    --accent: #00b88a;
+    --accent2: #cc1a44;
+    --accent3: #b8860b;
+    --card: #ffffff;
+    --border: #d0cec8;
+    --muted: #8a8d9a;
+    --glow: rgba(0, 184, 138, 0.1);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+}
+html { background: var(--bg); }
+body {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--fg);
+  min-height: 100vh;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--accent); text-decoration: none; transition: color 0.2s, transform 0.15s; }
+a:hover { color: #33ffdd; transform: translateX(2px); }
+a:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wrap { max-width: 1400px; margin: 0 auto; padding: clamp(1.5rem, 4vw, 3rem); }
+.skip-link { position: absolute; top: -100%; left: 1rem; padding: 0.75rem 1rem; background: var(--accent); color: var(--bg); font-weight: 600; z-index: 1000; }
+.skip-link:focus { top: 1rem; }
+header.hero { text-align: center; padding: clamp(2rem, 6vw, 4rem) 0 clamp(1.5rem, 4vw, 2.5rem); }
+.hero h1 { font-size: clamp(2.2rem, 7vw, 4.5rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.05; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 40%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero .tagline { font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: clamp(0.7rem, 1.5vw, 0.85rem); letter-spacing: 0.3em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 1rem; }
+.hero .desc { max-width: 700px; margin: 1.5rem auto 0; font-size: clamp(0.9rem, 1.8vw, 1.1rem); color: rgba(232, 228, 220, 0.55); line-height: 1.7; }
+.stats-bar { display: flex; justify-content: center; gap: clamp(1.5rem, 4vw, 3.5rem); padding: clamp(1.5rem, 3vw, 2rem) 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); margin: clamp(1.5rem, 3vw, 2rem) 0; flex-wrap: wrap; }
+.stat { text-align: center; }
+.stat .val { font-family: 'Space Grotesk', system-ui; font-size: clamp(1.8rem, 4vw, 2.5rem); font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat .label { font-family: 'JetBrains Mono', monospace; font-size: clamp(0.6rem, 1vw, 0.7rem); letter-spacing: 0.2em; text-transform: uppercase; color: var(--muted); margin-top: 0.4rem; }
+.collections { margin-top: clamp(2rem, 4vw, 3rem); }
+.collections h2 { font-size: clamp(0.7rem, 1.2vw, 0.8rem); letter-spacing: 0.3em; text-transform: uppercase; color: var(--muted); margin-bottom: 1.5rem; font-weight: 500; }
+.collection-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+.collection-card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease; position: relative; overflow: hidden; }
+.collection-card::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.3s ease; pointer-events: none; }
+.collection-card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 20px 40px -20px var(--glow); }
+.collection-card:hover::before { opacity: 0.03; }
+.collection-card:focus-within { outline: 2px solid var(--accent); outline-offset: 2px; }
+.collection-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; margin-bottom: 0.75rem; }
+.collection-num { font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); opacity: 0.7; font-weight: 600; }
+.collection-title { font-size: clamp(1rem, 2vw, 1.2rem); font-weight: 600; letter-spacing: -0.01em; color: var(--fg); line-height: 1.3; }
+.collection-desc { font-size: 0.85rem; color: rgba(232, 228, 220, 0.55); line-height: 1.6; margin-bottom: 1rem; }
+.collection-meta { display: flex; gap: 1rem; flex-wrap: wrap; font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); margin-bottom: 1rem; }
+.collection-link { display: inline-flex; align-items: center; gap: 0.5rem; font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; color: var(--accent); font-weight: 600; transition: gap 0.2s; }
+.collection-link:hover { gap: 0.75rem; }
+.collection-link::after { content: '→'; font-size: 0.85rem; }
+footer.footer { margin-top: clamp(3rem, 6vw, 5rem); padding-top: clamp(1.5rem, 3vw, 2rem); border-top: 1px solid var(--border); text-align: center; color: var(--muted); font-size: 0.8rem; }
+.footer p + p { margin-top: 0.5rem; }
+.footer a { color: var(--muted); }
+.footer a:hover { color: var(--accent); }
+.footer span[aria-hidden] { margin: 0 0.5rem; opacity: 0.5; }
+@media (max-width: 640px) {
+  .collection-grid { grid-template-columns: 1fr; }
+  .stats-bar { gap: 1.5rem; }
 }
 </style>
 </head>
 <body>
-<div class="wrap">
-
-<div class="hero">
-  <h1>100 <em>Stunning</em> Designs</h1>
-  <div class="tagline">An Open AI Creative Benchmark</div>
-  <p class="desc">Each AI model receives the same prompt — create 100 unique, stunning HTML files with zero repetition. The results live here, side by side, judged on visual quality, technical depth, creative range, and stamina.</p>
+<a href="#main" class="skip-link">Skip to main content</a>
+<div class="wrap" id="main">
+<header class="hero">
+<h1>100 <em>STUNNING</em> DESIGNS</h1>
+<p class="tagline">AI Creative Benchmark</p>
+<p class="desc">One hundred hand-crafted HTML visualizations spanning generative art, mathematical simulations, interactive physics, and algorithmic geometry. Built without generators—each file authored individually as a testament to creative coding craft.</p>
+</header>
+<div class="stats-bar" role="list" aria-label="Collection statistics">
+<div class="stat" role="listitem"><div class="val">100</div><div class="label">Designs</div></div>
+<div class="stat" role="listitem"><div class="val">1</div><div class="label">Theme</div></div>
+<div class="stat" role="listitem"><div class="val">0</div><div class="label">Generators</div></div>
+<div class="stat" role="listitem"><div class="val">100%</div><div class="label">Hand-coded</div></div>
 </div>
-
-<div class="stats">
-  <div class="stat"><div class="val">3</div><div class="label">Collections</div></div>
-  <div class="stat"><div class="val">300</div><div class="label">Total Designs</div></div>
-  <div class="stat"><div class="val">0</div><div class="label">Dependencies</div></div>
-  <div class="stat"><div class="val">100%</div><div class="label">Self-Contained</div></div>
-</div>
-
-<div class="collections">
-  <h2>Collections</h2>
-  <div class="collection-grid">
-
-    <div class="collection">
-      <div class="badge">MiniMax M3</div>
-      <h3>Poetic Narratives</h3>
-      <div class="meta">
-        <span>Style:</span> Warm editorial, paper textures, serif typography<br>
-        <span>Themes:</span> Observatories, libraries, radios, botanical gardens<br>
-        <span>Strength:</span> Atmospheric storytelling, cohesive visual language
-      </div>
-      <a href="MiniMax M3/index.html" class="link">Explore Collection →</a>
-    </div>
-
-    <div class="collection">
-      <div class="badge">Deepseek V4 Pro</div>
-      <h3>Technical Showcase</h3>
-      <div class="meta">
-        <span>Style:</span> Dark UI, canvas animations, interactive effects<br>
-        <span>Themes:</span> Particle systems, glassmorphism, data viz, cyberpunk<br>
-        <span>Strength:</span> Technical breadth, modern web APIs, interactivity
-      </div>
-      <a href="Deepseek V4 Pro/index.html" class="link">Explore Collection →</a>
-    </div>
-
-    <div class="collection">
-      <div class="badge">MiMo V2.5 Pro</div>
-      <h3>Nature & Science</h3>
-      <div class="meta">
-        <span>Style:</span> Organic, canvas-based, scientifically inspired<br>
-        <span>Themes:</span> Ecosystems, geology, physics, astronomy, biology<br>
-        <span>Strength:</span> Natural phenomena, educational depth, visual variety
-      </div>
-      <a href="MiMo V2.5 Pro/index.html" class="link">Explore Collection →</a>
-    </div>
-
-  </div>
-</div>
-
-<div class="methodology">
-  <h2>How It Works</h2>
-  <div class="method-grid">
-    <div class="method">
-      <div class="icon">⌘</div>
-      <h4>Same Prompt</h4>
-      <p>Every model receives identical instructions: 100 HTML files, zero repetition, full creative mode.</p>
-    </div>
-    <div class="method">
-      <div class="icon">◯</div>
-      <h4>Zero Dependencies</h4>
-      <p>Each file is self-contained HTML with inline CSS and JS. No frameworks, no CDNs, no build tools.</p>
-    </div>
-    <div class="method">
-      <div class="icon">△</div>
-      <h4>Blind Comparison</h4>
-      <p>Collections are compared on visual quality, technical depth, creative range, and consistency.</p>
-    </div>
-    <div class="method">
-      <div class="icon">◇</div>
-      <h4>Open Results</h4>
-      <p>Every file is here for you to explore, compare, and judge. The source is the proof.</p>
-    </div>
-  </div>
-</div>
-
-<footer>
-  An open experiment in AI creative capacity · <a href="https://github.com">View on GitHub</a>
+<section class="collections" aria-labelledby="collections-heading">
+<h2 id="collections-heading">The Collection</h2>
+<div class="collection-grid" id="grid"></div>
+</section>
+<footer class="footer">
+<p>Benchmark by <a href="https://nousresearch.com" target="_blank" rel="noopener">Nous Research</a> · Built on <a href="https://github.com/nousresearch/hermes-agent" target="_blank" rel="noopener">Hermes Agent</a></p>
+<p><a href="https://github.com/nousresearch/hermes-agent" target="_blank" rel="noopener">Source Code</a><span aria-hidden="true">·</span><a href="https://nousresearch.com" target="_blank" rel="noopener">Nous Research</a></p>
 </footer>
-
 </div>
+<script>
+const designs = [
+  {num:"01",title:"Neural Field Visualizer",desc:"Interactive 3D neural field with ray-marched isosurfaces and real-time parameter control.",tags:["WebGL","3D","Raymarching"]},
+  {num:"02",title:"Fluid Dynamics Solver",desc:"Navier-Stokes simulation with vorticity confinement and dye advection.",tags:["WebGL","Physics","Simulation"]},
+  {num:"03",title:"Fractal Explorer",desc:"Mandelbrot and Julia set explorer with smooth coloring and deep zoom.",tags:["Canvas","Fractals","Math"]},
+  {num:"04",title:"Wave Interference",desc:"Multi-source wave interference patterns with phase control.",tags:["Canvas","Waves","Physics"]},
+  {num:"05",title:"Particle Life",desc:"Emergent behavior from simple attraction/repulsion rules between particle species.",tags:["Canvas","Emergence","ALife"]},
+  {num:"06",title:"Reaction Diffusion",desc:"Gray-Scott model with multiple parameter presets and brush painting.",tags:["WebGL","RD","Patterns"]},
+  {num:"07",title:"Boids Flocking",desc:"Craig Reynolds' boids with separation, alignment, cohesion, and obstacles.",tags:["Canvas","Flocking","AI"]},
+  {num:"08",title:"Strange Attractors",desc:"Lorenz, Rössler, Aizawa, and Clifford attractors in interactive 3D.",tags:["WebGL","Chaos","3D"]},
+  {num:"09",title:"L-System Fractals",desc:"Recursive plant generation with stochastic rules and wind simulation.",tags:["Canvas","L-Systems","Generative"]},
+  {num:"10",title:"Cellular Automata",desc:"Elementary, Game of Life, and custom rules with brush tools.",tags:["Canvas","CA","Grid"]},
+  {num:"11",title:"Fourier Series Visualizer",desc:"Interactive Fourier series with harmonic sliders and waveform synthesis.",tags:["Canvas","Math","Audio"]},
+  {num:"12",title:"Perlin Terrain",desc:"Procedural terrain with multi-octave noise, erosion, and water simulation.",tags:["WebGL","Noise","Terrain"]},
+  {num:"13",title:"Quantum Wavefunction",desc:"Schrödinger equation solver with potential barriers and superposition.",tags:["WebGL","Quantum","Physics"]},
+  {num:"14",title:"Raymarching Volumetric",desc:"Signed distance fields with volumetric lighting and fractal primitives.",tags:["WebGL","Raymarching","SDF"]},
+  {num:"15",title:"Particle Gravity",desc:"N-body gravity simulation with trails, collisions, and preset configurations.",tags:["Canvas","N-Body","Physics"]},
+  {num:"16",title:"Hopf Fibration",desc:"S³→S² fiber bundle visualization with stereographic projection.",tags:["WebGL","Topology","4D"]},
+  {num:"17",title:"Voronoi Mosaic",desc:"Animated Voronoi diagrams with multiple distance metrics.",tags:["Canvas","Voronoi","Geometry"]},
+  {num:"18",title:"Centennial Finale",desc:"The 100th design—harmonic particle network with golden ratio resonance.",tags:["Canvas","Generative","Finale"]},
+  {num:"19",title:"Recursive Geometry",desc:"Self-similar geometric patterns with depth control and color cycling.",tags:["Canvas","Recursion","Geometry"]},
+  {num:"20",title:"Magnetic Field Lines",desc:"Interactive magnetic dipole field visualization with iron filings mode.",tags:["Canvas","Physics","Fields"]},
+  {num:"21",title:"Double Pendulum Chaos",desc:"Chaotic double pendulum with phase space trajectory and energy plot.",tags:["Canvas","Chaos","Physics"]},
+  {num:"22",title:"Diffusion Limited Aggregation",desc:"DLA growth simulation with multiple walkers and stickiness parameters.",tags:["Canvas","DLA","Growth"]},
+  {num:"23",title:"Kaleidoscope Mirror",desc:"Real-time kaleidoscope with adjustable symmetry and camera input.",tags:["Canvas","Symmetry","Webcam"]},
+  {num:"24",title:"Supershapes Explorer",desc:"Gielis superformula with interactive parameter space exploration.",tags:["Canvas","Math","Shapes"]},
+  {num:"25",title:"Barnsley Fern",desc:"Iterated function system with probability controls and mutation.",tags:["Canvas","IFS","Fractals"]},
+  {num:"26",title:"Sierpinski Triangle",desc:"Chaos game and deterministic construction with dimension controls.",tags:["Canvas","Fractals","Math"]},
+  {num:"27",title:"Swiss Grid Poster",desc:"Typography-driven poster generator with modular grid system.",tags:["Canvas","Typography","Design"]},
+  {num:"28",title:"Recursive Geometry",desc:"Self-similar geometric patterns with depth control and color cycling.",tags:["Canvas","Recursion","Geometry"]},
+  {num:"29",title:"Fire Simulation",desc:"Cellular automaton fire with wind, fuel, and temperature controls.",tags:["Canvas","CA","Fire"]},
+  {num:"30",title:"Water Ripples",desc:"2D wave equation with droplet impacts and boundary reflection.",tags:["Canvas","Waves","Physics"]},
+  {num:"31",title:"Gravity Wells",desc:"Orbital mechanics with multiple bodies and trajectory prediction.",tags:["Canvas","Orbital","Physics"]},
+  {num:"32",title:"Mandelbrot 3D",desc:"3D Mandelbulb with distance estimation and ambient occlusion.",tags:["WebGL","3D","Fractals"]},
+  {num:"33",title:"Flow Field Particles",desc:"Particles following Perlin noise flow fields with color trails.",tags:["Canvas","Flow Field","Particles"]},
+  {num:"34",title:"Conway's Game of Life",desc:"Infinite grid Life with HashLife algorithm and pattern library.",tags:["Canvas","CA","Life"]},
+  {num:"35",title:"Bézier Curve Designer",desc:"Interactive cubic Bézier curves with handle manipulation and export.",tags:["Canvas","Curves","Design"]},
+  {num:"36",title:"Voronoi Stippling",desc:"Lloyd relaxation stippling from images with weight maps.",tags:["Canvas","Stippling","Art"]},
+  {num:"37",title:"Poisson Disc Sampling",desc:"Blue noise sampling with Bridson's algorithm and animation.",tags:["Canvas","Sampling","Algorithm"]},
+  {num:"38",title:"Delaunay Triangulation",desc:"Bowyer-Watson algorithm with incremental insertion visualization.",tags:["Canvas","Triangulation","Geometry"]},
+  {num:"39",title:"Marching Squares",desc:"Isocontour extraction with metaballs and resolution control.",tags:["Canvas","Marching Squares","Contours"]},
+  {num:"40",title:"Harmonograph",desc:"Multi-pendulum harmonograph with damping and phase controls.",tags:["Canvas","Harmonograph","Art"]},
+  {num:"41",title:"Lissajous Curves",desc:"Parametric Lissajous figures with frequency ratio exploration.",tags:["Canvas","Math","Curves"]},
+  {num:"42",title:"Spirograph",desc:"Hypotrochoid and epitrochoid generator with gear ratio presets.",tags:["Canvas","Spirograph","Geometry"]},
+  {num:"43",title:"Rose Curves",desc:"Rhodonea curves with rational and irrational frequency ratios.",tags:["Canvas","Polar","Math"]},
+  {num:"44",title:"Epicycles Fourier",desc:"Fourier series as rotating epicycles—draw any closed curve.",tags:["Canvas","Fourier","Epicycles"]},
+  {num:"45",title:"Wave Function Collapse",desc:"Constraint-based tile generation with entropy visualization.",tags:["Canvas","WFC","Generation"]},
+  {num:"46",title:"Truchet Tiles",desc:"Animated Truchet tile patterns with rotation and arc variants.",tags:["Canvas","Truchet","Patterns"]},
+  {num:"47",title:"Penrose Tiling",desc:"Aperiodic Penrose P2/P3 tilings with inflation/deflation.",tags:["Canvas","Tiling","Math"]},
+  {num:"48",title:"Apollonian Gasket",desc:"Circle packing with Descartes' theorem and recursive depth.",tags:["Canvas","Circle Packing","Geometry"]},
+  {num:"49",title:"Ford Circles",desc:"Fractional Ford circles with Farey sequence navigation.",tags:["Canvas","Number Theory","Geometry"]},
+  {num:"50",title:"Ulam Spiral",desc:"Prime number spiral with quadratic polynomial highlights.",tags:["Canvas","Primes","Number Theory"]},
+  {num:"51",title:"Collatz Conjecture",desc:"Collatz sequence visualization with stopping time heatmap.",tags:["Canvas","Collatz","Math"]},
+  {num:"52",title:"Dragon Curve",desc:"Heighway dragon with iterative folding and turn angle control.",tags:["Canvas","Dragon Curve","Fractals"]},
+  {num:"53",title:"Koch Snowflake",desc:"Koch curve construction with variant generators and dimension.",tags:["Canvas","Koch","Fractals"]},
+  {num:"54",title:"Hilbert Curve",desc:"Space-filling Hilbert curve with order animation and locality.",tags:["Canvas","Hilbert","Space-Filling"]},
+  {num:"55",title:"Z-Order Curve",desc:"Morton order curve with quadtree visualization and bit interleaving.",tags:["Canvas","Z-Order","Quadtree"]},
+  {num:"56",title:"Quadtree Visualization",desc:"Dynamic quadtree with insertion, subdivision, and query demo.",tags:["Canvas","Quadtree","Data Structure"]},
+  {num:"57",title:"Barnsley Fern",desc:"Affine IFS with probability weights and real-time mutation.",tags:["Canvas","IFS","Fractals"]},
+  {num:"58",title:"Sierpinski Carpet",desc:"Multi-dimensional Sierpinski carpet with box-counting dimension.",tags:["Canvas","Carpet","Fractals"]},
+  {num:"59",title:"Menger Sponge",desc:"3D Menger sponge with cross-section slicing and raycasting.",tags:["WebGL","3D","Fractals"]},
+  {num:"60",title:"Julia Set Explorer",desc:"Julia sets for quadratic and cubic polynomials with orbit traps.",tags:["Canvas","Julia","Fractals"]},
+  {num:"61",title:"Newton Fractals",desc:"Newton's method basins of attraction for complex polynomials.",tags:["Canvas","Newton","Fractals"]},
+  {num:"62",title:"Burning Ship",desc:"Burning Ship fractal variant with absolute value iterations.",tags:["Canvas","Fractals","Variants"]},
+  {num:"63",title:"Tricorn Fractal",desc:"Mandelbar (tricorn) with anti-analytic iteration and symmetry.",tags:["Canvas","Tricorn","Fractals"]},
+  {num:"64",title:"Multibrot Sets",desc:"Generalized Mandelbrot z→z^d+c for real and complex powers.",tags:["Canvas","Multibrot","Fractals"]},
+  {num:"65",title:"Buddhabrot",desc:"Buddhabrot and Anti-Buddhabrot with Metropolis sampling.",tags:["Canvas","Buddhabrot","Fractals"]},
+  {num:"66",title:"Orbit Traps",desc:"Fractal coloring with geometric orbit traps and distance fields.",tags:["Canvas","Orbit Traps","Fractals"]},
+  {num:"67",title:"Domain Coloring",desc:"Complex function visualization with HSV domain coloring.",tags:["Canvas","Complex","Visualization"]},
+  {num:"68",title:"Riemann Zeta",desc:"Riemann zeta function on critical line with zero tracking.",tags:["Canvas","Zeta","Number Theory"]},
+  {num:"69",title:"Modular Forms",desc:"Modular form visualization on fundamental domain.",tags:["Canvas","Modular Forms","Math"]},
+  {num:"70",title:"Elliptic Curves",desc:"Weierstrass elliptic curves with group law visualization.",tags:["Canvas","Elliptic Curves","Crypto"]},
+  {num:"71",title:"Flow Visualization",desc:"Vector field visualization with streamlines and LIC.",tags:["Canvas","Flow","Vector Field"]},
+  {num:"72",title:"Turbulence Simulation",desc:"2D turbulence with energy cascade and vortex merging.",tags:["WebGL","Turbulence","Physics"]},
+  {num:"73",title:"Smoke Simulation",desc:"Stable fluids with buoyancy, vorticity confinement, and obstacles.",tags:["WebGL","Fluids","Simulation"]},
+  {num:"74",title:"Cloth Simulation",desc:"Verlet integration cloth with tearing, wind, and collision.",tags:["Canvas","Verlet","Physics"]},
+  {num:"75",title:"Rope Physics",desc:"Verlet rope with constraints, grabbing, and soft body coupling.",tags:["Canvas","Verlet","Physics"]},
+  {num:"76",title:"Soft Body Physics",desc:"Pressure-based soft bodies with volume conservation.",tags:["Canvas","Soft Body","Physics"]},
+  {num:"77",title:"Rigid Body Dynamics",desc:"SAT collision detection with contact caching and stacking.",tags:["Canvas","Rigid Body","Physics"]},
+  {num:"78",title:"Ragdoll Physics",desc:"Articulated ragdoll with joint constraints and muscle actuation.",tags:["Canvas","Ragdoll","Physics"]},
+  {num:"79",title:"Vehicle Simulation",desc:"Car physics with suspension, differential, and tire friction curves.",tags:["Canvas","Vehicle","Physics"]},
+  {num:"80",title:"Boid Predators",desc:"Flocking with predator-prey dynamics and fear response.",tags:["Canvas","Boids","AI"]},
+  {num:"81",title:"Ant Colony Optimization",desc:"ACO pathfinding with pheromone evaporation and heuristic weights.",tags:["Canvas","ACO","Optimization"]},
+  {num:"82",title:"Genetic Algorithm",desc:"Real-time GA with crossover, mutation, and fitness landscape.",tags:["Canvas","GA","Evolution"]},
+  {num:"83",title:"Particle Swarm",desc:"PSO optimization with inertia, cognitive, and social components.",tags:["Canvas","PSO","Optimization"]},
+  {num:"84",title:"Simulated Annealing",desc:"SA with temperature schedules and energy landscape viz.",tags:["Canvas","SA","Optimization"]},
+  {num:"85",title:"Strange Attractors",desc:"3D strange attractors gallery with parameter morphing.",tags:["WebGL","Chaos","3D"]},
+  {num:"86",title:"Reaction Diffusion",desc:"Extended Gray-Scott with multiple species and feed/kill maps.",tags:["WebGL","RD","Patterns"]},
+  {num:"87",title:"Boids Flocking 3D",desc:"3D boids with obstacle avoidance and leader following.",tags:["WebGL","Flocking","3D"]},
+  {num:"88",title:"Wave Interference 3D",desc:"3D wave equation with multiple sources and caustics.",tags:["WebGL","Waves","3D"]},
+  {num:"89",title:"L-System 3D",desc:"3D L-systems with turtle graphics and branching rules.",tags:["WebGL","L-Systems","3D"]},
+  {num:"90",title:"Cellular Automata 3D",desc:"3D CA with Moore neighborhood and rule exploration.",tags:["WebGL","3D CA","Simulation"]},
+  {num:"91",title:"Fourier Series 3D",desc:"3D parametric surfaces from Fourier series coefficients.",tags:["WebGL","Fourier","3D"]},
+  {num:"92",title:"Perlin Terrain 3D",desc:"Infinite procedural terrain with LOD and biome blending.",tags:["WebGL","Terrain","Infinite"]},
+  {num:"93",title:"Quantum Wavefunction 3D",desc:"3D hydrogen orbitals with probability clouds and slicing.",tags:["WebGL","Quantum","3D"]},
+  {num:"94",title:"Raymarching Volumetric",desc:"Advanced SDF operations with soft shadows and subsurface.",tags:["WebGL","Raymarching","SDF"]},
+  {num:"95",title:"Typographic Playground",desc:"Variable font playground with axis interpolation and animation.",tags:["Canvas","Typography","Variable Fonts"]},
+  {num:"96",title:"Swiss Grid Poster",desc:"International Typographic Style poster generator with grid.",tags:["Canvas","Typography","Swiss Design"]},
+  {num:"97",title:"Particle Gravity",desc:"N-body simulation with gravitational merging and trails.",tags:["Canvas","N-Body","Gravity"]},
+  {num:"98",title:"Hopf Fibration",desc:"Hopf map S³→S² with fiber animation and stereo projection.",tags:["WebGL","Topology","4D"]},
+  {num:"99",title:"Voronoi Mosaic",desc:"Animated Voronoi with multiple metrics and site dynamics.",tags:["Canvas","Voronoi","Animation"]},
+  {num:"100",title:"Centennial",desc:"Harmonic particle network—golden ratio resonance finale.",tags:["Canvas","Generative","Finale"]}
+];
+const grid = document.getElementById('grid');
+designs.forEach(d => {
+  const card = document.createElement('article');
+  card.className = 'collection-card';
+  card.innerHTML = `<div class="collection-header"><span class="collection-num">${d.num}/100</span></div><h3 class="collection-title">${d.title}</h3><p class="collection-desc">${d.desc}</p><div class="collection-meta">${d.tags.map(t=>`<span>${t}</span>`).join('')}</div><a href="Nemotron 3 Ultra/${d.num.toLowerCase()}-${d.title.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/-+/g,'-').replace(/-$/,'')}.html" class="collection-link">View Design</a>`;
+  grid.appendChild(card);
+});
+</script>
 </body>
 </html>

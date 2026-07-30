@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursive Geometry — Nemotron 3 Ultra #28</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.recursive-selector { pointer-events: auto; }
+.recursive-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.recursive-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>RECURSIVE GEOMETRY</h1>
+<p class="subtitle">Self-Similar Patterns</p>
+</div>
+<div class="controls">
+<div class="recursive-selector"><select id="patternSelect" aria-label="Select pattern"></select></div>
+<div class="slider-group"><label>Depth</label><input type="range" id="depthSlider" min="1" max="8" step="1" value="5"></div>
+<div class="slider-group"><label>Scale</label><input type="range" id="scaleSlider" min="0.3" max="0.7" step="0.05" value="0.5"></div>
+<button class="btn primary" id="btnRandom" aria-label="Randomize"><span>Randomize</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Depth</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click to set origin • Keys: Space pause • R random • C color • 1-6 patterns</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="depthCount">5</div><div class="stat-label">Recursion Depth</div></div>
+<div class="stat"><div class="stat-value" id="shapeCount">0</div><div class="stat-label">Shapes Drawn</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const patterns = [
+    { name: 'Sierpinski Triangle', draw: drawSierpinski },
+    { name: 'Koch Snowflake', draw: drawKoch },
+    { name: 'Fractal Tree', draw: drawTree },
+    { name: 'H-Tree', draw: drawHTree },
+    { name: 'Circle Packing', draw: drawCirclePacking },
+    { name: 'Square Fractal', draw: drawSquareFractal },
+];
+let patternIdx = 0, depth = 5, scale = 0.5, paused = false, running = true, colorMode = 0, time = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const origin = { x: 0.5, y: 0.5 };
+const select = document.getElementById('patternSelect');
+patterns.forEach((p, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${p.name}`; select.appendChild(opt); });
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); }
+function drawSierpinski(x, y, size, d) { if (d === 0) { drawTriangle(x, y, size); return; } const h = size * Math.sqrt(3) / 2; drawSierpinski(x, y, size / 2, d - 1); drawSierpinski(x - size / 4, y + h / 2, size / 2, d - 1); drawSierpinski(x + size / 4, y + h / 2, size / 2, d - 1); }
+function drawTriangle(x, y, size) { const h = size * Math.sqrt(3) / 2; ctx.beginPath(); ctx.moveTo(x, y - h * 2/3); ctx.lineTo(x - size / 2, y + h / 3); ctx.lineTo(x + size / 2, y + h / 3); ctx.closePath(); }
+function drawKoch(x, y, len, angle, d) { if (d === 0) { ctx.lineTo(x + Math.cos(angle) * len, y + Math.sin(angle) * len); return; } const l = len / 3; drawKoch(x, y, l, angle, d - 1); x += Math.cos(angle) * l; y += Math.sin(angle) * l; drawKoch(x, y, l, angle - Math.PI / 3, d - 1); x += Math.cos(angle - Math.PI / 3) * l; y += Math.sin(angle - Math.PI / 3) * l; drawKoch(x, y, l, angle + Math.PI / 3, d - 1); x += Math.cos(angle + Math.PI / 3) * l; y += Math.sin(angle + Math.PI / 3) * l; drawKoch(x, y, l, angle, d - 1); }
+function drawTree(x, y, angle, len, d) { if (d === 0) return; const nx = x + Math.cos(angle) * len; const ny = y + Math.sin(angle) * len; ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(nx, ny); ctx.stroke(); drawTree(nx, ny, angle - 0.4, len * 0.67, d - 1); drawTree(nx, ny, angle + 0.4, len * 0.67, d - 1); }
+function drawHTree(x, y, size, d) { if (d === 0) return; const half = size / 2; ctx.beginPath(); ctx.moveTo(x - half, y); ctx.lineTo(x + half, y); ctx.moveTo(x - half, y - half); ctx.lineTo(x - half, y + half); ctx.moveTo(x + half, y - half); ctx.lineTo(x + half, y + half); ctx.stroke(); drawHTree(x - half, y - half, half, d - 1); drawHTree(x - half, y + half, half, d - 1); drawHTree(x + half, y - half, half, d - 1); drawHTree(x + half, y + half, half, d - 1); }
+function drawCirclePacking(x, y, r, d) { if (d === 0 || r < 2) return; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.stroke(); const nr = r * scale; drawCirclePacking(x - nr, y, nr, d - 1); drawCirclePacking(x + nr, y, nr, d - 1); drawCirclePacking(x, y - nr, nr, d - 1); drawCirclePacking(x, y + nr, nr, d - 1); }
+function drawSquareFractal(x, y, size, d) { if (d === 0) { ctx.strokeRect(x - size/2, y - size/2, size, size); return; } const ns = size * scale; drawSquareFractal(x - size/2 + ns/2, y - size/2 + ns/2, ns, d - 1); drawSquareFractal(x + size/2 - ns/2, y - size/2 + ns/2, ns, d - 1); drawSquareFractal(x - size/2 + ns/2, y + size/2 - ns/2, ns, d - 1); drawSquareFractal(x + size/2 - ns/2, y + size/2 - ns/2, ns, d - 1); }
+function setStyle(d, maxD) { if (colorMode === 0) { const hue = (d / maxD) * 360; ctx.strokeStyle = `hsla(${hue}, 80%, 60%, 0.8)`; } else if (colorMode === 1) { const hue = (time * 50 + d * 30) % 360; ctx.strokeStyle = `hsla(${hue}, 80%, 60%, 0.8)`; } else { ctx.strokeStyle = '#00ffc8'; } ctx.lineWidth = Math.max(0.5, 2 - d * 0.2); }
+let shapeCount = 0;
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); ctx.save(); ctx.translate(w * origin.x, h * origin.y); shapeCount = 0; const pattern = patterns[patternIdx]; const maxSize = Math.min(w, h) * 0.4; if (patternIdx === 1) { // Koch Snowflake
+        ctx.beginPath(); ctx.moveTo(-maxSize * 0.5, maxSize * 0.3); for (let i = 0; i < 3; i++) { drawKoch(-maxSize * 0.5, maxSize * 0.3, maxSize, -i * 2 * Math.PI / 3, depth); } ctx.stroke(); }
+    else if (patternIdx === 2) { // Fractal Tree
+        drawTree(0, maxSize * 0.5, -Math.PI / 2, maxSize * 0.5, depth); }
+    else if (patternIdx === 3) { // H-Tree
+        drawHTree(0, 0, maxSize, depth); }
+    else if (patternIdx === 4) { // Circle Packing
+        drawCirclePacking(0, 0, maxSize, depth); }
+    else if (patternIdx === 5) { // Square Fractal
+        drawSquareFractal(0, 0, maxSize, depth); }
+    else { // Sierpinski
+        drawSierpinski(0, 0, maxSize, depth); }
+    ctx.restore(); document.getElementById('shapeCount').textContent = shapeCount; }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) time += dt * 0.1; render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('depthSlider').addEventListener('input', e => { depth = parseInt(e.target.value); document.getElementById('depthCount').textContent = depth; }); document.getElementById('scaleSlider').addEventListener('input', e => scale = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('click', e => { origin.x = e.clientX / (width / dpr); origin.y = e.clientY / (height / dpr); });
+select.addEventListener('change', e => patternIdx = parseInt(e.target.value));
+document.getElementById('btnRandom').addEventListener('click', () => { origin.x = Math.random(); origin.y = Math.random(); depth = Math.floor(Math.random() * 5) + 2; document.getElementById('depthSlider').value = depth; document.getElementById('depthCount').textContent = depth; patternIdx = Math.floor(Math.random() * patterns.length); select.value = patternIdx; });
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Depth', 'Color: Time', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') { origin.x = Math.random(); origin.y = Math.random(); depth = Math.floor(Math.random() * 5) + 2; document.getElementById('depthSlider').value = depth; document.getElementById('depthCount').textContent = depth; patternIdx = Math.floor(Math.random() * patterns.length); select.value = patternIdx; } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Depth', 'Color: Time', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key >= '1' && e.key <= '6') { patternIdx = parseInt(e.key) - 1; select.value = patternIdx; } });
+init();
+</script>
+</body>
+</html>

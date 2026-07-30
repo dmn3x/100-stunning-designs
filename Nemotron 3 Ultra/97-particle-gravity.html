@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Particle Gravity — Nemotron 3 Ultra #97</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>PARTICLE GRAVITY</h1>
+<p class="subtitle">N-Body Simulation</p>
+</div>
+<div class="controls">
+<div class="slider-group"><label>Particles</label><input type="range" id="countSlider" min="50" max="500" step="25" value="200"></div>
+<div class="slider-group"><label>G</label><input type="range" id="gSlider" min="0.1" max="5" step="0.1" value="1"></div>
+<div class="slider-group"><label>Trail</label><input type="range" id="trailSlider" min="0" max="1" step="0.05" value="0.08"></div>
+<button class="btn primary" id="btnReset" aria-label="Reset simulation"><span>Reset</span></button>
+<button class="btn" id="btnPause" aria-label="Toggle simulation"><span>Pause</span></button>
+<button class="btn" id="btnCollide" aria-label="Toggle collisions"><span>Collide: Off</span></button>
+<button class="btn" id="btnTrails" aria-label="Toggle trails"><span>Trails: On</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Click to add particle • Drag to create velocity • Keys: Space pause • R reset • C collide • T trails • 1-5 presets</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="particleCount">200</div><div class="stat-label">Particles</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+let particles = [], paused = false, running = true, trails = true, trailAlpha = 0.08, collide = false, G = 1;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const mouse = { x: 0, y: 0, down: false, startX: 0, startY: 0 };
+function resize() { dpr = Math.min(window.devicePixelRatio || 1, 2); width = canvas.width = Math.floor(window.innerWidth * dpr); height = canvas.height = Math.floor(window.innerHeight * dpr); ctx.scale(dpr, dpr); }
+function initParticles(count) { particles = []; const w = width / dpr, h = height / dpr; for (let i = 0; i < count; i++) { particles.push({ x: Math.random() * w, y: Math.random() * h, vx: (Math.random() - 0.5) * 2, vy: (Math.random() - 0.5) * 2, mass: 1 + Math.random() * 3, r: 2 + Math.random() * 4, hue: Math.random() * 360 }); } document.getElementById('particleCount').textContent = count; }
+function reset() { const count = parseInt(document.getElementById('countSlider').value); initParticles(count); }
+function step() { const w = width / dpr, h = height / dpr; const dt = 0.016; for (let i = 0; i < particles.length; i++) { const p = particles[i]; let fx = 0, fy = 0; for (let j = 0; j < particles.length; j++) { if (i === j) continue; const q = particles[j]; const dx = q.x - p.x, dy = q.y - p.y; const dist2 = dx*dx + dy*dy + 100; const dist = Math.sqrt(dist2); const force = G * p.mass * q.mass / dist2; fx += force * dx / dist; fy += force * dy / dist; if (collide && dist < p.r + q.r) { const nx = dx / dist, ny = dy / dist; const dvx = q.vx - p.vx, dvy = q.vy - p.vy; const impulse = 2 * (dvx * nx + dvy * ny) / (p.mass + q.mass); p.vx += impulse * q.mass * nx * 0.5; p.vy += impulse * q.mass * ny * 0.5; q.vx -= impulse * p.mass * nx * 0.5; q.vy -= impulse * p.mass * ny * 0.5; } } p.vx += fx * dt / p.mass; p.vy += fy * dt / p.mass; p.vx *= 0.999; p.vy *= 0.999; p.x += p.vx; p.y += p.vy; if (p.x < 0) { p.x = 0; p.vx = Math.abs(p.vx) * 0.8; } if (p.x > w) { p.x = w; p.vx = -Math.abs(p.vx) * 0.8; } if (p.y < 0) { p.y = 0; p.vy = Math.abs(p.vy) * 0.8; } if (p.y > h) { p.y = h; p.vy = -Math.abs(p.vy) * 0.8; } } }
+function render() { const w = width / dpr, h = height / dpr; if (trails) { ctx.fillStyle = `rgba(3, 3, 5, ${trailAlpha})`; ctx.fillRect(0, 0, w, h); } else { ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); } for (const p of particles) { ctx.beginPath(); ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2); ctx.fillStyle = `hsla(${p.hue}, 80%, 60%, 0.9)`; ctx.shadowColor = `hsla(${p.hue}, 80%, 60%, 0.8)`; ctx.shadowBlur = 8; ctx.fill(); ctx.shadowBlur = 0; } }
+function loop(time) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (time - lastTime) / 1000; lastTime = time; frameCount++; if (time - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (time - fpsTime)); frameCount = 0; fpsTime = time; document.getElementById('fps').textContent = fps; } if (!paused) step(); render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); initParticles(200); document.getElementById('countSlider').addEventListener('input', e => { initParticles(parseInt(e.target.value)); }); document.getElementById('gSlider').addEventListener('input', e => G = parseFloat(e.target.value)); document.getElementById('trailSlider').addEventListener('input', e => trailAlpha = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.startX = e.clientX; mouse.startY = e.clientY; });
+canvas.addEventListener('mousemove', e => { mouse.x = e.clientX; mouse.y = e.clientY; if (mouse.down) { const p = { x: e.clientX, y: e.clientY, vx: (e.clientX - mouse.startX) * 0.1, vy: (e.clientY - mouse.startY) * 0.1, mass: 2, r: 4, hue: Math.random() * 360 }; particles.push(p); mouse.startX = e.clientX; mouse.startY = e.clientY; document.getElementById('particleCount').textContent = particles.length; } });
+canvas.addEventListener('mouseup', () => mouse.down = false);
+document.getElementById('btnReset').addEventListener('click', reset);
+document.getElementById('btnPause').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnCollide').addEventListener('click', () => { collide = !collide; document.getElementById('btnCollide').querySelector('span').textContent = collide ? 'Collide: On' : 'Collide: Off'; document.getElementById('btnCollide').classList.toggle('primary', collide); });
+document.getElementById('btnTrails').addEventListener('click', () => { trails = !trails; trailAlpha = trails ? parseFloat(document.getElementById('trailSlider').value) : 0; document.getElementById('btnTrails').querySelector('span').textContent = trails ? 'Trails: On' : 'Trails: Off'; document.getElementById('btnTrails').classList.toggle('primary', trails); });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnPause').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 'r' || e.key === 'R') reset(); else if (e.key === 'c' || e.key === 'C') { collide = !collide; document.getElementById('btnCollide').querySelector('span').textContent = collide ? 'Collide: On' : 'Collide: Off'; document.getElementById('btnCollide').classList.toggle('primary', collide); } else if (e.key === 't' || e.key === 'T') { trails = !trails; trailAlpha = trails ? parseFloat(document.getElementById('trailSlider').value) : 0; document.getElementById('btnTrails').querySelector('span').textContent = trails ? 'Trails: On' : 'Trails: Off'; document.getElementById('btnTrails').classList.toggle('primary', trails); } });
+init();
+</script>
+</body>
+</html>

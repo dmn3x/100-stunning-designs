@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hopf Fibration — Nemotron 3 Ultra #98</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root { --bg: #030305; --fg: #f0ebe5; --accent: #00ffc8; --accent2: #ff3366; --accent3: #ffcc00; --card: #0a0c16; --border: #1a1f3a; --glow: rgba(0, 255, 200, 0.35); }
+@media (prefers-color-scheme: light) { :root { --bg: #faf9f5; --fg: #1a1815; --accent: #00b88a; --accent2: #cc1a44; --accent3: #b8860b; --card: #ffffff; --border: #d0cec8; --glow: rgba(0, 184, 138, 0.3); } }
+@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; } }
+@font-face { font-family: 'SpaceGrotesk'; src: local('Space Grotesk'), local('Inter'), local('system-ui'); font-display: swap; }
+@font-face { font-family: 'JetBrainsMono'; src: local('JetBrains Mono'), local('Fira Code'), local('Monospace'); font-display: swap; }
+body { font-family: 'SpaceGrotesk', system-ui, sans-serif; background: var(--bg); color: var(--fg); min-height: 100vh; overflow: hidden; position: relative; }
+#canvas { position: fixed; inset: 0; z-index: 0; display: block; }
+.ui { position: relative; z-index: 10; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; padding: 2rem; pointer-events: none; }
+.header { display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 1rem; }
+.title-block h1 { font-family: 'SpaceGrotesk', system-ui; font-size: clamp(1.8rem, 5vw, 3.5rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.1; background: linear-gradient(135deg, var(--fg) 0%, var(--accent) 50%, var(--accent2) 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.title-block .subtitle { font-family: 'JetBrainsMono', monospace; font-size: 0.75rem; letter-spacing: 0.25em; text-transform: uppercase; color: var(--accent); opacity: 0.8; margin-top: 0.25rem; }
+.controls { display: flex; gap: 0.75rem; flex-wrap: wrap; pointer-events: auto; }
+.btn { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; padding: 0.6rem 1.2rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; transition: all 0.15s ease; position: relative; overflow: hidden; }
+.btn::before { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, var(--accent), var(--accent2)); opacity: 0; transition: opacity 0.15s ease; }
+.btn:hover::before, .btn:focus::before { opacity: 1; }
+.btn span { position: relative; z-index: 1; }
+.btn.primary { border-color: var(--accent); }
+.btn.primary:hover, .btn.primary:focus { border-color: var(--accent); box-shadow: 0 0 24px var(--glow); }
+.btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; }
+.info { font-family: 'JetBrainsMono', monospace; font-size: 0.65rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.4; }
+.stats { display: flex; gap: 2rem; flex-wrap: wrap; }
+.stat { text-align: right; }
+.stat-value { font-family: 'SpaceGrotesk', system-ui; font-size: 1.5rem; font-weight: 700; background: linear-gradient(135deg, var(--accent), var(--accent3)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; line-height: 1; }
+.stat-label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.15em; text-transform: uppercase; color: var(--fg); opacity: 0.5; margin-top: 0.15rem; }
+.hopf-selector { pointer-events: auto; }
+.hopf-selector select { font-family: 'JetBrainsMono', monospace; font-size: 0.7rem; letter-spacing: 0.05em; text-transform: uppercase; padding: 0.5rem 1rem; border: 1px solid var(--border); background: var(--card); color: var(--fg); cursor: pointer; appearance: none; }
+.hopf-selector select:focus { outline: 2px solid var(--accent); outline-offset: 2px; }
+.slider-group { pointer-events: auto; display: flex; flex-direction: column; gap: 0.3rem; min-width: 100px; }
+.slider-group label { font-family: 'JetBrainsMono', monospace; font-size: 0.6rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--fg); opacity: 0.6; }
+.slider-group input { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 2px; background: var(--border); outline: none; }
+.slider-group input::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 14px; height: 14px; border-radius: 50%; background: var(--accent); cursor: pointer; }
+@media (max-width: 640px) { .header { flex-direction: column; align-items: flex-start; } .footer { flex-direction: column; align-items: flex-start; } .stats { gap: 1rem; } .controls { flex-direction: column; } .slider-group { width: 100%; } }
+</style>
+</head>
+<body>
+<canvas id="canvas" aria-hidden="true"></canvas>
+<div class="ui">
+<header class="header">
+<div class="title-block">
+<h1>HOPF FIBRATION</h1>
+<p class="subtitle">S³ → S² Fiber Bundle</p>
+</div>
+<div class="controls">
+<div class="hopf-selector"><select id="modeSelect" aria-label="Select visualization mode"></select></div>
+<div class="slider-group"><label>Fibers</label><input type="range" id="fiberSlider" min="8" max="64" step="4" value="24"></div>
+<div class="slider-group"><label>Rotation</label><input type="range" id="rotSlider" min="0" max="2" step="0.1" value="0.5"></div>
+<button class="btn primary" id="btnAnimate" aria-label="Toggle animation"><span>Pause</span></button>
+<button class="btn" id="btnStereo" aria-label="Toggle stereographic"><span>Stereo: On</span></button>
+<button class="btn" id="btnColor" aria-label="Toggle color mode"><span>Color: Fiber</span></button>
+</div>
+</header>
+<footer class="footer">
+<p class="info" id="infoText">Drag to rotate 4D view • Scroll to zoom • Keys: Space pause • S stereo • C color • M mode • 1-4 modes</p>
+<div class="stats">
+<div class="stat"><div class="stat-value" id="fiberCount">24</div><div class="stat-label">Fibers</div></div>
+<div class="stat"><div class="stat-value" id="fps">60</div><div class="stat-label">FPS</div></div>
+</div>
+</footer>
+</div>
+<script>
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+let width = 0, height = 0, dpr = 1;
+const modes = [
+    { name: 'Standard', fiber: (t, u, v) => ({ x: Math.cos(t) * Math.cos(u), y: Math.sin(t) * Math.cos(u), z: Math.sin(u) * Math.cos(v), w: Math.sin(u) * Math.sin(v) }) },
+    { name: 'Torus Knots', fiber: (t, u, v) => ({ x: Math.cos(2*t) * Math.cos(u), y: Math.sin(2*t) * Math.cos(u), z: Math.sin(u) * Math.cos(v), w: Math.sin(u) * Math.sin(v) }) },
+    { name: 'Linked Rings', fiber: (t, u, v) => ({ x: Math.cos(t) * Math.cos(3*u), y: Math.sin(t) * Math.cos(3*u), z: Math.sin(3*u) * Math.cos(v), w: Math.sin(3*u) * Math.sin(v) }) },
+    { name: 'Spiral', fiber: (t, u, v) => ({ x: Math.cos(t + u) * Math.cos(u), y: Math.sin(t + u) * Math.cos(u), z: Math.sin(u) * Math.cos(v), w: Math.sin(u) * Math.sin(v) }) },
+];
+let modeIdx = 0, numFibers = 24, rotSpeed = 0.5, paused = false, running = true, stereo = true, colorMode = 0, time = 0;
+let lastTime = 0, frameCount = 0, fps = 60, fpsTime = 0, animationId = null;
+const camera = { rotX: 0.3, rotY: 0.5, rotZ: 0, rotW: 0, scale: 1, targetRotX: 0.3, targetRotY: 0.5, targetScale: 1 };
+const mouse = { down: false, lastX: 0, lastY: 0 };
+const select = document.getElementById('modeSelect');
+modes.forEach((m, i) => { const opt = document.createElement('option'); opt.value = i; opt.textContent = `${i+1} ${m.name}`; select.appendChild(opt); });
+function hopfTo3D(x, y, z, w) { if (stereo) { const denom = 1 - w; if (Math.abs(denom) < 0.001) return null; return { x: x / denom, y: y / denom, z: z / denom }; } else { return { x, y, z }; } }
+function rotate4D(p, rx, ry, rz, rw) { let { x, y, z, w } = p; const cxy = Math.cos(rz), sxy = Math.sin(rz); [x, y] = [x * cxy - y * sxy, x * sxy + y * cxy]; const cxz = Math.cos(ry), sxz = Math.sin(ry); [x, z] = [x * cxz - z * sxz, x * sxz + z * cxz]; const cxw = Math.cos(rw), sxw = Math.sin(rw); [x, w] = [x * cxw - w * sxw, x * sxw + w * cxw]; const cyz = Math.cos(rx), syz = Math.sin(rx); [y, z] = [y * cyz - z * syz, y * syz + z * cyz]; return { x, y, z, w }; }
+function project3D(p) { const scale = 300 * camera.scale / (3 + p.z); return { x: p.x * scale + width / dpr / 2, y: -p.y * scale + height / dpr / 2, z: p.z }; }
+function render() { const w = width / dpr, h = height / dpr; ctx.fillStyle = '#030305'; ctx.fillRect(0, 0, w, h); const fiberFunc = modes[modeIdx].fiber; for (let fi = 0; fi < numFibers; fi++) { const v0 = fi / numFibers * Math.PI * 2; ctx.beginPath(); let first = true; for (let t = 0; t <= Math.PI * 2; t += 0.02) { const u = Math.PI / 2 * Math.sin(t * 0.5 + time * 0.1); const pt = fiberFunc(t, u, v0); let rpt = rotate4D(pt, camera.rotX, camera.rotY, camera.rotZ, camera.rotW); const proj = hopfTo3D(rpt.x, rpt.y, rpt.z, rpt.w); if (!proj) continue; const p3d = project3D(proj); if (first) { ctx.moveTo(p3d.x, p3d.y); first = false; } else { ctx.lineTo(p3d.x, p3d.y); } } if (colorMode === 0) { ctx.strokeStyle = `hsl(${fi / numFibers * 360}, 80%, 60%)`; } else if (colorMode === 1) { ctx.strokeStyle = `hsl(${time * 50 + fi * 10}, 80%, 60%)`; } else { ctx.strokeStyle = '#00ffc8'; } ctx.lineWidth = 1.5; ctx.globalAlpha = 0.8; ctx.stroke(); ctx.globalAlpha = 1; } }
+function loop(t) { if (!running) { animationId = requestAnimationFrame(loop); return; } const dt = (t - lastTime) / 1000; lastTime = t; frameCount++; if (t - fpsTime > 1000) { fps = Math.round(frameCount * 1000 / (t - fpsTime)); frameCount = 0; fpsTime = t; document.getElementById('fps').textContent = fps; } if (!paused) time += dt * rotSpeed; camera.rotX += (camera.targetRotX - camera.rotX) * 0.05; camera.rotY += (camera.targetRotY - camera.rotY) * 0.05; camera.scale += (camera.targetScale - camera.scale) * 0.05; render(); animationId = requestAnimationFrame(loop); }
+function init() { resize(); document.getElementById('fiberSlider').addEventListener('input', e => { numFibers = parseInt(e.target.value); document.getElementById('fiberCount').textContent = numFibers; }); document.getElementById('rotSlider').addEventListener('input', e => rotSpeed = parseFloat(e.target.value)); lastTime = performance.now(); fpsTime = performance.now(); loop(lastTime); }
+window.addEventListener('resize', resize);
+canvas.addEventListener('mousedown', e => { mouse.down = true; mouse.lastX = e.clientX; mouse.lastY = e.clientY; canvas.style.cursor = 'grabbing'; });
+window.addEventListener('mousemove', e => { if (mouse.down) { camera.targetRotY -= (e.clientX - mouse.lastX) * 0.005; camera.targetRotX = Math.max(-1.5, Math.min(1.5, camera.targetRotX - (e.clientY - mouse.lastY) * 0.005)); mouse.lastX = e.clientX; mouse.lastY = e.clientY; } });
+window.addEventListener('mouseup', () => { mouse.down = false; canvas.style.cursor = 'grab'; });
+canvas.addEventListener('wheel', e => { e.preventDefault(); camera.targetScale = Math.max(0.3, Math.min(3, camera.targetScale * (e.deltaY > 0 ? 0.9 : 1.1))); }, { passive: false });
+select.addEventListener('change', e => modeIdx = parseInt(e.target.value));
+document.getElementById('btnAnimate').addEventListener('click', () => { paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } });
+document.getElementById('btnStereo').addEventListener('click', () => { stereo = !stereo; document.getElementById('btnStereo').classList.toggle('primary', stereo); document.getElementById('btnStereo').querySelector('span').textContent = stereo ? 'Stereo: On' : 'Stereo: Off'; });
+document.getElementById('btnColor').addEventListener('click', () => { colorMode = (colorMode + 1) % 3; const labels = ['Color: Fiber', 'Color: Time', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; });
+document.addEventListener('keydown', e => { if (e.key === ' ') { e.preventDefault(); paused = !paused; running = !paused; document.getElementById('btnAnimate').querySelector('span').textContent = paused ? 'Resume' : 'Pause'; if (running) { lastTime = performance.now(); loop(lastTime); } } else if (e.key === 's' || e.key === 'S') { stereo = !stereo; document.getElementById('btnStereo').classList.toggle('primary', stereo); document.getElementById('btnStereo').querySelector('span').textContent = stereo ? 'Stereo: On' : 'Stereo: Off'; } else if (e.key === 'c' || e.key === 'C') { colorMode = (colorMode + 1) % 3; const labels = ['Color: Fiber', 'Color: Time', 'Color: Mono']; document.getElementById('btnColor').querySelector('span').textContent = labels[colorMode]; } else if (e.key === 'm' || e.key === 'M') { modeIdx = (modeIdx + 1) % modes.length; select.value = modeIdx; } else if (e.key >= '1' && e.key <= '4') { modeIdx = parseInt(e.key) - 1; select.value = modeIdx; } });
+init();
+</script>
+</body>
+</html>
