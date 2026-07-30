@@ -87,19 +87,19 @@ a { color:inherit; text-decoration:none }
 </div>
 
 <div class="tabs" id="tabs">
-<a class="tab active" href="./MiMo%20V2.5%20Pro/index.html"><span class="dot" style="background:#8b5cf6"></span>🔮 MiMo V2.5 Pro<span class="badge">100</span></a>
-<a class="tab" href="./Nemotron%203%20Ultra/index.html"><span class="dot" style="background:#f59e0b"></span>⚡ Nemotron 3 Ultra<span class="badge">100</span></a>
-<a class="tab" href="./Deepseek%20V4%20Pro/index.html"><span class="dot" style="background:#10b981"></span>🌀 Deepseek V4 Pro<span class="badge">100</span></a>
-<a class="tab" href="./MiniMax%20M3/index.html"><span class="dot" style="background:#ec4899"></span>🎭 MiniMax M3<span class="badge">100</span></a>
-<a class="tab" href="./Laguna%20S%202.1/index.html"><span class="dot" style="background:#06b6d4"></span>🌊 Laguna S 2.1<span class="badge">70</span></a>
+<button class="tab active" data-model="mimo"><span class="dot" style="background:#8b5cf6"></span>🔮 MiMo V2.5 Pro<span class="badge">100</span></button>
+<button class="tab" data-model="nemotron"><span class="dot" style="background:#f59e0b"></span>⚡ Nemotron 3 Ultra<span class="badge">100</span></button>
+<button class="tab" data-model="deepseek"><span class="dot" style="background:#10b981"></span>🌀 Deepseek V4 Pro<span class="badge">100</span></button>
+<button class="tab" data-model="minimax"><span class="dot" style="background:#ec4899"></span>🎭 MiniMax M3<span class="badge">100</span></button>
+<button class="tab" data-model="laguna"><span class="dot" style="background:#06b6d4"></span>🌊 Laguna S 2.1<span class="badge">70</span></button>
 </div>
 
 <section class="collections" id="collections">
-<div class="panel active" id="panel-mimo"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🔮 A creative powerhouse of 100 generative UI concepts — from brutalism to particle physics — designed for maximum visual impact.</p></div>
-<div class="panel" id="panel-nemotron"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">⚡ 100 high-intensity generative explorations — neural blossoms, quantum foam, kinetic typography, and beyond.</p></div>
-<div class="panel" id="panel-deepseek"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌀 100 generative UI design experiments — from glitch terminals to fractal landscapes. Pure HTML/CSS/JS.</p></div>
-<div class="panel" id="panel-minimax"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🎭 100 design concepts — generative art, interactive tools, and avant-garde UI experiments.</p></div>
-<div class="panel" id="panel-laguna"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌊 70 fluid, organic, and generative design pieces — aurora borealis, crystal caverns, and ethereal motion.</p></div>
+<div class="panel active" id="panel-mimo"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🔮 A creative powerhouse of 100 generative UI concepts — from brutalism to particle physics — designed for maximum visual impact.<br><a href="./MiMo%20V2.5%20Pro/index.html" style="display:inline-block;margin-top:6px;color:#8b5cf6;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
+<div class="panel" id="panel-nemotron"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">⚡ 100 high-intensity generative explorations — neural blossoms, quantum foam, kinetic typography, and beyond.<br><a href="./Nemotron%203%20Ultra/index.html" style="display:inline-block;margin-top:6px;color:#f59e0b;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
+<div class="panel" id="panel-deepseek"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌀 100 generative UI design experiments — from glitch terminals to fractal landscapes. Pure HTML/CSS/JS.<br><a href="./Deepseek%20V4%20Pro/index.html" style="display:inline-block;margin-top:6px;color:#10b981;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
+<div class="panel" id="panel-minimax"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🎭 100 design concepts — generative art, interactive tools, and avant-garde UI experiments.<br><a href="./MiniMax%20M3/index.html" style="display:inline-block;margin-top:6px;color:#ec4899;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
+<div class="panel" id="panel-laguna"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌊 70 fluid, organic, and generative design pieces — aurora borealis, crystal caverns, and ethereal motion.<br><a href="./Laguna%20S%202.1/index.html" style="display:inline-block;margin-top:6px;color:#06b6d4;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
 </section>
 
 <footer class="footer">
@@ -672,9 +672,26 @@ function renderGrid(model) {
   }
 }
 
+// ── Tab Switching ──
+function switchTab(model) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.panel').forEach(function(p) { p.classList.remove('active'); });
+  var tab = document.querySelector('.tab[data-model="' + model + '"]');
+  if (tab) tab.classList.add('active');
+  var panel = document.getElementById('panel-' + model);
+  if (panel) {
+    panel.classList.add('active');
+    if (!panel.querySelector('.grid')) renderGrid(model);
+  }
+}
+
 // ── Init ──
 document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('.tab').forEach(function(tab) {
+    tab.addEventListener('click', function() { switchTab(this.dataset.model); });
+  });
   ['mimo','nemotron','deepseek','minimax','laguna'].forEach(function(m) { renderGrid(m); });
+  switchTab('mimo');
 });
 </script>
 </body>
