@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Glassmorphism Cards</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}
+body{background:linear-gradient(135deg,#e8d5c4,#c4b5e8,#a8d8ea,#f4c2c2);background-size:400% 400%;animation:bg 20s ease infinite;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;padding:2rem}
+@keyframes bg{0%,100%{background-position:0 50%}50%{background-position:100% 50%}}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:2rem;max-width:1100px;width:100%}
+.card{background:rgba(255,255,255,.2);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border-radius:1.5rem;padding:2rem;border:1px solid rgba(255,255,255,.3);box-shadow:0 8px 32px rgba(0,0,0,.08);transition:transform .3s}.card:hover{transform:translateY(-6px)}
+.icon{font-size:2.5rem;margin-bottom:1rem}h2{font-size:1.5rem;font-weight:700;margin-bottom:.5rem;color:#2d2d3a}p{color:#555;line-height:1.6}
+</style></head>
+<body><div class="grid">
+<div class="card"><div class="icon">🌊</div><h2>Fluidity</h2><p>Adapt like water. Shape yourself to the container, but never lose your essence.</p></div>
+<div class="card"><div class="icon">🔮</div><h2>Vision</h2><p>See beyond the horizon. The future belongs to those who can imagine it first.</p></div>
+<div class="card"><div class="icon">⚡</div><h2>Velocity</h2><p>Speed matters. Ship fast, learn faster, iterate endlessly until perfection emerges.</p></div>
+<div class="card"><div class="icon">🌙</div><h2>Depth</h2><p>Go deeper than anyone expects. Surface-level is for those who've already given up.</p></div>
+<div class="card"><div class="icon">🎯</div><h2>Precision</h2><p>Every pixel, every word, every interaction — intentional. There is no filler here.</p></div>
+<div class="card"><div class="icon">🔥</div><h2>Passion</h2><p>Build things that make you feel alive. The rest is just noise in the signal.</p></div>
+</div></body></html>

@@ -1,0 +1,8 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Kinetic Type</title>
+<style>*{margin:0;padding:0}body{background:#111;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui}
+.word{display:flex;gap:.2rem}.letter{font-size:clamp(3rem,10vw,8rem);font-weight:900;color:#fff;animation:k 3s ease-in-out infinite}
+.letter:nth-child(1){animation-delay:0s}.letter:nth-child(2){animation-delay:.1s}.letter:nth-child(3){animation-delay:.2s}.letter:nth-child(4){animation-delay:.3s}.letter:nth-child(5){animation-delay:.4s}.letter:nth-child(6){animation-delay:.5s}
+@keyframes k{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-30px) rotate(-5deg)}50%{transform:translateY(10px) rotate(3deg)}75%{transform:translateY(-15px) rotate(-2deg)}}
+</style></head><body><div class="word"><span class="letter">M</span><span class="letter">O</span><span class="letter">T</span><span class="letter">I</span><span class="letter">O</span><span class="letter">N</span></div></body></html>

@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Minimalist Gallery</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#fafaf8;font-family:system-ui;color:#1a1a1a}
+nav{display:flex;justify-content:space-between;align-items:center;padding:2rem 3rem;border-bottom:1px solid #e5e5e0}
+nav h1{font-size:1.2rem;font-weight:500;letter-spacing:.05em}nav a{text-decoration:none;color:#1a1a1a;margin-left:2rem;font-size:.9rem}
+.gallery{display:grid;grid-template-columns:repeat(auto-fit,minmax(350px,1fr));gap:2px;background:#e5e5e0;padding:2px}
+.item{aspect-ratio:1;display:flex;align-items:flex-end;padding:2rem;cursor:pointer;transition:all .4s;overflow:hidden}
+.item:hover{background:#1a1a1a;color:#fff}.item .content{transform:translateY(20px);opacity:0;transition:all .4s}.item:hover .content{transform:translateY(0);opacity:1}
+.num{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;margin-bottom:.5rem;opacity:.5}h3{font-size:1.5rem;font-weight:500}
+</style></head>
+<body><nav><h1>GALLERY</h1><div><a href="#">Work</a><a href="#">About</a><a href="#">Contact</a></div></nav>
+<div class="gallery">
+<div class="item" style="background:linear-gradient(135deg,#f5f0ff,#fff0f5)"><div class="content"><span class="num">01 · Architecture</span><h3>Glass Pavilion</h3><p>Where transparency meets structure.</p></div></div>
+<div class="item" style="background:linear-gradient(135deg,#f0fff5,#f5fff0)"><div class="content"><span class="num">02 · Landscape</span><h3>Morning Mist</h3><p>The quiet hour before the world wakes.</p></div></div>
+<div class="item" style="background:linear-gradient(135deg,#fff5f0,#fffaf0)"><div class="content"><span class="num">03 · Portrait</span><h3>Stillness</h3><p>A moment captured between breaths.</p></div></div>
+<div class="item" style="background:linear-gradient(135deg,#f0f5ff,#f5f0ff)"><div class="content"><span class="num">04 · Abstract</span><h3>Chromatic Field</h3><p>Color as language. Form as syntax.</p></div></div>
+</div></body></html>

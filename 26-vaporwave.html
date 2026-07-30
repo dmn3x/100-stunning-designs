@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Vaporwave</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:linear-gradient(180deg,#0f0c29,#302b63,#24243e);min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;overflow:hidden}
+.sun{position:absolute;top:15%;left:50%;transform:translateX(-50%);width:300px;height:300px;background:linear-gradient(180deg,#ff6b9d 0%,#c44569 40%,#0f0c29 70%,transparent 100%);border-radius:50%;animation:sunset 4s ease-in-out infinite alternate}
+@keyframes sunset{0%{top:15%}100%{top:25%}}
+.grid-floor{position:absolute;bottom:0;width:100%;height:50%;background:repeating-linear-gradient(90deg,transparent,transparent 40px,rgba(255,255,255,.05) 40px,rgba(255,255,255,.05) 41px),repeating-linear-gradient(0deg,transparent,transparent 40px,rgba(255,255,255,.05) 40px,rgba(255,255,255,.05) 41px);transform:perspective(600px) rotateX(60deg);transform-origin:bottom}
+.content{position:relative;z-index:10;text-align:center}
+.content h1{font-size:clamp(3rem,10vw,8rem);font-weight:900;color:#ff6b9d;text-shadow:0 0 40px rgba(255,107,157,.5),4px 4px 0 #2d1b4e;letter-spacing:.1em}
+.sub{color:rgba(255,255,255,.5);margin-top:1rem;font-style:italic}
+</style></head>
+<body><div class="sun"></div><div class="grid-floor"></div><div class="content"><h1>ＡＥＳＴＨＥＴＩＣ</h1><p class="sub">~ nostalgia for a time that never was ~</p></div></body></html>

@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Neon Rain</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow:hidden}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+let w,h,D=[];
+function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;
+const ch="ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+for(let i=0;i<200;i++)D.push({x:Math.random()*w,y:Math.random()*h,s:Math.random()*3+2,c:ch[Math.floor(Math.random()*ch.length)],z:Math.random()*20+10,h:Math.random()*360});
+function draw(){
+ctx.fillStyle="rgba(0,0,0,.05)";ctx.fillRect(0,0,w,h);
+D.forEach(d=>{d.y+=d.s;if(d.y>h+20){d.y=-20;d.x=Math.random()*w}
+ctx.font=d.z+"px monospace";ctx.fillStyle="hsla("+d.h+",100%,65%,.8)";ctx.fillText(d.c,d.x,d.y)});
+requestAnimationFrame(draw)}draw();
+</script></body></html>

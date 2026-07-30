@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Kaleidoscope</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow:hidden}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+let w,h,t=0;
+function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;
+function draw(){
+ctx.fillStyle="rgba(0,0,0,.08)";ctx.fillRect(0,0,w,h);t+=.01;
+const cx=w/2,cy=h/2,segs=12;
+for(let i=0;i<segs;i++){
+const a=(i/segs)*Math.PI*2;ctx.save();ctx.translate(cx,cy);ctx.rotate(a);
+for(let j=0;j<3;j++){const r=150+j*50+Math.sin(t*2+j)*30,x=Math.cos(t+j*1.5)*r,y=Math.sin(t*2+j)*r;ctx.beginPath();ctx.arc(x,y,15+Math.sin(t*3+j)*10,0,Math.PI*2);ctx.fillStyle="hsl("+((t*100+j*120+i*30)%360)+",80%,60%)";ctx.fill()}
+ctx.restore()}
+requestAnimationFrame(draw)}draw();
+</script></body></html>

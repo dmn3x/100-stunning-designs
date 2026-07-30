@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Parallax Mountains</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{overflow-x:hidden;font-family:Georgia,serif}
+section{position:relative;height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.bg1{background:linear-gradient(180deg,#1a1a3e,#2d1b4e)}.bg2{background:linear-gradient(180deg,#ffecd2,#fcb69f)}.bg3{background:linear-gradient(180deg,#0f2027,#203a43,#2c5364)}
+.mountain{position:absolute;bottom:0;width:120%;left:-10%}
+.layer1{height:40%;background:linear-gradient(180deg,#4a3f6b,#2d2555);clip-path:polygon(0 100%,5% 40%,15% 60%,25% 25%,35% 55%,50% 30%,65% 50%,75% 20%,85% 45%,100% 35%,100% 100%)}
+.layer2{height:30%;background:linear-gradient(180deg,#6b5b8a,#4a3f6b);clip-path:polygon(0 100%,10% 60%,20% 40%,35% 65%,50% 35%,60% 55%,75% 30%,90% 50%,100% 45%,100% 100%);bottom:0;transform:translateY(20%)}
+.content{position:relative;z-index:10;text-align:center;color:#fff}
+.content h1{font-size:clamp(2rem,8vw,6rem);font-weight:900;text-shadow:0 4px 40px rgba(0,0,0,.3)}.content p{font-size:1.2rem;opacity:.8;margin-top:1rem}
+.bg2 .content{color:#4a3728}.bg3 .content{color:#e0e0e0}
+</style></head>
+<body><section class="bg1"><div class="mountain layer1"></div><div class="mountain layer2"></div><div class="content"><h1>Rise Above</h1><p>The summit is not the goal — the climb is.</p></div></section>
+<section class="bg2"><div class="content"><h1>Golden Hour</h1><p>Everything looks better when the light is soft.</p></div></section>
+<section class="bg3"><div class="content"><h1>Deep Blue</h1><p>The ocean keeps secrets the land will never know.</p></div></section></body></html>

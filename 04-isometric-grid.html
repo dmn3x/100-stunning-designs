@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Isometric Grid</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1a1a2e;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:100vh}
+canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+let w,h,t=0;
+function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;
+function draw(){
+ctx.fillStyle="rgba(26,26,46,.2)";ctx.fillRect(0,0,w,h);t+=.005;
+const cx=w/2,cy=h/2,s=30;
+for(let r=0;r<16;r++)for(let C=0;C<16;C++){
+const ix=(C-r)*(s*Math.cos(Math.PI/6)),iy=(C+r)*(s*Math.sin(Math.PI/6))-Math.sin(t+C*.3+r*.3)*20;
+const x=cx+ix,y=cy+iy,hue=((C+r)/32)*360;
+ctx.fillStyle="hsl("+hue+",70%,"+(50+Math.sin(t+C*.5+r*.5)*20)+"%)";
+ctx.beginPath();ctx.moveTo(x,y-s/2);ctx.lineTo(x+s*Math.cos(Math.PI/6),y);ctx.lineTo(x,y+s/2);ctx.lineTo(x-s*Math.cos(Math.PI/6),y);ctx.closePath();ctx.fill();
+ctx.strokeStyle="rgba(255,255,255,.1)";ctx.lineWidth=.5;ctx.stroke();
+ctx.beginPath();ctx.arc(x,y-s/2-2,2,0,Math.PI*2);ctx.fillStyle="#fff";ctx.fill()
+}
+requestAnimationFrame(draw)}draw();
+</script></body></html>

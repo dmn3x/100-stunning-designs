@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Clockwork</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#1c1c1e;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:system-ui}
+.clock{position:relative;width:300px;height:300px;border-radius:50%;background:radial-gradient(circle,#2c2c2e,#1c1c1e);border:6px solid #48484a;box-shadow:0 0 60px rgba(0,0,0,.5),inset 0 0 30px rgba(0,0,0,.3)}
+.mark,.major{position:absolute;left:50%;transform-origin:bottom center}.mark{width:2px;height:12px;background:#8e8e93;top:12px}.major{width:3px;height:20px;background:#fff;top:12px}
+.hand{position:absolute;bottom:50%;left:50%;transform-origin:bottom center;border-radius:2px}
+.hour{width:4px;height:70px;background:#fff;margin-left:-2px}.minute{width:3px;height:100px;background:#aeaeb2;margin-left:-1.5px}.second{width:1px;height:120px;background:#ff453a;margin-left:-.5px}
+.center-dot{position:absolute;width:16px;height:16px;background:#fff;border-radius:50%;top:50%;left:50%;transform:translate(-50%,-50%)}
+.digital{text-align:center;margin-top:2rem;font-size:2rem;font-weight:300;color:#fff;letter-spacing:.1em}
+</style></head>
+<body><div id="clock" class="clock"></div><div class="digital" id="digi"></div>
+<script>
+const cl=document.getElementById('clock');
+for(let i=0;i<60;i++){const m=document.createElement('div');m.className=i%5===0?'major':'mark';m.style.transform=`rotate(${i*6}deg) translateY(-138px)`;cl.appendChild(m)}
+['12','1','2','3','4','5','6','7','8','9','10','11'].forEach((n,i)=>{const l=document.createElement('div');l.style.cssText=`position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(${i*30}deg) translateY(-110px) rotate(-${i*30}deg);color:#8e8e93;font-size:1rem`;l.textContent=n;cl.appendChild(l)});
+['hour','minute','second'].forEach(c=>{const d=document.createElement('div');d.className=`hand ${c}`;cl.appendChild(d)});
+const cd=document.createElement('div');cd.className='center-dot';cl.appendChild(cd);
+setInterval(()=>{const n=new Date(),h=n.getHours()%12,m=n.getMinutes(),s=n.getSeconds(),ms=n.getMilliseconds();cl.children[60].style.transform=`rotate(${h*30+m*.5}deg)`;cl.children[61].style.transform=`rotate(${m*6}deg)`;cl.children[62].style.transform=`rotate(${s*6+ms*.006}deg)`;document.getElementById('digi').textContent=n.toLocaleTimeString('en-US',{hour12:false})},50);
+</script></body></html>

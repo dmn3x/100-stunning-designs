@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Mandelbrot</title>
+<style>*{margin:0;padding:0}body{background:#000;overflow:hidden}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');let w,h,z=1;
+function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;
+function draw(){const img=ctx.createImageData(w,h),d=img.data;
+for(let py=0;py<h;py++)for(let px=0;px<w;px++){let x=0,y=0,iter=0;const x0=(px-w/2)*(3/z)/w-0.75,y0=(py-h/2)*(3/z)/h;
+while(x*x+y*y<=4&&iter<64){const xt=x*x-y*y+x0;y=2*x*y+y0;x=xt;iter++}
+const i=(py*w+px)*4,v=iter===64?0:iter*4;d[i]=v;d[i+1]=v*0.6;d[i+2]=v*1.5;d[i+3]=255}
+ctx.putImageData(img,0,0);z*=1.015;requestAnimationFrame(draw)}draw();
+</script></body></html>

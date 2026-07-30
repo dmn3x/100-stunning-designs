@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>SVG Blobs</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0f0f1a;min-height:100vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;padding:2rem}svg{width:200px;height:200px}
+.blob{animation:morph 8s ease-in-out infinite alternate}.blob2{animation:morph 8s ease-in-out infinite alternate;animation-delay:-3s}.blob3{animation:morph 8s ease-in-out infinite alternate;animation-delay:-6s}
+@keyframes morph{0%{d:path('M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z')}100%{d:path('M60,-20 C90,-40 110,-10 115,15 C120,40 95,65 70,60 C45,55 20,65 15,35 C10,5 30,-0 60,-20Z')}}
+</style></head>
+<body><div class="grid">
+<svg viewBox="-50 -50 200 200"><path class="blob" fill="url(#g1)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#ff6b9d"/><stop offset="100%" style="stop-color:#c44569"/></linearGradient></defs></svg>
+<svg viewBox="-50 -50 200 200"><path class="blob2" fill="url(#g2)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#786fa6"/><stop offset="100%" style="stop-color:#574b90"/></linearGradient></defs></svg>
+<svg viewBox="-50 -50 200 200"><path class="blob3" fill="url(#g3)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#63cdda"/><stop offset="100%" style="stop-color:#3dc1d3"/></linearGradient></defs></svg>
+<svg viewBox="-50 -50 200 200"><path class="blob" fill="url(#g4)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f8a5c2"/><stop offset="100%" style="stop-color:#e66767"/></linearGradient></defs></svg>
+<svg viewBox="-50 -50 200 200"><path class="blob2" fill="url(#g5)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#f19066"/><stop offset="100%" style="stop-color:#e15f41"/></linearGradient></defs></svg>
+<svg viewBox="-50 -50 200 200"><path class="blob3" fill="url(#g6)" d="M50,-30 C75,-50 100,-30 120,-10 C140,10 135,40 110,55 C85,70 55,65 35,45 C15,25 25,-10 50,-30Z"/><defs><linearGradient id="g6" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#546de5"/><stop offset="100%" style="stop-color:#303f9f"/></linearGradient></defs></svg>
+</div></body></html>

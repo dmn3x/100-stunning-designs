@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Perlin Landscape</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0d1117;overflow:hidden}canvas{display:block}</style></head>
+<body><canvas id="c"></canvas>
+<script>
+const c=document.getElementById('c'),ctx=c.getContext('2d');
+let w,h,t=0,S=[];
+function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;
+for(let i=0;i<200;i++)S.push({x:Math.random()*w,y:Math.random()*(h*.6),z:Math.random()*2});
+function N(x,y){return Math.sin(x*.01)*Math.cos(y*.01)*Math.sin((x+y)*.005)}
+function draw(){t+=.003;ctx.fillStyle='#0d1117';ctx.fillRect(0,0,w,h);
+S.forEach(s=>{ctx.fillStyle=`rgba(255,255,255,${.3+Math.sin(t*2+s.x)*.3})`;ctx.fillRect(s.x,s.y,s.z,s.z)});
+const lY=h*.55;ctx.beginPath();ctx.moveTo(0,h);
+for(let x=0;x<=w;x+=2){const y=lY+N(x,t*50)*80+N(x*.5,t*30)*30+N(x*.2,t*20)*60;ctx.lineTo(x,y)}
+ctx.lineTo(w,h);ctx.closePath();
+const g=ctx.createLinearGradient(0,lY-150,0,h);g.addColorStop(0,'#1a1a3e');g.addColorStop(.3,'#2d1b4e');g.addColorStop(.6,'#1b3a4b');g.addColorStop(1,'#0a1628');
+ctx.fillStyle=g;ctx.fill();requestAnimationFrame(draw)}draw();
+</script></body></html>

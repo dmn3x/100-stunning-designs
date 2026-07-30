@@ -1,0 +1,12 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Holographic Card</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0a0a0a;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui}
+.card{position:relative;width:350px;height:480px;border-radius:20px;background:linear-gradient(135deg,rgba(255,255,255,.1),rgba(255,255,255,.05));backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,.15);overflow:hidden;padding:2rem;display:flex;flex-direction:column;justify-content:flex-end;color:#fff}
+.card::before{content:'';position:absolute;top:-50%;left:-50%;width:200%;height:200%;background:conic-gradient(from 0deg,transparent,rgba(255,100,200,.3),transparent,rgba(100,200,255,.3),transparent,rgba(200,255,100,.3),transparent);animation:spin 6s linear infinite}
+.card::after{content:'';position:absolute;inset:2px;border-radius:18px;background:#0a0a0a;z-index:0}.card>*{position:relative;z-index:1}
+.chip{width:50px;height:40px;background:linear-gradient(135deg,#ffd700,#ffb300);border-radius:8px;margin-bottom:1rem}
+.number{font-size:1.5rem;font-family:'Courier New',monospace;letter-spacing:.15em;margin-bottom:1rem}
+.info{display:flex;justify-content:space-between;font-size:.85rem;text-transform:uppercase;letter-spacing:.1em;opacity:.7}
+@keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+</style></head><body><div class="card"><div class="chip"></div><div class="number">4532 •••• •••• 7891</div><div class="info"><span>J. MORRISON</span><span>12/28</span></div></div></body></html>

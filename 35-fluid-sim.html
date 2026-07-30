@@ -1,0 +1,5 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>35 Fluid Sim.Html</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui;overflow:hidden}</style></head>
+<body><canvas id="c"></canvas><script>const c=document.getElementById("c"),ctx=c.getContext("2d");let w,h,P=[];function R(){w=c.width=innerWidth;h=c.height=innerHeight}R();onresize=R;for(let i=0;i<500;i++)P.push({x:Math.random()*w,y:Math.random()*h,vx:0,vy:0,h:Math.random()*360});let mx=-999,my=-999;c.addEventListener("mousemove",e=>{mx=e.clientX;my=e.clientY});function draw(){ctx.fillStyle="rgba(0,0,0,.05)";ctx.fillRect(0,0,w,h);P.forEach(p=>{p.vx+=(mx-p.x)*.0001;p.vy+=(my-p.y)*.0001;p.vx*=.98;p.vy*=.98;p.x+=p.vx;p.y+=p.vy;if(p.x<0)p.x=w;if(p.x>w)p.x=0;if(p.y<0)p.y=h;if(p.y>h)p.y=0;ctx.beginPath();ctx.arc(p.x,p.y,3,0,Math.PI*2);ctx.fillStyle="hsla("+p.h+",80%,60%,.6)";ctx.fill()});requestAnimationFrame(draw)}draw();</script></body></html>

@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Morphing Blobs</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#0f0c29;overflow:hidden}
+.blob{position:absolute;border-radius:50%;filter:blur(80px);opacity:.7;animation:morph 8s ease-in-out infinite alternate}
+.blob:nth-child(1){width:400px;height:400px;background:linear-gradient(135deg,#667eea,#764ba2);top:10%;left:10%}
+.blob:nth-child(2){width:350px;height:350px;background:linear-gradient(135deg,#f093fb,#f5576c);top:50%;right:10%;animation-delay:-2s}
+.blob:nth-child(3){width:300px;height:300px;background:linear-gradient(135deg,#4facfe,#00f2fe);bottom:10%;left:30%;animation-delay:-4s}
+.blob:nth-child(4){width:450px;height:450px;background:linear-gradient(135deg,#fa709a,#fee140);top:30%;right:30%;animation-delay:-6s}
+@keyframes morph{0%{border-radius:40% 60% 60% 40%/60% 30% 70% 40%;transform:translate(0,0) scale(1)}100%{border-radius:60% 40% 30% 70%/50% 60% 40% 60%;transform:translate(50px,-30px) scale(1.1)}}
+.title{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);color:#fff;font-family:Georgia,serif;font-size:clamp(3rem,10vw,8rem);z-index:10;text-shadow:0 0 60px rgba(255,255,255,.3);pointer-events:none;mix-blend-mode:overlay}
+</style></head>
+<body><div class="blob"></div><div class="blob"></div><div class="blob"></div><div class="blob"></div><h1 class="title">FLUX</h1></body></html>

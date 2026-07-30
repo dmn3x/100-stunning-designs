@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"><title>Infinity Mirror</title>
+<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;overflow:hidden}
+.mirror{position:relative;width:300px;height:300px}
+.ring{position:absolute;top:50%;left:50%;border-radius:50%;border:2px solid;transform:translate(-50%,-50%);animation:pulse 3s ease-in-out infinite}
+@keyframes pulse{0%,100%{transform:translate(-50%,-50%) scale(1);opacity:1}50%{transform:translate(-50%,-50%) scale(1.1);opacity:.4}}
+.center-dot{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:10px;height:10px;background:#fff;border-radius:50%;box-shadow:0 0 30px #f36,0 0 60px #f36;z-index:10;animation:breathe 2s ease-in-out infinite}
+@keyframes breathe{0%,100%{box-shadow:0 0 30px #f36,0 0 60px #f36}50%{box-shadow:0 0 60px #f36,0 0 120px #f36}}
+</style></head>
+<body><div class="mirror">
+<div class="ring" style="width:40px;height:40px;border-color:#f36;animation-delay:0s"></div>
+<div class="ring" style="width:80px;height:80px;border-color:#f69;animation-delay:.2s"></div>
+<div class="ring" style="width:120px;height:120px;border-color:#f9b;animation-delay:.4s"></div>
+<div class="ring" style="width:160px;height:160px;border-color:#c38;animation-delay:.6s"></div>
+<div class="ring" style="width:200px;height:200px;border-color:#936;animation-delay:.8s"></div>
+<div class="ring" style="width:240px;height:240px;border-color:#614;animation-delay:1s"></div>
+<div class="ring" style="width:280px;height:280px;border-color:#302;animation-delay:1.2s"></div>
+<div class="ring" style="width:320px;height:320px;border-color:#f36;animation-delay:1.4s;opacity:.5"></div>
+<div class="ring" style="width:360px;height:360px;border-color:#f69;animation-delay:1.6s;opacity:.3"></div>
+<div class="ring" style="width:400px;height:400px;border-color:#f9b;animation-delay:1.8s;opacity:.15"></div>
+<div class="center-dot"></div>
+</div></body></html>
