@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lantern District — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0418;color:#f5d56e;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #3a1d6e;padding-bottom:.6rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.8rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .map{background:radial-gradient(ellipse,#1c0a2a,#0a0418);border:1px solid #3a1d6e;position:relative;aspect-ratio:1.4;overflow:hidden;margin-top:1rem}
+  svg{width:100%;height:100%}
+  .legend{position:absolute;bottom:.4rem;left:.4rem;background:rgba(0,0,0,.6);padding:.4rem .6rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em}
+  .panel{margin-top:1rem;display:grid;grid-template-columns:repeat(5,1fr);gap:.6rem;font-family:"Courier New",monospace;font-size:.78rem}
+  .panel button{padding:.4rem;border:1px solid #3a1d6e;background:transparent;color:#f5d56e;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  .panel button:hover{background:#3a1d6e;color:#f5d56e}
+  footer{margin-top:1rem;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Lantern District</h1>
+  <small>festival of small lights</small>
+  <small>city of seven arches</small>
+</header>
+<section class="map">
+  <svg id="svg" viewBox="0 0 700 500" preserveAspectRatio="xMidYMid meet"></svg>
+  <div class="legend">● lit · ○ waiting</div>
+</section>
+<div class="panel">
+  <button data-a="ignite">Ignite all</button>
+  <button data-a="dim">Dim by 10</button>
+  <button data-a="drop">Drop one</button>
+  <button data-a="arrow">Set arrow</button>
+  <button data-a="reset">Reset</button>
+</div>
+<footer>MiniMax M3 · 53 / 100</footer>
+<script>
+  const svg=document.getElementById('svg');let lanterns=[{x:120,y:80},{x:240,y:140},{x:380,y:90},{x:520,y:170},{x:600,y:80},{x:170,y:240},{x:330,y:280},{x:470,y:330},{x:560,y:280},{x:80,y:380},{x:260,y:400},{x:430,y:430}];
+  function draw(){svg.innerHTML='';for(let i=0;i<lanterns.length-1;i++){svg.innerHTML+=`<line x1="${lanterns[i].x}" y1="${lanterns[i].y}" x2="${lanterns[i+1].x}" y2="${lanterns[i+1].y}" stroke="rgba(245,213,110,.3)" stroke-dasharray="3 3"/>`}lanterns.forEach((l,i)=>{svg.innerHTML+=`<circle cx="${l.x}" cy="${l.y}" r="${6+l.intensity*.5}" fill="${l.lit?'#f5d56e':'#3a2a14'}" stroke="#3a1d6e" stroke-width="1"/><text x="${l.x+12}" y="${l.y+4}" font-family="serif" font-size="12" fill="#f5d56e" opacity=".7">${i+1}</text>`})}
+  draw();
+  document.querySelectorAll('.panel button').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.a==='ignite')lanterns.forEach(l=>l.lit=true);if(b.dataset.a==='dim')lanterns.forEach(l=>l.intensity=Math.max(0,(l.intensity||1)-.1));if(b.dataset.a==='drop')lanterns.pop();if(b.dataset.a==='arrow')lanterns.reverse();if(b.dataset.a==='reset'){lanterns=[{x:120,y:80},{x:240,y:140},{x:380,y:90},{x:520,y:170},{x:600,y:80},{x:170,y:240},{x:330,y:280},{x:470,y:330},{x:560,y:280},{x:80,y:380},{x:260,y:400},{x:430,y:430}];lanterns.forEach(l=>{l.lit=false;l.intensity=1})}draw()}));
+  document.getElementById('svg').addEventListener('click',e=>{const rect=svg.getBoundingClientRect();const x=(e.clientX-rect.left)/rect.width*700,y=(e.clientY-rect.top)/rect.height*500;let nearest=null,nd=80;lanterns.forEach(l=>{const d=Math.hypot(l.x-x,l.y-y);if(d<nd){nd=d;nearest=l}});if(nearest){nearest.lit=!nearest.lit;nearest.intensity=1;draw()}});
+</script>
+</body>
+</html>

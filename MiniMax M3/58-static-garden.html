@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Static Garden — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0808;color:#e0e0e0;font-family:"JetBrains Mono","Courier New",monospace;min-height:100vh;padding:1.4rem}
+  .wall{display:grid;grid-template-columns:repeat(12,1fr);gap:.4rem;min-height:60vh}
+  @media (max-width:880px){.wall{grid-template-columns:repeat(6,1fr)}}
+  .cell{aspect-ratio:1;border:1px solid #2a2a2a;display:flex;align-items:center;justify-content:center;background:repeating-linear-gradient(135deg,#0e0e0e 0 4px,#0c0c0c 4px 8px);cursor:pointer;font-family:monospace;font-size:.78rem;position:relative;overflow:hidden}
+  .cell:hover{outline:1px solid #fff}
+  .cell .bar{display:flex;flex-direction:column-reverse;height:80%;width:50%;gap:1px}
+  .cell .bar i{background:#5fa8d3;height:6px}
+  .knobs{display:flex;gap:.4rem;margin-top:1rem;flex-wrap:wrap}
+  .knobs button{font:inherit;background:transparent;color:#e0e0e0;border:1px solid #3a3a3a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  .knobs button:hover{background:#3a3a3a}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #2a2a2a;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Iowan Old Style",serif;font-size:1.4rem;color:#fff}
+  header small{font-size:.7rem;letter-spacing:.3em;color:#a4d7a6;text-transform:uppercase}
+  footer{margin-top:.6rem;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#3a3a3a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Static Garden</h1>
+  <small>noise art, twelve metres square</small>
+  <small>noise floor — <b id="fl">-3.2 dB</b></small>
+</header>
+<section class="wall" id="wall"></section>
+<div class="knobs">
+  <button id="seed">Seed all</button><button id="clear">Clear</button><button id="swap">Swap polarities</button><button id="rain">Rain on me</button>
+</div>
+<footer>MiniMax M3 · 58 / 100</footer>
+<script>
+  const wall=document.getElementById('wall');for(let i=0;i<144;i++){const c=document.createElement('button');c.type='button';c.className='cell';c.dataset.i=i;c.innerHTML=`<div class="bar">${Array.from({length:8},()=>'<i></i>').join('')}</div>`;updateCell(c);c.addEventListener('click',()=>{randomise(c);document.getElementById('fl').textContent=(Math.random()*5-3).toFixed(1)+' dB'});wall.appendChild(c)}
+  function randomise(c){const bars=c.querySelectorAll('i');bars.forEach(b=>{const h=Math.random()*40;if(Math.random()<.3)b.style.background='transparent';else b.style.background=['#5fa8d3','#c44569','#f5d56e','#a05c2a'][Math.floor(Math.random()*4)];b.style.height=h+'%'})}
+  function updateCell(c){randomise(c)}
+  document.getElementById('seed').addEventListener('click',()=>document.querySelectorAll('.cell').forEach(randomise));
+  document.getElementById('clear').addEventListener('click',()=>document.querySelectorAll('.cell i').forEach(b=>{b.style.background='transparent';b.style.height='6px'}));
+  document.getElementById('swap').addEventListener('click',()=>document.querySelectorAll('.cell').forEach(c=>{c.style.flexDirection=c.style.flexDirection==='column-reverse'?'column':'column-reverse'}));
+  document.getElementById('rain').addEventListener('click',()=>document.querySelectorAll('.cell').forEach(c=>{c.querySelectorAll('i').forEach((b,i)=>{b.style.height=Math.random()*80+'%';b.style.background=['#5fa8d3','#a4d7a6'][Math.floor(Math.random()*2)]})}));
+</script>
+</body>
+</html>

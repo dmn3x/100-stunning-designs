@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Quiet Museum — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--ink:#0d0d0d;--paper:#f3f0eb;--wall:#ebe7df;--frame:#1c1c1c}
+  body{background:var(--wall);color:var(--ink);font-family:"Cormorant Garamond","EB Garamond",Georgia,serif}
+  nav{position:fixed;top:0;left:0;right:0;background:rgba(243,240,235,.92);backdrop-filter:saturate(140%) blur(6px);border-bottom:1px solid var(--ink);display:flex;justify-content:space-between;padding:.7rem 1.4rem;z-index:5;font-size:.78rem;letter-spacing:.2em;text-transform:uppercase}
+  nav a{color:var(--ink);text-decoration:none;border-bottom:1px solid transparent}
+  nav a:hover{border-bottom-color:var(--ink)}
+  .rooms{display:grid;grid-template-columns:1fr 1fr;gap:0;min-height:100vh;align-items:stretch}
+  @media (max-width:780px){.rooms{grid-template-columns:1fr}}
+  .room{padding:8rem 2rem 4rem;position:relative;cursor:none}
+  .room[data-tone="night"]{background:#0d0d0d;color:#e8e4d8}
+  .room[data-tone="paper"]{background:#f3f0eb;color:var(--ink)}
+  .room[data-tone="sepia"]{background:#e8dcc4;color:#2a1a0b}
+  .frame{aspect-ratio:4/5;background:#fff8e6;border:1px solid rgba(0,0,0,.4);margin:0 auto 1.2rem;max-width:280px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;text-align:center;line-height:1.2;padding:1rem;box-shadow:inset 0 0 40px rgba(0,0,0,.05);position:relative}
+  .room[data-tone="night"] .frame{background:#181818;color:#e8e4d8;border-color:#e8e4d8}
+  .frame::before{content:"";position:absolute;inset:6px;border:1px solid rgba(0,0,0,.2)}
+  .room h3{text-align:center;font-size:1.1rem;letter-spacing:.3em;text-transform:uppercase;margin-bottom:.5rem}
+  .room p{max-width:520px;margin:0 auto;text-align:center;font-size:1rem;line-height:1.6}
+  .spot{position:absolute;width:380px;height:380px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.45),transparent 70%);pointer-events:none;mix-blend-mode:screen;transition:opacity .2s}
+  .room[data-tone="paper"] .spot{background:radial-gradient(circle,rgba(0,0,0,.18),transparent 70%);mix-blend-mode:multiply}
+  .room[data-tone="sepia"] .spot{background:radial-gradient(circle,rgba(120,70,20,.18),transparent 70%);mix-blend-mode:multiply}
+  .caption{position:absolute;left:1rem;bottom:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;opacity:.6}
+  .footnote{position:fixed;bottom:0;right:0;padding:.6rem 1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;background:rgba(0,0,0,.7);color:#e8e4d8}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<nav>
+  <a href="#exhibit-01">Exhibit 01</a>
+  <a href="#exhibit-02">Exhibit 02</a>
+  <a href="#exhibit-03">Exhibit 03</a>
+  <span>SHHH</span>
+</nav>
+<div class="rooms">
+  <section id="exhibit-01" class="room" data-tone="paper">
+    <div class="spot" id="s1"></div>
+    <div class="frame">A small stone<br>Worn by a river<br><br><small style="font-size:.7rem;letter-spacing:.3em">— finding, 1942 —</small></div>
+    <h3>Finding</h3>
+    <p>An unremarkable stone, only remarkable because it lay in the bend of the river for a year and was retrieved on a Tuesday. The label is in the curator's handwriting.</p>
+    <div class="caption">exhibit 01</div>
+  </section>
+  <section id="exhibit-02" class="room" data-tone="night">
+    <div class="spot" id="s2"></div>
+    <div class="frame">A photograph<br>with the figures<br>removed</div>
+    <h3>Absence</h3>
+    <p>Six silhouettes dissolved by hand into the emulsion. The doctor preserved the scene; the chemist released the people.</p>
+    <div class="caption">exhibit 02</div>
+  </section>
+  <section id="exhibit-03" class="room" data-tone="sepia">
+    <div class="spot" id="s3"></div>
+    <div class="frame">A teacup,<br>stained inside with<br>pomegranate</div>
+    <h3>Ritual</h3>
+    <p>Used once, retired. Donated by the family of the woman who drank from it. It still smells faintly of rose.</p>
+    <div class="caption">exhibit 03</div>
+  </section>
+</div>
+<aside class="footnote">quiet — please do not speak above a whisper</aside>
+<script>
+  ['s1','s2','s3'].forEach(id=>{
+    const s=document.getElementById(id);
+    s.parentElement.addEventListener('pointermove',e=>{
+      const r=s.parentElement.getBoundingClientRect();s.style.left=(e.clientX-r.left-r.width/2)+'px';s.style.top=(e.clientY-r.top-r.height/2)+'px';s.style.opacity=1;
+    });
+    s.parentElement.addEventListener('pointerleave',()=>s.style.opacity=.2);
+  });
+</script>
+</body>
+</html>

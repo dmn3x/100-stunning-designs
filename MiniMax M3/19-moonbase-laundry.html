@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Moonbase Laundry — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#11142a;color:#dce0f5;font-family:"JetBrains Mono","Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .panel{background:#1a1d36;border:1px solid #2b2f55;padding:1rem}
+  .panel h2{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;margin-bottom:.6rem;color:#9bb1ff}
+  h1{grid-column:1/-1;font-family:"Inter",sans-serif;font-size:1.4rem;letter-spacing:.2em;color:#e0b85c;border-bottom:1px solid #2b2f55;padding-bottom:.5rem;margin-bottom:.6rem}
+  .ticker{grid-column:1/-1;background:#06081c;border:1px solid #2b2f55;height:60px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:1.4rem;color:#9bb1ff;letter-spacing:.3em}
+  .machine{height:120px;border:2px solid #2b2f55;background:#06081c;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:2rem;color:#5a6c91}
+  .machine.on{border-color:#e0b85c;color:#e0b85c;animation:spin 2s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .status{display:flex;gap:.4rem;align-items:flex-end;height:50px}
+  .status div{flex:1;background:#5a6c91;border-radius:1px}
+  .status div.on{background:#9bb1ff}
+  .cycle{height:6px;background:#06081c;border:1px solid #2b2f55;margin-top:.6rem}
+  .cycle i{display:block;height:100%;background:linear-gradient(90deg,#9bb1ff,#e0b85c);width:0;transition:width 1s linear}
+  ul{font-size:.85rem;line-height:1.7;list-style:square inside;color:#9bb1ff}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#5a6c91}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<h1>▢ MOONBASE LAUNDRY · SECTOR 04 · 23:14 LST</h1>
+<section class="panel">
+  <h2>Drum Array</h2>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem">
+    <div class="machine" id="d1">◌</div><div class="machine on" id="d2">◍</div><div class="machine" id="d3">◌</div>
+    <div class="machine" id="d4">◌</div><div class="machine" id="d5">◌</div><div class="machine on" id="d6">◍</div>
+  </div>
+  <div class="status" id="st"></div>
+  <div style="margin-top:.4rem;font-size:.7rem;letter-spacing:.2em">Drum 02 — wool · 31 min remaining</div>
+  <div class="cycle"><i id="cyc" style="width:42%"></i></div>
+</section>
+<section class="panel">
+  <h2>Inventory</h2>
+  <ul>
+    <li>3 × Navy coveralls</li>
+    <li>5 × White lab coats (stained)</li>
+    <li>1 × Orange jumpsuit (G. Patel)</li>
+    <li>1 × Mended jumper (Dr. Vell)</li>
+    <li>1 × Set of bedsheets, east cabin</li>
+    <li>2 × Tea towels, returned from kitchen</li>
+  </ul>
+  <h2 style="margin-top:1rem">Notes</h2>
+  <p style="font-size:.85rem;line-height:1.5;color:#9bb1ff">Reminders: do not over-dry the coveralls; the cabin sheets need folding; the orange jumpsuit is missing a button.</p>
+</section>
+<section class="panel">
+  <h2>Orbit</h2>
+  <svg viewBox="0 0 200 200" style="width:100%;height:200px">
+    <circle cx="100" cy="100" r="80" fill="none" stroke="#2b2f55"/>
+    <circle cx="100" cy="100" r="50" fill="none" stroke="#2b2f55" stroke-dasharray="3 3"/>
+    <circle cx="100" cy="100" r="20" fill="#9bb1ff"/>
+    <g id="moon"><circle cx="100" cy="20" r="6" fill="#e0b85c"/></g>
+    <g id="trash"><circle cx="180" cy="100" r="3" fill="#5a6c91"/></g>
+  </svg>
+  <div style="display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.2em"><span>Phase</span><b style="color:#e0b85c" id="phase">WAXING</b></div>
+  <div style="display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.2em"><span>Oxygen</span><b style="color:#9bb1ff">99.4%</b></div>
+  <div style="display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.2em"><span>Tea?</span><b style="color:#e0b85c">yes</b></div>
+</section>
+<div class="ticker">▶ WASH · RINSE · SPIN · FOLD · RETURN-TO-CABIN ◀</div>
+<footer>MiniMax M3 · 19 / 100 · quiet after curfew</footer>
+<script>
+  const st=document.getElementById('st');for(let i=0;i<16;i++){const d=document.createElement('div');st.appendChild(d)}
+  setInterval(()=>{
+    const arr=Array.from(st.children);const n=Math.floor(Math.random()*12)+4;arr.forEach((b,i)=>b.classList.toggle('on',i<n));
+    const cyc=document.getElementById('cyc');cyc.style.width=((Date.now()%120000)/1200)+'%';
+    const moon=document.getElementById('moon');const a=Date.now()/4000;moon.setAttribute('transform',`rotate(${a*30} 100 100) translate(0 -80) rotate(${-a*30})`);
+    document.getElementById('phase').textContent=['WAXING','FULL','WANING','NEW'][Math.floor(a/3)%4];
+  },600);
+</script>
+</body>
+</html>

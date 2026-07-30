@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Red Thread — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#100808;color:#f0d8a8;font-family:"Times New Roman",serif;min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #a32;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem;padding:1rem 1.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;font-style:italic;color:#fff}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a32;text-transform:uppercase}
+  .wall{position:relative;background:repeating-linear-gradient(90deg,#1a0a0a,#220c0c);min-height:calc(100vh - 4rem);overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  .evidence{position:absolute;background:rgba(255,250,230,.95);color:#1a0a0a;padding:.4rem .6rem;font-family:"Courier New",monospace;font-size:.78rem;border:1px solid #a32;box-shadow:0 4px 0 rgba(0,0,0,.5);max-width:200px}
+  .legend{position:absolute;bottom:1rem;left:1rem;background:rgba(0,0,0,.6);padding:.4rem .6rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;color:#a32;text-transform:uppercase}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a32;text-transform:uppercase;padding:.6rem 1.4rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Red Thread</h1>
+  <small>investigative wall · case #14</small>
+  <small>statements <b id="c">8</b></small>
+</header>
+<section class="wall" id="wall">
+  <canvas id="cv"></canvas>
+</section>
+<footer>MiniMax M3 · 95 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');const w=cv.parentElement;let W,H;function fit(){W=cv.width=w.offsetWidth*2;H=cv.height=w.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const evidence=[
+    ['A cancelled ticket','M3'],['Time on the bell','11:14'],['Saw the postmaster','14:14'],['A small red thread','16:14'],['The window was open','17:14'],['The kettle had spoken','18:14'],['A faded green glove','20:14'],['The river turned east','22:14'],
+    ['A misdelivered letter','23:14'],['A birch path backwards','00:14'],['A copper plate missing','02:14'],['The lights, again','03:14'],['Brass at the bakery','05:14'],['The kettle, repeated','06:14']
+  ];
+  let placed=[];
+  function layout(){cx.clearRect(0,0,W,H);cx.strokeStyle='#a32';cx.lineWidth=2;placed.forEach((p,i)=>{p.x+=(p.tx-p.x)*.06;p.y+=(p.ty-p.y)*.06;if(i<placed.length-1){cx.beginPath();cx.moveTo(p.x+60,p.y+30);cx.lineTo(placed[i+1].x+60,placed[i+1].y+30);cx.stroke()}});placed.forEach(p=>{const div=document.getElementById('p_'+p.id);if(div){div.style.left=p.x/2+'px';div.style.top=p.y/2+'px'}});requestAnimationFrame(layout)}layout();
+  for(let i=0;i<evidence.length;i++){const d=document.createElement('div');d.id='p_'+i;d.className='evidence';d.style.position='absolute';d.innerHTML=`<strong style="font-family:'Bodoni Moda',serif;font-style:italic">${evidence[i][0]}</strong><br><small style="color:#a32">${evidence[i][1]}</small>`;w.appendChild(d);placed.push({id:i,x:Math.random()*W*.3,y:Math.random()*H*.5,tx:200+i*(W/evidence.length)*.8,ty:H*.2+(i%2)*H*.3})}
+</script>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Velvet Rope — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--night:#0b0710;--paper:#1b1226;--gold:#d3a955;--crimson:#a8324d;--cream:#f4e8c8}
+  html,body{height:100%}
+  body{background:var(--night);color:var(--cream);font-family:"Inter","Helvetica Neue",sans-serif;overflow:hidden}
+  .stage{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 90%,#1b1226,#0b0710 60%)}
+  .scan{position:fixed;inset:0;background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(0,0,0,.18) 3px 4px);mix-blend-mode:multiply;pointer-events:none}
+  .marquee{position:absolute;top:0;left:0;right:0;height:48px;background:#15091e;border-bottom:1px solid var(--gold);overflow:hidden;display:flex;align-items:center}
+  .marquee span{white-space:nowrap;letter-spacing:.6em;font-family:"Bodoni Moda",serif;font-size:1rem;color:var(--gold);animation:scroll 40s linear infinite}
+  @keyframes scroll{from{transform:translateX(50vw)}to{transform:translateX(-100%)}}
+  .door{position:absolute;left:50%;bottom:8%;transform:translateX(-50%);width:180px;height:320px;background:linear-gradient(180deg,#251028,#0d0414 90%);border:3px solid var(--gold);border-radius:90px 90px 4px 4px;box-shadow:0 0 0 8px rgba(0,0,0,.6),0 30px 80px rgba(0,0,0,.7);overflow:hidden}
+  .door::before{content:"";position:absolute;inset:8px;border:1px solid rgba(211,169,85,.4);border-radius:84px 84px 0 0}
+  .lamp{position:absolute;top:-22px;left:50%;transform:translateX(-50%);width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,#fff7d9 0,#d3a955 60%,transparent 80%);box-shadow:0 0 60px #d3a955;animation:flicker 2.4s infinite}
+  @keyframes flicker{50%{opacity:.92}}
+  .doorhead{position:absolute;top:30px;left:0;right:0;text-align:center;font-family:"Bodoni Moda",serif;color:var(--gold);font-size:.9rem;letter-spacing:.4em}
+  .rope{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);width:540px;height:18px;background:linear-gradient(180deg,#a8324d,#5a1424);border-radius:9px;box-shadow:0 6px 0 rgba(0,0,0,.4)}
+  .rope::after,.rope::before{content:"";position:absolute;top:6px;width:14px;height:60px;background:#caa253;border-radius:6px}
+  .rope::before{left:0}.rope::after{right:0}
+  .queue{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);display:flex;gap:30px;align-items:flex-end;transition:transform .6s}
+  .person{width:36px;height:90px;border-radius:18px 18px 0 0;background:linear-gradient(180deg,#2b1a36,#0b0612)}
+  .person:nth-child(1){background:linear-gradient(180deg,#3b2a4c,#100818)}
+  .person:nth-child(2){background:linear-gradient(180deg,#4a2236,#200a18)}
+  .person:nth-child(3){background:linear-gradient(180deg,#35264a,#0e061a)}
+  .person .head{width:24px;height:24px;border-radius:50%;background:#f0d1a0;margin:0 auto 4px}
+  .sign{position:absolute;top:80px;right:5%;background:rgba(0,0,0,.7);border:1px solid var(--gold);padding:.8rem 1rem;max-width:280px;font-family:"Courier New",monospace;font-size:.7rem;line-height:1.6;color:var(--cream)}
+  .sign h3{font-family:"Bodoni Moda",serif;font-size:1.1rem;color:var(--gold);margin-bottom:.3rem;letter-spacing:.1em}
+  .toggle{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.5rem;z-index:5}
+  .toggle button{font:inherit;padding:.5rem .9rem;background:transparent;border:1px solid var(--gold);color:var(--cream);cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}
+  .toggle button.active{background:var(--gold);color:#0b0612}
+  .display{position:absolute;bottom:80px;left:50%;transform:translateX(-50%);font-family:"Bodoni Moda",serif;color:var(--gold);font-size:2.4rem;letter-spacing:.04em;text-shadow:0 0 12px rgba(211,169,85,.4)}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="stage"></div>
+<div class="scan"></div>
+<div class="marquee"><span>✦ VELVET ROPE ✦ ESTABLISHED 1947 ✦ MEMBERS & GUESTS ✦ AFTER MIDNIGHT, BARTENDER'S DISCRETION ✦</span></div>
+<div class="door">
+  <div class="lamp"></div>
+  <div class="doorhead">NO. 47</div>
+</div>
+<div class="queue" id="queue"></div>
+<div class="rope" id="rope"></div>
+<div class="display" id="display">— TONIGHT —</div>
+<aside class="sign">
+  <h3>Tonight's roster</h3>
+  <div id="roster">Hover the queue to know who's at the door.</div>
+</aside>
+<div class="toggle">
+  <button id="admit" type="button">Admit Next</button>
+  <button id="refuse" type="button">Refuse Last</button>
+  <button id="fill" type="button">Fill Queue</button>
+</div>
+<script>
+  const queue=document.getElementById('queue'),display=document.getElementById('display'),roster=document.getElementById('roster');
+  const names=['Ms. Okafor','Dr. Vell','the Brass Trio','Mr. Hendrix','Mademoiselle L.','the Carpenter','H. Pul','a Small God','the Taxi Driver','the Pilot, retired'];
+  let rosterList=[];
+  function fill(n=5){queue.innerHTML='';rosterList=[];for(let i=0;i<n;i++){const name=names[Math.floor(Math.random()*names.length)];rosterList.push(name);const p=document.createElement('div');p.className='person';p.innerHTML='<div class="head"></div>';p.dataset.name=name;p.addEventListener('mouseenter',()=>roster.textContent=`${p.dataset.name} — at the door`);p.addEventListener('focus',()=>roster.textContent=`${p.dataset.name} — at the door`);p.tabIndex=0;queue.appendChild(p)}}
+  fill();
+  document.getElementById('fill').addEventListener('click',()=>fill(5));
+  document.getElementById('admit').addEventListener('click',()=>{const first=queue.firstElementChild;if(first){first.style.transition='transform .6s, opacity .6s';first.style.transform='translateY(-160px) scale(.6)';first.style.opacity=0;setTimeout(()=>{first.remove();rosterList.shift();display.textContent=rosterList[0]?`now arriving: ${rosterList[0]}`:'closing soon'},600)}});
+  document.getElementById('refuse').addEventListener('click',()=>{const last=queue.lastElementChild;if(last){last.style.transition='transform .4s, opacity .4s';last.style.transform='translateX(-200px) rotate(-15deg)';last.style.opacity=0;setTimeout(()=>last.remove(),400);rosterList.pop();display.textContent=`refused: ${last.dataset.name}`}});
+</script>
+</body>
+</html>

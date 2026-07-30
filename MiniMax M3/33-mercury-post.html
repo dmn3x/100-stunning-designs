@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Mercury Post — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f6efe0;color:#3a2418;font-family:"Times New Roman",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1.3fr 1fr;gap:1.4rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .stamp-sheet{background:#fff8e6;padding:1.4rem;border:1px dashed #3a2418;display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem}
+  .stamp{aspect-ratio:1;background:#fbf6e9;border:2px dotted #3a2418;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;padding:.4rem}
+  .stamp:hover{background:#fff}
+  .stamp h3{font-family:"Iowan Old Style",serif;font-size:.9rem;text-align:center;line-height:1.2}
+  .stamp .value{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7a2218;margin-top:.4rem;border-top:1px solid #3a2418;border-bottom:1px solid #3a2418;padding:.1rem 0;width:80%;text-align:center}
+  .stamp .stamp-art{font-size:1.8rem;margin-bottom:.2rem}
+  .mailbox{background:#3a2418;color:#fbf6e9;padding:1.4rem;display:flex;flex-direction:column;gap:.6rem}
+  .mailbox h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#f5d56e}
+  .mailbox p{font-size:.95rem;line-height:1.5}
+  textarea{flex:1;width:100%;background:#1c1108;color:#f6efe0;border:1px solid #7a2218;padding:.6rem;font-family:"Times New Roman",serif;font-size:1rem;line-height:1.5}
+  button{font:inherit;background:#f5d56e;color:#3a2418;border:none;padding:.5rem 1rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;font-family:"Courier New",monospace}
+  button:hover{background:#7a2218;color:#f5d56e}
+  .postmark{position:absolute;top:.5rem;right:.5rem;border:2px solid #7a2218;color:#7a2218;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;font-size:.55rem;letter-spacing:.2em;text-align:center;line-height:1.1;transform:rotate(-12deg);opacity:.7}
+  footer{grid-column:1/-1;text-align:center;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7a2218;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section>
+  <h1 style="font-family:'Bodoni Moda',serif;font-size:1.6rem;margin-bottom:.4rem">Pick your stamp</h1>
+  <p style="font-size:.95rem;line-height:1.5;margin-bottom:1rem">Twelve denominations, twelve small planets. Choose a stamp and we'll frank your letter accordingly.</p>
+  <div class="stamp-sheet" id="sheets"></div>
+</section>
+<aside class="mailbox" style="position:relative">
+  <div class="postmark">Mercury<br>Post</div>
+  <h1>Mail slot</h1>
+  <p>Drop your letter; it will travel at the speed of light, which is quite reasonable.</p>
+  <textarea placeholder="Dearest, the weather here is exactly as we discussed..."></textarea>
+  <button type="button" id="send">▣ post today</button>
+  <p style="font-family:'Courier New',monospace;font-size:.75rem;letter-spacing:.2em" id="status">Awaiting letter.</p>
+</aside>
+<footer>MiniMax M3 · 33 / 100</footer>
+<script>
+  const stamps=[
+    {art:'☿',name:'Mercury',value:'1c'}, {art:'♀',name:'Venus',value:'2c'}, {art:'🌍',name:'Earth',value:'3c'},
+    {art:'♂',name:'Mars',value:'5c'}, {art:'♃',name:'Jupiter',value:'8c'}, {art:'♄',name:'Saturn',value:'10c'},
+    {art:'♅',name:'Uranus',value:'13c'}, {art:'♆',name:'Neptune',value:'15c'}, {art:'☄',name:'Comet',value:'20c'},
+    {art:'🌑',name:'New Moon',value:'7c'}, {art:'🌕',name:'Full Moon',value:'11c'}, {art:'☀',name:'Sun',value:'14c'}
+  ];
+  const sheets=document.getElementById('sheets');let picked=null;
+  stamps.forEach(s=>{const d=document.createElement('div');d.className='stamp';d.innerHTML=`<div class="stamp-art">${s.art}</div><h3>${s.name}</h3><div class="value">${s.value}</div>`;d.addEventListener('click',()=>{document.querySelectorAll('.stamp').forEach(x=>x.style.background='#fbf6e9');d.style.background='#fff5b6';picked=s;document.getElementById('status').textContent='stamped with '+s.name});sheets.appendChild(d)});
+  document.getElementById('send').addEventListener('click',()=>{const t=document.querySelector('textarea').value;if(t.length<3){document.getElementById('status').textContent='— write a letter first —';return}document.getElementById('status').textContent='sent at light-speed · destination: '+picked.name+' · eta: now'});
+</script>
+</body>
+</html>

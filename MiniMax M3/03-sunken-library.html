@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sunken Library — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%;background:#02161e;color:#cce8ee;font-family:"Iowan Old Style",serif}
+  body{overflow:hidden;position:relative}
+  #sea{position:fixed;inset:0;background:linear-gradient(180deg,#04334b 0%,#022735 40%,#01141a 100%)}
+  .rays{position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(170,236,255,.45),transparent 60%);mix-blend-mode:screen;opacity:.6;pointer-events:none}
+  #bubbles{position:fixed;inset:0;pointer-events:none}
+  .wrap{position:relative;height:100vh;overflow-y:auto;overflow-x:hidden;perspective:900px}
+  .shelf{position:sticky;top:0;height:100vh;display:flex;align-items:flex-end;justify-content:center}
+  .floor{position:absolute;bottom:0;left:0;right:0;height:30%;background:linear-gradient(180deg,transparent,#021016 80%);transform-origin:bottom;transform:rotateX(60deg)}
+  .room{position:absolute;inset:5% 8%;border:1px solid rgba(170,236,255,.18);border-radius:6px;backdrop-filter:blur(2px)}
+  .bookwall{display:grid;grid-template-columns:repeat(auto-fill,minmax(38px,1fr));gap:6px;padding:14px;height:100%;overflow:hidden}
+  .book{height:120%;width:100%;border-radius:2px 2px 0 0;cursor:pointer;position:relative;transform-origin:bottom;transition:transform .25s ease}
+  .book:hover,.book:focus-visible{transform:translateY(-6px) scale(1.08);z-index:4;outline:none}
+  .book[data-c="1"]{background:linear-gradient(180deg,#7b3f2a,#3a1c12)}.book[data-c="2"]{background:linear-gradient(180deg,#265f4a,#0f2b20)}.book[data-c="3"]{background:linear-gradient(180deg,#504073,#241a3a)}.book[data-c="4"]{background:linear-gradient(180deg,#7d6c2b,#32290f)}.book[data-c="5"]{background:linear-gradient(180deg,#5b2b4a,#2b0d22)}.book[data-c="6"]{background:linear-gradient(180deg,#2a4a6c,#0c2336)}
+  .book b{position:absolute;writing-mode:vertical-rl;left:50%;top:6px;bottom:6px;transform:translateX(-50%);font-size:.7rem;letter-spacing:.15em;color:rgba(255,255,255,.85);font-family:"Courier New",monospace}
+  main{position:relative;padding:2rem 1.4rem 8rem;max-width:780px;margin:0 auto;color:#e6f3f8}
+  main h2{font-size:1.6rem;letter-spacing:.04em;margin-bottom:.6rem}
+  main p{margin:.7rem 0;line-height:1.6;font-size:1.02rem}
+  .tome{display:none;background:rgba(2,30,40,.86);padding:1rem 1.2rem;border-left:3px solid #6ec5d4;margin:1rem 0;border-radius:2px;animation:fade .5s}
+  .tome.open{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+  .hint{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);font-family:"Courier New",monospace;letter-spacing:.3em;font-size:.7rem;color:rgba(204,232,238,.5);text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div id="sea"><canvas id="bubbles"></canvas><div class="rays"></div></div>
+<div class="wrap" id="wrap">
+  <div class="shelf">
+    <div class="room">
+      <div class="bookwall" id="wall"></div>
+    </div>
+    <div class="floor"></div>
+  </div>
+  <main>
+    <h2>Recovered folios</h2>
+    <p>The water here is older than the city above it. Each spine holds one of the lost journals, drying slowly under phosphor light. Pull a book from the wall — the rest will tilt gently to reveal the binding.</p>
+    <div id="tomes"></div>
+  </main>
+  <div class="hint">scroll · read · surface</div>
+</div>
+<script>
+  // bubbles
+  const cv=document.getElementById('bubbles'),cx=cv.getContext('2d');function fit(){cv.width=innerWidth*2;cv.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const Bs=Array.from({length:60},()=>({x:Math.random()*innerWidth,y:Math.random()*innerHeight,r:Math.random()*3+1,s:Math.random()*0.7+0.3}));
+  (function loop(){cx.clearRect(0,0,innerWidth,innerHeight);Bs.forEach(b=>{b.y-=b.s;if(b.y<-10){b.y=innerHeight+10;b.x=Math.random()*innerWidth}cx.beginPath();cx.arc(b.x,b.y,b.r,0,6.283);cx.fillStyle='rgba(170,236,255,.4)';cx.fill()});requestAnimationFrame(loop)})();
+  // books
+  const wall=document.getElementById('wall'),tomes=document.getElementById('tomes'),entries=[
+    ['Atlas of Tides','A. Marrow','"The flood is not angry. It is patient."'],
+    ['Cartographer, Lost','L. Vell','"I drew the river, then the river drew me."'],
+    ['On Quiet Drowning','H. Pul','"Sound travels further under the surface."'],
+    ['Codices, Volume 1','—','Recovered glyph fragments. Read downward.'],
+    ['Memory, Salt','P. Koi','"Ask the lagoon what it took."'],
+    ['How to Read Water','R. Solé','"Each wave is a sentence."'],
+    ['The Long Letter','—','"Dearest, the lighthouse went dark on Tuesday."'],
+    ['Index of Trees','—','A taxonomy of mangrove species, water-stained.'],
+    ['Compass Notes','—','Magnetic declination charts, illegible in parts.'],
+    ['Songs of the Reef','—','Lyrics recovered from inside a conch.']
+  ];
+  entries.forEach((e,i)=>{
+    const b=document.createElement('button');b.type='button';b.className='book';b.setAttribute('data-c',(i%6)+1);b.style.height=(90+Math.random()*140)+'px';b.innerHTML=`<b>${e[0]}</b>`;b.setAttribute('aria-label',e[0]+' by '+e[1]);
+    const t=document.createElement('article');t.className='tome';t.innerHTML=`<strong>${e[0]}</strong> — ${e[1]}<p>${e[2]}</p>`;
+    b.addEventListener('click',()=>{document.querySelectorAll('.tome.open').forEach(x=>x.classList.remove('open'));t.classList.add('open');tomes.appendChild(t);t.scrollIntoView({behavior:'smooth',block:'center'})});
+    b.addEventListener('keydown',e2=>{if(e2.key==='Enter'||e2.key===' '){e2.preventDefault();b.click()}});
+    wall.appendChild(b);
+  });
+</script>
+</body>
+</html>

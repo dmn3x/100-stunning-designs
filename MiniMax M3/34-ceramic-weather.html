@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ceramic Weather — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f6e5d0;color:#5a3920;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  .clay{display:grid;grid-template-columns:1fr 1fr;gap:1.4rem;align-items:start}
+  @media (max-width:880px){.clay{grid-template-columns:1fr}}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px dashed #a06d3c;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem}
+  header h1 small{display:block;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.4em;text-transform:uppercase;color:#a06d3c}
+  .vessel{position:relative;aspect-ratio:.7;border-radius:50%/30%;background:radial-gradient(ellipse at 50% 30%,#d49a6a,#7a4a26 80%);border:2px solid #5a3920;display:flex;align-items:center;justify-content:center;color:#fff5e0;font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.4rem;text-align:center;padding:1rem}
+  .vessel::before{content:"";position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:120px;height:40px;border-radius:60%;background:#a06d3c;border:2px solid #5a3920}
+  .panel{background:#fff5e0;border:1px dashed #a06d3c;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  .panel h3{font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#a06d3c}
+  .temp{font-family:"Bodoni Moda",serif;font-size:3rem;letter-spacing:.04em;color:#5a3920}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed #a06d3c;padding:.3rem 0;font-size:.9rem}
+  .row b{color:#a06d3c}
+  input[type=range]{accent-color:#a06d3c;width:100%}
+  .tape{display:flex;gap:.4rem;margin-top:.6rem}
+  .tape button{font:inherit;background:transparent;border:1px solid #a06d3c;color:#a06d3c;padding:.3rem .6rem;cursor:pointer;font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase}
+  .tape button.on{background:#a06d3c;color:#fff5e0}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="clay">
+  <header>
+    <h1>Ceramic Weather<small>studio dashboard · kiln 03</small></h1>
+    <div style="font-family:'Courier New',monospace;letter-spacing:.2em;font-size:.7rem;text-transform:uppercase">stoneware · cone 6 · wood-fired</div>
+  </header>
+  <div class="vessel"><span>glaze №14<br><small style="font-family:'Courier New',monospace;font-size:.6rem;letter-spacing:.3em">under-coat</small></span></div>
+  <div class="panel">
+    <h3>Kiln status</h3>
+    <div class="temp"><span id="T">980</span>°C</div>
+    <div class="row"><span>Target</span><b>1240 °C</b></div>
+    <div class="row"><span>Rate</span><b id="rate">+14 /min</b></div>
+    <div class="row"><span>Firing</span><b id="status">pre-heat</b></div>
+    <label for="rate" style="font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase">Set rate</label>
+    <input type="range" min="0" max="100" value="20" id="rateSet">
+    <h3>Stage</h3>
+    <div class="tape">
+      <button data-st="preheat">Pre-heat</button>
+      <button data-st="oxidation" class="on">Oxidation</button>
+      <button data-st="reduction">Reduction</button>
+      <button data-st="soak">Soak</button>
+      <button data-st="cool">Cool</button>
+    </div>
+    <p style="font-size:.9rem;line-height:1.5;font-style:italic">— record in the studio journal: "the glaze blue was not what I expected, but I have stopped expecting things from kilns."</p>
+  </div>
+  <footer>MiniMax M3 · 34 / 100</footer>
+</div>
+<script>
+  let t=980,stage='oxidation';const el=document.getElementById('T'),rate=document.getElementById('rate'),status=document.getElementById('status');
+  document.querySelectorAll('.tape button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.tape button').forEach(x=>x.classList.remove('on'));b.classList.add('on');stage=b.dataset.st;status.textContent=stage}));
+  document.getElementById('rateSet').addEventListener('input',e=>{rate.textContent='+'+(+e.target.value*1.2).toFixed(0)+' /min'});
+  setInterval(()=>{
+    const r=+document.getElementById('rateSet').value*1.2;
+    t+=stage==='cool'?-r*.3:r*.2;
+    t=Math.max(20,Math.min(1320,t));
+    el.textContent=t.toFixed(0);
+    if(t<300)status.textContent='pre-heat';else if(t<950)status.textContent='oxidation';else if(t<1100)status.textContent='reduction';else if(t<1240)status.textContent='soak';else status.textContent='— peaked —';
+  },1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Warm Archive — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#3a1a04;color:#f9dba0;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1.3fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .room{position:relative;background:repeating-linear-gradient(45deg,#5a2c0a 0 8px,#3a1a04 8px 16px);border:6px ridge #a06d3c;min-height:60vh;overflow:hidden}
+  .box{position:absolute;width:80px;height:80px;cursor:pointer;border:2px solid #a06d3c;display:flex;align-items:center;justify-content:center;font-size:1.4rem;transition:transform .3s}
+  .box:hover{transform:translateY(-4px) rotate(-1deg)}
+  .box.open{background:#fff8e0;color:#3a1a04}
+  aside{padding:1.4rem;background:#1a0a02;border:1px solid #a06d3c;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;color:#f5d56e}
+  aside p{font-size:.95rem;line-height:1.5}
+  .memory{padding:.6rem;background:#5a2c0a;border:1px solid #a06d3c;font-size:.9rem;line-height:1.5;font-style:italic;display:none}
+  .memory.on{display:block}
+  .legend{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;color:#a06d3c}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="room" id="room"></section>
+<aside>
+  <h1>The Warm Archive</h1>
+  <p>Twelve drawers; one for each season. Each drawer keeps the year's warmth long after the year has ended.</p>
+  <div class="memory" id="mem">Select a drawer to read its contents.</div>
+  <span class="legend">drawers · amber · wax · pressed petals</span>
+  <button id="close" style="font:inherit;background:transparent;color:#f5d56e;border:1px solid #a06d3c;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:'Courier New',monospace;width:120px">close drawer</button>
+</aside>
+<footer>MiniMax M3 · 60 / 100</footer>
+<script>
+  const seasons=['Spring 1994','Summer 1994','Autumn 1994','Winter 1994','Spring 1997','Summer 1997','Autumn 1997','Winter 1997','Spring 2001','Summer 2001','Autumn 2001','Winter 2001'];
+  const notes=['A lock of first hair. A tiny ribbon. A poem in invisible ink.','Pressed elderflower; a river pebble; a postcard from a small city.','Tea-stained letter; one chestnut leaf; a key to the bakery.','A snowball, melted; a photograph from a window seat.','Letters from the cherry blossoms; a record by a brass trio.','Salt-lick; a pressed limpet; a buttercup in wax.','A small dragonfly in resin; a note saying "north is good."','A funeral flower; a small wooden bird; a list of names.','A first tooth; a green birthday candle; a sketch of a tiger.','Cucumber slices; a tennis ball; a wasp specimen in amber.','A lost glove; a riddle unresolved; a pressed maple leaf.','A photograph of the harbour; a knitting needle; a bell jar of stars.'];
+  const room=document.getElementById('room');seasons.forEach((s,i)=>{const b=document.createElement('button');b.type='button';b.className='box';b.style.top=10+(i%4)*120+'px';b.style.left=10+(Math.floor(i/4))*110+'px';b.textContent=['🌸','☀️','🍂','❄️','🌷','🌞','🍁','🌨','🌼','🌻','🍄','⛄'][i];b.addEventListener('click',()=>{document.querySelectorAll('.box').forEach(x=>x.classList.remove('open'));b.classList.add('open');document.getElementById('mem').textContent=seasons[i]+': '+notes[i];document.getElementById('mem').classList.add('on')});room.appendChild(b)});
+  document.getElementById('close').addEventListener('click',()=>{document.querySelectorAll('.box').forEach(x=>x.classList.remove('open'));document.getElementById('mem').classList.remove('on')});
+</script>
+</body>
+</html>

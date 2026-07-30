@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Hearth & Histogram — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c0e0a;color:#f4d8a8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .kitchen{background:linear-gradient(180deg,#2a140a,#1c0e0a);border:1px solid #a05c2a;padding:1rem;display:flex;flex-direction:column;gap:.6rem;min-height:60vh}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #a05c2a;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.5rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .card{background:rgba(0,0,0,.4);border:1px solid #a05c2a;padding:.8rem;cursor:pointer;display:flex;align-items:center;gap:.6rem}
+  .card:hover{background:rgba(0,0,0,.7)}
+  .swatch{width:60px;height:60px;border-radius:6px;flex:0 0 60px;background:linear-gradient(180deg,#f4a04a,#a05c2a)}
+  .card b{font-family:"Courier New",monospace;font-size:.8rem;letter-spacing:.2em;color:#f5d56e;display:block}
+  .card small{font-size:.78rem;line-height:1.3;color:#a87f5c}
+  .hist{background:#0e0703;border:1px solid #a05c2a;padding:1rem;display:flex;flex-direction:column;gap:.6rem;min-height:60vh}
+  .heat{aspect-ratio:2/1;background:#0a0502;border:1px dashed #a05c2a;position:relative;display:flex}
+  .cell{flex:1;border-right:1px solid rgba(240,160,80,.2)}
+  .cell:last-child{border-right:none}
+  .cell.on{background:linear-gradient(180deg,#f5d56e,#f4a04a 80%);animation:glow 2s}
+  @keyframes glow{50%{filter:brightness(1.4)}}
+  .meter{flex:1;display:flex;flex-direction:column;gap:.4rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .bar{display:flex;align-items:center;gap:.4rem}
+  .bar i{flex:1;height:10px;background:#a05c2a;border-radius:5px;overflow:hidden;border:1px solid #f4a04a}
+  .bar i b{display:block;height:100%;background:#f4a04a;width:0}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a87f5c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="kitchen">
+  <header>
+    <h1>Hearth & Histogram</h1>
+    <small>cooking memories · stove 02</small>
+  </header>
+  <div id="cards"></div>
+</section>
+<section class="hist">
+  <h2 style="font-size:.85rem;letter-spacing:.2em;color:#a05c2a;font-family:'Courier New',monospace">MEMORY MAP</h2>
+  <p style="font-size:.85rem;line-height:1.5">Hover a card. The hearth remembers. Each meal increases the heat of one cell, by a little.</p>
+  <div class="heat" id="heat"></div>
+  <div class="meter">
+    <div class="bar">Memory<b id="m">0%</b><i><b id="mb" style="width:0"></b></i></div>
+    <div class="bar">Heat<b id="h">0</b><i><b id="hb" style="width:0"></b></i></div>
+  </div>
+</section>
+<footer>MiniMax M3 · 48 / 100</footer>
+<script>
+  const meals=[
+    ['Buttered toast','02','Saturdays','Toast, buttered on both sides. Served in silence.','#f4a04a'],
+    ['Greengage compote','14','Junes','Stone fruit from the wall. Sugar, water, time.','#9bbd3a'],
+    ['Fish stew','07','Thursdays','Three kinds of fish. A bay leaf.','#d8a89a'],
+    ['Apple cake','09','Sundays','Slow oven; long tea; a smaller cake than I remembered.','#a05c2a'],
+    ['Rice pudding','01','Wednesdays','Baked in a stone dish. A skin of nutmeg.','#f4d8a8'],
+    ['Wild garlic soup','03','Aprils','A short season, a long bowl.','#a4d7a6'],
+    ['Onion tart','11','Late August','Caramelised to a deep auburn.','#3a2510'],
+    ['Lemon posset','08','June / July','Three ingredients. A small wobble.','#f9e8a4'],
+    ['Pork broth','06','Januarys','A clear broth with ginger. A cure for rain.','#d6c8a4'],
+    ['Buckwheat galette','05','Autumns','A Sunday lunch; the pancake turned.','#7d5b22'],
+  ];
+  const cards=document.getElementById('cards'),heat=document.getElementById('heat');
+  for(let i=0;i<28;i++){const c=document.createElement('div');c.className='cell';heat.appendChild(c)}
+  meals.forEach(m=>{const c=document.createElement('article');c.className='card';c.innerHTML=`<div class="swatch" style="background:${m[4]}"></div><div><b>${m[0]}</b><small><em>${m[1]}</em> · ${m[2]}<br>${m[3]}</small></div>`;c.addEventListener('mouseenter',()=>{const cells=heat.querySelectorAll('.cell');cells[Math.floor(Math.random()*28)].classList.add('on');setTimeout(()=>cells[Math.floor(Math.random()*28)].classList.remove('on'),2400);document.getElementById('m').textContent=(Math.random()*100).toFixed(0)+'%';document.getElementById('mb').style.width=document.getElementById('m').textContent;document.getElementById('h').textContent=(Math.random()*100).toFixed(0);document.getElementById('hb').style.width=document.getElementById('h').textContent});cards.appendChild(c)});
+</script>
+</body>
+</html>

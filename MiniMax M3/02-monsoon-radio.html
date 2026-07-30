@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Monsoon Radio — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--bg:#0c1c2c;--ink:#9dd7f0;--panel:#102b3f;--accent:#ff8c5a;--grid:#1f4664;--warn:#f9d65c}
+  body{background:var(--bg);color:var(--ink);font-family:"Inter","Helvetica Neue",sans-serif;min-height:100vh;padding:clamp(1rem,3vw,2.2rem);display:grid;grid-template-rows:auto 1fr auto;gap:1rem}
+  h1{font-size:1.4rem;letter-spacing:.18em;text-transform:uppercase}
+  h1 span{color:var(--accent)}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid var(--grid);padding-bottom:.6rem;gap:1rem;flex-wrap:wrap}
+  .ticker{font-family:"Courier New",monospace;font-size:.8rem;letter-spacing:.15em;color:var(--warn)}
+  .grid{display:grid;grid-template-columns:1.4fr .9fr;gap:1rem;height:100%}
+  @media (max-width:880px){.grid{grid-template-columns:1fr}}
+  .panel{background:var(--panel);border:1px solid var(--grid);padding:1rem;border-radius:2px;position:relative;overflow:hidden}
+  .panel h2{font-size:.8rem;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.6rem;color:var(--accent)}
+  .map{aspect-ratio:1.6/1;background:radial-gradient(ellipse at 50% 60%,#1f4664,#0a1828 70%);position:relative;border:1px solid var(--grid)}
+  canvas{display:block;width:100%;height:100%}
+  .readout{font-family:"Courier New",monospace}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed var(--grid);padding:.3rem 0;font-size:.85rem}
+  .row b{color:#fff}
+  .sweep{height:60px;margin-top:.6rem;background:#06121c;border:1px solid var(--grid);position:relative;overflow:hidden}
+  .sweep::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(90deg,transparent 0 19px,rgba(157,215,240,.08) 19px 20px)}
+  .leds{display:flex;gap:.25rem;margin-top:.5rem}
+  .led{width:10px;height:14px;background:#222;border-radius:1px;flex:1}
+  .led.on{background:var(--accent);box-shadow:0 0 6px var(--accent)}
+  .dial{width:100%;margin-top:.4rem}
+  button{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--ink);padding:.4rem .7rem;cursor:pointer;letter-spacing:.15em;text-transform:uppercase;font-size:.7rem}
+  button:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  button.on{background:var(--accent);color:#06121c;border-color:var(--accent)}
+  .stat-row{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+  footer{display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.72rem;letter-spacing:.2em;text-transform:uppercase;color:#5d7d92;border-top:1px solid var(--grid);padding-top:.6rem}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top">
+  <h1>Monsoon <span>Radio</span> · ops console</h1>
+  <div class="ticker" id="ticker">PRESSURE ▼ 1004hPa · WIND 14kt SE · DEW 22°C</div>
+</div>
+<div class="grid">
+  <div class="panel">
+    <h2>Synoptic map · south-east coast</h2>
+    <div class="map"><canvas id="map"></canvas></div>
+    <div class="leds" id="leds" aria-hidden="true"></div>
+    <div class="sweep" id="sweep" aria-hidden="true"></div>
+  </div>
+  <div class="panel readout">
+    <h2>Console readout</h2>
+    <div class="row"><span>Station</span><b>MNR/IND-04</b></div>
+    <div class="row"><span>Frequency</span><b>162.550 MHz</b></div>
+    <div class="row"><span>Wind shear</span><b id="shear">3 kt/km</b></div>
+    <div class="row"><span>Front depth</span><b id="depth">2,400 m</b></div>
+    <div class="row"><span>Lifted index</span><b id="li">-4.2</b></div>
+    <div class="row"><span>Risk</span><b id="risk" style="color:var(--warn)">Moderate</b></div>
+    <label for="dial" style="font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;display:block;margin-top:.6rem">Sweep tuning</label>
+    <input id="dial" class="dial" type="range" min="0" max="100" value="40">
+    <div class="stat-row">
+      <button id="storm" type="button">Trigger storm</button>
+      <button id="calm" type="button">Hold calm</button>
+      <button id="reset" type="button">Reset panel</button>
+    </div>
+  </div>
+</div>
+<footer>
+  <span>MiniMax M3 · 02 of 100</span>
+  <span>MNR · 24h monitoring</span>
+</footer>
+<script>
+  const c=document.getElementById('map'),ctx=c.getContext('2d'),sweep=document.getElementById('sweep');
+  function fit(){const r=c.parentElement.getBoundingClientRect();c.width=r.width*2;c.height=r.height*2;ctx.scale(2,2);draw()}
+  let t=0,storm=false,dial=40;
+  function draw(){
+    const w=c.width/2,h=c.height/2;ctx.clearRect(0,0,w,h);
+    // Latitude/longitude grid
+    ctx.strokeStyle='rgba(157,215,240,.15)';ctx.lineWidth=1;
+    for(let x=0;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,h);ctx.stroke()}
+    for(let y=0;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke()}
+    // Isobars
+    ctx.lineWidth=1.4;ctx.strokeStyle='rgba(157,215,240,.6)';
+    for(let i=0;i<6;i++){
+      ctx.beginPath();
+      const y=30+i*30+Math.sin(t/40+i)*4;
+      ctx.moveTo(0,y);
+      for(let x=0;x<w;x+=10){ctx.lineTo(x,y+Math.sin((x+i*30+t/30)/40)*8)}
+      ctx.stroke();
+    }
+    // Cold front
+    ctx.strokeStyle='#9dd7f0';ctx.lineWidth=2;
+    ctx.beginPath();
+    for(let x=0;x<w;x+=8){
+      const y=h*0.55+Math.sin(x/40+t/50)*30;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.stroke();
+    // Triangles
+    for(let x=20;x<w;x+=40){ctx.beginPath();ctx.moveTo(x,h*0.6);ctx.lineTo(x-6,h*0.6-6);ctx.lineTo(x+6,h*0.6-6);ctx.closePath();ctx.fillStyle='#9dd7f0';ctx.fill()}
+    // Storm eye
+    if(storm){
+      const cx=w*0.5+Math.sin(t/20)*40,cy=h*0.4+Math.cos(t/25)*20;
+      for(let r=80;r>10;r-=12){
+        ctx.beginPath();ctx.arc(cx,cy,r,0,Math.PI*2);ctx.fillStyle=`rgba(255,140,90,${0.04*(80-r)/12})`;ctx.fill();
+      }
+      ctx.beginPath();ctx.arc(cx,cy,12,0,Math.PI*2);ctx.fillStyle='#ff8c5a';ctx.fill();
+    }
+    // Dial sweep overlay
+    ctx.fillStyle=`rgba(255,140,90,${0.05+storm?0.07:0})`;
+    const sx=w*(0.4+Math.sin(t/12)*0.3);
+    ctx.fillRect(0,0,sx,h);
+  }
+  // LEDs
+  const leds=document.getElementById('leds');for(let i=0;i<24;i++){const d=document.createElement('div');d.className='led';leds.appendChild(d)}
+  function ledsTick(){const arr=Array.from(leds.children);let n=storm?22:8+dial/8;arr.forEach((l,i)=>l.classList.toggle('on',i<n))}
+  // Sweep
+  function sweepTick(){
+    const style=sweep.style.cssText;let x=(t*2)%(sweep.offsetWidth);
+    sweep.style.background=`linear-gradient(90deg, transparent 0, transparent ${x-30}px, var(--accent) ${x-6}px, transparent ${x+10}px)`;
+  }
+  // Wire
+  document.getElementById('storm').addEventListener('click',()=>{storm=true;document.getElementById('storm').classList.add('on');document.getElementById('calm').classList.remove('on')});
+  document.getElementById('calm').addEventListener('click',()=>{storm=false;document.getElementById('calm').classList.add('on');document.getElementById('storm').classList.remove('on')});
+  document.getElementById('reset').addEventListener('click',()=>{storm=false;dial=40;document.getElementById('dial').value=40;document.getElementById('storm').classList.remove('on');document.getElementById('calm').classList.remove('on')});
+  document.getElementById('dial').addEventListener('input',e=>{dial=+e.target.value});
+  function loop(){t++;draw();ledsTick();sweepTick();requestAnimationFrame(loop)}
+  window.addEventListener('resize',fit);fit();loop();
+</script>
+</body>
+</html>

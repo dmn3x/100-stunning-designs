@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Parcel Moon — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a14;color:#e8d8a8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #5a4a30;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .city{position:relative;background:linear-gradient(180deg,#0a0a14 0%,#1a132a 100%);min-height:calc(100vh - 4rem);overflow:hidden;border:1px solid #5a4a30}
+  canvas{display:block;width:100%;height:100%}
+  .moon{position:absolute;top:5%;right:5%;width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff5d0,#d4af37 80%);box-shadow:0 0 60px rgba(255,213,80,.4)}
+  .panel{position:absolute;bottom:1rem;left:1rem;right:1rem;background:rgba(0,0,0,.6);padding:.6rem;display:grid;grid-template-columns:repeat(5,1fr);gap:.4rem;font-family:"Courier New",monospace;font-size:.78rem;letter-spacing:.15em;text-transform:uppercase;color:#d4af37}
+  .panel div{padding:.3rem;border:1px dashed #5a4a30;text-align:center}
+  footer{margin-top:.4rem;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Parcel Moon</h1>
+  <small>overnight courier · city route 04</small>
+  <small>ETA <b id="eta">02:14</b></small>
+</header>
+<section class="city"><canvas id="cv"></canvas><div class="moon"></div>
+  <div class="panel">
+    <div>PICKUP<small id="t1">00:14</small></div>
+    <div>HUB<small id="t2">01:02</small></div>
+    <div>SPLIT<small id="t3">01:34</small></div>
+    <div>DROP<small id="t4">02:00</small></div>
+    <div>ACK<small id="t5">02:14</small></div>
+  </div>
+</section>
+<footer>MiniMax M3 · 70 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');const w=cv.parentElement;let W,H;function fit(){W=cv.width=w.offsetWidth*2;H=cv.height=w.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const houses=Array.from({length:30},(_,i)=>({x:50+i*30,y:H*.7+Math.sin(i)*20,w:30,h:80+Math.random()*40}));
+  const people=[];let routes=[];for(let i=0;i<6;i++){const s=houses[Math.floor(Math.random()*houses.length)];people.push({x:s.x,y:s.y-50,from:s})}
+  function draw(){cx.clearRect(0,0,W,H);const g=cx.createLinearGradient(0,0,0,H);g.addColorStop(0,'#0a0a14');g.addColorStop(1,'#1a132a');cx.fillStyle=g;cx.fillRect(0,0,W,H);houses.forEach(h=>{cx.fillStyle='#3a1d4a';cx.fillRect(h.x,h.y,h.w,h.h);for(let i=0;i<3;i++){cx.fillStyle=`hsla(${60+Math.random()*30},50%,60%,.6)`;cx.fillRect(h.x+5,h.y+10+i*20,h.w-10,8)}});people.forEach((p,i)=>{p.x+=Math.cos(Date.now()*.001)*.6;p.y+=Math.sin(Date.now()*.001+i)*.4;cx.fillStyle='#e8d8a8';cx.beginPath();cx.arc(p.x,p.y,3,0,Math.PI*2);cx.fill();cx.strokeStyle='rgba(212,175,55,.3)';for(let j=i+1;j<people.length;j++){cx.beginPath();cx.moveTo(people[j].x,people[j].y);cx.lineTo(p.x,p.y);cx.stroke()}});requestAnimationFrame(draw)}draw();
+  setInterval(()=>{const eta=new Date(Date.now()+75*60*1000);document.getElementById('eta').textContent=eta.toLocaleTimeString().slice(0,5);document.getElementById('t1').textContent='00:'+(10+Math.floor(Math.random()*5)).toString().padStart(2,'0');document.getElementById('t2').textContent='01:'+(Math.floor(Math.random()*9)).toString().padStart(2,'0');document.getElementById('t3').textContent='01:'+(34+Math.floor(Math.random()*5)).toString().padStart(2,'0');document.getElementById('t4').textContent='02:'+(Math.floor(Math.random()*4)).toString().padStart(2,'0');document.getElementById('t5').textContent='02:14'},5000);
+</script>
+</body>
+</html>

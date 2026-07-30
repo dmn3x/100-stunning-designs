@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Field Notes from Mars — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c0a0a;color:#e6c8a4;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .terrain{background:radial-gradient(ellipse at 50% 90%,#3a1a0a,#1c0a0a);border:4px solid #c44569;position:relative;overflow:hidden;min-height:60vh;cursor:ew-resize}
+  canvas{display:block;width:100%;height:100%}
+  aside{background:#1a0808;border:2px solid #c44569;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Iowan Old Style",serif;font-size:1.4rem;color:#f0c290;border-bottom:1px solid #c44569;padding-bottom:.4rem}
+  aside p{font-size:.85rem;line-height:1.5;font-family:"Iowan Old Style",serif;font-style:italic}
+  .row{font-size:.78rem;letter-spacing:.2em;display:flex;justify-content:space-between;border-bottom:1px dashed #c44569;padding:.3rem 0;text-transform:uppercase}
+  .row b{color:#f5d56e}
+  .entry{font-size:.78rem;line-height:1.6;height:100px;overflow:auto;border-top:1px dashed #c44569;padding-top:.4rem;font-style:italic}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#c44569;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="terrain"><canvas id="cv"></canvas></section>
+<aside>
+  <h1>Rover diary · sol 14</h1>
+  <p>The dust is red. The sky is not blue at noon, but a tired apricot. A dry riverbed runs from horizon to horizon. I am told this used to flow.</p>
+  <div class="row"><span>weather</span><b>calm</b></div>
+  <div class="row"><span>temp</span><b>-62°c</b></div>
+  <div class="row"><span>wind</span><b>4 m/s · NE</b></div>
+  <div class="row"><span>battery</span><b>83%</b></div>
+  <div class="entry" id="entry">[rover stopped · day 14 · 09:14]</div>
+</aside>
+<footer>MiniMax M3 · 50 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  function draw(){cx.clearRect(0,0,W,H);cx.fillStyle='#1c0a0a';cx.fillRect(0,0,W,H);const grad=cx.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#c4733a');grad.addColorStop(.4,'#a04a26');grad.addColorStop(1,'#3a1a0a');cx.fillStyle=grad;cx.fillRect(0,H*.6,W,H*.4);for(let i=0;i<30;i++){const x=i*30-10,y=H*.6+(Math.random()-Math.random())*60;cx.fillStyle='#9b3a1a';cx.beginPath();cx.moveTo(x,y);cx.lineTo(x+10,y-30);cx.lineTo(x+20,y);cx.closePath();cx.fill()}cx.fillStyle='#c44569';for(let i=0;i<3;i++){const x=i*120+60,y=H*.8-Math.random()*30;cx.beginPath();cx.arc(x,y,8+Math.random()*6,0,Math.PI*2);cx.fill()}}
+  draw();setInterval(draw,4000);
+  const entry=document.getElementById('entry');const msgs=['[rover stopped · morning fog · sensors nominal]','[sample taken · silica · sending home]','[calibration complete · camera 02]','[sunrise · apricot to amethyst]','[rover passes an old crater · continues]','[obstacle detected · evasive turn]','[communication blackout · 02:14]'];
+  let i=0;setInterval(()=>{entry.innerHTML+=`<br>[${new Date().toLocaleTimeString()}] ${msgs[i%msgs.length]}`;entry.scrollTop=entry.scrollHeight;i++},5000);
+</script>
+</body>
+</html>

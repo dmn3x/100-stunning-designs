@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Arctic Semaphore — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c1f33;color:#cfe9f6;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .borealis{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 80%,#7ad6f0,transparent 60%);opacity:.2;z-index:-1}
+  canvas{position:fixed;inset:0;z-index:-1}
+  .ice{background:rgba(10,30,50,.7);border:1px solid #5fa8d3;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;padding-bottom:.4rem;border-bottom:1px solid #5fa8d3;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;color:#fff}
+  header small{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase}
+  h2{font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#5fa8d3}
+  .map{aspect-ratio:16/9;background:radial-gradient(ellipse at 50% 60%,#1a3a55,#0c1f33);border:1px solid #5fa8d3;position:relative;overflow:hidden}
+  .station{position:absolute;width:14px;height:14px;border-radius:50%;border:1px solid #fff;cursor:pointer;transform:translate(-50%,-50%)}
+  .station.active{background:#ffb14d;box-shadow:0 0 20px #ffb14d}
+  .pulse{position:absolute;inset:0;pointer-events:none}
+  .console{display:grid;grid-template-columns:1fr 1fr;gap:.6rem}
+  .panel{padding:.6rem;background:rgba(0,0,0,.4);border:1px solid #5fa8d3}
+  .panel b{display:block;font-size:1.2rem;color:#ffb14d}
+  .panel small{font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:#5fa8d3}
+  .log{font-size:.78rem;line-height:1.5;height:120px;overflow:auto;border-top:1px solid #5fa8d3;padding-top:.4rem}
+  button{font:inherit;background:transparent;color:#cfe9f6;border:1px solid #5fa8d3;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#5fa8d3;color:#0c1f33}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#5fa8d3}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="borealis"></div>
+<canvas id="cv"></canvas>
+<header>
+  <h1>ARCTIC SEMAPHORE</h1>
+  <small>research station beacon array · north-east</small>
+  <small>temperature <b id="t">-44°C</b></small>
+</header>
+<section class="ice">
+  <h2>The map</h2>
+  <div class="map" id="map">
+    <canvas class="pulse" id="pmap"></canvas>
+  </div>
+</section>
+<section class="ice">
+  <h2>Status</h2>
+  <div class="console">
+    <div class="panel"><small>active beacon</small><b id="b1">—</b></div>
+    <div class="panel"><small>battery</small><b>83%</b></div>
+    <div class="panel"><small>visibility</small><b>4.2 nm</b></div>
+    <div class="panel"><small>last signal</small><b id="b2">—</b></div>
+  </div>
+  <h2 style="margin-top:.4rem">Pulse</h2>
+  <button id="beacon" type="button">fire beacon</button>
+  <button id="tune" type="button">re-tune array</button>
+  <div class="log" id="log">[beacon quiet] await sunrise</div>
+</section>
+<footer>MiniMax M3 · 42 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=innerWidth*2;H=cv.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const stars=Array.from({length:120},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4,r2:Math.random()*4}));
+  function aurora(){for(let i=0;i<20;i++){cx.fillStyle=`hsla(${180+i*4},80%,${30+i}%,0.05)`;cx.beginPath();cx.moveTo(0,Math.random()*H*.4);for(let x=0;x<W;x+=20){cx.lineTo(x,(Math.sin(x*.005+i*Math.PI/3)*50)+H*.3+Math.random()*8)}cx.lineTo(W,0);cx.lineTo(0,0);cx.fill()}}
+  function loop(){cx.clearRect(0,0,W,H);stars.forEach(s=>{cx.fillStyle=`rgba(255,255,255,${.3+Math.random()*.7})`;cx.beginPath();cx.arc(s.x,s.y,s.r,0,Math.PI*2);cx.fill()});if(Math.random()<.1)aurora();requestAnimationFrame(loop)}loop();
+  const stations=[['BR-01',.2,.4],['CR-02',.5,.5],['NL-03',.78,.36],['KN-04',.32,.7],['SV-05',.65,.8]];
+  const map=document.getElementById('map'),pc=document.getElementById('pmap');let pcx=pc.getContext('2d');
+  stations.forEach(s=>{const d=document.createElement('button');d.type='button';d.className='station';d.style.left=s[1]*100+'%';d.style.top=s[2]*100+'%';d.dataset.name=s[0];d.title=s[0];d.addEventListener('click',()=>{document.querySelectorAll('.station').forEach(x=>x.classList.remove('active'));d.classList.add('active');document.getElementById('b1').textContent=s[0];addLog('beacon '+(s[0])+' engaged.')});map.appendChild(d)});
+  function fitP(){const r=map.getBoundingClientRect();pc.width=r.width*2;pc.height=r.height*2;pcx.scale(2,2)}fitP();
+  addEventListener('resize',fitP);
+  function pulse(){pcx.clearRect(0,0,pc.width/2,pc.height/2);document.querySelectorAll('.station.active').forEach(s=>{const x=parseFloat(s.style.left)/100*pc.width/2,y=parseFloat(s.style.top)/100*pc.height/2;pcx.fillStyle='rgba(255,177,77,0.04)';pcx.beginPath();pcx.arc(x,y,Math.random()*30+10,0,Math.PI*2);pcx.fill()});requestAnimationFrame(pulse)}pulse();
+  document.getElementById('beacon').addEventListener('click',()=>{const el=document.querySelector('.station.active');if(!el)return addLog('no active beacon — pick a station');addLog('fired '+el.dataset.name+' at '+new Date().toLocaleTimeString())});
+  document.getElementById('tune').addEventListener('click',()=>addLog('tuned array to '+stations[Math.floor(Math.random()*stations.length)][0]));
+  const log=document.getElementById('log');function addLog(s){log.innerHTML+=`<br>[${new Date().toLocaleTimeString()}] ${s}`;log.scrollTop=log.scrollHeight;document.getElementById('b2').textContent=new Date().toLocaleTimeString()}
+  setInterval(()=>document.getElementById('t').textContent='-'+(40+Math.random()*10|0)+'°C',5000);
+</script>
+</body>
+</html>

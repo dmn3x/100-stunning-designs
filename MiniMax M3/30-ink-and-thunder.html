@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ink & Thunder — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0612;color:#e7c2ff;font-family:"Iowan Old Style",serif;min-height:100vh;overflow:hidden}
+  .paper{position:relative;background:#f6efe0;color:#0a0612;width:min(820px,94vw);margin:2.4rem auto;padding:3rem 2.4rem 6rem;box-shadow:0 30px 60px rgba(0,0,0,.7)}
+  .paper::before{content:"";position:absolute;inset:14px;border:1px solid #c9b6df;pointer-events:none}
+  .title{font-family:"Bodoni Moda",serif;font-size:clamp(1.8rem,5vw,3rem);font-style:italic;text-align:center;margin-bottom:.4rem;color:#3a1d6e}
+  .sub{text-align:center;font-family:"Courier New",monospace;letter-spacing:.4em;font-size:.7rem;text-transform:uppercase;color:#6c4e9c;border-top:1px solid #c9b6df;border-bottom:1px solid #c9b6df;padding:.4rem 0;margin-bottom:1.4rem}
+  .verses{columns:2;column-gap:2rem;font-size:1.05rem;line-height:1.6}
+  @media (max-width:780px){.verses{columns:1}}
+  .verses p{margin-bottom:.7rem;break-inside:avoid;text-indent:0}
+  .verses p:nth-child(3n){font-style:italic;color:#3a1d6e}
+  .verse:hover{background:rgba(0,0,0,.05)}
+  .storm{position:fixed;inset:0;pointer-events:none;z-index:2;opacity:.7}
+  .bolt{position:fixed;width:4px;background:linear-gradient(180deg,#fff,#cda6ff);opacity:0;transform-origin:top}
+  footer{position:fixed;left:50%;bottom:.6rem;transform:translateX(-50%);font-family:"Courier New",monospace;letter-spacing:.3em;font-size:.65rem;color:#888;text-transform:uppercase}
+  .ink{position:absolute;width:60px;height:60px;border-radius:50%;background:radial-gradient(circle,#3a1d6e,transparent 70%);mix-blend-mode:multiply}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<canvas class="storm" id="storm"></canvas>
+<article class="paper">
+  <h1 class="title">Ink & Thunder</h1>
+  <div class="sub">a poet's notebook · 23 March</div>
+  <div class="verses">
+    <p class="verse">There is a small storm in the kitchen each morning. It waits until the kettle has decided to sing. Then the cloud, honest as a postcard, opens its mouth.</p>
+    <p class="verse">Rain has been reading the headlines. It tells me: the river turned under the bridge. The swallow returned. The locksmith has left town.</p>
+    <p class="verse">I sit with the page between us. Ink becomes storm. Storm becomes ink. We argue politely, and the door stays open for the kind visitor.</p>
+    <p class="verse">Tonight the cat refuses to come in. She is reading the lightning as if it were a letter she had been waiting for.</p>
+    <p class="verse">My notebook is a gentle conspiracy against exact weather. I sign it loosely; the storm signs in capitals.</p>
+    <p class="verse">By 23:14 the rain has stopped. The cloud, slightly embarrassed, retreats over the linden. I pour a second cup, and write a polite reply.</p>
+    <p class="verse">It is now confirmed: the storm and I share a postal code. We are neighbours. We are quiet. We are reading each other aloud.</p>
+    <p class="verse">The draft under the door is the storm's small visiting card. Each line is a paragraph; the cat is the editor.</p>
+    <p class="verse">There is a poem tonight that is also a forecast. I will set it in italic so the cloud knows I am not unkind.</p>
+    <p class="verse">— signed — E.M., with an inkwell that trembles politely.</p>
+  </div>
+  <span class="ink" style="top:20%;left:6%"></span>
+  <span class="ink" style="bottom:8%;right:6%;opacity:.5"></span>
+</article>
+<footer>MiniMax M3 · 30 / 100</footer>
+<script>
+  const cv=document.getElementById('storm'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=innerWidth*2;H=cv.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  function loop(){cx.clearRect(0,0,W,H);if(Math.random()<.1){cx.fillStyle='rgba(255,255,255,.9)';cx.fillRect(0,0,W,H);if(Math.random()<.5){const x=Math.random()*W;cx.beginPath();cx.moveTo(x,0);cx.lineTo(x+Math.random()*40-20,H);cx.strokeStyle='rgba(255,255,255,.4)';cx.lineWidth=4;cx.stroke()}}requestAnimationFrame(loop)}loop();
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Wild Type Specimen — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f7f1e3;color:#3a2c1a;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:2px dashed #3a2c1a;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#7d5b22}
+  .field{column-count:2;column-gap:2rem;margin-top:1rem;font-size:1rem;line-height:1.6}
+  @media (max-width:780px){.field{column-count:1}}
+  .field p{margin-bottom:.8rem;break-inside:avoid}
+  .s{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.3rem;color:#3a2c1a;display:inline-block;padding:.1rem .3rem;background:rgba(245,213,110,.2);border:1px dashed #a05c2a;margin:0 .1rem}
+  .controls{margin-top:1rem;display:flex;gap:.4rem;flex-wrap:wrap}
+  button{font:inherit;background:transparent;color:#3a2c1a;border:1px solid #3a2c1a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#3a2c1a;color:#f7f1e3}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5b22;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Wild Type Specimen</h1>
+  <small>a typographic herbarium</small>
+  <small>pressed & live</small>
+</header>
+<div class="field" id="field">
+  <p>This is a typographic herbarium; it grows in <span class="s">a</span> slow, attentive garden. Each letter is given room; each letter is encouraged to settle.</p>
+  <p>The <span class="s">g</span> is the <em>greenest</em> letter — it tends sideways, like a small plant. The <span class="s">t</span> is a stick-in-the-mud; it does not lean.</p>
+  <p>Set in <span class="s" style="font-size:1.6em">i</span>ts own season, the <span class="s">S</span> curls into a swallow before it lands.</p>
+  <p>The <span class="s">m</span> is a hillside; the <span class="s">w</span> is two hillsides; the <span class="s">y</span>, impatient, with its tail up.</p>
+  <p>We press the <span class="s">B</span> for its taxonomy: round, bold, slightly ill-tempered. The <span class="s">Q</span> has always preferred tails to heads.</p>
+  <p>The <span class="s">.</span> — full stop — is the smallest plant. It survives every winter. It is the seed of the next sentence.</p>
+  <p>The <span class="s">!</span> — exclamation — is a stiff plant from the Mediterranean. Plant sparingly.</p>
+  <p>The <span class="s">?</span> — question — is taller than it appears. Look at its hook.</p>
+</div>
+<div class="controls">
+  <button id="setA">set bodoni</button>
+  <button id="setB">set humanist</button>
+  <button id="unpressed">un-pressed</button>
+  <button id="swap">swap palette</button>
+</div>
+<footer>MiniMax M3 · 90 / 100</footer>
+<script>
+  document.getElementById('setA').addEventListener('click',()=>{document.querySelectorAll('.s').forEach(s=>s.style.fontFamily='"Bodoni Moda",serif')});
+  document.getElementById('setB').addEventListener('click',()=>{document.querySelectorAll('.s').forEach(s=>s.style.fontFamily='"Iowan Old Style",serif')});
+  document.getElementById('unpressed').addEventListener('click',()=>{document.querySelectorAll('.s').forEach(s=>{s.style.background='transparent';s.style.borderColor='transparent';s.style.padding='0'})});
+  document.getElementById('swap').addEventListener('click',()=>{const colors=['rgba(193,18,31,.18)','rgba(43,108,68,.18)','rgba(32,86,122,.18)','rgba(149,103,33,.18)','rgba(106,71,118,.18)'];document.querySelectorAll('.s').forEach((s,i)=>s.style.background=colors[i%colors.length])});
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Cartographer — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c0f1c;color:#e6e2c5;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .map{position:relative;background:#0c0f1c;border:1px solid #2b3145;overflow:hidden;min-height:60vh}
+  canvas{display:block;width:100%;height:100%}
+  .panel{background:#11142a;border:1px solid #2b3145;padding:1rem;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .panel h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#f6efd8}
+  .panel p{font-family:"Iowan Old Style",serif;font-size:.95rem;line-height:1.5;color:#d4d0a8}
+  .pin-row{display:flex;align-items:center;justify-content:space-between;border-bottom:1px dashed #2b3145;padding:.4rem 0;cursor:pointer}
+  .pin-row:hover{background:#181c33}
+  .pin-row b{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase;color:#e0b85c}
+  .legend{font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;color:#7e88ad;display:flex;gap:1rem;flex-wrap:wrap}
+  footer{position:fixed;bottom:.4rem;left:50%;transform:translateX(-50%);font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.3em;text-transform:uppercase;color:#7e88ad}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="map">
+  <canvas id="cv"></canvas>
+</section>
+<aside class="panel">
+  <h1>The Cartographer</h1>
+  <p>Three cities, one river. A small, exploratory map with constant lakes and one stubborn island. Hover the pins to focus.</p>
+  <div id="pins"></div>
+  <div class="legend">
+    <span>● river mouth</span>
+    <span>★ lake</span>
+    <span>▲ port</span>
+    <span>✦ the island</span>
+  </div>
+  <div style="margin-top:auto;font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.3em;text-align:right;color:#7e88ad">M3 · 18 / 100</div>
+</aside>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const pins=[{x:.5,y:.55,name:'STONEBRIDGE',note:'A river town of ferrymen and two persistent gulls.'},{x:.2,y:.3,name:'OAK PARK',note:'Quiet. Old library. A garden that grows only at night.'},{x:.78,y:.4,name:'MARSDEN',note:'Industrial port; red brick; the bakery that never opens.'},{x:.45,y:.78,name:'THE ISLAND',note:'Neither port nor park. Drifting.'},{x:.65,y:.68,name:'THE LAKE',note:'Shaped like an ear. People listen to it.'},{x:.12,y:.72,name:'LOW MARSH',note:'Cattle; the smell of salt; the road ends here.'},{x:.88,y:.18,name:'CAPE HOLLOW',note:'Lighthouse; one operator; a small radio room.'}];
+  function draw(){
+    cx.clearRect(0,0,W,H);cx.fillStyle='#0c0f1c';cx.fillRect(0,0,W,H);
+    // grid
+    cx.strokeStyle='rgba(126,136,173,.1)';for(let x=0;x<W;x+=40){cx.beginPath();cx.moveTo(x,0);cx.lineTo(x,H);cx.stroke()}for(let y=0;y<H;y+=40){cx.beginPath();cx.moveTo(0,y);cx.lineTo(W,y);cx.stroke()}
+    // river
+    cx.strokeStyle='#5fa8d3';cx.lineWidth=4;cx.beginPath();cx.moveTo(0,H*.7);
+    for(let x=0;x<W;x+=8){cx.lineTo(x,H*.7-Math.sin(x*.005)*H*.18-Math.sin(x*.012)*H*.06+H*.05)}cx.stroke();cx.strokeStyle='rgba(95,168,211,.4)';cx.lineWidth=8;cx.stroke()
+    // lake
+    cx.fillStyle='rgba(95,168,211,.5)';cx.beginPath();cx.ellipse(W*.65,H*.68,W*.06,H*.05,0,0,Math.PI*2);cx.fill();
+    // island
+    cx.fillStyle='#23305c';cx.beginPath();cx.ellipse(W*.45,H*.78,W*.06,H*.05,0,0,Math.PI*2);cx.fill();cx.fillStyle='#9ad7c9';cx.beginPath();cx.arc(W*.45,H*.78,6,0,Math.PI*2);cx.fill();
+    // pins
+    pins.forEach(p=>{cx.fillStyle='#e0b85c';cx.beginPath();cx.arc(p.x*W,p.y*H,8,0,Math.PI*2);cx.fill();cx.strokeStyle='#0c0f1c';cx.lineWidth=2;cx.stroke();cx.fillStyle='#fff';cx.font='12px serif';cx.textAlign='center';cx.fillText('★',p.x*W,p.y*H+4)});
+    requestAnimationFrame(draw);
+  }
+  draw();
+  const pinRow=document.getElementById('pins');pins.forEach(p=>{const r=document.createElement('div');r.className='pin-row';r.innerHTML=`<span>${p.name}</span><b>— ${p.note.slice(0,40)}…</b>`;r.addEventListener('mouseenter',()=>{cx.fillStyle='rgba(224,184,92,.18)';cx.beginPath();cx.arc(p.x*W,p.y*H,32,0,Math.PI*2);cx.fill()});pinRow.appendChild(r)});
+</script>
+</body>
+</html>

@@ -1,0 +1,244 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>MiniMax M3 — A Hundred Studies in Stunning</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--paper:#f5efde;--ink:#1c1206;--gold:#a05c2a;--rule:#3a2614;--accent:#5a3a1a;--soft:#7d5b22;--night:#0c0c10}
+  body{background:var(--paper);color:var(--ink);font-family:"Iowan Old Style","Charter","Times New Roman",serif;min-height:100vh}
+  .wrap{max-width:1200px;margin:0 auto;padding:3rem clamp(1rem,4vw,2rem) 8rem}
+  /* masthead */
+  .masthead{border-top:6px double var(--ink);border-bottom:1px solid var(--ink);padding:2rem 0 1rem;margin-bottom:2rem}
+  .masthead .title{font-family:"Bodoni Moda","Didot",serif;font-weight:700;font-style:italic;font-size:clamp(2.4rem,7vw,5rem);line-height:.92;letter-spacing:-.02em;color:var(--ink)}
+  .masthead .title em{color:var(--gold);font-style:italic}
+  .masthead .sub{font-family:"Courier New",monospace;letter-spacing:.4em;text-transform:uppercase;font-size:.75rem;color:var(--soft);margin-top:.6rem}
+  .colophon-line{display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);border-top:1px dashed var(--ink);padding-top:.4rem;flex-wrap:wrap;gap:.4rem}
+  /* filters */
+  .filters{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:2rem;font-family:"Courier New",monospace}
+  .filters button{font:inherit;background:transparent;color:var(--ink);border:1px solid var(--ink);padding:.4rem .7rem;cursor:pointer;letter-spacing:.3em;text-transform:uppercase;font-size:.7rem;transition:all .2s}
+  .filters button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+  .filters button:hover:not([aria-pressed=true]){outline:1px dashed var(--ink);outline-offset:1px}
+  /* TOC list */
+  .toc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1.2rem;border-top:2px solid var(--ink);border-bottom:2px solid var(--ink);padding:2rem 0}
+  .entry{position:relative;padding:1rem .8rem;border:1px solid transparent;cursor:pointer;text-align:left;background:transparent;color:inherit;font-family:inherit;font-size:inherit}
+  .entry:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .entry .num{font-family:"Bodoni Moda",serif;font-weight:700;font-style:italic;font-size:1.6rem;color:var(--gold);line-height:.9}
+  .entry h3{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic;line-height:1.1;margin:.4rem 0 .3rem;color:var(--ink)}
+  .entry .one-liner{font-size:.9rem;line-height:1.4;font-style:italic;color:var(--ink);opacity:.85;margin-bottom:.5rem}
+  .entry .palette{display:flex;gap:.25rem;margin-top:.6rem}
+  .entry .palette i{width:18px;height:18px;border:1px solid rgba(0,0,0,.15);display:block}
+  .entry .tags{display:flex;flex-wrap:wrap;gap:.2rem;margin-top:.4rem;font-family:"Courier New",monospace;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--soft)}
+  .entry .tags span{border:1px solid var(--soft);padding:.15rem .4rem}
+  /* colophon */
+  .colophon{margin-top:3rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.2rem}
+  .colophon section{border-top:1px dashed var(--ink);padding-top:.6rem}
+  .colophon h4{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--gold);margin-bottom:.4rem}
+  .colophon p,.colophon li{font-size:.9rem;line-height:1.5}
+  .colophon ul{padding-left:1rem}
+  footer{margin-top:2.4rem;display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--soft);border-top:6px double var(--ink);padding-top:1rem;flex-wrap:wrap;gap:.4rem}
+  /* signature */
+  .signature{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.6rem;color:var(--gold);text-align:right;margin:2rem 0 0}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="masthead">
+    <div class="title">MiniMax <em>M3</em><br>— A Hundred Studies in Stunning —</div>
+    <div class="sub">an anthology of self-contained pages, hand-written, opened in any browser</div>
+    <div class="colophon-line">
+      <span>vol. 03</span>
+      <span>the patient edition</span>
+      <span>issued from the kettle desk</span>
+    </div>
+  </header>
+
+  <nav class="filters" aria-label="Filter by category">
+    <button data-cat="all" aria-pressed="true">All</button>
+    <button data-cat="spreads">Spreads</button>
+    <button data-cat="color">Color</button>
+    <button data-cat="motion">Motion</button>
+    <button data-cat="editorial">Editorial</button>
+    <button data-cat="interaction">Interaction</button>
+    <button data-cat="canvas">Canvas</button>
+    <button data-cat="type">Type</button>
+  </nav>
+
+  <main class="toc-list" id="toc"></main>
+
+  <div class="signature">— fin. —</div>
+
+  <section class="colophon">
+    <section>
+      <h4>Process</h4>
+      <p>One hundred pages, written one at a time. No templates, no shared layouts. Each entry has its own rhythm, palette, and posture. Generously mixed across disciplines — almanacs, atlases, dashboards, field notes, presses, drawers, boats — and yet somehow, all the same quiet.</p>
+    </section>
+    <section>
+      <h4>How to read</h4>
+      <p>Each design opens in its own tab. Every page is fully self-contained — no external dependencies, no tracking. Click them out of order. Read three, then seventeen, then two. The kettle rewards no particular sequence.</p>
+    </section>
+    <section>
+      <h4>Note on motion</h4>
+      <p>Some pages animate. Each honours <code style="font-family:'Courier New',monospace">prefers-reduced-motion</code>; the rest is courtesy. A small number include flashing light or cyclical strobing; step away if the cadence bothers you.</p>
+    </section>
+    <section>
+      <h4>Credit</h4>
+      <p>Generated by <strong style="font-family:'Courier New',monospace">MiniMax M3</strong>, curated by <strong style="font-family:'Courier New',monospace">Hermes Agent (Bog)</strong>, for <strong style="font-family:'Courier New',monospace">dmn3x</strong>. Sibling to <em>Deepseek V4 Pro</em> in the same experiment.</p>
+    </section>
+    <section>
+      <h4>License</h4>
+      <ul>
+        <li>Use freely, personally, educationally.</li>
+        <li>Do not pass off as your own; credit M3.</li>
+        <li>Remix generously; link back to the gallery.</li>
+      </ul>
+    </section>
+  </section>
+
+  <footer>
+    <span>99 ordinary — 1 finale</span>
+    <span>do not move the kettle</span>
+  </footer>
+</div>
+
+<script>
+  /* Hand-curated metadata — micro copy + curated palette + tags per design.
+     Inline JSON keeps the build lazy-senior: a single array, no shared module,
+     no codegen. Each entry gives the file, a one-line synopsis, palette swatches,
+     and one or more categorical tags. */
+  const entries=[
+    {n:1,slug:'01-paper-moon-observatory',title:'Paper Moon Observatory',one:"a field journal that charts a moonlit sky with the cursor as both pen and witness.",palette:['#1b1422','#f7e7c1','#7aa2c4'],tags:['editorial','interaction','type']},
+    {n:2,slug:'02-monsoon-radio',title:'Monsoon Radio',one:"a weather operator's console with live isobars and a stalled freight train.",palette:['#0c1c2c','#ff8c5a','#5fa8d3'],tags:['spreads','color','motion','canvas']},
+    {n:3,slug:'03-sunken-library',title:'Sunken Library',one:"an undersea archive whose spines shuffle under cursor drag.",palette:['#02161e','#cce8ee','#7d5b22'],tags:['editorial','interaction','color']},
+    {n:4,slug:'04-velvet-rope',title:'Velvet Rope',one:"the door of a 1947 club, a roster the bouncer keeps on the wall.",palette:['#0b0710','#a8324d','#d3a955'],tags:['spreads','motion','type']},
+    {n:5,slug:'05-orchard-almanac',title:'Orchard Almanac',one:"a twelve-month harvest planner written by hand and reset each spring.",palette:['#f5ecd2','#7a2138','#5a3a1d'],tags:['editorial','color']},
+    {n:6,slug:'06-the-quiet-museum',title:'The Quiet Museum',one:"three exhibits in adjacent rooms, lit only by cursor.",palette:['#0d0d0d','#f3f0eb','#e8dcc4'],tags:['spreads','color','editorial']},
+    {n:7,slug:'07-tidal-type',title:'Tidal Type',one:"a watery editorial whose letters rock with the swell under the cursor.",palette:['#012d3a','#a4d7e1','#7ad6f0'],tags:['editorial','motion','type']},
+    {n:8,slug:'08-moss-circuit',title:'Moss Circuit',one:"a bioluminescent control panel; chemistry, network, intention.",palette:['#04140c','#8fff9a','#1c4a30'],tags:['canvas','color','interaction']},
+    {n:9,slug:'09-night-train-1978',title:'Night Train 1978',one:"a southbound working timetable with a freight tail-lamp missing at Bletchley.",palette:['#ede2cb','#1f170d','#9c2c2c'],tags:['editorial','spreads']},
+    {n:10,slug:'10-house-of-echoes',title:'House of Echoes',one:"an architectural floorplan narrative; wander from vestibule to attic.",palette:['#0d0d12','#c3a062','#1d1d28'],tags:['editorial','spreads']},
+    {n:11,slug:'11-citrus-press',title:'Citrus Press',one:"a printed zine dedicated to lemons and lemon-shaped indiscretions.",palette:['#ffefb6','#e34f1c','#4d1a1a'],tags:['editorial','type']},
+    {n:12,slug:'12-radioactive-picnic',title:'Radioactive Picnic',one:"a 1959 health-and-safety poster that lets you spike the meter.",palette:['#1a1a0e','#cf2e2e','#f4e07a'],tags:['spreads','interaction','color']},
+    {n:13,slug:'13-desert-cinema',title:'Desert Cinema',one:"a sunset marquee in marfa listing twelve small films.",palette:['#1c0a02','#ffd28a','#ffba50'],tags:['spreads','color']},
+    {n:14,slug:'14-bloom-machine',title:'Bloom Machine',one:"a cabinet for growing flowers that should not exist.",palette:['#f0e4d1','#c44569','#557755'],tags:['canvas','color','interaction']},
+    {n:15,slug:'15-blue-hour-motel',title:'Blue Hour Motel',one:"a vacancy board for a road motel; toggle each room's state.",palette:['#0a0d18','#ff5b94','#ffdd6e'],tags:['spreads','color','interaction']},
+    {n:16,slug:'16-paleontology-desk',title:'Paleontology Desk',one:"a dig site with bone brushes and a ledger that grows.",palette:['#e8dcc0','#3a2510','#c44569'],tags:['canvas','interaction']},
+    {n:17,slug:'17-glasshouse-no-9',title:'Glasshouse №9',one:"cracked panes, one persistent orchid, a humidity dial you can choose.",palette:['#0e1413','#9ad7c9','#244036'],tags:['canvas','color']},
+    {n:18,slug:'18-the-cartographer',title:'The Cartographer',one:"a small, exploratory map with constant lakes and one stubborn island.",palette:['#0c0f1c','#5fa8d3','#e0b85c'],tags:['spreads','editorial']},
+    {n:19,slug:'19-moonbase-laundry',title:'Moonbase Laundry',one:"domestic sci-fi: 6 drums, oxygen, tea, an orbital cycle timer.",palette:['#11142a','#9bb1ff','#e0b85c'],tags:['spreads','interaction']},
+    {n:20,slug:'20-blackbird-dispatch',title:'The Blackbird Dispatch',one:"a noon-and-midnight newspaper that bans outdoor reading after ten.",palette:['#070708','#cfa43c','#f0e3b4'],tags:['editorial','type','spreads']},
+    {n:21,slug:'21-salt-library',title:'Salt Library',one:"a crystallographic index; filter salts, minerals, gems, or rarities.",palette:['#f6f4ee','#b7ac8b','#a08544'],tags:['spreads','editorial']},
+    {n:22,slug:'22-kite-works',title:'Kite Works',one:"a small laboratory of wind: drag the cursor to fly a kite.",palette:['#9dd7e5','#c44569','#0d3b66'],tags:['canvas','motion','color']},
+    {n:23,slug:'23-hotel-after-rain',title:'Hotel After Rain',one:"a reception-low motel that does not accept reservations.",palette:['#191823','#e0d5b1','#a097c4'],tags:['spreads','editorial','interaction']},
+    {n:24,slug:'24-antique-future',title:'Antique Future',one:"a speculative archive of artefacts designed for a future that never arrived.",palette:['#0a0e1c','#d8d2bc','#a0a8c8'],tags:['spreads','editorial']},
+    {n:25,slug:'25-comet-tailor',title:'Comet Tailor',one:"a celestial atelier for cutting fabric out of aurora and stardust.",palette:['#0a0418','#b76f2c','#b7a3d8'],tags:['spreads','color','interaction']},
+    {n:26,slug:'26-railway-botanica',title:'Railway Botanica',one:"pressed flowers recovered from the timetables of small stations.",palette:['#f7f1e0','#4a3c20','#a32'],tags:['editorial','spreads']},
+    {n:27,slug:'27-soft-machinery',title:'Soft Machinery',one:"an industrial manual for making pressure, warmth, certainty.",palette:['#f3e9d0','#1f1108','#a8753a'],tags:['spreads','editorial']},
+    {n:28,slug:'28-coral-ledger',title:'Coral Ledger',one:"a reef under stress; trigger a bleach, log every colony.",palette:['#001a26','#7bf0c5','#ffba50'],tags:['canvas','spreads']},
+    {n:29,slug:'29-the-last-arcade',title:'The Last Arcade',one:"three scanlined cabinets: a roadrunner, a bait-catcher, a drifter.",palette:['#0c0617','#f3d95c','#ff5b94'],tags:['canvas','color']},
+    {n:30,slug:'30-ink-and-thunder',title:'Ink & Thunder',one:"a poet's notebook that argues politely with a storm at the door.",palette:['#0a0612','#e7c2ff','#cda6ff'],tags:['editorial','type']},
+    {n:31,slug:'31-sunday-forecast',title:'Sunday Forecast',one:"a hand-drawn domestic forecast for the week ahead.",palette:['#fef6e0','#7d5b22','#fbc3a4'],tags:['spreads','editorial','color']},
+    {n:32,slug:'32-the-listening-room',title:'The Listening Room',one:"a vinyl room, a rotating sleeve, an unhurried programme.",palette:['#110b1a','#c44569','#f0e3b4'],tags:['spreads','motion','color']},
+    {n:33,slug:'33-mercury-post',title:'Mercury Post',one:"a planetary postal service with twelve small-denomination stamps.",palette:['#f6efe0','#7a2218','#a05c2a'],tags:['spreads','color']},
+    {n:34,slug:'34-ceramic-weather',title:'Ceramic Weather',one:"a kiln dashboard; preheat, oxidise, reduce, soak, cool.",palette:['#f6e5d0','#a06d3c','#5a3920'],tags:['spreads','interaction']},
+    {n:35,slug:'35-afterimage',title:'Afterimage',one:"a contact sheet for selecting three keepers from a roll.",palette:['#0a0a0a','#f0e6cd','#f5d56e'],tags:['spreads','interaction']},
+    {n:36,slug:'36-small-gods',title:'Small Gods',one:"a pocket mythology cabinet with twelve small, terracotta deities.",palette:['#1c1206','#f5d56e','#5a3a1a'],tags:['spreads','color']},
+    {n:37,slug:'37-blueprint-garden',title:'Blueprint Garden',one:"a grid-paper planter; drag to sprout a no-duplicate garden.",palette:['#0e2a4a','#aeb6cf','#7ba3c4'],tags:['canvas','interaction']},
+    {n:38,slug:'38-the-wax-museum',title:'The Wax Museum',one:"candlelit portrait walls where the faces slowly shift.",palette:['#0a0408','#f4d8aa','#a05c2a'],tags:['motion','spreads']},
+    {n:39,slug:'39-fever-dream-index',title:'Fever Dream Index',one:"a small surreal encyclopedia, cycling softly through its entries.",palette:['#1c0a14','#f0d5e5','#9b6db5'],tags:['editorial','motion']},
+    {n:40,slug:'40-analog-signal',title:'Analog Signal',one:"an oscilloscope whose carrier hum is, technically, a record player.",palette:['#0e1009','#b5b88a','#4a4d2a'],tags:['spreads','canvas']},
+    {n:41,slug:'41-lemonade-stand-zero',title:'Lemonade Stand Zero',one:"an optimistic apocalypse kiosk; the lemons remain.",palette:['#fff5b5','#d49a4a','#5a3a1a'],tags:['spreads','color']},
+    {n:42,slug:'42-arctic-semaphore',title:'Arctic Semaphore',one:"a polar research station's beacon array with live aurora.",palette:['#0c1f33','#5fa8d3','#ffb14d'],tags:['spreads','canvas','color']},
+    {n:43,slug:'43-ribbon-atlas',title:'Ribbon Atlas',one:"a textile geography: each ribbon a longitude; pull one.",palette:['#f7f1e7','#5a3a1d','#c44569'],tags:['spreads','color']},
+    {n:44,slug:'44-museum-of-unsent-letters',title:'Museum of Unsent Letters',one:"every letter was addressed, but none was ever sent.",palette:['#1c1006','#f5d56e','#a06d3c'],tags:['editorial','spreads','interaction']},
+    {n:45,slug:'45-clockmakers-apprentice',title:"Clockmaker's Apprentice",one:"a windable mechanism under brass light.",palette:['#0e1a13','#f5d56e','#a06d3c'],tags:['interaction','spreads']},
+    {n:46,slug:'46-paper-aquarium',title:'Paper Aquarium',one:"an origami fish tank; tap the water for folded notes.",palette:['#0a1a26','#cfe9f6','#5fa8d3'],tags:['canvas','motion','interaction']},
+    {n:47,slug:'47-urban-mycelium',title:'Urban Mycelium',one:"a subterranean city network; plant fruiting bodies on the grid.",palette:['#080d0a','#a4d7a6','#2c4c30'],tags:['canvas','interaction']},
+    {n:48,slug:'48-hearth-and-histogram',title:'Hearth & Histogram',one:"cooking memories turned into a heat map of meals.",palette:['#1c0e0a','#f4d8a8','#a05c2a'],tags:['spreads','color']},
+    {n:49,slug:'49-cobalt-cathedral',title:'Cobalt Cathedral',one:"stained glass geometry with dawn, evensong, and storm filters.",palette:['#040820','#c44569','#f5d56e'],tags:['spreads','color']},
+    {n:50,slug:'50-field-notes-from-mars',title:'Field Notes from Mars',one:"a rover's diary at sol 14; apricot sky, slow aperture.",palette:['#1c0a0a','#e6c8a4','#a04a26'],tags:['editorial','spreads']},
+    {n:51,slug:'51-the-green-room',title:'The Green Room',one:"backstage cue lights; a four-cue sequence.",palette:['#1c1006','#d8a85a','#4a2a14'],tags:['spreads','interaction']},
+    {n:52,slug:'52-cloud-census',title:'Cloud Census',one:"an impossible-weather bureau; click clouds to catalogue them.",palette:['#a0c8e0','#1a2e4a','#7ad6f0'],tags:['canvas','interaction']},
+    {n:53,slug:'53-lantern-district',title:'Lantern District',one:"a festival map of small lanterns; set arrows or dim one.",palette:['#0a0418','#f5d56e','#3a1d6e'],tags:['canvas','spreads','interaction']},
+    {n:54,slug:'54-commonplace-book',title:'Commonplace Book',one:"a scrapbook of borrowed lines, pinned to the wall at angles.",palette:['#f6efe0','#3a2418','#dba35a'],tags:['editorial','type']},
+    {n:55,slug:'55-fossil-futures',title:'Fossil Futures',one:"a museum-of-the-future exhibit label for an artefact not yet named.",palette:['#0a0608','#cfa4d8','#5a3a6e'],tags:['editorial','spreads']},
+    {n:56,slug:'56-indigo-ferry',title:'Indigo Ferry',one:"a tide-driven night timetable on a harbour of indigo waves.",palette:['#0a0d2a','#6e7ad6','#a4d7e1'],tags:['spreads','motion']},
+    {n:57,slug:'57-saffron-hotel',title:'Saffron Hotel',one:"eight rooms across three small cities; each with a passport.",palette:['#f8e9cf','#a05c2a','#5a2c0e'],tags:['spreads','editorial','color']},
+    {n:58,slug:'58-static-garden',title:'Static Garden',one:"a noise-art wall of 144 cells with seed and polarity controls.",palette:['#0a0808','#e0e0e0','#5fa8d3'],tags:['canvas','color','interaction']},
+    {n:59,slug:'59-starling-parliament',title:'Starling Parliament',one:"a flock in cohesion, splitting and merging at the cursor.",palette:['#1c2a3a','#3a2a3a','#f4d8a8'],tags:['canvas','motion']},
+    {n:60,slug:'60-warm-archive',title:'The Warm Archive',one:"twelve drawers, one for each season, that keep warmth until spring.",palette:['#3a1a04','#f9dba0','#a06d3c'],tags:['spreads','editorial','interaction']},
+    {n:61,slug:'61-tin-toy-city',title:'Tin Toy City',one:"a wind-up village where vehicles parade or get blown sideways.",palette:['#f4e7d3','#5a2c0e','#c44569'],tags:['canvas','motion','color']},
+    {n:62,slug:'62-plume-and-powder',title:'Plume & Powder',one:"a perfumery's accord wheel — three notes, one bottle.",palette:['#f7eee2','#5a2c0e','#a05c2a'],tags:['spreads','interaction']},
+    {n:63,slug:'63-negative-space',title:'Negative Space',one:"a small gallery of absences, contour and quietude.",palette:['#fbfaf3','#2a2a2a','#7e7560'],tags:['spreads','editorial']},
+    {n:64,slug:'64-the-long-table',title:'The Long Table',one:"fourteen covers, one story per chair, a table that remembers.",palette:['#3a2418','#f5d56e','#a05c2a'],tags:['spreads','interaction','editorial']},
+    {n:65,slug:'65-solar-folklore',title:'Solar Folklore',one:"a sun of small myths and one eclipse dial.",palette:['#1c0a0a','#f5d56e','#c44569'],tags:['spreads','interaction']},
+    {n:66,slug:'66-waterline',title:'Waterline — A Flood Archive',one:"the river returns; each level rewrites the chapter.",palette:['#0d2a3a','#5fa8d3','#dde7ee'],tags:['editorial','spreads','interaction']},
+    {n:67,slug:'67-the-locksmith',title:'The Locksmith',one:"three tumblers; a quiet dispatch; one correct combination.",palette:['#1a0e06','#f5d56e','#a06d3c'],tags:['interaction','spreads']},
+    {n:68,slug:'68-apricot-fm',title:'Apricot FM',one:"a coastal radio station that broadcasts the rain and the silence.",palette:['#1c0808','#f5d56e','#5a2c0e'],tags:['spreads','canvas']},
+    {n:69,slug:'69-black-ice-ballet',title:'Black Ice Ballet',one:"choreographed cursor trails over a black-ice rink.",palette:['#040608','#cce0eb','#5a6c91'],tags:['canvas','motion','color']},
+    {n:70,slug:'70-parcel-moon',title:'Parcel Moon',one:"a small city's overnight route traced against a paper moon.",palette:['#0a0a14','#e8d8a8','#d4af37'],tags:['spreads','color']},
+    {n:71,slug:'71-garden-of-forking-paths',title:'Garden of Forking Paths',one:"a branching narrative that resets if you let a kettle speak.",palette:['#0c2a18','#dde7d3','#a3d7a0'],tags:['editorial','interaction']},
+    {n:72,slug:'72-the-brass-index',title:'The Brass Index',one:"punched cards; a classification machine by topic.",palette:['#1a0e06','#f5d56e','#a06d3c'],tags:['spreads','interaction']},
+    {n:73,slug:'73-lavender-observatory',title:'Lavender Observatory',one:"a restful night, ten constellations, a soft evening.",palette:['#1c1233','#d8b6f5','#5a3a8a'],tags:['spreads','editorial']},
+    {n:74,slug:'74-noise-complaint',title:'Noise Complaint',one:"a city grid where complaints can be issued or retracted.",palette:['#0c0c10','#f0e6cf','#5a6c91'],tags:['spreads','interaction']},
+    {n:75,slug:'75-paper-tiger-bureau',title:'Paper Tiger Bureau',one:"playful spy dossiers stamped and re-stamped each season.",palette:['#f6efe0','#3a2418','#c44569'],tags:['spreads','editorial']},
+    {n:76,slug:'76-the-rainmaker',title:'The Rainmaker',one:"a small theatre of precipitation; summon the kind you like.",palette:['#0a0608','#cfa4d8','#5a3a6e'],tags:['canvas','motion','color']},
+    {n:77,slug:'77-museum-of-small-weather',title:'Museum of Small Weather',one:"twelve specimens of weather that fits in a pocket.",palette:['#f6f1e3','#3a2c1a','#7d5b22'],tags:['spreads','editorial']},
+    {n:78,slug:'78-neon-sepia',title:'Neon Sepia',one:"a photo-booth for the future that remembers the past too well.",palette:['#1c1014','#f5d56e','#a05c2a'],tags:['spreads','color','motion']},
+    {n:79,slug:'79-the-folded-coast',title:'The Folded Coast',one:"a single sheet, folded and unfolded, that maps two seas.",palette:['#f6efe0','#3a2418','#a06d3c'],tags:['interaction','editorial']},
+    {n:80,slug:'80-charcoal-kitchen',title:'Charcoal Kitchen',one:"five editorial recipes, an extra ingredient at a time.",palette:['#0c0808','#e0d2b6','#5a3a1a'],tags:['editorial','interaction']},
+    {n:81,slug:'81-aurora-postcard',title:'Aurora Postcard',one:"a single sky-coloured postcard, paintable and postable.",palette:['#0d1521','#f5d56e','#76c893'],tags:['canvas','interaction','color']},
+    {n:82,slug:'82-the-unbuilt-city',title:'The Unbuilt City',one:"the cancelled, paused, and rebuilt portions of a paper city.",palette:['#0e1c2c','#d4d8b6','#a4b6a4'],tags:['spreads','editorial']},
+    {n:83,slug:'83-honeycomb-commons',title:'Honeycomb Commons',one:"a community noticeboard of forty-two beehive cells.",palette:['#3a2c0e','#f5d56e','#a05c2a'],tags:['spreads','interaction']},
+    {n:84,slug:'84-the-sleepwalker',title:'The Sleepwalker',one:"a drift map for the town's quiet hours.",palette:['#04080c','#cfa4d8','#5a3a6e'],tags:['canvas','motion']},
+    {n:85,slug:'85-public-works',title:'Public Works',one:"a maintenance board; each job, a small civic promise.",palette:['#f6efe0','#1c0a02','#5a2c0e'],tags:['spreads','editorial','interaction']},
+    {n:86,slug:'86-the-blue-orchard',title:'The Blue Orchard',one:"nocturnal fruit trees; one quiet moon; many plums.",palette:['#0a0a14','#a4b3d2','#3a4a6c'],tags:['canvas','color']},
+    {n:87,slug:'87-radio-silence',title:'Radio Silence',one:"a memorial of transmissions, frequencies, and silences.",palette:['#0a0612','#cfa4d8','#5a3a6e'],tags:['editorial','spreads']},
+    {n:88,slug:'88-the-errant-compass',title:'The Errant Compass',one:"the needle points wherever you ask and nowhere else.",palette:['#1a1410','#f5d56e','#a05c2a'],tags:['interaction','spreads']},
+    {n:89,slug:'89-library-of-light',title:'Library of Light',one:"each spine keeps its own beam; drag it like an old librarian.",palette:['#1c1006','#f5d56e','#5a2c0e'],tags:['spreads','interaction','motion']},
+    {n:90,slug:'90-wild-type-specimen',title:'Wild Type Specimen',one:"a typographic herbarium — pressed and live letters.",palette:['#f7f1e3','#3a2c1a','#7d5b22'],tags:['editorial','type']},
+    {n:91,slug:'91-saltwater-almanac',title:'Saltwater Almanac',one:"a tide ledger with sixty-day highs, lows, and notes.",palette:['#0c1f33','#5fa8d3','#cfe9f6'],tags:['editorial','spreads']},
+    {n:92,slug:'92-the-tiny-planetarium',title:'The Tiny Planetarium',one:"a pocket cosmos you tilt with the cursor and name.",palette:['#0a0618','#e6d4ff','#f5d56e'],tags:['canvas','motion','interaction']},
+    {n:93,slug:'93-midnight-inventory',title:'Midnight Inventory',one:"the late shift at the corner store; a quiet restock.",palette:['#1c0a04','#f5d56e','#a05c2a'],tags:['spreads','editorial','interaction']},
+    {n:94,slug:'94-houseplant-hotline',title:'Houseplant Hotline',one:"a three-question diagnosis for plants in distress.",palette:['#0a1f15','#cce8d1','#2e6e44'],tags:['interaction','editorial']},
+    {n:95,slug:'95-the-red-thread',title:'The Red Thread',one:"an investigative wall of clues, knotted together.",palette:['#100808','#f0d8a8','#a32'],tags:['editorial','spreads']},
+    {n:96,slug:'96-lantern-engine',title:'Lantern Engine',one:"crank to summon light; the engine is patient.",palette:['#040405','#f5d56e','#a05c2a'],tags:['interaction','spreads']},
+    {n:97,slug:'97-aerial-postcards',title:'Aerial Postcards',one:"a phantom pigeon's postal atlas, six places at a glance.",palette:['#0e1a26','#cfe9f6','#5fa8d3'],tags:['editorial','spreads','color']},
+    {n:98,slug:'98-color-weather-bureau',title:'Color Weather Bureau',one:"mood-to-palette: each feeling a tiny atmosphere.",palette:['#0a0a14','#c44569','#f5d56e'],tags:['spreads','color','interaction']},
+    {n:99,slug:'99-the-unfinished-museum',title:'The Unfinished Museum',one:"a museum left for the visitor to finish; tell us what belongs.",palette:['#f8f4ec','#1c1206','#a05c2a'],tags:['editorial','interaction']},
+    {n:100,slug:'100-grand-finale',title:'Grand Finale',one:"a hundred weather wishes and a kettle that never quite turns off.",palette:['#0a0a0f','#c44569','#f5d56e'],tags:['color','motion']}
+  ];
+
+  const toc=document.getElementById('toc');
+  const filterBtns=document.querySelectorAll('.filters button');
+
+  function render(cat){
+    const list=cat==='all'?entries:entries.filter(e=>e.tags.includes(cat));
+    toc.innerHTML='';
+    list.forEach(e=>{
+      const a=document.createElement('a');
+      a.className='entry';
+      a.href=e.slug+'.html';
+      a.target='_blank';
+      a.rel='noopener';
+      a.setAttribute('aria-label',`Open ${e.title} (#${e.n})`);
+      a.innerHTML=`<div class="num">${e.n.toString().padStart(3,'0')}</div><h3>${e.title}</h3><p class="one-liner">${e.one}</p><div class="tags">${e.tags.map(t=>`<span>${t}</span>`).join('')}</div><div class="palette" aria-hidden="true">${e.palette.map(c=>`<i style="background:${c}"></i>`).join('')}</div>`;
+      toc.appendChild(a);
+    });
+    if(!list.length){
+      const m=document.createElement('p');m.style.padding='1rem';m.style.fontStyle='italic';m.textContent='— no entries under that filter —';toc.appendChild(m);
+    }
+  }
+
+  filterBtns.forEach(b=>b.addEventListener('click',()=>{
+    filterBtns.forEach(x=>x.setAttribute('aria-pressed','false'));
+    b.setAttribute('aria-pressed','true');
+    render(b.dataset.cat);
+  }));
+
+  render('all');
+</script>
+</body>
+</html>

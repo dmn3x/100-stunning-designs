@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>House of Echoes — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d0d12;color:#e5ddc8;font-family:"Iowan Old Style","Charter",serif;min-height:100vh;display:grid;grid-template-rows:auto 1fr}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.6rem;border-bottom:1px solid #2b2b35;font-family:"Courier New",monospace;letter-spacing:.25em;text-transform:uppercase;font-size:.7rem;color:#9c9486}
+  .layout{display:grid;grid-template-columns:300px 1fr;min-height:0}
+  @media (max-width:880px){.layout{grid-template-columns:1fr}}
+  .floor{background:#11111a;border-right:1px solid #2b2b35;padding:1.2rem;display:flex;flex-direction:column;gap:.6rem}
+  .floor h2{font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#9c9486;margin-bottom:.4rem}
+  .room{padding:.6rem .8rem;border:1px solid #2b2b35;cursor:pointer;font-size:.95rem;display:flex;justify-content:space-between;align-items:center;background:transparent;color:inherit;font-family:inherit;text-align:left}
+  .room:hover,.room:focus-visible,.room.active{background:#1d1d28;border-color:#c3a062;outline:none}
+  .room small{font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.2em;color:#9c9486}
+  .rooms{flex:1;overflow:auto}
+  .stage{padding:2rem;overflow:auto;display:grid;place-items:center;position:relative}
+  .echo{border:1px solid #2b2b35;padding:2rem;max-width:560px;background:#0d0d12;position:relative}
+  .echo::before{content:"";position:absolute;inset:-1px;border:1px dashed rgba(195,160,98,.4);margin:6px;pointer-events:none}
+  .echo h3{font-family:"Bodoni Moda",serif;font-size:1.6rem;margin-bottom:.4rem}
+  .echo .meta{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#9c9486;text-transform:uppercase;margin-bottom:1rem}
+  .echo p{font-size:1.05rem;line-height:1.7;margin-bottom:.7rem}
+  .explore{display:flex;justify-content:space-between;margin-top:1.2rem;gap:.5rem}
+  button.t{font:inherit;background:transparent;color:#c3a062;border:1px solid #c3a062;padding:.5rem .9rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}
+  button.t:hover{background:#c3a062;color:#0d0d12}
+  .number{position:absolute;top:.5rem;right:.8rem;font-family:"Bodoni Moda",serif;font-size:3rem;color:rgba(195,160,98,.18);font-weight:700}
+  footer{padding:1rem 1.6rem;border-top:1px solid #2b2b35;display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.25em;text-transform:uppercase;color:#9c9486}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="top"><span>House of Echoes</span><span>Floor plan · first & second storey</span><span>Owner: absent</span></div>
+<div class="layout">
+  <aside class="floor" id="floor">
+    <h2>Ground floor</h2>
+    <div class="rooms" id="roomsA"></div>
+    <h2 style="margin-top:1rem">First floor</h2>
+    <div class="rooms" id="roomsB"></div>
+  </aside>
+  <main class="stage" id="stage">
+    <div class="echo" id="echo"></div>
+  </main>
+</div>
+<footer><span>MiniMax M3 · 10 / 100</span><span>Welcome. Please remove your shoes.</span></footer>
+<script>
+  const rooms=[
+    {n:'F0',name:'Vestibule',floor:0,text:'The air here is colder than the rest. A single boot sits by the door. The coat rack carries one coat — heavy wool, still damp.'},
+    {n:'F1',name:'Parlour',floor:0,text:'Two wing chairs face the fireplace as if expecting company. A half-knitted jumper rests on the arm, needles still attached.'},
+    {n:'F2',name:'Kitchen',floor:0,text:'A kettle ticked itself off an hour ago. The window is open a hand-span. There is bread on the table, cut into six pieces, only one eaten.'},
+    {n:'F3',name:'Conservatory',floor:0,text:'A single lemon tree, heavy with fruit. The glass roof is cracked in three places. It rains here, on sunny days.'},
+    {n:'F4',name:'Library',floor:0,text:'Floor-to-ceiling shelves. The ladder is on the wrong track. Someone has been reading aloud; you can still hear the breath of it.'},
+    {n:'S0',name:'Landing',floor:1,text:'A green-glass lamp on a small table. Photographs of people you do not recognise, in frames that have been dusted recently.'},
+    {n:'S1',name:'East Bedroom',floor:1,text:'A child\'s bed neatly made. A small wooden horse stands watch. The wallpaper — bluebirds — has been peeled in one corner.'},
+    {n:'S2',name:'West Bedroom',floor:1,text:'A marriage bed, unslept-in for a while. On the nightstand: water glass, two pills, a notebook open to a single line — "return by Thursday."'},
+    {n:'S3',name:'Bathroom',floor:1,text:'A claw-foot tub, half full of cooled water. Peppermint soap. A wet towel folded over the rail — not by its owner.'},
+    {n:'S4',name:'Attic Trap',floor:1,text:'Ladder pulled up. The hatch is unlatched. Above: a single light bulb, a chair, and a view of the slate roof while it rains.'},
+  ];
+  const roomsA=document.getElementById('roomsA'),roomsB=document.getElementById('roomsB'),echo=document.getElementById('echo');
+  let active=rooms[0];
+  function render(){[roomsA,roomsB].forEach((el)=>el.innerHTML='');rooms.forEach(r=>{const b=document.createElement('button');b.type='button';b.className='room'+(r===active?' active':'');b.innerHTML=`${r.name}<small>${r.n}</small>`;b.addEventListener('click',()=>{active=r;render();stage.scrollTo({top:0,behavior:'smooth'})});r.floor===0?roomsA.appendChild(b):roomsB.appendChild(b)});echo.innerHTML=`<div class="number">${active.n}</div><h3>${active.name}</h3><div class="meta">${active.floor===0?'ground floor':'first floor'} · the house remembers</div><p>${active.text}</p><div class="explore"><button class="t" id="prev">← previous</button><button class="t" id="next">next →</button></div>`;document.getElementById('prev').addEventListener('click',()=>{active=rooms[(rooms.indexOf(active)-1+rooms.length)%rooms.length];render()});document.getElementById('next').addEventListener('click',()=>{active=rooms[(rooms.indexOf(active)+1)%rooms.length];render()})}
+  render();
+</script>
+</body>
+</html>

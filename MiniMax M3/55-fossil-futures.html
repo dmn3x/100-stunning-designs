@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Fossil Futures — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0608;color:#cfa4d8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .exhibit{background:#1c121a;border:1px solid #5a3a6e;padding:1.4rem;display:flex;flex-direction:column;gap:.6rem;position:relative}
+  .exhibit::after{content:"INVENTORY 3007";position:absolute;top:.4rem;right:.6rem;font-family:"Courier New",monospace;font-size:.6rem;letter-spacing:.3em;color:#9b6db5}
+  .label{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#cfa4d8;text-transform:uppercase;border-bottom:1px solid #5a3a6e;padding-bottom:.3rem}
+  h2{font-family:"Bodoni Moda",serif;font-size:1.5rem;font-style:italic}
+  .specimen{aspect-ratio:1;border:1px dashed #5a3a6e;background:radial-gradient(ellipse,#3a1d4a,#1c121a 70%);position:relative;display:flex;align-items:center;justify-content:center;font-size:2rem}
+  table{width:100%;border-collapse:collapse;font-family:"Courier New",monospace;font-size:.78rem}
+  td{padding:.3rem;border-bottom:1px dashed #5a3a6e}
+  td:first-child{opacity:.7;letter-spacing:.2em;text-transform:uppercase}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#9b6db5;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="exhibit">
+  <div class="label">from the museum of the future</div>
+  <h2>An artefact, 3017</h2>
+  <p style="font-size:.95rem;line-height:1.5">Recovered from a small drawer in the basement of the city museum. Origin unknown. Condition: preserved.</p>
+  <div class="specimen" id="spec">📦</div>
+  <p style="font-size:.85rem;font-style:italic">"A small, brown object. Warm to the touch. Probably a tool of mourning."</p>
+</section>
+<section class="exhibit">
+  <div class="label">specimen details</div>
+  <h2>Provenance</h2>
+  <table>
+    <tr><td>origin</td><td>unknown · 21st c.</td></tr>
+    <tr><td>composition</td><td>cardboard · ink · wrapping string</td></tr>
+    <tr><td>function</td><td>opinion varies</td></tr>
+    <tr><td>sentiment</td><td>5.6 / 10</td></tr>
+    <tr><td>storage</td><td>glass case, room 14</td></tr>
+    <tr><td>notes</td><td>"May be a bird. May be a song."</td></tr>
+  </table>
+  <p style="font-size:.85rem;font-style:italic;line-height:1.4;color:#9b6db5;margin-top:.4rem">Curatorial note: <em>the curator kept the artefact unwrapped</em>. It was the ribbon that interested her.</p>
+</section>
+<footer>MiniMax M3 · 55 / 100</footer>
+<script>
+  const spec=document.getElementById('spec');const artifacts=['📦','🪐','🪶','📜','🪨','🧭','🕯','🪡'];let i=0;setInterval(()=>{spec.style.transition='transform .8s, opacity .8s';spec.style.opacity=0;setTimeout(()=>{i=(i+1)%artifacts.length;spec.textContent=artifacts[i];spec.style.transform=`rotate(${Math.random()*40-20}deg)`;spec.style.opacity=1},800)},3500);
+</script>
+</body>
+</html>

@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Charcoal Kitchen — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c0808;color:#e0d2b6;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .canopy{background:repeating-linear-gradient(0deg,#1c1212 0 10px,#0c0808 10px 20px);border:2px solid #5a3a1a;min-height:60vh;padding:2rem;display:grid;place-items:center;position:relative}
+  .recipe{max-width:560px;background:#fff8e6;color:#1c0808;padding:2rem 1.6rem;font-family:"Times New Roman",serif;font-size:1.05rem;line-height:1.6;box-shadow:0 20px 30px rgba(0,0,0,.8)}
+  .recipe h2{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic;margin-bottom:.4rem}
+  .recipe h3{font-family:"Bodoni Moda",serif;margin-top:1rem;font-style:italic;color:#a05c2a}
+  .recipe ul{padding-left:1.2rem}
+  .recipe .glyphs{position:absolute;top:1rem;right:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  aside{padding:1rem;background:#1c0808;border:1px solid #5a3a1a;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  aside h3{font-family:"Bodoni Moda",serif;font-style:italic;color:#dba35a;font-size:1.2rem}
+  button{font:inherit;background:transparent;color:#e0d2b6;border:1px solid #5a3a1a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#5a3a1a}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="canopy">
+  <article class="recipe" id="rec">
+    <span class="glyphs">No. 42</span>
+    <h2>Charcoal Kitchen — Tarte Tatin</h2>
+    <p>Take eight small apples. Cut them in halves and then in halves again. Caramelise slowly. Lay a disc of pastry on top. Invert. Eat with a long spoon.</p>
+    <h3>The Work</h3>
+    <ul>
+      <li>Use a heavy iron pan.</li>
+      <li>Do not stir after the sugar turns.</li>
+      <li>Tell at least one person in the room what you are doing.</li>
+    </ul>
+    <h3>The Quiet</h3>
+    <p>Tarte Tatin cannot be hurried. It does not respond to commentary. If the kitchen is too silent, bring the radio.</p>
+  </article>
+</section>
+<aside>
+  <h3>Chef's notes</h3>
+  <p>— Always forgive the pan.</p>
+  <p>— Eat it first; photograph later.</p>
+  <p>— Send a slice to the neighbour with the loud kettle.</p>
+  <p>— Reserve the burnt bits for yourself. They are the truth.</p>
+  <div style="display:flex;gap:.4rem;margin-top:auto;flex-wrap:wrap">
+    <button id="next">Next recipe</button>
+    <button id="ingredient">Add ingredient</button>
+    <button id="print">Print</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 80 / 100</footer>
+<script>
+  const recs=[
+    {t:'Tarte Tatin',g:'No. 42',b:['Eight small apples, halved.','Heavy pan. Patient sugar.','Pastry placed carefully.','Inverted, eaten warm.']},
+    {t:'Wild garlic soup',g:'No. 11',b:['A short-season bunch of garlic leaves.','A small potato.','A thumb of butter.','Stock; patience; one bay leaf.']},
+    {t:'Lemon poset',g:'No. 18',b:['Cream — three measures.','Lemon — half a measure, juiced.','Sugar — a spoonful.','Whisk, set, wobble.']},
+    {t:'Onion tart',g:'No. 22',b:['Onions — several, sliced fine.','Pastry — short, blind.','Slow oven — patient.','A herb — optional.']},
+    {t:'Rice pudding',g:'No. 04',b:['Rice, milk, sugar, lemon peel.','A long oven.','A skin for the chef.','Cinnamon, perhaps.']},
+  ];
+  let i=0;const rec=document.getElementById('rec');
+  document.getElementById('next').addEventListener('click',()=>{i=(i+1)%recs.length;render()});
+  document.getElementById('ingredient').addEventListener('click',()=>{const extras=['a pinch of salt','a small bay leaf','a remembered grater','a flick of olive oil','the rind of one lemon'];recs[i].b.push(extras[Math.floor(Math.random()*extras.length)]);render()});
+  document.getElementById('print').addEventListener('click',()=>window.print());
+  function render(){const r=recs[i];rec.innerHTML=`<span class="glyphs">${r.g}</span><h2>Charcoal Kitchen — ${r.t}</h2><p>A small piece of work. Use a heavy pan and a steady hand.</p><h3>The Work</h3><ul>${r.b.map(x=>'<li>'+x+'</li>').join('')}</ul><h3>The Quiet</h3><p>Take the time. Talk to one person. Eat warm.</p>`}
+</script>
+</body>
+</html>

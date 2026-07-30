@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Plume & Powder — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f7eee2;color:#5a2c0e;font-family:"Times New Roman",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .lab{background:repeating-linear-gradient(135deg,#f7eee2 0 20px,#fbeac9 20px 40px);border:1px dashed #a05c2a;padding:1.4rem;display:flex;flex-direction:column;gap:.6rem;align-items:center;justify-content:center;min-height:60vh}
+  .wheel{width:340px;height:340px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#fff,#a05c2a 70%);position:relative;border:2px solid #5a2c0e;transform:rotate(0deg)}
+  .drops{position:absolute;inset:0;border-radius:50%}
+  .drop{position:absolute;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;color:#fff;font-family:"Courier New",monospace;letter-spacing:.2em;cursor:pointer;border:1px solid rgba(255,255,255,.4);transition:transform .3s}
+  .drop:hover{transform:scale(1.15)}
+  aside{padding:1rem;background:#fff8e6;border:1px dashed #a05c2a;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Ora",serif;font-size:1.4rem;color:#5a2c0e}
+  aside p{font-size:.9rem;line-height:1.5}
+  .blend{background:#f4e7d3;border:1px dashed #5a2c0e;padding:.6rem;font-family:"Courier New",monospace;font-size:.78rem;line-height:1.5;height:100px;overflow:auto}
+  button{font:inherit;background:transparent;color:#5a2c0e;border:1px solid #5a2c0e;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#5a2c0e;color:#f7eee2}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="lab">
+  <div class="wheel" id="wheel">
+    <div class="drops">
+      <div class="drop" style="top:6%;left:50%" data-n="Rose"><span>Rose</span></div>
+      <div class="drop" style="top:25%;left:84%" data-n="Sandalwood"><span>Sandal</span></div>
+      <div class="drop" style="top:60%;left:84%" data-n="Vetiver"><span>Vetiver</span></div>
+      <div class="drop" style="top:84%;left:50%" data-n="Patchouli"><span>Pat.</span></div>
+      <div class="drop" style="top:60%;left:16%" data-n="Bergamot"><span>Berg.</span></div>
+      <div class="drop" style="top:25%;left:16%" data-n="Neroli"><span>Ner.</span></div>
+      <div class="drop" style="top:10%;left:30%;background:rgba(255,255,255,.6);color:#5a2c0e" data-n="Iris"><span>Iris</span></div>
+      <div class="drop" style="top:38%;left:6%;background:rgba(255,255,255,.6);color:#5a2c0e" data-n="Lemon"><span>Lem.</span></div>
+    </div>
+  </div>
+  <p style="font-size:.85rem;font-style:italic;color:#a05c2a">a wheel of accents — each accord lives at a different hour of the day.</p>
+</section>
+<aside>
+  <h1>Perfumery</h1>
+  <p>Begin with a heart, add a top, finish with a base. Three clicks make a perfume. Click "compose" to set it.</p>
+  <div class="blend" id="blend">[empty jar]</div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+    <button id="compose">Compose</button>
+    <button id="clear">Clear</button>
+    <button id="name">Name it</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 62 / 100</footer>
+<script>
+  const wheel=document.getElementById('wheel');let chosen=[];
+  wheel.querySelectorAll('.drop').forEach(d=>d.addEventListener('click',()=>{const n=d.dataset.n;if(chosen.includes(n)){chosen=chosen.filter(x=>x!==n);d.style.boxShadow='none'}else{if(chosen.length<3)chosen.push(n);d.style.boxShadow='0 0 0 4px #5a2c0e'}document.getElementById('blend').textContent=chosen.length?'jar: '+chosen.join(', '):'[empty jar]'}));
+  document.getElementById('clear').addEventListener('click',()=>{chosen=[];document.getElementById('blend').textContent='[empty jar]';wheel.querySelectorAll('.drop').forEach(d=>d.style.boxShadow='none')});
+  document.getElementById('compose').addEventListener('click',()=>{if(chosen.length!==3){document.getElementById('blend').textContent='— pick three notes —';return}document.getElementById('blend').textContent=`composed: ${chosen.join(' + ')} — pour into a small blue bottle, label on Tuesday.`});
+  document.getElementById('name').addEventListener('click',()=>{if(chosen.length!==3)return;const adjectives=['Quiet','First','Velvet','Slow','Post-Rain','Half-Light','Apothecary'];document.getElementById('blend').textContent=`composed: ${adjectives[Math.floor(Math.random()*adjectives.length)]} — of ${chosen.join(' + ')}`});
+</script>
+</body>
+</html>

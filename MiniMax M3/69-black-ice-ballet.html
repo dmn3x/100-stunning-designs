@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Black Ice Ballet — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#040608;color:#e0e6f0;font-family:"Iowan Old Style",serif;min-height:100vh;overflow:hidden}
+  .stage{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 100%,#0e1218,#040608 70%);cursor:crosshair}
+  canvas{display:block;width:100%;height:100%}
+  .title{position:fixed;top:1rem;left:1rem;font-family:"Bodoni Moda",serif;color:#fff;font-style:italic;font-size:1.6rem;letter-spacing:.04em}
+  .title small{display:block;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a6c91;text-transform:uppercase;margin-top:.2rem}
+  .legend{position:fixed;bottom:1rem;left:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a6c91;text-transform:uppercase;display:flex;gap:1rem}
+  .controls{position:fixed;bottom:1rem;right:1rem;display:flex;gap:.4rem}
+  button{font:inherit;background:transparent;color:#cce0eb;border:1px solid #5a6c91;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#5a6c91;color:#040608}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="stage"><canvas id="cv"></canvas></section>
+<div class="title">Black Ice Ballet<small>choreographed by cursor</small></div>
+<div class="legend"><span>↺ 6 trails</span><span>↻ slow</span><span>↔ 0.8s</span></div>
+<div class="controls">
+  <button id="slow">slow</button><button id="fast">fast</button><button id="reset">reset</button>
+  <button id="more">more</button>
+</div>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=innerWidth*2;H=cv.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  let m={x:W/2,y:H/2};let trail=[];let lastMove=Date.now();
+  document.addEventListener('pointermove',e=>{m={x:e.clientX*2,y:e.clientY*2};lastMove=Date.now();const idx=trail.findIndex(t=>t.length<60);if(idx<0)trail.push([{...m}]);else trail[idx].push({...m})});
+  let n=6;function loop(){cx.fillStyle='rgba(4,6,8,.05)';cx.fillRect(0,0,W,H);trail.forEach((t)=>{if(t.length<2)return;for(let i=1;i<t.length;i++){cx.strokeStyle=`hsla(${200+i*2},80%,${40+i*.5}%,${(i/t.length)*.5})`;cx.lineWidth=i/12;cx.beginPath();cx.moveTo(t[i-1].x,t[i-1].y);cx.lineTo(t[i].x,t[i].y);cx.stroke()}});if(Date.now()-lastMove<2000)trail.forEach((t)=>{if(t.length<2)return;const i=t.length-1;const m2={x:m.x,y:m.y};t.push(m2);if(t.length>60)t.shift()});requestAnimationFrame(loop)}loop();
+  document.getElementById('reset').addEventListener('click',()=>{trail=[]});
+  document.getElementById('more').addEventListener('click',()=>{trail.push([]);n=trail.length});
+  document.getElementById('slow').addEventListener('click',()=>{trail.forEach(t=>t.length=Math.min(t.length,20))});
+  document.getElementById('fast').addEventListener('click',()=>{trail.forEach(t=>t.length=Math.min(t.length+10,80))});
+</script>
+</body>
+</html>

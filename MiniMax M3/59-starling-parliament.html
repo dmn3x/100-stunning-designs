@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Starling Parliament — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,#1c2a3a,#3a2a3a);color:#f4d8a8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  .sky{position:relative;aspect-ratio:16/9;border:1px solid #5a3a4a;background:radial-gradient(ellipse at 50% 80%,#5a3a4a,#1c2a3a 70%);overflow:hidden;min-height:60vh}
+  canvas{display:block;width:100%;height:100%}
+  .panel{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.6rem;margin-top:1rem}
+  .panel div{background:rgba(0,0,0,.4);padding:.6rem;font-family:"Courier New",monospace;font-size:.85rem;border:1px solid #5a3a4a}
+  .panel b{display:block;font-size:1.4rem;color:#f5d56e}
+  .panel small{font-size:.7rem;letter-spacing:.3em;color:#a05c4a;text-transform:uppercase}
+  .controls{margin-top:.4rem;display:flex;gap:.4rem}
+  button{font:inherit;background:transparent;color:#f4d8a8;border:1px solid #5a3a4a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#5a3a4a}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c4a;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="sky"><canvas id="cv"></canvas></section>
+<div class="panel">
+  <div><small>birds</small><b id="b">0</b></div>
+  <div><small>cohesion</small><b id="c">0.00</b></div>
+  <div><small>decision</small><b id="d">—</b></div>
+</div>
+<div class="controls">
+  <button id="up">more</button><button id="down">fewer</button><button id="split">split</button><button id="merge">merge</button><button id="north">north</button><button id="south">south</button>
+</div>
+<footer>MiniMax M3 · 59 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=cv.parentElement.offsetWidth*2;H=cv.height=cv.parentElement.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const flock=[];for(let i=0;i<60;i++)flock.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*1,vy:(Math.random()-.5)*1});
+  function step(){flock.forEach(b=>{let cx2=0,cy2=0,n=0;for(const o of flock){const d=Math.hypot(o.x-b.x,o.y-b.y);if(d<60){cx2+=o.x;cy2+=o.y;n++}}if(n>0){cx2/=n;cy2/=n;const dx=(cx2-b.x)*.001,dy=(cy2-b.y)*.001;if(b.vx+dx>2)b.vx=2;if(b.vx+dx<-2)b.vx=-2;b.vx+=dx;b.vy+=dy}if(b.x<0||b.x>W)b.vx*=-1;if(b.y<0||b.y>H)b.vy*=-1;b.vx=Math.max(-2,Math.min(2,b.vx));b.vy=Math.max(-2,Math.min(2,b.vy));b.x+=b.vx;b.y+=b.vy})}
+  let cohesion=0;function loop(){cx.fillStyle='rgba(28,42,58,.4)';cx.fillRect(0,0,W,H);step();flock.forEach(b=>{cx.fillStyle='#3a2a3a';cx.beginPath();cx.arc(b.x,b.y,3,0,Math.PI*2);cx.fill();cx.strokeStyle='#f4d8a8';cx.stroke()});let cx2=0,cy2=0;flock.forEach(b=>{cx2+=b.x;cy2+=b.y});cx2/=flock.length;cy2/=flock.length;cohesion=flock.reduce((a,b)=>a+Math.hypot(b.x-cx2,b.y-cy2),0)/flock.length;document.getElementById('b').textContent=flock.length;document.getElementById('c').textContent=(cohesion/W*100).toFixed(2);document.getElementById('d').textContent=cohesion<W*.2?'roost':cohesion<W*.5?'undivided':'division';requestAnimationFrame(loop)}loop();
+  document.getElementById('up').addEventListener('click',()=>{for(let i=0;i<10;i++)flock.push({x:Math.random()*W,y:H/2,vx:Math.random()-.5,vy:(Math.random()-.5)*.5})});
+  document.getElementById('down').addEventListener('click',()=>{for(let i=0;i<10;i++)if(flock.length)flock.pop()});
+  document.getElementById('split').addEventListener('click',()=>{flock.forEach(b=>{b.vx+=Math.random()-.5;b.vy+=Math.random()-.5})});
+  document.getElementById('merge').addEventListener('click',()=>{const tx=Math.random()*W,ty=H/2;flock.forEach(b=>{b.vx+=(tx-b.x)*.001;b.vy+=(ty-b.y)*.001})});
+  document.getElementById('north').addEventListener('click',()=>flock.forEach(b=>b.vy=-1.6));
+  document.getElementById('south').addEventListener('click',()=>flock.forEach(b=>b.vy=1.6));
+</script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Radio Silence — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0612;color:#cfa4d8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr;gap:1rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #5a3a6e;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a3a6e;text-transform:uppercase}
+  .board{padding:1.4rem;background:rgba(0,0,0,.4);border:1px solid #5a3a6e;display:flex;flex-direction:column;gap:.6rem;min-height:60vh}
+  .group{display:flex;align-items:center;justify-content:space-between;padding:.4rem;border:1px dashed #5a3a6e;cursor:pointer}
+  .group .ch{font-family:"Courier New",monospace;color:#a4b3cf;letter-spacing:.2em}
+  .group .when{font-size:.78rem;color:#5a3a6e;font-family:"Courier New",monospace}
+  .group.live{background:rgba(207,164,216,.15);border-color:#cfa4d8}
+  .group.live .when{color:#f5d56e}
+  aside{padding:1rem;background:rgba(0,0,0,.4);border:1px solid #5a3a6e;font-family:"Courier New",monospace;font-size:.85rem;display:flex;justify-content:space-around;text-align:center}
+  aside div small{display:block;font-size:.7rem;letter-spacing:.3em;color:#5a3a6e;text-transform:uppercase}
+  aside div b{color:#f5d56e}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a3a6e;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Radio Silence</h1>
+  <small>transmission memorial · <b id="d"></b></small>
+  <small><b id="live">0</b> live</small>
+</header>
+<section class="board" id="board"></section>
+<aside>
+  <div><small>frequencies</small><b>1,142</b></div>
+  <div><small>last word</small><b>"tomorrow"</b></div>
+  <div><small>silence since</small><b>1981</b></div>
+  <div><small>listeners</small><b>14</b></div>
+</aside>
+<footer>MiniMax M3 · 87 / 100</footer>
+<script>
+  document.getElementById('d').textContent=new Date().toLocaleDateString();
+  const f=[
+    ['23:14','Stonebridge','Dr. Marrow','last word: the kettle has spoken'],
+    ['22:01','Marsden','the lighthouse keeper','ocean glass; keep off the green field'],
+    ['21:14','Cape Hollow','operator A','weather only'],
+    ['20:04','Royal Mile','a schoolboy','nothing — only the cracks'],
+    ['19:14','River Mouth','H. Pul','the river turned again'],
+    ['18:00','unknown','unknown','—'],
+    ['17:14','Old Coast','the postmaster','one letter; no caller'],
+    ['16:14','Porthallow','the cabin','the kettle hums'],
+    ['15:14','Bletchley','train crew','held — freight'],
+    ['14:14','Cranbrook','one visitor','—'],
+  ];
+  const board=document.getElementById('board');let live=0;
+  f.forEach((r,i)=>{const g=document.createElement('button');g.type='button';g.className='group';g.innerHTML=`<span class="ch">${r[1]} · ${r[2]}</span><span class="when">${r[0]}</span>`;g.addEventListener('click',()=>{g.classList.toggle('live');if(g.classList.contains('live')){live++}else{live--}document.getElementById('live').textContent=live;g.querySelector('.ch').innerHTML=g.classList.contains('live')?r[1]+' · '+r[2]+' <em style="font-size:.8em;color:#cfa4d8"> — '+r[3]+'</em>':r[1]+' · '+r[2]});board.appendChild(g)});
+</script>
+</body>
+</html>

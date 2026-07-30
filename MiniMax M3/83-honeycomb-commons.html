@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Honeycomb Commons — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#3a2c0e;color:#f5d56e;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #a05c2a;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .grid{display:grid;grid-template-columns:repeat(7,1fr);grid-auto-rows:80px;gap:.6rem;margin-top:1rem}
+  @media (max-width:780px){.grid{grid-template-columns:repeat(4,1fr)}}
+  .hex{clip-path:polygon(50% 0,100% 25%,100% 75%,50% 100%,0 75%,0 25%);background:#1c0a02;display:flex;align-items:center;justify-content:center;cursor:pointer;padding:.4rem;text-align:center;font-size:.78rem;font-family:"Courier New",monospace;letter-spacing:.15em}
+  .hex:hover,.hex:focus-visible{background:#a05c2a;outline:none;color:#1c0a02}
+  aside{padding:1rem 1.4rem;border-top:1px solid #a05c2a;margin-top:1rem;font-style:italic;line-height:1.5;color:#a05c2a}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Honeycomb Commons</h1>
+  <small>community noticeboard · 42 cells</small>
+  <small><b id="count">0</b> · read</small>
+</header>
+<main class="grid" id="grid"></main>
+<aside id="read">Pick a note. The honeycomb is patient.</aside>
+<footer>MiniMax M3 · 83 / 100</footer>
+<script>
+  const cells=['parish council','lost · brown paper parcel','found · small stone','library reading list','parrot sitter wanted','beer share','concert Sunday','soup exchange','walking group','italian lessons','tomato seedlings','fence painted','duck visiting rights','show rehearsal','bin rota','fire drill','boat trip','returnable bottle','oat milk','bicycle repair','orchid workshop','cats of no. 9','back-garden book club','call the kettle','scandal: council','raisin cookies','return please','tenant meeting','hydrant practice','sparrow survey','gratitude','lost · hat','transit meeting','soft opening','clean-up day','yarn circle','sewing bee','thank-you','printer paper','question · timetable','next-of-kin'];
+  const grid=document.getElementById('grid');let count=0;
+  cells.forEach((c,i)=>{const h=document.createElement('button');h.type='button';h.className='hex';h.textContent=c;h.addEventListener('click',()=>{count++;document.getElementById('count').textContent=count;document.getElementById('read').innerHTML='<strong style="color:#f5d56e;font-style:normal;font-family:Bodoni Moda,serif;font-size:1.2rem">Cell '+(i+1).toString().padStart(2,'0')+'</strong><br> — '+c+' — posted '+(Math.floor(Math.random()*12)+1)+' days ago'});grid.appendChild(h)});
+</script>
+</body>
+</html>

@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Desert Cinema — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c0a02;color:#ffd28a;font-family:"Bodoni Moda",serif;min-height:100vh;overflow-x:hidden;position:relative}
+  body::before{content:"";position:fixed;inset:0;background:radial-gradient(ellipse at 50% 100%,#5c2208 0,#1c0a02 50%,#0d0401 100%);z-index:-1}
+  .marquee{margin:1rem 1.5rem;border:8px double #ffd28a;padding:2rem 1rem;text-align:center;position:relative}
+  .marquee::before,.marquee::after{content:"★";position:absolute;top:50%;transform:translateY(-50%);color:#ffd28a;font-size:1.8rem}
+  .marquee::before{left:.6rem}.marquee::after{right:.6rem}
+  .logo{font-size:clamp(1.8rem,7vw,4rem);letter-spacing:.18em;font-weight:700;text-shadow:2px 2px 0 #5c2208;color:#fff}
+  .logo small{display:block;font-size:.5em;letter-spacing:.5em;margin-top:.4rem;color:#ffba50}
+  .reel{width:80px;height:80px;border-radius:50%;border:8px solid #ffd28a;margin:0 auto;position:relative;animation:spin 4s linear infinite}
+  .reel::before,.reel::after{content:"";position:absolute;inset:14px;border-radius:50%;border:3px solid #ffd28a}
+  .reel::after{inset:30px;background:#ffd28a}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .stripes{display:flex;margin:1rem 0;height:24px}
+  .stripes span{flex:1;background:repeating-linear-gradient(45deg,#ffd28a 0 6px,#5c2208 6px 12px)}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1rem;padding:1rem 1.5rem}
+  .card{background:rgba(0,0,0,.4);border:1px solid #ffd28a33;padding:1rem;font-family:"Times New Roman",serif;position:relative;cursor:pointer}
+  .card h3{font-size:1.2rem;letter-spacing:.05em;margin-bottom:.3rem;color:#fff}
+  .card .meta{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.25em;color:#ffba50;text-transform:uppercase}
+  .card p{font-size:.85rem;line-height:1.5;margin-top:.4rem}
+  .now{display:grid;grid-template-columns:1fr 200px;gap:1rem;padding:1rem 1.5rem;background:rgba(255,210,138,.05);border-top:2px solid #ffd28a;border-bottom:2px solid #ffd28a;font-family:"Courier New",monospace}
+  @media (max-width:780px){.now{grid-template-columns:1fr}}
+  .screen{aspect-ratio:16/9;background:#000;border:6px solid #ffd28a;position:relative;display:flex;align-items:center;justify-content:center;color:#fff;font-family:"Bodoni Moda",serif;font-style:italic}
+  .screen::before{content:"";position:absolute;inset:0;background:repeating-linear-gradient(180deg,transparent 0 2px,rgba(255,255,255,.05) 2px 3px);pointer-events:none}
+  .scrubber{grid-column:1/-1;display:flex;align-items:center;gap:1rem;margin-top:1rem}
+  .scrubber input{flex:1;accent-color:#ffd28a}
+  footer{padding:1rem 1.5rem;display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#ffba50}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="marquee">
+  <div class="logo">DESERT CINEMA<small>est. 1962 · Marfa, Texas</small></div>
+  <div class="reel" aria-hidden="true"></div>
+</div>
+<div class="stripes"><span></span><span></span><span></span><span></span><span></span></div>
+<section class="now">
+  <div>
+    <div style="font-size:.7rem;letter-spacing:.4em;margin-bottom:.4rem">▣ NOW SHOWING ▣</div>
+    <h2 style="font-family:'Bodoni Moda',serif;font-size:1.6rem;letter-spacing:.05em" id="title">A Slow Conversation in the Dunes</h2>
+    <p style="font-size:.85rem;line-height:1.6;margin-top:.4rem">A man, a woman, and a small radio. 92 minutes, no dialogue.</p>
+    <div class="scrubber">
+      <span id="time">00:00</span>
+      <input type="range" min="0" max="100" value="0" id="scrub">
+      <span id="dur">01:32</span>
+    </div>
+  </div>
+  <div class="screen" id="screen"><span>— feature begins —</span></div>
+</section>
+<div class="grid" id="grid"></div>
+<footer><span>MiniMax M3 · 13 / 100</span><span>tonight's reel · show begins at sundown</span></footer>
+<script>
+  const films=[
+    ['The Cartographer\'s Daughter','61 min · 1964','A young woman maps the city by following its pigeons.'],
+    ['The Brass Radio','88 min · 1971','A family heirloom broadcasts only the sea.'],
+    ['Motel Verdigris','74 min · 1978','Twelve rooms. One guest. A small mystery.'],
+    ['Antarctic Spring','102 min · 1982','A research station finds a garden growing in the corner of the kitchen.'],
+    ['Slow Train, Slow','46 min · 1985','A side-quest through western Texas, mostly landscapes.'],
+    ['The Cartographer, Lost','67 min · 1989','A sequel of sorts — find her work in the dunes.'],
+    ['Ink & Thunder','93 min · 1993','A poet finds a storm on her desk every morning.'],
+    ['Citrus Season','58 min · 1996','A small Mediterranean island loses its lemons.'],
+    ['Midnight Inventory','71 min · 2001','A convenience store after hours; a clerk restocking with care.'],
+    ['A Letter Never Posted','54 min · 2004','Recovered correspondence between two strangers.'],
+    ['The Wax Museum','110 min · 2010','A portrait moves between rooms. Nobody is sure when.'],
+    ['Tin Toy City','35 min · 2012','Forty minutes of pure innocence.'],
+  ];
+  const grid=document.getElementById('grid');films.forEach((f,i)=>{const c=document.createElement('article');c.className='card';c.innerHTML=`<div class="meta">${f[1]}</div><h3>${f[0]}</h3><p>${f[2]}</p>`;c.addEventListener('click',()=>{document.getElementById('title').textContent=f[0];document.getElementById('screen').innerHTML=`<em>— ${f[0]} —</em>`;document.getElementById('time').textContent='00:00';document.getElementById('scrub').value=0});grid.appendChild(c)});
+  const scrub=document.getElementById('scrub'),time=document.getElementById('time');let pct=0;
+  scrub.addEventListener('input',()=>{pct=+scrub.value;const total=92*60;const s=Math.floor(pct/100*total);time.textContent=`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`});
+</script>
+</body>
+</html>

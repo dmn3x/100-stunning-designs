@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Last Arcade — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c0617;color:#f3d95c;font-family:"Press Start 2P",ui-monospace,monospace;min-height:100vh}
+  .bg{position:fixed;inset:0;background:radial-gradient(ellipse at 50% 50%,#2a0a4c,#0c0617 60%);z-index:-1}
+  .scan{position:fixed;inset:0;background:repeating-linear-gradient(180deg,transparent 0 3px,rgba(0,0,0,.18) 3px 4px);pointer-events:none;z-index:3}
+  .cabinet{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem;padding:1.4rem;min-height:100vh}
+  .cab{background:linear-gradient(180deg,#1c1233,#0c0617 80%);border:6px ridge #f3d95c;padding:1rem;color:#7bf0c5;display:flex;flex-direction:column;gap:.6rem}
+  .cab h2{font-family:"Press Start 2P",monospace;font-size:.85rem;color:#f3d95c;text-shadow:2px 2px 0 #5b2b9a;letter-spacing:.1em}
+  .screen{aspect-ratio:4/3;background:#000;border:4px solid #f3d95c;position:relative;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  .controls{display:flex;justify-content:space-between;align-items:center;font-size:.65rem;letter-spacing:.15em;color:#7bf0c5;text-transform:uppercase}
+  .btn{padding:.3rem .7rem;background:#5b2b9a;color:#fff;border:2px solid #f3d95c;cursor:pointer;font-family:inherit;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase}
+  .btn:hover{background:#f3d95c;color:#5b2b9a}
+  .inscr{font-size:.7rem;line-height:1.5;color:#7bf0c5;letter-spacing:.1em}
+  footer{position:fixed;bottom:.4rem;left:50%;transform:translateX(-50%);font-size:.55rem;letter-spacing:.3em;color:#7bf0c5;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="bg"></div>
+<div class="scan"></div>
+<div class="cabinet">
+  <article class="cab"><h2>► ROADRUNNER</h2><div class="screen"><canvas id="c1"></canvas></div><p class="inscr">Jump the cones. Avoid the coyote. Insert coin.</p><div class="controls"><span>► coin:∞</span><button class="btn" type="button">play</button></div></article>
+  <article class="cab"><h2>► ASTROBAIT</h2><div class="screen"><canvas id="c2"></canvas></div><p class="inscr">Catch falling bait from a small stranded rocket. Use ← →.</p><div class="controls"><span>► score:0</span><button class="btn" type="button">play</button></div></article>
+  <article class="cab"><h2>► DRIFTER</h2><div class="screen"><canvas id="c3"></canvas></div><p class="inscr">Hold ◀▶ to drift through long hills.</p><div class="controls"><span>► speed:0</span><button class="btn" type="button">play</button></div></article>
+</div>
+<footer>MiniMax M3 · 29 / 100</footer>
+<script>
+  // simple roadrunner: cone that moves left; player jumps on click
+  const c1=document.getElementById('c1'),x1=c1.getContext('2d');function fit1(){c1.width=c1.offsetWidth*2;c1.height=c1.offsetHeight*2;x1.scale(2,2)}fit1();
+  let cy1=80;const draw1=()=>{x1.fillStyle='#000';x1.fillRect(0,0,c1.width/2,c1.height/2);x1.fillStyle='#f3d95c';x1.fillRect(0,100,200,4);x1.fillRect(0,120,200,4);const t=Date.now()/200%240;x1.fillStyle='#5b2b9a';x1.fillRect(t,90,16,12);x1.fillStyle='#f3d95c';x1.fillRect(40,cy1-30,16,30);requestAnimationFrame(draw1)};draw1();
+  c1.parentElement.parentElement.querySelector('button').addEventListener('click',()=>{cy1=cy1===80?40:80});
+  // astrobait
+  const c2=document.getElementById('c2'),x2=c2.getContext('2d');function fit2(){c2.width=c2.offsetWidth*2;c2.height=c2.offsetHeight*2;x2.scale(2,2)}fit2();
+  let bx=100,by=20,bvx=(Math.random()-.5)*2;const draw2=()=>{x2.fillStyle='#000';x2.fillRect(0,0,c2.width/2,c2.height/2);by+=1;if(by>120){by=0;bx=Math.random()*180}bx+=bvx;if(bx<0||bx>180)bvx=-bvx;x2.fillStyle='#f3d95c';x2.fillRect(bx,by,8,8);x2.fillStyle='#7bf0c5';x2.fillRect(80,110,40,8);requestAnimationFrame(draw2)};draw2();
+  // drifter
+  const c3=document.getElementById('c3'),x3=c3.getContext('2d');function fit3(){c3.width=c3.offsetWidth*2;c3.height=c3.offsetHeight*2;x3.scale(2,2)}fit3();
+  let dx=100,dy=80,vs=1;document.addEventListener('keydown',e=>{if(e.key==='ArrowLeft')vs=-1;if(e.key==='ArrowRight')vs=1});
+  const draw3=()=>{x3.fillStyle='#000';x3.fillRect(0,0,c3.width/2,c3.height/2);x3.fillStyle='#7bf0c5';for(let i=0;i<10;i++)x3.fillRect(0,20+i*10,200,1);dx+=vs;if(dx<10)dx=180;if(dx>190)dx=20;x3.fillStyle='#f3d95c';x3.fillRect(dx,dy,12,8);requestAnimationFrame(draw3)};draw3();
+</script>
+</body>
+</html>

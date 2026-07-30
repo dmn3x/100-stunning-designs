@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Solar Folklore — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,#1c0a0a,#3a0a14);color:#f5d56e;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .sun-pane{position:relative;aspect-ratio:1;background:radial-gradient(circle at 50% 50%,#f5d56e,#c44569 60%,#3a0a14);border:2px solid #c44569;border-radius:8px;overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .sun{width:50%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 40% 40%,#fff,#f5d56e 70%);position:absolute;top:25%;left:25%;animation:pulse 4s ease-in-out infinite}
+  @keyframes pulse{50%{transform:scale(1.04)}}
+  .moon-overlay{position:absolute;background:#3a0a14;border-radius:50%;width:50%;aspect-ratio:1;left:-25%;top:0;cursor:pointer;transition:left 1s}
+  .overlay-label{position:absolute;bottom:.4rem;left:.4rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#fff}
+  .controls{margin-top:1rem;display:flex;gap:.4rem}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #c44569;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#c44569;color:#fff}
+  aside{padding:1rem;background:rgba(0,0,0,.4);border:1px solid #c44569;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.5rem;font-style:italic;color:#f5d56e}
+  aside p{font-size:.95rem;line-height:1.5}
+  .glyphs{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem}
+  .glyph{aspect-ratio:1;border:1px dashed #c44569;display:flex;align-items:center;justify-content:center;font-size:1.6rem;font-family:"Bodoni Moda",serif}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#c44569;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section>
+  <div class="sun-pane">
+    <div class="sun" id="sun"></div>
+    <div class="moon-overlay" id="overlay"></div>
+    <div class="overlay-label" id="lab">covering 0% · phase: full sun</div>
+  </div>
+  <div class="controls">
+    <button id="more">Eclipse</button>
+    <button id="less">Restore</button>
+    <button id="total">Total</button>
+    <button id="myth">Myth</button>
+  </div>
+  <h2 style="margin-top:1rem;font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.3em;color:#c44569;text-transform:uppercase">Sun Myth Atlas</h2>
+  <div class="glyphs">
+    <div class="glyph">☀</div><div class="glyph">🌙</div><div class="glyph">☽</div><div class="glyph">🔥</div><div class="glyph">🐓</div><div class="glyph">🌾</div>
+  </div>
+</section>
+<aside id="side">
+  <h1>The Sun's Old Stories</h1>
+  <p>Each culture has the sun as a small, travelling relative. Watch the eclipse — the myths call back to each other.</p>
+  <p style="font-style:italic">The catalogue reads: "<em>Three brothers rent a room from the sun; the room has no chimney.</em>"</p>
+</aside>
+<footer>MiniMax M3 · 65 / 100</footer>
+<script>
+  const overlay=document.getElementById('overlay');let pct=0,phases=['full sun','waxing crescent','half','waning crescent','diamond ring','corona','total eclipse'];
+  function update(){overlay.style.left=`calc(${pct*1.5-25}% - ${pct*15}%)`;document.getElementById('lab').textContent=`covering ${(pct*1.5).toFixed(0)}% · phase: ${phases[Math.min(phases.length-1,Math.floor(pct/15))]}`}
+  document.getElementById('more').addEventListener('click',()=>{pct=Math.min(85,pct+10);update()});
+  document.getElementById('less').addEventListener('click',()=>{pct=Math.max(0,pct-15);update()});
+  document.getElementById('total').addEventListener('click',()=>{pct=85;update()});
+  document.getElementById('myth').addEventListener('click',()=>{const m=['The sun & the moon once worked shifts. They still do.','Dragons ate the sun, thrice, until a child sang it back.','When the sun sets red, the lake is dreaming.','Eclipses are the sun reading aloud to the horizon.','In the south, the sun takes noon naps. Of course it does.'];document.getElementById('side').innerHTML='<h1>Myth</h1><p style="font-style:italic;font-size:1.1rem;line-height:1.5">'+m[Math.floor(Math.random()*m.length)]+'</p>';pct=0;update()});
+</script>
+</body>
+</html>

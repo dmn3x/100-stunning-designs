@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Negative Space — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#fbfaf3;color:#2a2a2a;font-family:"Inter",sans-serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .gallery{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;align-content:start}
+  @media (max-width:880px){.gallery{grid-template-columns:1fr}}
+  .piece{aspect-ratio:1.2;background:#fff;border:1px solid #2a2a2a;position:relative;cursor:pointer;overflow:hidden}
+  .piece svg{width:100%;height:100%}
+  .piece:hover .absent{opacity:1}
+  .absent{position:absolute;inset:0;background:rgba(255,255,255,.94);display:flex;align-items:center;justify-content:center;text-align:center;font-family:"Iowan Old Style",serif;font-style:italic;font-size:1.1rem;padding:1rem;opacity:0;transition:opacity .4s}
+  .absent span{max-width:80%}
+  aside{padding:1rem;background:#fff;border:1px solid #2a2a2a}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;margin-bottom:.4rem;font-style:italic}
+  aside p{font-size:.9rem;line-height:1.5}
+  .hint{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7e7560;text-transform:uppercase;margin-top:1rem}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7e7560;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="gallery" id="gallery"></section>
+<aside>
+  <h1>Negative Space</h1>
+  <p>A small gallery of absences. The "thing" drawn is a contour. The piece is the absence the contour encloses.</p>
+  <p style="font-style:italic;color:#7e7560;margin-top:.4rem">Hover a piece to reveal what is missing.</p>
+  <p class="hint">instructions: hover · reflect</p>
+</aside>
+<footer>MiniMax M3 · 63 / 100</footer>
+<script>
+  const pieces=[
+    ['A small stone, lifted.','M — circle, weight 2'],
+    ['A river that ran inland.','S — wave, length 80'],
+    ['A book borrowed, not returned.','R — rectangle, 4×6'],
+    ['A kite, untethered.','T — triangle, 60°'],
+    ['A letter, addressed to no one.','E — envelope, flap down'],
+    ['The sound the kettle makes, given a shape.','P — drop, mute'],
+    ['A held breath.','— line, infinite'],
+    ['A pause between sentences.','— comma, nearly'],
+  ];
+  const gallery=document.getElementById('gallery');pieces.forEach((p,i)=>{const d=document.createElement('article');d.className='piece';d.innerHTML=`<svg viewBox="0 0 300 200"><circle cx="150" cy="100" r="60" fill="none" stroke="#2a2a2a" stroke-width="2"/><line x1="100" y1="100" x2="200" y2="100" stroke="#2a2a2a"/></svg><div class="absent"><span>${p[0]}<br><small style="font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#7e7560">№ ${(i+1).toString().padStart(2,'0')}</small></span></div>`;gallery.appendChild(d)});
+</script>
+</body>
+</html>

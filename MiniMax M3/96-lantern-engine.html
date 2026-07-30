@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Lantern Engine — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#040405;color:#f5d56e;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem}
+  .engine{position:relative;aspect-ratio:1;width:60vw;max-width:440px;background:radial-gradient(circle,#a05c2a,#1c0a02 80%);border-radius:14px;border:6px solid #5a2c0e;display:flex;align-items:center;justify-content:center;flex-direction:column;box-shadow:0 30px 60px rgba(0,0,0,.7);transition:transform .2s;cursor:pointer}
+  .engine:active{transform:scale(.96)}
+  .shaft{position:absolute;top:0;left:50%;transform:translateX(-50%);width:30px;height:60%;background:linear-gradient(180deg,#a05c2a,#5a2c0e);border:2px solid #f5d56e;border-radius:8px 8px 0 0}
+  .handle{position:absolute;top:-20px;left:50%;transform:translateX(-50%);width:140px;height:30px;background:linear-gradient(180deg,#f5d56e,#a05c2a);border-radius:30px;border:2px solid #5a2c0e}
+  .rods{display:flex;justify-content:center;gap:.4rem;position:absolute;bottom:0;left:0;right:0;padding:1rem}
+  .rod{aspect-ratio:.3;width:50px;background:linear-gradient(180deg,#a05c2a,#5a2c0e);border-radius:6px}
+  h1{font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.6rem;color:#f5d56e;margin-top:.6rem}
+  small{display:block;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .gate{position:absolute;bottom:0;left:50%;transform:translateX(-50%);font-family:"Courier New",monospace;font-size:.78rem;color:#f5d56e;background:rgba(0,0,0,.6);padding:.4rem .8rem;border:1px dashed #a05c2a}
+  footer{font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<h1>The Lantern Engine<small>crank to summon light</small></h1>
+<button class="engine" id="e" type="button" style="all:unset;cursor:pointer;display:flex;align-items:center;justify-content:center">
+  <div class="shaft" id="shaft"></div>
+  <div class="handle" id="handle"></div>
+  <div class="rods"><div class="rod"></div><div class="rod"></div><div class="rod"></div><div class="rod"></div></div>
+  <div class="gate" id="gate">crank</div>
+</button>
+<footer>MiniMax M3 · 96 / 100</footer>
+<script>
+  const e=document.getElementById('e'),handle=document.getElementById('handle'),gate=document.getElementById('gate');
+  let i=0;const lines=['crank','winding','lit','warm','patient','lit','warm','crank'];setInterval(()=>{handle.style.transform='rotate('+Math.sin(i*.4)*15+'deg)';i++},40);
+  e.addEventListener('click',()=>{gate.textContent=lines[Math.floor(Math.random()*lines.length)];document.body.style.background=Math.random()<.3?'#5a2c0e':'#040405';document.body.style.color=Math.random()<.3?'#fff5d0':'#f5d56e'});
+</script>
+</body>
+</html>

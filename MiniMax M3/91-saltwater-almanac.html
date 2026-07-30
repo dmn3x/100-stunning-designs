@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Saltwater Almanac — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c1f33;color:#cfe9f6;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #5fa8d3;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;color:#fff;font-style:italic}
+  header small{font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#5fa8d3}
+  .ledger{overflow:auto;max-height:calc(100vh - 8rem);border:1px solid #5fa8d3;background:rgba(0,0,0,.4);padding:1rem}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th,td{padding:.4rem .6rem;border-bottom:1px dotted #5fa8d3;text-align:left}
+  th{color:#f5d56e;letter-spacing:.3em;text-transform:uppercase;font-size:.7rem;font-weight:400;background:#0c1f33}
+  tr:hover td{background:rgba(95,168,211,.1)}
+  .high{color:#f5d56e}
+  .low{color:#5fa8d3}
+  aside{padding:1rem;margin-top:.6rem;border-top:1px solid #5fa8d3;display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-size:.85rem}
+  aside span{color:#f5d56e}
+  footer{text-align:right;font-size:.7rem;letter-spacing:.3em;color:#5fa8d3;text-transform:uppercase;margin-top:.6rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Saltwater Almanac</h1>
+  <small>tide ledger · 365 entries</small>
+  <small>window: <b>the river mouth</b></small>
+</header>
+<main class="ledger" id="ledger"></main>
+<aside>
+  <div>neap coefficient<span>0.42</span></div>
+  <div>spring coefficient<span>0.86</span></div>
+  <div>lunar phase<span style="color:#5fa8d3">waxing gibbous</span></div>
+  <div>current sweep<span>1.4 knots</span></div>
+  <div>stormwatch<span style="color:#f5d56e">amber</span></div>
+  <div>visitors<span>14 small boats</span></div>
+</aside>
+<footer>MiniMax M3 · 91 / 100</footer>
+<script>
+  const ledger=document.getElementById('ledger');const table=document.createElement('table');table.innerHTML=`<thead><tr><th>date</th><th>high</th><th>low</th><th>range</th><th>notes</th></tr></thead><tbody></tbody>`;
+  ledger.appendChild(table);const tb=table.querySelector('tbody');
+  const notes=['the lagoon is calmer than usual','a single seal was seen','the rocks are slippery','a fleet of lobster pots','two swans held court','the river turned inwards','a light from a small window','the wind carried a postcard','herons held the line at the bridge','the post office was awake at 4am'];
+  let moon=0;for(let i=0;i<60;i++){const d=new Date(Date.now()-60*86400000+i*86400000);const hi=(Math.sin(moon)*.8+1.4+Math.random()*.2).toFixed(2);const lo=(Math.sin(moon+.5)*.8+.6+Math.random()*.2).toFixed(2);const range=(hi-lo).toFixed(2);const note=notes[Math.floor(Math.random()*notes.length)];moon+=.3;const tr=document.createElement('tr');tr.innerHTML=`<td>${d.toLocaleDateString(undefined,{month:'short',day:'numeric'})}</td><td class="high">${hi}m</td><td class="low">${lo}m</td><td>${range}m</td><td>${note}</td>`;tb.appendChild(tr)}
+</script>
+</body>
+</html>

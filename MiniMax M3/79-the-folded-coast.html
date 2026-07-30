@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Folded Coast — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f6efe0;color:#3a2418;font-family:"Times New Roman",serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+  .paper{aspect-ratio:.7;width:90vw;max-width:520px;position:relative;perspective:1400px;cursor:pointer}
+  .fold{position:absolute;inset:0;background:#fff8e6;transform-origin:top;transition:transform 1s;border:1px solid #c9b48a;display:flex;align-items:center;justify-content:center}
+  .fold::after{content:attr(data-text);position:absolute;bottom:1rem;left:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  .f1{background:linear-gradient(180deg,#fff8e6,#dba35a);clip-path:polygon(0 0,100% 0,100% 80%,0 80%)}
+  .f2{background:linear-gradient(180deg,#f5d56e,#a05c2a);clip-path:polygon(0 80%,100% 80%,100% 100%,0 100%);transform:rotateX(0deg)}
+  .controls{position:fixed;bottom:1rem;left:50%;transform:translateX(-50%);display:flex;gap:.4rem}
+  button{font:inherit;background:transparent;color:#3a2418;border:1px solid #3a2418;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#3a2418;color:#f6efe0}
+  h1{position:fixed;top:1rem;left:1rem;font-family:"Bodoni Moda",serif;font-size:1.4rem;font-style:italic}
+  footer{position:fixed;bottom:1rem;right:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<h1>The Folded Coast</h1>
+<div class="paper" id="p">
+  <div class="fold f1" data-text="this side: inland">Folded Coast</div>
+  <div class="fold f2" data-text="that side: the sea"></div>
+</div>
+<div class="controls"><button id="unfold">Unfold</button><button id="fold">Re-fold</button><button id="flip">Flip</button></div>
+<footer>MiniMax M3 · 79 / 100</footer>
+<script>
+  const f2=document.querySelector('.f2'),f1=document.querySelector('.f1');
+  let unfolded=false;document.getElementById('unfold').addEventListener('click',()=>{f2.style.transform='rotateX(180deg)';unfolded=true});document.getElementById('fold').addEventListener('click',()=>{f2.style.transform='rotateX(0deg)';unfolded=false});document.getElementById('flip').addEventListener('click',()=>{document.getElementById('p').style.transform=document.getElementById('p').style.transform==='rotateY(180deg)'?'rotateY(0)':'rotateY(180deg)'});
+</script>
+</body>
+</html>

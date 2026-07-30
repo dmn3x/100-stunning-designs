@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Errant Compass — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a1410;color:#e8d0a4;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .stage{position:relative;background:radial-gradient(circle at 50% 50%,#3a2614,#0a0604);border:6px ridge #a06d3c;display:flex;align-items:center;justify-content:center;min-height:60vh;cursor:crosshair;perspective:800px}
+  .compass{width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 30% 30%,#f5d56e,#a05c2a 70%);border:8px solid #5a2c0e;position:relative;transform-style:preserve-3d}
+  .needle{position:absolute;top:50%;left:50%;transform-origin:50% 50%;width:80%;height:6px;background:linear-gradient(90deg,#c44569,#5a2c0e);border-radius:3px;transform:translate(-50%,-50%) rotate(0deg)}
+  .needle::before{content:"";position:absolute;left:-8px;top:-4px;width:14px;height:14px;background:#f5d56e;border-radius:50%}
+  .labels{position:absolute;inset:0}
+  .labels span{position:absolute;font-family:"Courier New",monospace;letter-spacing:.4em;font-size:.7rem;color:#5a2c0e;text-transform:uppercase}
+  aside{padding:1rem;background:#0a0604;border:1px solid #a06d3c;font-family:"Courier New",monospace;font-size:.85rem;display:flex;flex-direction:column;gap:.4rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;color:#f5d56e;font-style:italic}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #a06d3c;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#a06d3c;color:#0a0604}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="stage" id="stage">
+  <div class="compass">
+    <div class="labels">
+      <span style="top:5%;left:50%;transform:translateX(-50%)">N</span>
+      <span style="bottom:5%;left:50%;transform:translateX(-50%)">S</span>
+      <span style="top:50%;left:5%;transform:translateY(-50%)">W</span>
+      <span style="top:50%;right:5%;transform:translateY(-50%)">E</span>
+    </div>
+    <div class="needle" id="needle"></div>
+  </div>
+</section>
+<aside>
+  <h1>The Errant Compass</h1>
+  <p>This compass never points north. It points wherever you ask. Click anywhere on the dial — the needle will find a path.</p>
+  <p style="font-size:.85rem;font-style:italic;color:#a06d3c">"The needle does not lie. The needle does not agree with you, either."</p>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto">
+    <button data-t="0">North</button>
+    <button data-t="40">Turn 40</button>
+    <button data-t="100">East-by-north</button>
+    <button data-t="200">Southwest</button>
+    <button data-t="random">Somewhere</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 88 / 100</footer>
+<script>
+  const needle=document.getElementById('needle');let deg=0;let target=0;
+  document.getElementById('stage').addEventListener('pointerdown',e=>{const r=needle.parentElement.getBoundingClientRect();const cx2=(e.clientX-r.left)/r.width*100;const cy2=(e.clientY-r.top)/r.height*100;target=Math.atan2(cy2-50,cx2-50)*180/Math.PI+90});
+  document.querySelectorAll('[data-t]').forEach(b=>b.addEventListener('click',()=>{if(b.dataset.t==='random')target=Math.random()*360;else target=+b.dataset.t}));
+  (function loop(){deg+=(target-deg)*.04;needle.style.transform=`translate(-50%,-50%) rotate(${deg}deg)`;requestAnimationFrame(loop)})();
+</script>
+</body>
+</html>

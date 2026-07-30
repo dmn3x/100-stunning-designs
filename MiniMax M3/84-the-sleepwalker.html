@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Sleepwalker — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#04080c;color:#cfa4d8;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #5a3a6e;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a3a6e;text-transform:uppercase}
+  .town{position:relative;background:radial-gradient(ellipse,#1c1230,#04080c 70%);min-height:calc(100vh - 8rem);overflow:hidden;border:1px solid #5a3a6e}
+  canvas{position:absolute;inset:0;width:100%;height:100%}
+  .walker{position:absolute;width:14px;height:14px;border-radius:50%;background:#f5d56e;box-shadow:0 0 20px #f5d56e}
+  .log{position:absolute;left:1rem;top:1rem;background:rgba(0,0,0,.6);padding:.6rem;font-family:"Courier New",monospace;font-size:.78rem;letter-spacing:.2em;color:#cfa4d8;border:1px solid #5a3a6e;max-width:260px}
+  aside{padding:1rem;background:rgba(0,0,0,.4);border:1px solid #5a3a6e;margin-top:.6rem;font-size:.85rem;font-style:italic;color:#cfa4d8}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a3a6e;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Sleepwalker</h1>
+  <small>drift map · town of low eaves</small>
+  <small>step <b id="step">0</b></small>
+</header>
+<section class="town"><canvas id="cv"></canvas><div class="walker" id="walker"></div>
+<div class="log" id="log">[the sleepwalker sets out]</div>
+</section>
+<aside>Sleepwalkers do not choose where they go; they go where the town is dreaming. Click anywhere on the map to redirect.</aside>
+<footer>MiniMax M3 · 84 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');const w=cv.parentElement;let W,H;function fit(){W=cv.width=w.offsetWidth*2;H=cv.height=w.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const walks=[];const news=['the lamp shop is closed','a cat watches from the bakery','the river runs slower here','the bridge remembers yesterday','the well is quiet','the newspaper blow goes on for two more days','the harbour is closed for paint','the postmaster is asleep','the letter-box is open','the rabbit is in the lettuce again'];
+  let me={x:W/2,y:H/2};let target={x:W/2,y:H/2};let step=0;
+  function draw(){cx.clearRect(0,0,W,H);walks.forEach(p=>{cx.fillStyle=`hsla(${Date.now()*.05%360},60%,${60-Math.hypot(p.x-me.x,p.y-me.y)/30}%,.3)`;cx.beginPath();cx.arc(p.x,p.y,2+Math.hypot(p.x-me.x,p.y-me.y)/30,0,Math.PI*2);cx.fill()});requestAnimationFrame(draw)}draw();
+  w.addEventListener('pointerdown',e=>{const r=w.getBoundingClientRect();target={x:(e.clientX-r.left)/r.width*W,y:(e.clientY-r.top)/r.height*H};step++;document.getElementById('step').textContent=step;document.getElementById('log').innerHTML+='<br> → '+news[step%news.length]});
+  function loop(){const dx=(target.x-me.x)*.02,dy=(target.y-me.y)*.02;me.x+=dx;me.y+=dy;walks.unshift({...me});if(walks.length>120)walks.pop();const wEl=document.getElementById('walker');wEl.style.left=me.x/2+'px';wEl.style.top=me.y/2+'px';requestAnimationFrame(loop)}loop();
+</script>
+</body>
+</html>

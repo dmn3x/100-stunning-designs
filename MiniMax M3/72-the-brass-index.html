@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Brass Index — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a0e06;color:#f5d56e;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #a06d3c;padding-bottom:.6rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  .machine{display:grid;grid-template-columns:1fr 280px;gap:1rem;margin-top:1rem}
+  @media (max-width:880px){.machine{grid-template-columns:1fr}}
+  .cards{aspect-ratio:1.3;background:#0a0602;border:1px solid #a06d3c;display:grid;grid-template-columns:repeat(7,1fr);padding:.4rem;gap:.2rem;overflow:auto}
+  .card{aspect-ratio:.7;background:#f6efe0;color:#0a0602;padding:.2rem;display:flex;flex-direction:column;justify-content:space-between;font-size:.6rem;border-radius:2px;cursor:pointer;position:relative}
+  .card.sel{outline:3px solid #c44569}
+  .card small{display:block;font-family:"Iowan Old Style",serif;font-style:italic}
+  .card i{position:absolute;left:.2rem;top:.2rem;display:block;width:6px;height:6px;background:#0a0602;border-radius:50%}
+  .card i.on{background:#c44569}
+  .reader{padding:1rem;background:#3a2310;border:1px solid #a06d3c;font-size:.85rem;line-height:1.5}
+  .reader h3{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic;color:#f5d56e;margin-bottom:.4rem}
+  .legend{font-size:.7rem;letter-spacing:.2em;color:#a06d3c;text-transform:uppercase}
+  .controls{display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #a06d3c;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#a06d3c;color:#0a0602}
+  footer{text-align:right;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Brass Index</h1>
+  <small>punched card · 03 · library of classification</small>
+</header>
+<div class="machine">
+  <div class="cards" id="cards"></div>
+  <aside class="reader">
+    <h3>Card reader</h3>
+    <p id="read">Click a card to read its classification.</p>
+    <div class="legend">71 cards · 1 drawer</div>
+    <div class="controls">
+      <button id="all">All topics</button>
+      <button id="find">Find by topic</button>
+      <button id="reset">Reset</button>
+    </div>
+    <input id="q" placeholder="type a topic…" style="margin-top:.6rem;width:100%;font:inherit;background:#0a0602;color:#f5d56e;border:1px solid #a06d3c;padding:.4rem .6rem">
+  </aside>
+</div>
+<footer>MiniMax M3 · 72 / 100</footer>
+<script>
+  const topics=['letters','rivers','kettles','sound','storms','cat','harbour','library','moon','tea','postcards','fish','music','horses','gardens','kites','sailors','quarrels','gifts','birds','midnight','cat','moss','houses','silence','orchids','carts','castles','boxes','bridges','dreams','celery','cat','doors','key','lamp','shadow','shores','cousins','pipes','pebbles','gold','silver','apples','maps','pearl','thermos','pine','twins','wheat','silver','roses','saffron','islands','storms','egg','ruby','heron','whistles','rain','hand','violin','letters','cat','tin','puddles','wax','tea','orchid','curtains','cocoa','wings'];
+  const cards=document.getElementById('cards'),read=document.getElementById('read');
+  for(let i=0;i<71;i++){const c=document.createElement('button');c.type='button';c.className='card';const punches=Math.floor(Math.random()*8)+1;c.innerHTML=`<i></i><small>№${(i+1).toString().padStart(3,'0')}</small><div style="text-align:center;font-family:'Iowan Old Style',serif;font-style:italic;font-size:.7rem">${topics[i%topics.length]}</div><small style="font-size:.5rem;color:#7d4520">shelf ${Math.floor(i/12)+1}, row ${i%4+1}</small>`;for(let j=0;j<punches;j++){const h=document.createElement('i');h.className='on';h.style.left=2+Math.random()*14+'px';h.style.top=2+Math.random()*16+'px';c.appendChild(h)}c.addEventListener('click',()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('sel'));c.classList.add('sel');read.innerHTML=`<strong style="font-family:'Bodoni Moda',serif;color:#f5d56e">${topics[i%topics.length]}</strong><br>classification #${(i+1).toString().padStart(3,'0')}<br>shelf ${Math.floor(i/12)+1}, row ${i%4+1}<br>punched: ${punches} holes<br>"Across the library, this card never lines up with its neighbour. Coincidence, or attendance."`});cards.appendChild(c)}
+  document.getElementById('all').addEventListener('click',()=>{read.innerHTML='<em>all topics — '+(topics.length)+' distinct — sorted by neighbours.</em>'});
+  document.getElementById('find').addEventListener('click',()=>{const q=document.getElementById('q').value.trim().toLowerCase();let found=-1;for(let i=0;i<topics.length;i++)if(topics[i]===q){found=i;break}if(found>=0){document.querySelectorAll('.card')[found].click()}else read.innerHTML='— topic not yet catalogued —'});
+  document.getElementById('reset').addEventListener('click',()=>{document.querySelectorAll('.card').forEach(x=>x.classList.remove('sel'));read.textContent='Click a card to read its classification.';document.getElementById('q').value=''});
+</script>
+</body>
+</html>

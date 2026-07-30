@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Neon Sepia — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c1014;color:#f5d56e;font-family:"Bodoni Moda",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .booth{position:relative;background:radial-gradient(circle at 50% 30%,#3a1a2a,#1c1014);border:6px ridge #a05c2a;display:flex;align-items:center;justify-content:center;min-height:60vh;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  .flash{position:absolute;width:100%;height:100%;background:rgba(255,255,255,.9);opacity:0;pointer-events:none}
+  aside{padding:1rem;background:rgba(0,0,0,.4);border:1px solid #a05c2a;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-style:italic;font-size:1.4rem;color:#f5d56e}
+  aside p{font-size:.9rem;line-height:1.5;color:#dba35a}
+  .controls button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #a05c2a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace;width:100%;margin-bottom:.4rem}
+  .controls button:hover{background:#a05c2a}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="booth">
+  <canvas id="cv"></canvas>
+  <div class="flash" id="flash"></div>
+</section>
+<aside>
+  <h1>Neon Sepia</h1>
+  <p>A photo-booth for the future that remembers the past too well. Select a filter, click the booth.</p>
+  <div class="controls">
+    <button data-f="sepia">Sepia with neon</button>
+    <button data-f="chrome">Chrome & sulphur</button>
+    <button data-f="rose">Rose-tinted</button>
+    <button data-f="noir">Noir</button>
+    <button id="snap">Take photo</button>
+  </div>
+  <p style="font-size:.85rem;font-style:italic;margin-top:auto">"Each filter is a kind of memory. Each memory is a kind of weather."</p>
+</aside>
+<footer>MiniMax M3 · 78 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');const w=cv.parentElement;let W,H;function fit(){W=cv.width=w.offsetWidth*2;H=cv.height=w.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const subjects=['🪑','🌆','🛋','🏛','👤','🌿','🪞','🎷'];let subj=0;
+  let filter='sepia';function filterStyle(){return filter==='sepia'?'sepia(0.7) saturate(2) hue-rotate(30deg)':filter==='chrome'?'grayscale(0.3) contrast(1.4) saturate(1.5)':filter==='rose'?'sepia(0.4) hue-rotate(-20deg) saturate(1.6)':'grayscale(0.7) contrast(1.6) brightness(.8)'}
+  function draw(){cx.clearRect(0,0,W,H);cx.filter=filterStyle();cx.fillStyle='#1c1014';cx.fillRect(0,0,W,H);cx.fillStyle='#a05c2a';cx.fillRect(W*.2,H*.4,W*.6,H*.5);for(let i=0;i<6;i++){cx.fillStyle=`hsla(${Math.random()*30+10},60%,${30+Math.random()*20}%,.4)`;cx.fillRect(W*.1+Math.random()*W*.8,H*.1+Math.random()*H*.2,20,20)}cx.font=`${H*.3}px serif`;cx.fillText(subjects[subj],W*.5,H*.6);cx.textAlign='center';cx.filter='none';requestAnimationFrame(draw)}
+  draw();
+  let i=0;setInterval(()=>{subj=(subj+1)%subjects.length},3000);
+  document.querySelectorAll('[data-f]').forEach(b=>b.addEventListener('click',()=>filter=b.dataset.f));
+  document.getElementById('snap').addEventListener('click',()=>{const f=document.getElementById('flash');f.style.transition='opacity .1s';f.style.opacity=1;setTimeout(()=>{f.style.transition='opacity 1s';f.style.opacity=0},80)});
+</script>
+</body>
+</html>

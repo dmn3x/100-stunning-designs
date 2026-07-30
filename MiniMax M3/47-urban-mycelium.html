@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Urban Mycelium — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#080d0a;color:#a4d7a6;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .map{background:#040807;border:1px solid #2c4c30;min-height:60vh;position:relative;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  aside{background:#0c140e;border:1px solid #2c4c30;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Ora",serif;font-size:1.4rem;color:#d8f5a4}
+  aside p{font-size:.9rem;line-height:1.5}
+  .controls button{font:inherit;background:transparent;color:#a4d7a6;border:1px solid #a4d7a6;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;width:100%;margin-bottom:.4rem}
+  .controls button:hover{background:#a4d7a6;color:#040807}
+  .log{font-size:.75rem;line-height:1.6;height:80px;overflow:auto;border-top:1px dashed #2c4c30;padding-top:.4rem}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#587c5d;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="map"><canvas id="cv"></canvas></section>
+<aside>
+  <h1>Urban Mycelium</h1>
+  <p>Below the city, life grows. Plot fruiting bodies; the network connects them by shortest-path.</p>
+  <div class="controls">
+    <button id="node">Plant body</button>
+    <button id="grow">Pulse</button>
+    <button id="clear">Clear</button>
+  </div>
+  <div class="log" id="log">[subterranean] underlay layer 04 · neutral</div>
+</aside>
+<footer>MiniMax M3 · 47 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const nodes=[];const gridW=24,gridH=14;function snap(x,y){return [Math.round(x/(W/gridW))*(W/gridW),Math.round(y/(H/gridH))*(H/gridH)]}
+  function drawGrid(){cx.strokeStyle='rgba(60,90,72,.4)';for(let i=0;i<gridW;i++){cx.beginPath();cx.moveTo(i*W/gridW,0);cx.lineTo(i*W/gridW,H);cx.stroke()}for(let i=0;i<gridH;i++){cx.beginPath();cx.moveTo(0,i*H/gridH);cx.lineTo(W,i*H/gridH);cx.stroke()}}
+  function drawNodes(){nodes.forEach(n=>{cx.fillStyle=n.c;cx.beginPath();cx.arc(n.x,n.y,12,0,Math.PI*2);cx.fill();cx.fillStyle='#d8f5a4';cx.beginPath();cx.arc(n.x,n.y,4,0,Math.PI*2);cx.fill()})}
+  function drawConnections(){for(let i=0;i<nodes.length;i++){let best=null,bd=80;for(let j=0;j<nodes.length;j++){if(i===j)continue;const d=Math.hypot(nodes[i].x-nodes[j].x,nodes[i].y-nodes[j].y);if(d<bd){bd=d;best=nodes[j]}}if(best){cx.strokeStyle=`rgba(164,215,166,.3)`;cx.beginPath();cx.moveTo(nodes[i].x,nodes[i].y);cx.lineTo(best.x,best.y);cx.stroke()}}}
+  function loop(){cx.clearRect(0,0,W,H);drawGrid();drawConnections();drawNodes();requestAnimationFrame(loop)}loop();
+  cv.parentElement.addEventListener('pointerdown',e=>{const r=cv.getBoundingClientRect();const[x,y]=snap((e.clientX-r.left)/r.width*W,(e.clientY-r.top)/r.height*H);nodes.push({x,y,c:`hsl(${Math.random()*60+90},60%,40%)`});addLog('planted mycelial body at '+Math.round(x/W*100)+','+Math.round(y/H*100)+'%')});
+  document.getElementById('grow').addEventListener('click',()=>{nodes.forEach(n=>{const cx2=n.x+Math.random()*60-30;const cy2=n.y+Math.random()*60-30;cx.strokeStyle='rgba(216,245,164,.7)';cx.lineWidth=1;cx.beginPath();cx.moveTo(n.x,n.y);cx.lineTo(cx2,cy2);cx.stroke()});addLog('pulse sent')});
+  document.getElementById('clear').addEventListener('click',()=>{nodes.length=0;addLog('plot cleared')});
+  const log=document.getElementById('log');function addLog(s){log.innerHTML+=`<br>[${new Date().toLocaleTimeString()}] ${s}`;log.scrollTop=log.scrollHeight}
+</script>
+</body>
+</html>

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Kite Works — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,#9dd7e5 0%,#bce6c1 60%,#a4c98f 100%);color:#1d2a4c;font-family:"Iowan Old Style",serif;min-height:100vh;overflow:hidden;position:relative;cursor:crosshair}
+  canvas#c{position:fixed;inset:0;width:100%;height:100%}
+  .hud{position:fixed;top:1rem;left:1rem;background:rgba(255,255,255,.7);backdrop-filter:blur(8px);padding:.8rem 1rem;border:1px solid #1d2a4c;font-family:"Courier New",monospace;font-size:.75rem;line-height:1.6;letter-spacing:.15em;max-width:280px}
+  .hud h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#1d2a4c;margin-bottom:.3rem}
+  .dial{position:fixed;top:1rem;right:1rem;background:rgba(255,255,255,.7);backdrop-filter:blur(8px);padding:.6rem;border:1px solid #1d2a4c;width:160px;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em}
+  .dial input{width:100%;margin-top:.4rem;accent-color:#1d2a4c}
+  .log{position:fixed;bottom:1rem;left:1rem;right:1rem;background:rgba(255,255,255,.8);padding:.6rem;font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.2em;border:1px solid #1d2a4c;text-align:center;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<aside class="hud">
+  <h1>Kite Works</h1>
+  <p>A small laboratory in a small wind. Drag the cursor to fly a kite.</p>
+  <p>Each kite has its own temperament. Press <kbd>space</kbd> to cycle kites.</p>
+</aside>
+<aside class="dial">
+  Wind
+  <input type="range" min="0" max="100" value="40" id="wind"><br>
+  Streamers
+  <input type="range" min="0" max="100" value="60" id="stream"><br>
+  Anchor
+  <input type="range" min="20" max="100" value="50" id="anchor">
+</aside>
+<div class="log" id="log">[kite shack] good wind · steady · sky is honest</div>
+<script>
+  const c=document.getElementById('c'),cx=c.getContext('2d');let W,H;function fit(){W=c.width=innerWidth*2;H=c.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const kites=[{c:'#c44569',shape:0},{c:'#e8a02a',shape:1},{c:'#1d6e3a',shape:2},{c:'#0d3b66',shape:3}];
+  let kite=0,w=40,s=60,a=50;let m={x:innerWidth/2,y:innerHeight*.4};document.addEventListener('pointermove',e=>m={x:e.clientX,y:e.clientY});
+  document.getElementById('wind').oninput=e=>w=+e.target.value;document.getElementById('stream').oninput=e=>s=+e.target.value;
+  document.addEventListener('keydown',e=>{if(e.key===' '){kite=(kite+1)%kites.length;document.getElementById('log').textContent='switched kite '+(kite+1)}});
+  function loop(){
+    cx.clearRect(0,0,W,H);
+    // clouds
+    cx.fillStyle='rgba(255,255,255,.5)';for(let i=0;i<5;i++){const x=(i*300+Date.now()*.01*w)%W,y=100+i*40;cx.beginPath();cx.ellipse(x,y,80,30,0,0,Math.PI*2);cx.fill()}
+    // line
+    const anchor={x:W/2,y:H-H*.15};cx.strokeStyle='#1d2a4c';cx.lineWidth=1;cx.beginPath();cx.moveTo(anchor.x,anchor.y);cx.lineTo(m.x*2,m.y*2);cx.stroke();
+    // kite
+    const k=kites[kite];cx.save();cx.translate(m.x*2,m.y*2);cx.rotate(Math.sin(Date.now()*.001)*.2);
+    cx.fillStyle=k.c;
+    if(k.shape===0){cx.beginPath();cx.moveTo(0,-30);cx.lineTo(20,15);cx.lineTo(-20,15);cx.closePath();cx.fill()}
+    else if(k.shape===1){cx.beginPath();cx.arc(0,0,28,0,Math.PI*2);cx.fill();cx.beginPath();cx.arc(0,0,28,.5,1.5);cx.fillStyle='#fff';cx.fill()}
+    else if(k.shape===2){cx.fillRect(-25,-25,50,50)}
+    else{cx.beginPath();cx.moveTo(0,-25);cx.lineTo(20,25);cx.lineTo(-20,25);cx.closePath();cx.fill();cx.fillStyle='#fff';cx.fillRect(-2,-15,4,40)}
+    // streamers
+    for(let i=0;i<8;i++){cx.strokeStyle=k.c;cx.lineWidth=2;cx.beginPath();cx.moveTo(0,25);const seg=s/8;for(let j=0;j<8;j++){cx.lineTo(Math.sin(j+Date.now()*.005)*8*j,25+seg*j)}cx.stroke()}
+    cx.restore();
+    requestAnimationFrame(loop);
+  }
+  loop();
+</script>
+</body>
+</html>

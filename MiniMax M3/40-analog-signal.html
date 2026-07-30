@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Analog Signal — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0e1009;color:#b5b88a;font-family:"JetBrains Mono",ui-monospace,monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .scope{background:#10130a;border:8px ridge #4a4d2a;padding:1rem;display:flex;flex-direction:column;gap:.6rem;min-height:60vh}
+  .screen{flex:1;background:#0a0c05;position:relative;border:1px solid #4a4d2a;overflow:hidden}
+  svg{width:100%;height:100%}
+  .row{display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#7a7e54}
+  .knob{display:grid;place-items:center;width:80px;height:80px;border-radius:50%;background:radial-gradient(circle,#2a2c12,#0a0c05 70%);border:2px solid #7a7e54;color:#b5b88a;font-size:.7rem;cursor:pointer;font-family:inherit;letter-spacing:.2em;text-transform:uppercase}
+  .knob span{writing-mode:vertical-rl}
+  aside{background:#10130a;border:1px solid #4a4d2a;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.3rem;color:#fff;font-style:italic}
+  aside p{font-size:.9rem;line-height:1.5}
+  .slider{display:flex;flex-direction:column;gap:.4rem}
+  input[type=range]{accent-color:#b5b88a;width:100%}
+  .legend{font-size:.7rem;letter-spacing:.2em;color:#7a7e54;text-transform:uppercase}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#7a7e54;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="scope">
+  <div class="screen"><svg id="scope" viewBox="0 0 800 400" preserveAspectRatio="none"></svg></div>
+  <div class="row">
+    <span>CH A</span>
+    <span id="hz">14.7 Hz</span>
+    <span>·</span>
+    <span id="amp">±2.4</span>
+    <span>·</span>
+    <span id="phase">+0.18</span>
+  </div>
+  <div style="display:flex;gap:.6rem;align-items:center">
+    <button class="knob" id="k1"><span>freq</span></button>
+    <button class="knob" id="k2"><span>amp</span></button>
+    <button class="knob" id="k3"><span>phase</span></button>
+    <button class="knob" id="k4"><span>noise</span></button>
+  </div>
+</section>
+<aside>
+  <h1>Signal Archaeology Lab</h1>
+  <p>Tune the dials and listen to the carrier hum. Today's specimen: a transmission pulled from a record player that learned to dream.</p>
+  <div class="slider"><label for="fr">Frequency · carrier wave</label><input id="fr" type="range" min="1" max="40" value="14"></div>
+  <div class="slider"><label for="am">Amplitude</label><input id="am" type="range" min="0" max="50" value="24"></div>
+  <div class="slider"><label for="ph">Phase shift</label><input id="ph" type="range" min="-180" max="180" value="18"></div>
+  <div class="slider"><label for="ns">Noise floor</label><input id="ns" type="range" min="0" max="100" value="20"></div>
+  <p class="legend">status: <b id="lock" style="color:#b5b88a">locked</b></p>
+</aside>
+<footer>MiniMax M3 · 40 / 100</footer>
+<script>
+  const svg=document.getElementById('scope');let fr=14,am=24,ph=18,ns=20,traces=Array(900).fill(0);let lock='locked';
+  function draw(){let s='';for(let i=0;i<traces.length-1;i++){const x1=i/traces.length*800,y1=200-traces[i],x2=(i+1)/traces.length*800,y2=200-traces[i+1];s+=`<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#b5b88a" stroke-width="1.2"/>`}svg.innerHTML=s+`<line x1="0" y1="200" x2="800" y2="200" stroke="#7a7e54" stroke-dasharray="4 4"/>`}
+  setInterval(()=>{traces.shift();traces.push(Math.sin(Date.now()*.001*fr/8)*am+Math.random()*ns/20+(Math.random()-.5)*ns/30);draw();document.getElementById('hz').textContent=fr.toFixed(1)+' Hz';document.getElementById('amp').textContent='±'+(am/10).toFixed(1);document.getElementById('phase').textContent=(ph>=0?'+':'')+(ph/100).toFixed(2);document.getElementById('lock').textContent=ns>80?'drifting':ns>60?'marginal':'locked';document.getElementById('lock').style.color=ns>80?'#e6a04a':ns>60?'#d4cf3a':'#b5b88a'},100);
+  ['fr','am','ph','ns'].forEach(id=>document.getElementById(id).addEventListener('input',e=>{[id==='fr'?fr:id==='am'?am:id==='ph'?ph:ns]=+e.target.value}));
+  document.querySelectorAll('.knob').forEach((b,i)=>b.addEventListener('click',()=>{if(i===0)fr++;if(i===1)am+=2;if(i===2)ph+=10;if(i===3)ns=Math.min(100,ns+10);document.getElementById('fr').value=fr;document.getElementById('am').value=am;document.getElementById('ph').value=ph;document.getElementById('ns').value=ns}));
+  draw();
+</script>
+</body>
+</html>

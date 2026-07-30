@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Cloud Census — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,#a0c8e0,#e0e8f0 60%);color:#1a2e4a;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr auto;gap:1rem}
+  header{display:flex;justify-content:space-between;border-bottom:2px solid #1a2e4a;padding-bottom:.6rem;flex-wrap:wrap;gap:.5rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;color:#1a2e4a}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#4a6cb0;text-transform:uppercase}
+  .sky{position:relative;min-height:60vh;border:1px solid #1a2e4a;background:linear-gradient(180deg,#7ad6f0,#a0c8e0 70%);overflow:hidden}
+  .cloud{position:absolute;background:rgba(255,255,255,.85);border-radius:50%;cursor:crosshair;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-family:"Courier New",monospace;color:#1a2e4a}
+  .log{padding:1rem;background:#fff;border-top:4px solid #1a2e4a}
+  .log .row{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .log .row b{color:#0e3b66}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#4a6cb0;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Cloud Census</h1>
+  <small>bureau of impossible weather</small>
+  <small>today: <b id="d"></b></small>
+</header>
+<section class="sky" id="sky"></section>
+<section class="log">
+  <div class="row">
+    <div>Clouds seen<b id="cs">0</b></div>
+    <div>Cirrus <b id="ci">0</b></div>
+    <div>Cumulus <b id="cu">0</b></div>
+    <div>Strange <b id="st">0</b></div>
+  </div>
+</section>
+<footer>MiniMax M3 · 52 / 100</footer>
+<script>
+  document.getElementById('d').textContent=new Date().toLocaleDateString(undefined,{weekday:'long'});
+  const sky=document.getElementById('sky');const types=['cirrus','cumulus','strange','cumulus','cirrus','strange'];
+  function gen(){for(let i=0;i<24;i++){const c=document.createElement('button');c.type='button';c.className='cloud';const r=Math.random()*60+20;c.style.width=r*1.5+'px';c.style.height=r+'px';c.style.top=Math.random()*70+'%';c.style.left=Math.random()*80+'%';c.textContent=types[i%types.length];c.dataset.type=types[i%types.length];c.addEventListener('click',()=>{const t=c.dataset.type;document.getElementById('cs').textContent=+document.getElementById('cs').textContent+1;document.getElementById(t==='cirrus'?'ci':t==='cumulus'?'cu':'st').textContent=+document.getElementById(t==='cirrus'?'ci':t==='cumulus'?'cu':'st').textContent+1;c.style.transition='all 1s';c.style.transform='translateY(-200px) scale(.5)';c.style.opacity=0;setTimeout(()=>c.remove(),1100)});sky.appendChild(c)}}
+  gen();
+  setInterval(()=>{if(sky.children.length<24){const c=document.createElement('button');c.type='button';c.className='cloud';const r=Math.random()*60+20;c.style.width=r*1.5+'px';c.style.height=r+'px';c.style.top='100%';c.style.left=Math.random()*80+'%';c.textContent=types[Math.floor(Math.random()*types.length)];c.dataset.type=c.textContent;c.addEventListener('click',()=>{document.getElementById('cs').textContent=+document.getElementById('cs').textContent+1;const t=c.dataset.type;document.getElementById(t==='cirrus'?'ci':t==='cumulus'?'cu':'st').textContent=+document.getElementById(t==='cirrus'?'ci':t==='cumulus'?'cu':'st').textContent+1;c.style.transition='all 1s';c.style.transform='translateY(-200px)';c.style.opacity=0;setTimeout(()=>c.remove(),1100)});sky.appendChild(c);setTimeout(()=>{c.style.transition='all 6s';c.style.top='-20%'},100)}},2000);
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Afterimage — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0a0a;color:#f0e6cd;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .sheet{background:#1c1c1c;border:1px solid #2c2c2c;padding:1rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:.8rem;min-height:60vh}
+  .frame{aspect-ratio:1;background:#000;border:1px solid #3a3a3a;position:relative;cursor:pointer;overflow:hidden}
+  .frame img,.frame .p{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+  .frame .p{display:flex;align-items:center;justify-content:center;font-family:"Bodoni Moda",serif;font-size:2rem;color:#f0e6cd;background:radial-gradient(circle,#3a3a3a,#1c1c1c)}
+  .frame.selected{border:2px solid #f0e6cd}
+  .frame.selected::after{content:"★";position:absolute;top:.4rem;right:.4rem;color:#f5d56e;font-size:1rem}
+  .panel{background:#1c1c1c;border:1px solid #2c2c2c;padding:1rem;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .panel h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#f0e6cd}
+  .panel p{font-family:"Iowan Old Style",serif;font-size:.95rem;line-height:1.5}
+  .meta{display:flex;justify-content:space-between;font-size:.75rem;letter-spacing:.2em;color:#aaa}
+  button{font:inherit;background:transparent;color:#f0e6cd;border:1px solid #f0e6cd;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}
+  button:hover{background:#f0e6cd;color:#1c1c1c}
+  .annot{background:#f5d56e;color:#0a0a0a;padding:.5rem .7rem;font-family:"Courier New",monospace;font-size:.78rem;line-height:1.5;border:1px solid #f0e6cd}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#aaa;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="sheet" id="sheet"></section>
+<aside class="panel">
+  <h1>Afterimage — Contact Sheet #14</h1>
+  <p>Choose three frames. The third becomes the keepers' note for the contact print.</p>
+  <div class="meta"><span id="count">3 / 3 selected</span><span id="film">Tri-X · 400</span></div>
+  <div class="annot" id="annot">— No annotation yet.</div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+    <button id="clear">Clear</button>
+    <button id="print">Annotate</button>
+    <button id="mix">Try a mix</button>
+  </div>
+  <hr style="border:none;border-top:1px dashed #3a3a3a;margin:.6rem 0">
+  <p style="font-size:.85rem">Notes from the photographer:</p>
+  <p style="font-style:italic;color:#f5d56e;font-size:.85rem;line-height:1.4">"The third frame is always the one I remember. Usually it is also the one that survives the cut."</p>
+</aside>
+<footer>MiniMax M3 · 35 / 100</footer>
+<script>
+  const sheets=['☀ 🌙 ⛰','⛵ 🌅 🌳','🌊 🏛 🌹','🐦 🌿 🌾','🌻 🍎 🌶','🍂 🌫 🪶','🌜 ⭐ ✨','🎭 🎪 🎷','📚 🖋 🪞','🕯 🍷 🌹','🌫 🛤 🏚','🦢 🕊 🐚'];
+  const sheet=document.getElementById('sheet'),count=document.getElementById('count'),annot=document.getElementById('annot');
+  const selections=[];
+  sheets.forEach((s,i)=>{const f=document.createElement('button');f.type='button';f.className='frame';f.innerHTML=`<div class="p" style="background:linear-gradient(135deg, hsl(${i*30},30%,${15+i}%), hsl(${i*30+60},30%,25%))">${s}</div>`;f.dataset.idx=i;f.addEventListener('click',()=>{f.classList.toggle('selected');if(f.classList.contains('selected')){selections.push(i);if(selections.length>3){const old=document.querySelector('.frame.selected');old.classList.remove('selected');selections.shift()}}else{const ix=selections.indexOf(i);if(ix>=0)selections.splice(ix,1)}count.textContent=`${selections.length} / 3 selected`});sheet.appendChild(f)});
+  document.getElementById('clear').addEventListener('click',()=>{document.querySelectorAll('.frame').forEach(f=>f.classList.remove('selected'));selections.length=0;count.textContent='0 / 3 selected';annot.textContent='— No annotation yet.'});
+  document.getElementById('print').addEventListener('click',()=>{if(selections.length<3){annot.textContent='— pick three first —';return}annot.textContent=`keep ${selections[0]+1}-${selections[1]+1}-${selections[2]+1} · light: warm · scene: ${sheets[selections[2]]}`});
+  document.getElementById('mix').addEventListener('click',()=>{selections.length=0;document.querySelectorAll('.frame').forEach(f=>f.classList.remove('selected'));const pool=Array.from({length:12},(_,i)=>i);for(let i=0;i<3;i++){const r=Math.floor(Math.random()*pool.length);selections.push(pool[r]);pool.splice(r,1);document.querySelector(`.frame[data-idx="${selections[selections.length-1]}"]`).classList.add('selected')}count.textContent='3 / 3 selected';annot.textContent='— try this: '+selections.map(s=>s+1).join(' · ')});
+</script>
+</body>
+</html>

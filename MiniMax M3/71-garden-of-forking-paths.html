@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Garden of Forking Paths — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0c2a18;color:#dde7d3;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem}
+  header{display:flex;justify-content:space-between;border-bottom:1px solid #5a8a55;padding-bottom:.6rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#a3d7a0}
+  .paths{margin-top:1rem;display:grid;gap:.6rem}
+  .step{background:rgba(0,0,0,.4);border:1px solid #5a8a55;padding:1rem;font-size:1.05rem;line-height:1.6}
+  .step h2{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic;color:#a3d7a0;margin-bottom:.4rem;border-bottom:1px solid #5a8a55;padding-bottom:.3rem}
+  .choices{display:flex;flex-wrap:wrap;gap:.4rem;margin-top:.6rem}
+  .choices button{font:inherit;background:transparent;color:#dde7d3;border:1px solid #5a8a55;padding:.5rem .8rem;cursor:pointer;letter-spacing:.1em;font-family:"Courier New",monospace;font-size:.78rem}
+  .choices button:hover{background:#5a8a55;color:#0c2a18}
+  .log{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;color:#a3d7a0;margin-top:1rem;padding:.6rem;background:#04140c;border:1px dashed #5a8a55;min-height:40px}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a8a55;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Garden of Forking Paths</h1>
+  <small>a small narrative · read at your own forks</small>
+  <small>current step <b id="cur">— begin —</b></small>
+</header>
+<main class="paths" id="paths"></main>
+<div class="log" id="log">[setting out]</div>
+<footer>MiniMax M3 · 71 / 100</footer>
+<script>
+  const story={
+    start:{t:'A small garden',b:'You arrive at a gate. There is a gatekeeper asleep; on the wall, a list of names, two of which you recognise. Ahead, three paths.',c:['Briar path','Stone stairs','Moss path']},
+    'Briar path':{t:'Briar path',b:'The briars are slow. They do not move as you walk; they move while you sleep. The middle branches at a small apple.',c:['Follow the apple','Take the south branch']},
+    'Stone stairs':{t:'Stone stairs',b:'They are older than the gate. Each step has a footprint not your own. There is a small landing with a sign.',c:['Read the sign','Skip the landing']},
+    'Moss path':{t:'Moss path',b:'The moss keeps every sound; you walk as if through butter. There is a small pavilion, slightly off the path.',c:['Enter the pavilion','Mark the spot, return']},
+    'Follow the apple':{t:'Following the apple',b:'You carry the apple. It is light and warm; it grows in your pocket. Briars mend behind you.',c:['Eat the apple','Bury the apple']},
+    'Take the south branch':{t:'South branch',b:'The south branch runs alongside a stream. There is a small wooden bridge, freshly painted.',c:['Cross the bridge','Stop at the stream']},
+    'Read the sign':{t:'The sign',b:'The sign reads: "The stairs are smaller than they look. Sit down only at the second landing."',c:['Sit at the second','Continue down']},
+    'Skip the landing':{t:'Skipping',b:'You skip the landing. The stairs lengthen suddenly. There is a kettle boiling at the bottom.',c:['Talk to the kettle','Pass the kettle']},
+    'Enter the pavilion':{t:'Inside the pavilion',b:'Three cushions. A teapot. Three leaves of paper pinned to the wall, all blank, all unsigned.',c:['Write on a leaf','Take a leaf']},
+    'Mark the spot, return':{t:'Returning',b:'You mark the spot with a small stone. The moss closes behind you, twice. At the gate, the gatekeeper is awake now.',c:['Talk to the gatekeeper','Slip past']},
+    'Eat the apple':{t:'The apple',b:'It tastes of warm nights; you sleep and wake at the gate. The briar garden is a small, leafy room. There is a twin apple.',c:['Continue','Reset']},
+    'Bury the apple':{t:'The buried apple',b:'You bury the apple under a stone. By morning, there is a tree the size of a kettle. You pick a leaf.',c:['Continue','Reset']},
+    'Cross the bridge':{t:'The bridge',b:'The bridge is painted in fresh yellow. On the other side, three postboxes, only one of which has a flag.',c:['Lower the flag','Walk past']},
+    'Stop at the stream':{t:'The stream',b:'You cup water in your hands. It is warm. Upstream, someone is singing, but you cannot see them.',c:['Call out','Sit']},
+    'Sit at the second':{t:'Second landing',b:'You sit. The stairs hum pleasantly. Below, there is a small wooden door, just ajar.',c:['Enter','Knock']},
+    'Continue down':{t:'Continuing',b:'The kettle is offered you a cup. The cup fits your hand like an old glove.',c:['Continue','Reset']},
+    'Talk to the kettle':{t:'The kettle',b:'"I have been waiting for a person," says the kettle. "Not a visitor."',c:['Continue','Reset']},
+    'Pass the kettle':{t:'Passing',b:'You pass the kettle. Beyond it, a small library with the door wide open.',c:['Enter the library','Reset']},
+    'Write on a leaf':{t:'Writing',b:'You write on the leaf. The ink dries into a small bird. It flies to the kettle, who begins to gossip.',c:['Continue','Reset']},
+    'Take a leaf':{t:'A leaf',b:'You pocket a leaf. It warms quickly. It will be unreadable when unfolded.',c:['Continue','Reset']},
+    'Talk to the gatekeeper':{t:'The gatekeeper',b:'He gives you two names: yours, and one you had forgotten.',c:['Continue','Reset']},
+    'Slip past':{t:'Slipping',b:'You slip past the gatekeeper. The garden sighs; it thought you would stop.',c:['Continue','Reset']},
+    'Lower the flag':{t:'Lowering the flag',b:'A letter falls out. It is addressed to you and signed by you. You do not open it.',c:['Open it','Pocket it']},
+    'Walk past':{t:'Walking past',b:'You walk past. The postboxes nod politely. You arrive at a tea-shop that opens only for you.',c:['Continue','Reset']},
+    'Call out':{t:'Calling out',b:'The singing pauses. You hear an "oh." Then, three notes back.',c:['Continue','Reset']},
+    'Sit':{t:'Sitting',b:'You sit. A small fish surfaces; it does not speak, but it listens.',c:['Continue','Reset']},
+    'Enter':{t:'Inside',b:'A small circular room. A chair, a desk, a small kettle, a sash window facing the garden.',c:['Continue','Reset']},
+    'Knock':{t:'Knocking',b:'The door swings open. Inside is a room with two chairs and a kettle. A kettle. There is always a kettle.',c:['Continue','Reset']},
+    'Continue':{t:'—',b:'You return to the gate. The garden remembers you. So does the kettle.',c:['Reset']},
+    'Open it':{t:'The letter',b:'It is from a small child who has not been born yet. She wishes you a particular tea.',c:['Continue','Reset']},
+    'Pocket it':{t:'Pocketing',b:'You pocket the letter. It warms in your hand. The bridge behind you is unpainted.',c:['Continue','Reset']},
+    Reset:{t:'A small garden',b:'You arrive at a gate. There is a gatekeeper asleep; on the wall, a list of names, two of which you recognise. Ahead, three paths.',c:['Briar path','Stone stairs','Moss path']},
+  };
+  const paths=document.getElementById('paths'),cur=document.getElementById('cur'),log=document.getElementById('log');
+  let step='start',history=[];
+  function render(){paths.innerHTML='';const s=story[step];const card=document.createElement('article');card.className='step';card.innerHTML=`<h2>${s.t}</h2><p>${s.b}</p>`;const c=document.createElement('div');c.className='choices';s.c.forEach(x=>{const b=document.createElement('button');b.type='button';b.textContent=x;b.addEventListener('click',()=>{history.push(step);step=x;log.innerHTML+=`<br>→ ${x}`;render()});c.appendChild(b)});card.appendChild(c);paths.appendChild(card);cur.textContent=s.t}
+  render();
+</script>
+</body>
+</html>

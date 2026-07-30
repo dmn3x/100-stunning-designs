@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Midnight Inventory — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c0a04;color:#f5d56e;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1.5fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .aisles{display:grid;grid-template-columns:repeat(4,1fr);gap:.4rem;min-height:60vh}
+  @media (max-width:780px){.aisles{grid-template-columns:repeat(2,1fr)}}
+  .shelf{aspect-ratio:2;border:1px dashed #5a2c0e;padding:.4rem;cursor:pointer;background:#3a1a04;position:relative;font-size:.78rem;letter-spacing:.05em}
+  .shelf:hover{outline:1px solid #f5d56e}
+  .shelf.empty{background:#1c0a04;color:#5a2c0e;font-style:italic;display:flex;align-items:center;justify-content:center}
+  .shelf .row{border-bottom:1px dashed rgba(245,213,110,.2);padding:.1rem 0;font-size:.7rem}
+  aside{padding:1rem;background:#3a1a04;border:1px solid #5a2c0e;display:flex;flex-direction:column;gap:.4rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;color:#f5d56e;font-style:italic}
+  aside .stock{font-size:.85rem;line-height:1.5;background:#1c0a04;padding:.6rem;border:1px dashed #5a2c0e;min-height:140px}
+  .controls{display:flex;gap:.4rem;flex-wrap:wrap}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #5a2c0e;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#5a2c0e}
+  footer{grid-column:1/-1;text-align:right;font-size:.7rem;letter-spacing:.3em;color:#5a2c0e;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<section class="aisles" id="aisles"></section>
+<aside>
+  <h1>Convenience Store</h1>
+  <p>After hours. The clerk is restocking. Click a shelf to read its inventory.</p>
+  <div class="stock" id="stock">[selected aisle will appear here]</div>
+  <div class="controls">
+    <button id="restock">Restock</button>
+    <button id="finish">Finish shift</button>
+    <button id="unexpected">Receive delivery</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 93 / 100</footer>
+<script>
+  const aisles=[['01','Drinks','water, soda, milk, oolong, lemonade'],['02','Snacks','crisps, biscuits, jerky, chocolate'],['03','Stationery','pens, paper, stamps, gum, pins'],['04','Soup','tomato, lentil, parsnip, miso'],['05','Bread','sourdough, brioche, rye, rolls'],['06','Household','tape, soap, candles, batteries'],['07','Dairy','yogurt, butter, cream, eggs'],['08','Spices','cumin, pepper, cinnamon, mustard'],['09','Dried','rice, pasta, lentils, couscous'],['10','Frozen','peas, dumplings, ice cream'],['11','Sweet','candy, gummies, brittle, candy'],['12','Ritual','incense, candles, matches, chalk']];
+  const a=document.getElementById('aisles');let extra='';
+  function render(){a.innerHTML='';aisles.forEach(al=>{const s=document.createElement('button');s.type='button';s.className='shelf';if(Math.random()<.3){s.classList.add('empty');s.textContent='aisle '+al[0]+' — restocking'}else{s.innerHTML=`<strong style="font-family:'Bodoni Moda',serif;font-style:italic;font-size:1.1rem">Aisle ${al[0]} — ${al[1]}</strong><div class="row" style="margin-top:.4rem">${al[2]}</div>`}s.addEventListener('click',()=>{document.getElementById('stock').innerHTML=`<strong style="color:#f5d56e;font-family:'Bodoni Moda',serif">${al[1]}</strong><br><span style="color:#a05c2a;font-size:.75rem">aisle ${al[0]}</span><br>${al[2]}${extra?'<br>'+extra:''}`});a.appendChild(s)})}
+  render();
+  document.getElementById('restock').addEventListener('click',render);
+  document.getElementById('finish').addEventListener('click',()=>{document.querySelectorAll('.shelf').forEach(s=>s.style.opacity='.3')});
+  document.getElementById('unexpected').addEventListener('click',()=>{extra='— surprise crate: small bird; one signed letter; half a pound of kindness —';render()});
+</script>
+</body>
+</html>

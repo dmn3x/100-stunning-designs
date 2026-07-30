@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Tiny Planetarium — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:radial-gradient(circle at 50% 50%,#0a0618,#040212);color:#e6d4ff;font-family:"Iowan Old Style",serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:1.4rem}
+  .dome{position:relative;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle at 50% 50%,#1a0d2c,#04020e);overflow:hidden;border:6px solid #3a1d6e;box-shadow:0 0 60px rgba(155,89,182,.4)}
+  canvas{display:block;width:100%;height:100%}
+  .legend{margin-top:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#7a4ea0;display:flex;gap:1rem}
+  .controls{margin-top:.4rem;display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
+  button{font:inherit;background:transparent;color:#e6d4ff;border:1px solid #5a3a8a;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#3a1d6e;color:#fff}
+  .star{position:absolute;width:18px;height:18px;border-radius:50%;background:#f5d56e;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-family:"Courier New",monospace;color:#3a1d6e;cursor:pointer;border:none;font-weight:bold}
+  footer{margin-top:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a3a8a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="dome" id="dome">
+  <canvas id="cv"></canvas>
+</div>
+<div class="legend"><span>↑ tap stars to orbit</span><span>tilt <b id="t">0</b>°</span></div>
+<div class="controls">
+  <button id="slow">slow</button>
+  <button id="fast">fast</button>
+  <button id="dawn">dawn</button>
+  <button id="name">Name it</button>
+</div>
+<footer>MiniMax M3 · 92 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');const w=cv.parentElement;let W,H;function fit(){W=cv.width=w.offsetWidth*2;H=cv.height=w.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  let tilt=0;const stars=[];for(let i=0;i<8;i++){const angle=i/8*Math.PI*2;const r=W*.25+Math.random()*W*.1;stars.push({angle,r,size:14+Math.random()*10,label:'☼★·'[i%4]})}
+  function draw(){cx.fillStyle='rgba(4,2,14,.06)';cx.fillRect(0,0,W,H);stars.forEach(s=>{s.angle+=.001;const x=W/2+Math.cos(s.angle)*s.r,y=H/2+Math.sin(s.angle)*s.r;cx.fillStyle=`hsla(${(s.angle*60)%360},80%,70%,.4)`;cx.beginPath();cx.arc(x,y,s.size*1.5,0,Math.PI*2);cx.fill();cx.fillStyle='#f5d56e';cx.beginPath();cx.arc(x,y,s.size*.4,0,Math.PI*2);cx.fill()})};
+  setInterval(draw,30);
+  document.getElementById('slow').addEventListener('click',()=>stars.forEach(s=>s.size=Math.max(8,s.size*.8)));
+  document.getElementById('fast').addEventListener('click',()=>stars.forEach(s=>s.size=Math.min(24,s.size*1.4)));
+  document.getElementById('dawn').addEventListener('click',()=>{stars.forEach(s=>s.size=Math.max(8,s.size*.8));document.body.style.background='radial-gradient(circle at 50% 50%,#3a2c5a,#0a0618)'});
+  document.getElementById('name').addEventListener('click',()=>{const names=['Mini-Mercury','Cups','The Quiet District','The Lunch Star','Small Letter','Half-Moon','Late Compass','Drift'];alert('I name it: '+names[Math.floor(Math.random()*names.length)])});
+  document.addEventListener('pointermove',e=>{const r=w.getBoundingClientRect();const cx2=(e.clientX-r.left)/r.width*100;const cy2=(e.clientY-r.top)/r.height*100;tilt=(cx2-50)*.4;document.getElementById('t').textContent=tilt.toFixed(0);w.style.transform=`perspective(600px) rotateX(${cy2-50>0?'-':'+'}12deg) rotateY(${tilt}deg)`});
+</script>
+</body>
+</html>

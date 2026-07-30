@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Moss Circuit — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#04140c;color:#cce7c8;font-family:"JetBrains Mono",ui-monospace,monospace;min-height:100vh;padding:1.4rem}
+  .frame{display:grid;grid-template-columns:1fr 360px;gap:1rem;min-height:calc(100vh - 2.8rem)}
+  @media (max-width:880px){.frame{grid-template-columns:1fr}}
+  .panel{background:rgba(0,0,0,.4);border:1px solid rgba(204,231,200,.2);padding:1rem;position:relative;overflow:hidden}
+  .topbar{display:flex;justify-content:space-between;margin-bottom:1rem;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#8fb59a}
+  canvas{width:100%;height:100%;display:block}
+  h2{font-size:.8rem;letter-spacing:.25em;text-transform:uppercase;margin-bottom:.6rem;color:#8fff9a}
+  .gauge{display:flex;gap:.4rem;align-items:flex-end;height:60px;margin-bottom:1rem}
+  .gauge div{flex:1;background:linear-gradient(180deg,#8fff9a,#2c6e3a);border-radius:2px;transition:opacity .3s}
+  .stat{display:grid;grid-template-columns:1fr 1fr;gap:.4rem .8rem;font-size:.8rem;margin-bottom:1rem}
+  .stat span{opacity:.55}
+  .stat b{color:#8fff9a;font-weight:400}
+  button{background:transparent;color:#cce7c8;border:1px solid #8fff9a;padding:.45rem .7rem;cursor:pointer;font:inherit;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;width:100%;margin-bottom:.5rem}
+  button:hover,button:focus-visible{background:#8fff9a;color:#04140c;outline:none}
+  .log{font-size:.7rem;line-height:1.7;opacity:.75;max-height:120px;overflow:auto;border-top:1px dashed rgba(204,231,200,.3);padding-top:.5rem}
+  .footer{position:absolute;left:1rem;bottom:1rem;font-size:.7rem;letter-spacing:.2em;color:#4c7a5e}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="frame">
+  <div class="panel">
+    <div class="topbar"><span>Moss Circuit // SECTOR F-04</span><span id="clock">00:00:00</span></div>
+    <canvas id="cv"></canvas>
+  </div>
+  <div class="panel">
+    <h2>Biosignal Console</h2>
+    <div class="gauge" id="gauge"></div>
+    <div class="stat">
+      <span>Humidity</span><b id="hum">87%</b>
+      <span>pH floor</span><b id="ph">5.4</b>
+      <span>Sporulation</span><b id="spo">NOMINAL</b>
+      <span>Colony index</span><b id="col">0042</b>
+    </div>
+    <button id="bloom" type="button">Force bloom</button>
+    <button id="starve" type="button">Cut nutrient</button>
+    <button id="harvest" type="button">Harvest spore</button>
+    <div class="log" id="log">[boot] console online. ambient chemistry nominal.</div>
+    <div class="footer">M3 · 08 / 100 · mycelium · v0.1</div>
+  </div>
+</div>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const nodes=Array.from({length:120},()=>({x:Math.random()*800,y:Math.random()*500,e:Math.random()*Math.PI*2}));
+  const logEl=document.getElementById('log'),gaugeEl=document.getElementById('gauge');
+  for(let i=0;i<12;i++){const d=document.createElement('div');d.style.height=(40+Math.random()*50)+'%';gaugeEl.appendChild(d)}
+  let bloom=0,starve=false;
+  function loop(){
+    cx.fillStyle='rgba(4,20,12,.2)';cx.fillRect(0,0,W,H);
+    nodes.forEach(n=>{
+      n.e+=(Math.random()-.5)*0.1;
+      n.x+=Math.cos(n.e)*0.6*(starve?.3:1);n.y+=Math.sin(n.e)*0.6*(starve?.3:1);
+      if(n.x<0||n.x>W)n.e+=Math.PI;
+      if(n.y<0||n.y>H)n.e+=Math.PI;
+      cx.fillStyle=`rgba(${starve?180:140+bloom},255,${starve?140:180},.6)`;cx.beginPath();cx.arc(n.x,n.y,2,0,6.283);cx.fill();
+    });
+    // connect nearest
+    for(let i=0;i<nodes.length;i++){const a=nodes[i];let best=null,bd=80;for(let j=0;j<nodes.length;j++){if(i===j)continue;const b=nodes[j],d=Math.hypot(a.x-b.x,a.y-b.y);if(d<bd){bd=d;best=b}}if(best){cx.beginPath();cx.moveTo(a.x,a.y);cx.lineTo(best.x,best.y);cx.strokeStyle=`rgba(143,255,154,${0.3-bd/250})`;cx.stroke()}}
+    requestAnimationFrame(loop);
+  }
+  loop();
+  function log(s){const t=new Date().toLocaleTimeString();logEl.innerHTML+=`<br>[${t}] ${s}`;logEl.scrollTop=logEl.scrollHeight}
+  document.getElementById('bloom').addEventListener('click',()=>{bloom=Math.min(120,bloom+30);log('force bloom · overlay energy ↑')});
+  document.getElementById('starve').addEventListener('click',()=>{starve=!starve;log(starve?'nutrient cut · biology slows':'nutrient restored · biology resumes')});
+  document.getElementById('harvest').addEventListener('click',()=>{log('spore #'+Math.floor(Math.random()*9999)+' released to chamber')});
+  setInterval(()=>{document.getElementById('clock').textContent=new Date().toLocaleTimeString();const hum=80+Math.random()*15|0;document.getElementById('hum').textContent=hum+'%';document.getElementById('ph').textContent=(5+Math.random()*1).toFixed(1)},1000);
+</script>
+</body>
+</html>

@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Listening Room — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#110b1a;color:#e6d4f5;font-family:"Inter",sans-serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #5b2b9a;padding-bottom:.5rem;font-family:"Courier New",monospace;letter-spacing:.3em;text-transform:uppercase;font-size:.7rem;color:#b39ad9;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#fff;text-transform:none}
+  main{display:grid;grid-template-columns:1fr 320px;gap:1rem;padding-top:1rem}
+  @media (max-width:880px){main{grid-template-columns:1fr}}
+  .stage{background:#0c0612;border:1px solid #5b2b9a;padding:2rem;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:60vh;position:relative}
+  .sleeve{width:60%;aspect-ratio:1;border-radius:50%;background:conic-gradient(from 0deg,#c44569,#7a4ea0,#0d3b66,#c44569);position:relative;cursor:grab;box-shadow:0 30px 60px rgba(0,0,0,.7)}
+  .sleeve::before{content:"";position:absolute;inset:30%;border-radius:50%;background:radial-gradient(#1a0e26,#0c0612 80%);border:2px solid #b39ad9}
+  .sleeve::after{content:"";position:absolute;inset:36%;border-radius:50%;border:1px dashed #b39ad9}
+  .needle{position:absolute;top:10%;right:5%;width:8px;height:60%;background:linear-gradient(180deg,#b39ad9,#5b2b9a);transform-origin:top right;transform:rotate(-15deg);transition:transform .4s}
+  .info{max-width:60%;text-align:center;margin-top:2rem}
+  .info h2{font-family:"Bodoni Moda",serif;font-size:1.6rem}
+  .info p{font-size:.95rem;line-height:1.5;margin-top:.3rem;color:#b39ad9}
+  .panel{background:#0c0612;border:1px solid #5b2b9a;padding:1rem;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .panel h3{font-family:"Bodoni Moda",serif;font-size:1.2rem;letter-spacing:.04em;color:#fff}
+  ol li{padding:.4rem 0;border-bottom:1px dashed #5b2b9a;cursor:pointer;letter-spacing:.15em}
+  ol li:hover,.playing{color:#e6d4f5;text-shadow:0 0 6px rgba(196,69,105,.5)}
+  .progress{height:6px;background:#1a0e26;border:1px solid #5b2b9a;margin-top:auto;position:relative;overflow:hidden}
+  .progress i{display:block;height:100%;background:linear-gradient(90deg,#7a4ea0,#c44569);width:0;transition:width .5s linear}
+  footer{padding:1rem 1.4rem;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#b39ad9;text-transform:uppercase;border-top:1px solid #5b2b9a;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Listening Room</h1>
+  <span>vinyl only · 33⅓ · side B</span>
+  <span>— please do not speak during the bridge —</span>
+</header>
+<main>
+  <section class="stage">
+    <div class="sleeve" id="sleeve"><div class="needle" id="needle"></div></div>
+    <div class="info">
+      <h2 id="title">—</h2>
+      <p id="desc">Click a track to lower the needle.</p>
+    </div>
+  </section>
+  <aside class="panel">
+    <h3>Tonight's side</h3>
+    <ol id="tracks"></ol>
+    <div class="progress"><i id="bar"></i></div>
+    <div style="font-size:.7rem;letter-spacing:.2em" id="time">00:00 / 00:00</div>
+    <hr style="border:none;border-top:1px dashed #5b2b9a;margin:.4rem 0">
+    <div style="font-family:'Iowan Old Style',serif;font-style:italic;font-size:.85rem;line-height:1.4;color:#b39ad9">"We listen attentively. The album, on its part, also listens."</div>
+  </aside>
+</main>
+<footer>MiniMax M3 · 32 / 100</footer>
+<script>
+  const tracks=[
+    ['Letter from the River','Side B · track 1 · 04:12','A piano, a horn, and a small river-metaphor.'],
+    ['Brass Trio at the Marshes','Side B · track 2 · 03:48','Three horns, a marsh, no autograph.'],
+    ['Velvet Curtains','Side B · track 3 · 06:02','A ballad for late cinema.'],
+    ['Cargo Train Slow','Side B · track 4 · 05:21','Recorded at a station we could not name.'],
+    ['Inland','Side B · track 5 · 04:33','Bagpipe and table-fan.'],
+    ['Ghosts of Cape Hollow','Side B · track 6 · 07:11','All lighthouses.'],
+  ];
+  const tracksEl=document.getElementById('tracks'),title=document.getElementById('title'),desc=document.getElementById('desc'),needle=document.getElementById('needle'),sleeve=document.getElementById('sleeve'),bar=document.getElementById('bar'),time=document.getElementById('time');
+  let playing=null,progress=0,trackDur=240;
+  tracks.forEach((t,i)=>{const li=document.createElement('li');li.textContent=`${i+1}. ${t[0]}`;li.addEventListener('click',()=>play(i));tracksEl.appendChild(li)});
+  function play(i){document.querySelectorAll('li').forEach(x=>x.classList.remove('playing'));document.querySelectorAll('li')[i].classList.add('playing');playing=i;progress=0;needle.style.transform='rotate(-15deg)';title.textContent=tracks[i][0];desc.textContent=tracks[i][2];trackDur=parseInt(tracks[i][1].split('·')[2])*60||240}
+  setInterval(()=>{if(playing!==null){progress=(progress+1)%trackDur;bar.style.width=(progress/trackDur*100)+'%';time.textContent=`${String(Math.floor(progress/60)).padStart(2,'0')}:${String(progress%60).padStart(2,'0')} / ${tracks[playing][1].split('·')[2]}`;needle.style.transform=`rotate(${-15+Math.sin(progress/trackDur*Math.PI)*15}deg)`;if(progress===0)play((playing+1)%tracks.length)}},1000);
+  sleeve.addEventListener('click',()=>{if(playing!==null){play((playing+1)%tracks.length)}else play(0)});
+</script>
+</body>
+</html>

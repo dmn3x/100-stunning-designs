@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Wax Museum — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0408;color:#f4d8aa;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #2a0a04;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.8rem;letter-spacing:.04em;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  .portrait{background:radial-gradient(ellipse,#3a1804,#0a0408 70%);padding:1rem;border:6px solid #a05c2a;box-shadow:inset 0 0 30px rgba(255,200,150,.18),0 0 30px rgba(0,0,0,.7);cursor:pointer;text-align:center;position:relative}
+  .wax{aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 35% 35%,#f4d8aa,#a05c2a 80%);margin:0 auto .6rem;width:60%;position:relative;animation:melt 12s ease-in-out infinite}
+  @keyframes melt{50%{transform:scaleY(1.05) scaleX(.97)}}
+  .eyes{position:absolute;top:35%;left:30%;width:14%;height:14%;border-radius:50%;background:#3a1804}
+  .eyes.r{left:55%}
+  .mouth{position:absolute;top:60%;left:42%;width:16%;height:6%;border-radius:50%;border-bottom:2px solid #3a1804}
+  .portrait h2{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic;letter-spacing:.04em;color:#f4d8aa}
+  .portrait p{font-size:.85rem;font-style:italic;color:#a05c2a;margin-top:.4rem;line-height:1.4}
+  footer{grid-column:1/-1;text-align:center;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){.wax{animation:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Wax Museum</h1>
+  <small>candlelit porticos · 31 portraits</small>
+</header>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>Mr. Caldwell</h2><p>Once a violinist, now a permanent listener.</p></div>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>The Locksmith</h2><p>Carried 47 master keys. Left them all to the city.</p></div>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>Aunt Peg</h2><p>Said to have talked to the kettle. Believed by some.</p></div>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>The Cartographer's Daughter</h2><p>Returned last spring. Or so they say.</p></div>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>Dr. Vell</h2><p>Treated the stubborn kettle. Charged for the time.</p></div>
+<div class="portrait"><div class="wax"><div class="eyes"></div><div class="eyes r"></div><div class="mouth"></div></div><h2>Mr. Anders</h2><p>Final parcel delivered without a destination.</p></div>
+<footer>MiniMax M3 · 38 / 100</footer>
+</body>
+</html>

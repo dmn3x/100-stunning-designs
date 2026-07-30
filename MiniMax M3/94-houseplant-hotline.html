@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Houseplant Hotline — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a1f15;color:#cce8d1;font-family:"Iowan Old Style",serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+  .booth{display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:840px;width:100%;border:8px ridge #2e6e44;padding:1.4rem;background:rgba(0,0,0,.5)}
+  @media (max-width:780px){.booth{grid-template-columns:1fr}}
+  .phones{aspect-ratio:1;background:radial-gradient(circle,#1c4a30,#061411);position:relative;border:2px solid #2e6e44;display:grid;place-items:center}
+  .emoji{font-size:5rem}
+  aside{padding:1rem;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .q{display:flex;flex-direction:column;gap:.4rem}
+  .q button{font:inherit;background:transparent;color:#cce8d1;border:1px solid #2e6e44;padding:.4rem .7rem;cursor:pointer;letter-spacing:.1em;text-align:left;font-family:"Iowan Old Style",serif;font-size:.9rem}
+  .q button:hover{background:#1c4a30}
+  .diagnosis{background:rgba(0,0,0,.4);padding:.6rem;border:1px dashed #2e6e44;font-size:.85rem;line-height:1.5;min-height:80px}
+  footer{margin-top:.6rem;font-size:.7rem;letter-spacing:.3em;color:#2e6e44;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="booth">
+  <section class="phones"><div class="emoji" id="emoji">🪴</div></section>
+  <aside>
+    <h2 style="font-family:'Bodoni Moda',serif;font-style:italic;font-size:1.4rem">Houseplant Hotline</h2>
+    <p>Press the soil. Tell us about the leaves. We will listen. Please describe your plant's distress in three clicks.</p>
+    <div class="q" id="q"></div>
+    <div class="diagnosis" id="diag">Diagnosis will appear here.</div>
+    <footer>Open weekends · ad hoc hours otherwise.</footer>
+  </aside>
+</div>
+<script>
+  const emoji=['🪴','🌵','🌿','🌱','🍃','🌳','🌷','🥀','🌻','🍂'];
+  const steps=[
+    {q:'What part of the plant is in distress?',a:['Leaves','Stem','Roots','Soil-level']},
+    {q:'How does the leaf feel?',a:['Dry and crispy','Soft and limp','Yellow','Patterned']},
+    {q:'How long has this been going on?',a:['Less than a day','About a week','A month','Years']},
+  ];
+  let answers=[];const qEl=document.getElementById('q'),diag=document.getElementById('diag');
+  function show(idx){qEl.innerHTML='';if(idx>=steps.length){const final=['Too dry — try a glass of water and a quiet moment.','Too wet — hold off; let the saucer dry.','Likely needs more light. Move it nearer a window.','Sounds like a draft. Move it two feet away from the window.','Repotting season — give it a new small home.','It might be talking to itself. That is allowed.','Try a different plant. Yes, this is a real option.','Get a smaller plant.'];diag.innerHTML=`<strong style="color:#cce8d1">${final[Math.floor(Math.random()*final.length)]}</strong><br><small style="color:#2e6e44;font-family:'Courier New',monospace">— follow-up: keep us posted. Do not water until Tuesday.</small>`;return}const s=steps[idx];const p=document.createElement('div');p.innerHTML=`<strong style="font-family:'Courier New',monospace;font-size:.78rem;letter-spacing:.3em;color:#2e6e44;text-transform:uppercase">question ${idx+1}</strong><p style="margin:.4rem 0">${s.q}</p>`;const bts=document.createElement('div');bts.style.display='flex';bts.style.flexDirection='column';bts.style.gap='.3rem';s.a.forEach(ans=>{const b=document.createElement('button');b.type='button';b.textContent=ans;b.addEventListener('click',()=>{answers.push(ans);document.getElementById('emoji').textContent=emoji[Math.floor(Math.random()*emoji.length)];show(idx+1)});bts.appendChild(b)});p.appendChild(bts);qEl.appendChild(p)}
+  show(0);
+</script>
+</body>
+</html>

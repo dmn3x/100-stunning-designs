@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Railway Botanica — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f7f1e0;color:#1a1306;font-family:"Times New Roman",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1.5fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .col{display:grid;grid-template-rows:auto auto 1fr auto;gap:.8rem;background:#fff8e6;border:1px dashed #4a3c20;padding:1rem}
+  .col h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;border-bottom:2px solid #4a3c20;padding-bottom:.3rem}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.8rem;overflow:auto;max-height:60vh;padding-right:.4rem}
+  .card{background:repeating-linear-gradient(180deg,#fff8e6 0 9px,#f0e2bd 9px 10px);border:1px solid #4a3c20;padding:.5rem .6rem;cursor:pointer;font-size:.8rem;position:relative}
+  .card h3{font-family:"Bodoni Moda",serif;font-size:1rem;margin-bottom:.2rem}
+  .card small{font-family:"Courier New",monospace;font-size:.6rem;letter-spacing:.3em;color:#5a432b;text-transform:uppercase}
+  .card .stamp{position:absolute;bottom:.4rem;right:.4rem;border:1px solid #a32;border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-family:"Courier New",monospace;font-size:.5rem;color:#a32;transform:rotate(-12deg)}
+  aside{background:#3a2310;color:#f0e2bd;padding:1rem;font-family:"Iowan Old Style",serif;font-size:.95rem;line-height:1.5}
+  aside h2{font-family:"Bodoni Moda",serif;font-size:1.3rem;color:#f5d56e;margin-bottom:.4rem}
+  aside pre{font-family:"Courier New",monospace;font-size:.8rem;background:#1f1108;color:#f0e2bd;padding:.6rem;white-space:pre-wrap;margin-top:.6rem;border:1px solid #5a3a1d}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#4a3c20;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="col">
+  <h1>Railway Botanica</h1>
+  <p style="font-size:.9rem;line-height:1.5">Pressed flowers recovered from the timetables of small stations. Click any card to read its specimen card.</p>
+  <div class="grid" id="grid"></div>
+  <p style="font-family:'Courier New',monospace;font-size:.75rem;letter-spacing:.2em;color:#4a3c20">Catalogue: 14 specimens · 6 stations</p>
+</section>
+<aside>
+  <h2>Specimen card</h2>
+  <pre id="card">Choose a specimen to read the entry filed at the station master's desk.
+
+  Station: ____
+  Date:    ____
+  Finder:  ____
+  Notes:   ____</pre>
+  <hr style="margin:1rem 0;border:none;border-top:1px dashed #5a3a1d">
+  <p style="font-size:.85rem;font-style:italic">"The pressed flowers had no complaints. They had no opinions. They had only a long memory of their stations."</p>
+</aside>
+<footer>MiniMax M3 · 26 / 100</footer>
+<script>
+  const flowers=[
+    ['Meadowsweet','Blackwater Halt','1928','A pale panicle. Sweet. Pressed between hymn 14 and the timetable.'],
+    ['Sea Thrift','Porthallow','1931','Sea-pink. Salt still faintly on it. Marker for shore-stations.'],
+    ['Cowslip','Brent Knoll','1936','A cluster of four yellows. Pressed for bravery.'],
+    ['Harebell','Crianlarich','1940','Thin and blue. Survived the war timetable.'],
+    ['Moss Campion','Ribblesdale','1945','A pink pincushion from above the snow-line.'],
+    ['Yellow Archangel','Ashurst','1949','A small bright hood from beneath the signal-box.'],
+    ['Common Spotted Orchid','Axminster','1951','A pink-purple pyramid. Pollinators long gone.'],
+    ['Coltsfoot','Great Village','1954','Yellow, late winter; first leaf, no flower.'],
+    ['Tufted Vetch','Hartlepool','1956','A tangle of pea-flowers. With the engine-driver.'],
+    ['Perforate St John\'s Wort','Selby','1959','Held against melancholy; or so the diary says.'],
+    ['Foxglove','Crossgates','1963','A spire of bells. Toxic; oracular; beloved.'],
+    ['Common Mallow','St Germans','1965','A single pink petal, with five notches.'],
+    ['Dog Rose','Cattal','1968','Pressed with care: separate petals, separate leaf.'],
+    ['Lesser Celandine','Bourton','1971','A small star of yellow, opening only on the upper platform.'],
+  ];
+  const grid=document.getElementById('grid');flowers.forEach(f=>{const c=document.createElement('article');c.className='card';c.innerHTML=`<h3>${f[0]}</h3><small>${f[1]} · ${f[2]}</small><div class="stamp">${f[1].split(' ').map(w=>w[0]).join('')}</div>`;c.addEventListener('click',()=>{document.getElementById('card').textContent=`Station: ${f[1]}\nDate:    ${f[2]}\nFinder:  station-master, est. line\nNotes:   ${f[3]}`});grid.appendChild(c)});
+</script>
+</body>
+</html>

@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Comet Tailor — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0a0418;color:#e3d7f5;font-family:"Iowan Old Style",serif;min-height:100vh;overflow:hidden}
+  .sky{position:fixed;inset:0;background:radial-gradient(ellipse at 50% -10%,#3a2466 0%,#0a0418 50%)}
+  #stars{position:fixed;inset:0}
+  .atelier{position:relative;min-height:100vh;display:grid;grid-template-columns:1.2fr 1fr;grid-template-rows:1fr auto;padding:1.4rem;gap:1rem}
+  @media (max-width:880px){.atelier{grid-template-columns:1fr}}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1px solid #b7a3d8;padding-bottom:.5rem;font-family:"Courier New",monospace;letter-spacing:.3em;text-transform:uppercase;font-size:.7rem;color:#b7a3d8;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#fff;text-transform:none;font-style:italic}
+  .mannequin{position:relative;background:rgba(255,255,255,.04);border:1px solid #b7a3d8;min-height:60vh;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  .figure{position:relative;width:50%;aspect-ratio:.45;background:radial-gradient(ellipse,#3a2466,#1b1240 80%);border-radius:50% 50% 6px 6px}
+  .figure::before{content:"";position:absolute;top:8%;left:50%;transform:translateX(-50%);width:60%;aspect-ratio:1;border-radius:50%;background:radial-gradient(#fce6a2,#b76f2c 80%)}
+  .garment{position:absolute;left:10%;right:10%;top:30%;bottom:5%;border-radius:8px;transition:all .4s}
+  .studio{padding:1rem;background:rgba(255,255,255,.04);border:1px solid #b7a3d8;display:flex;flex-direction:column;gap:.8rem;overflow:auto}
+  .studio h2{font-family:"Bodoni Moda",serif;font-size:1.4rem}
+  .swatches{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:.4rem}
+  .sw{aspect-ratio:1;border-radius:6px;cursor:pointer;border:2px solid transparent;font-family:"Courier New",monospace;font-size:.7rem;color:#0a0418;display:flex;align-items:center;justify-content:center;text-align:center;padding:.3rem}
+  .sw:hover,.sw:focus-visible{border-color:#fff;outline:none}
+  .cuts button{font:inherit;background:transparent;color:#e3d7f5;border:1px solid #b7a3d8;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;font-family:"Courier New",monospace;margin-right:.4rem;margin-bottom:.4rem}
+  .cuts button:hover{background:#b7a3d8;color:#0a0418}
+  .cuts .active{background:#b7a3d8;color:#0a0418}
+  footer{grid-column:1/-1;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#b7a3d8;text-transform:uppercase;text-align:right}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky"></div>
+<canvas id="stars"></canvas>
+<div class="atelier">
+  <header>
+    <h1>Comet Tailor · celestial atelier</h1>
+    <span>catalog №072</span>
+    <span>by appointment · twilight only</span>
+  </header>
+  <section class="mannequin">
+    <div class="figure">
+      <div class="garment" id="garment" style="background:linear-gradient(180deg,#b76f2c,#3a1d0e)"></div>
+    </div>
+  </section>
+  <aside class="studio">
+    <h2>Design a celestial garment</h2>
+    <p style="font-size:.9rem;line-height:1.5">Choose a fabric, a cut, and a trim. The atelier will record every choice in the celestial ledger.</p>
+    <h3 style="font-family:'Courier New',monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase;margin-top:.6rem">Fabric</h3>
+    <div class="swatches" id="sw"></div>
+    <h3 style="font-family:'Courier New',monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase">Cut</h3>
+    <div class="cuts">
+      <button data-cut="cloak" class="active">Cloak</button>
+      <button data-cut="tunic">Tunic</button>
+      <button data-cut="mantle">Mantle</button>
+      <button data-cut="doublet">Doublet</button>
+    </div>
+    <h3 style="font-family:'Courier New',monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase">Trim</h3>
+    <div class="cuts">
+      <button data-trim="none">None</button>
+      <button data-trim="ribbon">Ribbon</button>
+      <button data-trim="spangle">Spangle</button>
+      <button data-trim="fur">Fur</button>
+    </div>
+    <div style="font-family:'Courier New',monospace;font-size:.75rem;line-height:1.6;color:#b7a3d8;margin-top:.6rem">
+      <strong>ledger:</strong>
+      <div id="ledger" style="margin-top:.3rem;color:#e3d7f5">[ready for a new commission]</div>
+    </div>
+  </aside>
+  <footer>MiniMax M3 · 25 / 100</footer>
+</div>
+<script>
+  const cv=document.getElementById('stars'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=innerWidth*2;H=cv.height=innerHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const stars=Array.from({length:140},()=>({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.5+.5}));function draw(){cx.clearRect(0,0,W,H);stars.forEach(s=>{s.x+=Math.sin(Date.now()*.0005)*.05;cx.fillStyle='#fff';cx.beginPath();cx.arc(s.x,s.y,s.r,0,6.283);cx.fill()});requestAnimationFrame(draw)}draw();
+  const fabrics=[['Comet Dust','linear-gradient(180deg,#e3d7f5,#b7a3d8)'],['Perseid Wool','linear-gradient(180deg,#fbe6a6,#a76b1f)'],['Nebula Silk','linear-gradient(180deg,#9b6db5,#3a1d6e)'],['Meteor Felt','linear-gradient(180deg,#0d3b66,#020e22)'],['Aurora Velvet','linear-gradient(180deg,#76c893,#3a7253)'],['Black-Body','linear-gradient(180deg,#1c1c1c,#060606)'],['Solar Tweed','linear-gradient(180deg,#ffd28a,#a4531b)']];
+  const sw=document.getElementById('sw');fabrics.forEach(f=>{const b=document.createElement('button');b.type='button';b.className='sw';b.style.background=f[1];b.textContent=f[0];b.addEventListener('click',()=>{document.getElementById('garment').style.background=f[1];update(f[0])});sw.appendChild(b)});
+  function update(f){const cut=document.querySelector('.cuts button.active[data-cut]')?.dataset.cut||'cloak';const trim=document.querySelector('.cuts button.active[data-trim]')?.dataset.trim||'none';document.getElementById('ledger').textContent=`${f} ${cut} with ${trim} trim — catalogued under star ${Math.floor(Math.random()*999)}.`}
+  document.querySelectorAll('.cuts button[data-cut]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.cuts button[data-cut]').forEach(x=>x.classList.remove('active'));b.classList.add('active');update(document.querySelector('.sw[style*="Perseid"]')?.textContent||'Comet Dust')}));
+  document.querySelectorAll('.cuts button[data-trim]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.cuts button[data-trim]').forEach(x=>x.classList.remove('active'));b.classList.add('active');update('Comet Dust')}));
+</script>
+</body>
+</html>

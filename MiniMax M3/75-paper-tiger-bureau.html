@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Paper Tiger Bureau — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f6efe0;color:#3a2418;font-family:"Inter",sans-serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:repeat(3,1fr);gap:1rem}
+  @media (max-width:780px){body{grid-template-columns:repeat(2,1fr)}}
+  .dossier{background:#fff;border:2px dashed #3a2418;padding:1rem;display:flex;flex-direction:column;gap:.4rem;position:relative;cursor:pointer}
+  .dossier::before{content:"CLASSIFIED";position:absolute;top:-12px;left:50%;transform:translateX(-50%) rotate(-1deg);background:#c44569;color:#fff;padding:.2rem .6rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;border-radius:2px}
+  .dossier h2{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic;border-bottom:1px solid #3a2418;padding-bottom:.4rem}
+  .dossier .stamp{position:absolute;top:1rem;right:1rem;font-family:"Courier New",monospace;font-size:.6rem;letter-spacing:.3em;color:#c44569;border:2px solid #c44569;border-radius:50%;width:60px;height:60px;display:flex;align-items:center;justify-content:center;text-align:center;transform:rotate(-10deg)}
+  .dossier .tabs{display:flex;flex-direction:column;gap:.3rem}
+  .tab{padding:.4rem;border:1px dashed #3a2418;display:flex;justify-content:space-between;font-size:.85rem;font-family:"Courier New",monospace}
+  .tab b{color:#3a2418}
+  footer{grid-column:1/-1;text-align:center;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#3a2418;text-transform:uppercase;margin-top:1rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>The Cat of No. 9</h2>
+  <div class="tabs">
+    <div class="tab"><span>Subject</span><b>Cat, ginger</b></div>
+    <div class="tab"><span>Last seen</span><b>Linen cupboard</b></div>
+    <div class="tab"><span>Affiliation</span><b>Suspected</b></div>
+    <div class="tab"><span>Notes</span><b>Knocks things over with intent.</b></div>
+  </div>
+</article>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>Mr. Anders</h2>
+  <div class="tabs">
+    <div class="tab"><span>Role</span><b>Parcels dispatcher</b></div>
+    <div class="tab"><span>Last seen</span><b>North pier, 02:14</b></div>
+    <div class="tab"><span>Status</span><b>Trustworthy</b></div>
+    <div class="tab"><span>Notes</span><b>Carries one umbrella in any weather.</b></div>
+  </div>
+</article>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>M. L.</h2>
+  <div class="tabs">
+    <div class="tab"><span>Address</span><b>Address withheld</b></div>
+    <div class="tab"><span>Hair colour</span><b>Reputation: red</b></div>
+    <div class="tab"><span>Affiliation</span><b>Sympathetic</b></div>
+    <div class="tab"><span>Notes</span><b>Returns books before they are due.</b></div>
+  </div>
+</article>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>Dr. Vell</h2>
+  <div class="tabs">
+    <div class="tab"><span>Field</span><b>Letters, late</b></div>
+    <div class="tab"><span>Status</span><b>Recently retired</b></div>
+    <div class="tab"><span>Affiliation</span><b>The Wax Museum</b></div>
+    <div class="tab"><span>Notes</span><b>Always recommends a kettle.</b></div>
+  </div>
+</article>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>The Harbour Master</h2>
+  <div class="tabs">
+    <div class="tab"><span>Last seen</span><b>04:02 hrs</b></div>
+    <div class="tab"><span>Status</span><b>Trustworthy</b></div>
+    <div class="tab"><span>Affiliation</span><b>The Long Table</b></div>
+    <div class="tab"><span>Notes</span><b>Sings off-key and knows it.</b></div>
+  </div>
+</article>
+<article class="dossier">
+  <div class="stamp">e.g.</div>
+  <h2>E. M.</h2>
+  <div class="tabs">
+    <div class="tab"><span>Address</span><b>P.O. Box 02</b></div>
+    <div class="tab"><span>Editor of</span><b>the Dispatch</b></div>
+    <div class="tab"><span>Status</span><b>Sleepless, soft</b></div>
+    <div class="tab"><span>Notes</span><b>Has a parrot named Ink.</b></div>
+  </div>
+</article>
+<footer>MiniMax M3 · 75 / 100 · — files are mostly paper —</footer>
+</body>
+</html>

@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sunday Forecast — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#fef6e0;color:#3a2c1a;font-family:"Caveat","Iowan Old Style",cursive,serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:repeat(7,1fr);gap:.6rem}
+  @media (max-width:880px){body{grid-template-columns:repeat(2,1fr)}}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px dashed #3a2c1a;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-size:2.2rem;letter-spacing:.01em}
+  header h1 small{display:block;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5b22;text-transform:uppercase;margin-top:.2rem}
+  .day{background:#fff8e0;border:2px dashed #7d5b22;border-radius:8px;padding:.8rem;position:relative;min-height:200px;display:flex;flex-direction:column;gap:.4rem}
+  .day h2{font-size:1.4rem}
+  .day .icon{font-size:2.6rem;text-align:center;margin:.2rem 0}
+  .day p{flex:1;font-size:.95rem;line-height:1.4}
+  .day small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5b22;text-transform:uppercase}
+  .tear{position:absolute;top:10px;right:14px;width:20px;height:30px;background:linear-gradient(180deg,#7da4d6,transparent);border-radius:50% 50% 60% 40%/50% 50% 80% 80%;transform:rotate(-12deg);opacity:.4}
+  footer{grid-column:1/-1;text-align:center;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5b22;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Sunday Forecast<small>Drawn at the kitchen window</small></h1>
+  <div style="font-family:'Courier New',monospace;font-size:.85rem;letter-spacing:.2em">— for the week ahead —</div>
+</header>
+<section class="day"><small>monday</small><h2>M — cloud</h2><div class="icon">☁️</div><p>A cloud stays for breakfast. Takes its time. Leaves by lunch. By 3pm the laundry is on the line, snapping politely.</p></section>
+<section class="day"><small>tuesday</small><h2>T — fog</h2><div class="icon">🌫️</div><p>The garden has gone shy. We talk in whispers; one robin, very nearby, judges.</p></section>
+<section class="day"><small>wednesday</small><h2>W — rain</h2><div class="icon">🌧️</div><p>Rain that prefers reading. It sits on the windowsill and quotes something in Esperanto.</p></section>
+<section class="day"><small>thursday</small><h2>Th — sun, mild</h2><div class="icon">🌤️</div><p>A mild sunny Thursday. The dog is suddenly philosophical. The kettle listens back.</p></section>
+<section class="day"><small>friday</small><h2>F — wind</h2><div class="icon">🌬️</div><p>Wind starting west, finishing south-east. Doors are advised. Tiny packets of leaves in transit.</p></section>
+<section class="day"><small>saturday</small><h2>S — storm</h2><div class="icon">⛈️</div><p>A storm with an appointment. Comes at 4pm. Leaves a calling-card: a pool of rainwater and a small piece of sky.</p></section>
+<section class="day"><small>sunday</small><h2>Su — quiet</h2><div class="icon">☀️</div><p>An honest Sunday. Hammock weather. Tea. A nap. The cat agrees.</p><div class="tear"></div></section>
+<footer>MiniMax M3 · 31 / 100</footer>
+</body>
+</html>

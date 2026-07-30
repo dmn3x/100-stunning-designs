@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Blackbird Dispatch — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#070708;color:#d0cbb3;font-family:"Times New Roman",serif;min-height:100vh}
+  .masthead{padding:1rem 2rem;border-bottom:2px solid #cfa43c;display:flex;justify-content:space-between;align-items:flex-end;background:linear-gradient(180deg,#0c0c14,#070708);flex-wrap:wrap;gap:.5rem}
+  .masthead h1{font-family:"Bodoni Moda",serif;font-size:clamp(1.8rem,5vw,3rem);font-weight:700;letter-spacing:.02em;color:#f0e3b4}
+  .masthead h1 small{display:block;font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.4em;color:#cfa43c;text-transform:uppercase;margin-top:.2rem}
+  .masthead .price{font-family:"Courier New",monospace;font-size:1.2rem;color:#cfa43c;border:2px solid #cfa43c;padding:.3rem .8rem}
+  .board{display:grid;grid-template-columns:1.4fr 1fr;gap:0}
+  @media (max-width:880px){.board{grid-template-columns:1fr}}
+  .column{padding:2rem;border-right:1px solid #1d1d22;border-bottom:1px solid #1d1d22}
+  .column:last-child{border-right:none}
+  .kicker{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.4em;color:#cfa43c;text-transform:uppercase;margin-bottom:.4rem}
+  .lead{font-family:"Bodoni Moda",serif;font-size:clamp(1.6rem,4vw,2.6rem);line-height:1.05;color:#fff;font-weight:700;margin-bottom:.8rem;max-width:14ch}
+  .lead::first-letter{font-size:5rem;float:left;line-height:.85;padding:.2rem .4rem 0 0;color:#cfa43c;font-style:italic}
+  .byline{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7e7560;margin-bottom:1rem;text-transform:uppercase}
+  .col p{font-size:1.02rem;line-height:1.55;margin-bottom:.7rem;text-align:justify}
+  .drop-cap{display:inline-block;font-family:"Bodoni Moda",serif;font-size:3.4rem;line-height:.9;float:left;padding:.3rem .5rem 0 0;color:#cfa43c;font-style:italic}
+  .ticker{background:#0d0d13;border-top:1px solid #1d1d22;border-bottom:1px solid #1d1d22;padding:.4rem 0;overflow:hidden;position:relative;font-family:"Courier New",monospace;font-size:.85rem;color:#cfa43c;letter-spacing:.2em}
+  .ticker span{display:inline-block;white-space:nowrap;animation:roll 60s linear infinite}
+  @keyframes roll{from{transform:translateX(50vw)}to{transform:translateX(-100%)}}
+  .classifieds{display:grid;grid-template-columns:1fr 1fr;gap:.8rem}
+  @media (max-width:780px){.classifieds{grid-template-columns:1fr}}
+  .ad{border:1px solid #2b2b33;padding:.6rem;font-size:.85rem;line-height:1.5}
+  .ad h4{font-family:"Bodoni Moda",serif;font-size:1.05rem;color:#f0e3b4;margin-bottom:.3rem}
+  .ad small{font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.3em;color:#cfa43c;display:block;margin-bottom:.3rem;text-transform:uppercase}
+  footer{padding:1rem 2rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7e7560;text-transform:uppercase;border-top:1px solid #1d1d22;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header class="masthead">
+  <h1>THE BLACKBIRD DISPATCH<small>est. 1923 · the night side</small></h1>
+  <div class="price">2¢</div>
+</header>
+<div class="ticker"><span>✦ Weather: low cloud, persistent ✦ Council moves to ban outdoor reading past 10pm ✦ Blackbird population up six per cent, says ornithologist ✦ Citizen's band radio: a single, mournful duck ✦ The river runs backwards today, witnesses claim ✦</span></div>
+<div class="board">
+  <article class="column">
+    <div class="kicker">Civic affairs · 03:14</div>
+    <h2 class="lead">Council moves to ban outdoor reading past ten p.m.</h2>
+    <div class="byline">By E. Marlowe · 03:14 · Stonebridge</div>
+    <p><span class="drop-cap">T</span>he Stonebridge city council voted <em>six to three</em> last night to introduce an ordinance prohibiting recreational reading in public spaces after the ten o'clock siren. Councillor F. Vell, who proposed the motion, said readers were "a drain on lampposts" and "inconveniently quiet."</p>
+    <p>An impromptu gathering of readers outside the courthouse, organised by the Blackbird Library and held, fittingly, in silence, dispersed at 22:07. The mayor declined comment. The librarian declined to comment. The ducks declined to comment, though one was observed to quack.</p>
+    <p>The ordinance takes effect Friday. Fines begin at 50¢. Repeated offences may incur a &mdash; <em>wait, the rest of this column is unreadable.</em></p>
+  </article>
+  <article class="column">
+    <div class="kicker">Hard news · 02:40</div>
+    <h2 style="font-family:'Bodoni Moda',serif;font-size:1.4rem;color:#fff">River observed running <em>backwards</em>; or, maybe, ordinary reversal</h2>
+    <div class="byline">By an unattributed source · Marsden</div>
+    <p><span class="drop-cap">A</span> mariner at the Marsden wharf reports that the river turned and ran inland for twelve minutes before resuming its normal course. Eyewitnesses counted three fish swimming north.</p>
+    <p>The harbourmaster attributed the phenomenon to "the wind", but declined to clarify which direction it had blown from. Operators of small vessels were advised to remain in port for the remainder of the evening.</p>
+    <div class="classifieds">
+      <div class="ad"><small>Lost</small><h4>A pocket watch, train-shaped</h4>Last seen near platform 3 of the night train. Belonged to my grandfather. Sentimental reward.<br>— E.M.</div>
+      <div class="ad"><small>For hire</small><h4>A typewriter, slightly brooding</h4>Available evenings, weekends. Will dictate to your silence. Reasonable rates.<br>— H.P.</div>
+      <div class="ad"><small>Found</small><h4>A small stone</h4>In the bend of the river. Smooth. Cool. Free to the right kind of person.<br>— Anonymous</div>
+      <div class="ad"><small>Notice</small><h4>Blackbird Library extended hours</h4>Open until midnight through Saturday. Bring ID. Bring patience.</div>
+    </div>
+  </article>
+</div>
+<footer><span>MiniMax M3 · 20 / 100</span><span>Set in Bodoni & Courier · printed at 03:14 on rainy paper</span></footer>
+</body>
+</html>

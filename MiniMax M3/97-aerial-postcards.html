@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Aerial Postcards — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0e1a26;color:#cfe9f6;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1rem}
+  .pcard{aspect-ratio:.71;border:1px solid #5fa8d3;background:linear-gradient(180deg,#5fa8d3,#1c3a55);position:relative;cursor:pointer;overflow:hidden;transition:transform .3s}
+  .pcard:hover{transform:scale(1.04);z-index:2}
+  .pcard .stamp{position:absolute;top:.6rem;right:.6rem;border:2px dashed #cfe9f6;width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-family:"Bodoni Moda",serif;font-style:italic;font-size:1.2rem}
+  .pcard .place{position:absolute;bottom:.4rem;left:.6rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#cfe9f6;text-transform:uppercase}
+  .pcard .note{position:absolute;top:.4rem;left:.6rem;font-family:"Times New Roman",serif;font-style:italic;font-size:.85rem;line-height:1.4;color:#fff8e0;background:rgba(0,0,0,.5);padding:.3rem .5rem;max-width:60%}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;border-bottom:2px dashed #5fa8d3;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;color:#fff;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5fa8d3;text-transform:uppercase}
+  footer{grid-column:1/-1;text-align:center;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5fa8d3;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Aerial Postcards</h1>
+  <small>bird's-eye atlas · 42 places</small>
+  <small>from a phantom pigeon</small>
+</header>
+<div class="pcard" style="background:linear-gradient(180deg,#5fa8d3,#1c3a55)"><div class="note">From up here, the river looks like it is reading itself.</div><div class="stamp">M</div><div class="place">Marsden</div></div>
+<div class="pcard" style="background:linear-gradient(180deg,#c44569,#7a1d2a)"><div class="note">Balloons for the closing ceremony. Two of them are still here.</div><div class="stamp">C</div><div class="place">Cranbrook</div></div>
+<div class="pcard" style="background:linear-gradient(180deg,#9b6db5,#3a1d6e)"><div class="note">The moon looks larger here. It is the same size. We checked.</div><div class="stamp">O</div><div class="place">Oakhurst</div></div>
+<div class="pcard" style="background:linear-gradient(180deg,#3a7253,#0e1d10)"><div class="note">A lake shaped like an ear; everyone is listening.</div><div class="stamp">L</div><div class="place">Lac Vert</div></div>
+<div class="pcard" style="background:linear-gradient(180deg,#e8a02a,#7a4a14)"><div class="note">The market is louder than its weight.</div><div class="stamp">P</div><div class="place">Porthallow</div></div>
+<div class="pcard" style="background:linear-gradient(180deg,#f6efe0,#a05c2a)"><div class="note">One small airport; one small wind; one small kettle.</div><div class="stamp">W</div><div class="place">Westmarsh</div></div>
+<footer>MiniMax M3 · 97 / 100 · up here, the wind is the wind</footer>
+</body>
+</html>

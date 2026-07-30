@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Long Table — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#3a2418;color:#f5d56e;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr;gap:1rem}
+  header{display:flex;justify-content:space-between;padding-bottom:.4rem;border-bottom:1px solid #5a2c0e;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#a05c2a}
+  .salon{position:relative;background:radial-gradient(ellipse at 50% 50%,#5a2c0e,#3a2418 70%);border:1px solid #a05c2a;min-height:60vh;padding:2rem;display:flex;align-items:center;justify-content:center}
+  .table{width:90%;max-width:760px;height:140px;background:linear-gradient(180deg,#a05c2a,#5a2c0e);border-radius:8px;display:flex;justify-content:space-around;align-items:center;position:relative;box-shadow:inset 0 -10px 30px rgba(0,0,0,.5)}
+  .seat{aspect-ratio:1;width:60px;background:#fff8e6;color:#5a2c0e;border-radius:50%;display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;font-size:.7rem;font-family:"Courier New",monospace;letter-spacing:.1em;line-height:1.1;padding:.4rem;position:relative;transition:transform .3s}
+  .seat:hover{transform:translateY(-6px)}
+  .seat.taken{background:#a05c2a;color:#fff8e6}
+  .seat.glow{box-shadow:0 0 30px #f5d56e}
+  aside{padding:1rem;background:#1a0e08;border:1px solid #a05c2a}
+  aside h2{font-family:"Bodoni Moda",serif;font-size:1.4rem;font-style:italic;color:#f5d56e;margin-bottom:.4rem}
+  aside p{font-size:.95rem;line-height:1.5;font-style:italic}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a05c2a;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Long Table</h1>
+  <small>14 covers · one story per chair</small>
+  <small><b id="c">0</b> seated</small>
+</header>
+<section class="salon">
+  <div class="table" id="table"></div>
+</section>
+<aside id="story">
+  <h2>Choose a place</h2>
+  <p>Each seat has its own small story. Click a chair to listen. The table remembers; you may not have to.</p>
+</aside>
+<footer>MiniMax M3 · 64 / 100</footer>
+<script>
+  const guests=['E.M.','H.P.','F.V.','P.K.','A.B.','L.S.','P.V.','J.K.','B.H.','C.O.','D.L.','A.V.','R.A.','M.C.'];
+  const stories={'E.M.':'Editor by trade. Drinks stewed tea. Carries a graphite pencil stub.','H.P.':'Had a small radio. Believed the river turned for her, once.','F.V.':'Council member. Wears the same coat to all meetings.','P.K.':'Lives by the lagoon. Has not slept in three nights.','A.B.':'Night-train driver. Sleeps one minute past each stop.','L.S.':'Runs the harbour desk. Sings off-key. Kind.','P.V.':'Cartographer. Has not been home in seven years.','J.K.':'Bookseller. Picks up the dropped reads.','B.H.':'Drives the day-train. Bakes bread Sundays.','C.O.':'Crew change. New to the line. Unfolds maps in her bunk.','D.L.':'Gentleman. Hands you three coins; takes the smallest.','A.V.':'Schoolteacher. Returns what she borrows within the day.','R.A.':'Carpenter. Built this table. Refuses the credit.','M.C.':'Came in from the rain. Is not yet a member of anything.'};
+  const table=document.getElementById('table');let count=0;
+  guests.forEach(g=>{const s=document.createElement('button');s.type='button';s.className='seat';s.textContent=g;s.style.fontSize='.6rem';s.addEventListener('click',()=>{s.classList.toggle('taken');if(s.classList.contains('taken')){count++;s.classList.add('glow');setTimeout(()=>s.classList.remove('glow'),1200);document.getElementById('story').innerHTML=`<h2>${g}</h2><p>${stories[g]}</p>`}else{count--}document.getElementById('c').textContent=count});table.appendChild(s)});
+</script>
+</body>
+</html>

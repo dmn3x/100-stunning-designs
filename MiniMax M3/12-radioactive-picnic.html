@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Radioactive Picnic — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a1a0e;color:#cf2e2e;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;cursor:crosshair}
+  .border{position:fixed;inset:8px;border:6px double #cf2e2e;pointer-events:none;z-index:2;mix-blend-mode:multiply}
+  .corners::before,.corners::after,.corners > i, .corners b{position:fixed;font-size:1rem;color:#cf2e2e;letter-spacing:.2em}
+  .tl{top:14px;left:14px}.tr{top:14px;right:14px}.bl{bottom:14px;left:14px}.br{bottom:14px;right:14px}
+  main{max-width:780px;margin:0 auto;text-align:center;padding:3rem 1rem}
+  .clss{font-size:1.4rem;letter-spacing:.3em;color:#cf2e2e;border:2px solid #cf2e2e;display:inline-block;padding:.4rem 1.6rem;margin-bottom:.6rem}
+  h1{font-family:"Times New Roman",serif;font-size:clamp(2.2rem,8vw,5rem);font-weight:900;letter-spacing:-.02em;color:#cf2e2e;text-shadow:2px 2px 0 #0a0a04;margin-bottom:.6rem;line-height:.9}
+  h1 small{display:block;font-size:1rem;letter-spacing:.4em;margin-top:.4rem;color:#f4e07a}
+  .warn{background:#f4e07a;color:#1a1a0e;padding:1rem;margin:1rem 0;text-align:left;border:2px solid #cf2e2e}
+  .warn h3{font-size:.95rem;letter-spacing:.2em;text-transform:uppercase;margin-bottom:.4rem}
+  .meter{display:inline-block;background:#0a0a04;border:2px solid #cf2e2e;padding:1rem 1.6rem;margin:1rem 0}
+  .meter .big{font-size:3rem;font-weight:700;letter-spacing:.1em}
+  .meter small{display:block;font-size:.6rem;letter-spacing:.4em;margin-top:.3rem}
+  .bar{width:280px;height:14px;background:#0a0a04;border:2px solid #cf2e2e;margin:.6rem auto;position:relative}
+  .bar i{position:absolute;top:0;bottom:0;left:0;background:linear-gradient(90deg,#3ad24a,#cf2e2e 80%);transition:width .3s}
+  .rules{text-align:left;margin:1rem 0;line-height:1.6}
+  .rules li{padding:.25rem 0;border-bottom:1px dashed rgba(207,46,46,.3);list-style-position:inside}
+  .pulse{color:#f4e07a;animation:blink 1.4s steps(2) infinite}
+  @keyframes blink{50%{opacity:.2}}
+  .signature{margin-top:1.4rem;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;color:#cf2e2e}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="border"></div>
+<div class="corners"><span class="tl">▢</span><span class="tr">▢</span><span class="bl">▢</span><span class="br">▢</span></div>
+<main>
+  <div class="clss">CLASSIFIED — 1959</div>
+  <h1>RADIOACTIVE<br>PICNIC<small>do not eat the dessert</small></h1>
+  <div class="warn">
+    <h3>↑ Health & Safety Notice ↑</h3>
+    <p>Several attendees of the Annual Atomic Fellowship Picnic have reported mild luminescence around the wrists after dessert. This is considered <em>within acceptable tolerance</em>. Please refrain from kissing anyone with green-tinted lips until further notice.</p>
+  </div>
+  <div class="meter">
+    <div class="big" id="reading">.04</div>
+    <small>background · millisieverts</small>
+  </div>
+  <div class="bar"><i id="bar" style="width:8%"></i></div>
+  <div style="font-size:.75rem;letter-spacing:.3em">↑ move cursor ↑ / click & hold ↑ to spike reading</div>
+  <ol class="rules">
+    <li>No more than three marshmallows from the Geiger-corner.</li>
+    <li>Children must be accompanied by a parent <em>and</em> a Geiger counter.</li>
+    <li>The salad contains strontium. It is decorative. It is not for eating.</li>
+    <li>If your shadow appears on the wrong side, report to the tent.</li>
+    <li>One dessert has been pre-blessed by the fire marshal. Choose wisely.</li>
+  </ol>
+  <div class="signature"><span class="pulse">●</span> signed · Atomic Fellowship · picnic committee</div>
+  <div style="font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.3em;margin-top:2rem">MiniMax M3 · 12 / 100</div>
+</main>
+<script>
+  const reading=document.getElementById('reading'),bar=document.getElementById('bar');let v=.04,hold=false;
+  document.addEventListener('pointerdown',()=>hold=true);document.addEventListener('pointerup',()=>hold=false);
+  setInterval(()=>{
+    v=hold?v+(Math.random()-.2)*.6:v+(Math.random()-.5)*.04;
+    v=Math.max(0.02,Math.min(8,v));
+    reading.textContent=v.toFixed(2);
+    bar.style.width=(v/8)*100+'%';
+    if(v>1.5)reading.style.color='#3ad24a';else if(v>3)reading.style.color='#f4e07a';else reading.style.color='#cf2e2e';
+  },200);
+</script>
+</body>
+</html>

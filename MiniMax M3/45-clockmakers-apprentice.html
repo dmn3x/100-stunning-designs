@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Clockmaker's Apprentice — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0e1a13;color:#e9d59a;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;border-bottom:1px solid #5a3a1a;padding-bottom:.4rem;align-items:flex-end;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  .workshop{background:radial-gradient(ellipse,#3a2310,#0e1a13);border:6px ridge #5a3a1a;display:flex;align-items:center;justify-content:center;min-height:60vh;position:relative;overflow:hidden}
+  svg{width:100%;height:100%}
+  aside{background:#1c140a;border:1px solid #5a3a1a;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  aside h3{font-family:"Bodoni Moda",serif;font-size:1.3rem;font-style:italic}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed #5a3a1a;padding:.3rem 0;font-family:"Courier New",monospace;font-size:.85rem}
+  .row b{color:#f5d56e}
+  input[type=range]{accent-color:#f5d56e;width:100%}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #f5d56e;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#f5d56e;color:#0e1a13}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Clockmaker's Apprentice</h1>
+  <small>workbench 02 · brass & walnut</small>
+  <small>aria ·"click"</small>
+</header>
+<section class="workshop"><svg id="svg" viewBox="-100 -100 200 200"></svg></section>
+<aside>
+  <h3>Wind the mechanism</h3>
+  <div class="row"><span>Spring tension</span><b id="t">60%</b></div>
+  <input type="range" min="0" max="100" value="60" id="tension">
+  <div class="row"><span>Pendulum length</span><b id="p">35</b></div>
+  <input type="range" min="10" max="60" value="35" id="pend">
+  <div class="row"><span>Escapement</span><b id="e">DETENT</b></div>
+  <select id="esc" style="font:inherit;background:#0e1a13;color:#f5d56e;border:1px solid #5a3a1a;padding:.4rem">
+    <option value="detent">Detent</option><option value="anchor">Anchor</option><option value="verge">Verge</option>
+  </select>
+  <button id="wind" type="button">wind the clock</button>
+  <p style="font-size:.85rem;font-style:italic;line-height:1.5;color:#a06d3c">"We do not own the time. We keep it for a while. Then we pass it on."</p>
+</aside>
+<footer>MiniMax M3 · 45 / 100</footer>
+<script>
+  const svg=document.getElementById('svg');let ang=0,spring=60,pendLen=35,esc='detent';
+  function draw(){svg.innerHTML=`
+    <circle r="95" fill="#1c140a" stroke="#5a3a1a" stroke-width="2"/>
+    <g stroke="#5a3a1a" fill="none"><path d="M0,-90 L0,-78 M0,90 L0,78 M-90,0 L-78,0 M90,0 L78,0"/></g>
+    <line x1="0" y1="${-pendLen*1.4}" x2="0" y2="${pendLen*1.4}" stroke="#a06d3c" stroke-width="3" transform="rotate(${Math.sin(ang)*8})"/>
+    <circle r="14" fill="#f5d56e"/>
+    <text x="0" y="-30" text-anchor="middle" fill="#f5d56e" font-family="serif" font-size="12">M3</text>
+    <animateTransform attributeName="transform" type="rotate" from="0" to="${spring>20?360:0}" dur="${60/spring}s" repeatCount="indefinite"/>`;
+  }
+  draw();
+  document.getElementById('tension').addEventListener('input',e=>{spring=+e.target.value;document.getElementById('t').textContent=spring+'%';draw()});
+  document.getElementById('pend').addEventListener('input',e=>{pendLen=+e.target.value;document.getElementById('p').textContent=pendLen;draw()});
+  document.getElementById('esc').addEventListener('change',e=>{esc=e.target.value;document.getElementById('e').textContent=esc.toUpperCase()});
+  document.getElementById('wind').addEventListener('click',()=>{spring=Math.min(100,spring+10);document.getElementById('tension').value=spring;document.getElementById('t').textContent=spring+'%';draw()});
+  (function tick(){ang+=spring*.005;requestAnimationFrame(tick)})();
+</script>
+</body>
+</html>

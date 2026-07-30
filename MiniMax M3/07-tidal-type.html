@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Tidal Type — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#012d3a;color:#cdeaf0;font-family:"Inter",sans-serif;min-height:100vh;overflow-x:hidden}
+  .sea{position:fixed;inset:0;z-index:-1}
+  main{max-width:900px;margin:0 auto;padding:6rem 1.4rem 8rem}
+  .headline{font-family:"Bodoni Moda",serif;font-size:clamp(2.4rem,7vw,5.2rem);line-height:1.02;letter-spacing:-.02em;margin-bottom:1.5rem;position:relative;padding:1rem 0}
+  .headline span{display:block}
+  .glyphs{display:flex;gap:.6rem;flex-wrap:wrap;margin-bottom:1.2rem}
+  .glyph{padding:.3rem .6rem;border:1px solid rgba(205,234,240,.3);font-family:"Courier New",monospace;font-size:.8rem;cursor:pointer}
+  .glyph:hover{background:#cdeaf0;color:#012d3a}
+  .columns{display:grid;grid-template-columns:repeat(3,1fr);gap:1.4rem}
+  @media (max-width:780px){.columns{grid-template-columns:1fr}}
+  .col p{font-size:1rem;line-height:1.6;margin-bottom:.8rem}
+  .col h3{font-family:"Bodoni Moda",serif;font-size:1.2rem;margin-bottom:.6rem;color:#a4d7e1;border-top:1px solid rgba(205,234,240,.3);padding-top:.4rem}
+  .wave{display:block;width:100%;height:60px;margin:1rem 0}
+  .stamp{position:fixed;bottom:1rem;left:1rem;font-family:"Courier New",monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase}
+  .tide{display:flex;gap:.4rem;align-items:flex-end;height:60px;margin-top:1rem}
+  .tide div{flex:1;background:linear-gradient(180deg,#a4d7e1,#3d8193);border-radius:1px;animation:tide 3s ease-in-out infinite}
+  .tide div:nth-child(2n){animation-delay:.4s;background:linear-gradient(180deg,#75b8c5,#265566)}
+  @keyframes tide{0%,100%{height:20%}50%{height:90%}}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<canvas class="sea" id="sea"></canvas>
+<main>
+  <h1 class="headline">
+    <span id="line1">The harbour</span>
+    <span id="line2">forgets our names</span>
+    <span id="line3">at low tide.</span>
+  </h1>
+  <svg class="wave" viewBox="0 0 100 12" preserveAspectRatio="none"><path id="w1" d="M0,6 Q25,0 50,6 T100,6 V12 H0 Z" fill="rgba(205,234,240,.5)"/></svg>
+  <div class="glyphs">
+    <span class="glyph" data-g="ampersand">&amp;</span>
+    <span class="glyph" data-g="question">?</span>
+    <span class="glyph" data-g="tilde">~</span>
+    <span class="glyph" data-g="dagger">†</span>
+    <span class="glyph" data-g="bullet">•</span>
+    <span class="glyph" data-g="pilcrow">¶</span>
+    <span class="glyph" data-g="section">§</span>
+  </div>
+  <div class="columns">
+    <div class="col">
+      <h3>Currents</h3>
+      <p>The headline breathes once every six seconds. The waves are drawn live, never the same shape twice. You can hover the words and the swell responds under your cursor.</p>
+      <div class="tide"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>
+    </div>
+    <div class="col">
+      <h3>Drift</h3>
+      <p>Set the glyphs in the masthead and the page reveals itself in three movements — a tide, a turn, a tide going out. Hover any paragraph; the waterline lowers behind it.</p>
+    </div>
+    <div class="col">
+      <h3>Tables</h3>
+      <p>The text follows maritime log conventions: a long unbroken line of weather, a short entry of incident, and a longer observation. No filename of authors. No date.</p>
+    </div>
+  </div>
+</main>
+<div class="stamp">MiniMax M3 · 07 / 100 · vol. tide</div>
+<script>
+  const sea=document.getElementById('sea'),ctx=sea.getContext('2d');let W,H;function fit(){W=sea.width=innerWidth*2;H=sea.height=innerHeight*2;ctx.scale(2,2)}fit();addEventListener('resize',fit);
+  let t=0;function seaDraw(){ctx.fillStyle='#012d3a';ctx.fillRect(0,0,W,H);for(let i=0;i<40;i++){ctx.beginPath();ctx.arc((i*40+t*.5)%W,H-30+Math.sin((t+i)/30)*10,1.2,0,6.283);ctx.fillStyle='rgba(205,234,240,.2)';ctx.fill()}t++;requestAnimationFrame(seaDraw)}seaDraw();
+  const headline=document.getElementById('line1');headline.parentElement.addEventListener('pointermove',e=>{const r=headline.getBoundingClientRect();const lines=[document.getElementById('line1'),document.getElementById('line2'),document.getElementById('line3')];lines.forEach(l=>{const dx=(e.clientX-r.left-r.width/2)/80;l.style.transform=`translateX(${dx}px)`;l.style.letterSpacing=`${-0.02+dx*0.001}em`})});
+  document.querySelectorAll('.glyph').forEach(g=>{g.addEventListener('click',()=>{const last=document.getElementById('line3');last.textContent=last.textContent.trim()+' '+g.textContent})});
+</script>
+</body>
+</html>

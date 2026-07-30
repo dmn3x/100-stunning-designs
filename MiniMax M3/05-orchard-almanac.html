@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Orchard Almanac — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--leaf:#3a6b3a;--bark:#5a3a1d;--sky:#f5ecd2;--berry:#7a2138;--citrus:#e8a02a;--plum:#432256;--sage:#a3b08c;--ink:#22221c}
+  body{background:var(--sky);color:var(--ink);font-family:"Georgia",serif;min-height:100vh;padding:1.5rem;display:grid;grid-template-rows:auto 1fr;gap:1.2rem}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--ink);padding-bottom:.6rem;flex-wrap:wrap;gap:1rem}
+  h1{font-size:clamp(1.6rem,4vw,2.4rem);letter-spacing:.02em}
+  h1 small{display:block;font-family:"Courier New",monospace;letter-spacing:.4em;text-transform:uppercase;font-size:.7rem;color:var(--leaf)}
+  .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:.6rem}
+  .month{aspect-ratio:1/1;border:1.5px solid var(--ink);position:relative;background:#fff8e3;display:flex;align-items:center;justify-content:center;flex-direction:column;cursor:pointer;overflow:hidden;transition:transform .2s}
+  .month:hover,.month:focus-visible{transform:scale(1.04);z-index:2;outline:none}
+  .month h3{font-size:.9rem;letter-spacing:.2em;text-transform:uppercase}
+  .month::before{content:"";position:absolute;inset:6px;border:1px dashed rgba(0,0,0,.2)}
+  .harvest{position:absolute;font-size:1.4rem;letter-spacing:-.05em;line-height:1}
+  .harvest span{display:block}
+  .panel{grid-column:span 12;background:#fbf5e3;border:2px solid var(--ink);padding:1rem 1.2rem;margin-top:.8rem;display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  @media (max-width:780px){.panel{grid-template-columns:1fr}.grid{grid-template-columns:repeat(6,1fr)}}
+  .panel h2{font-size:1.4rem;margin-bottom:.4rem}
+  .panel p{font-size:.95rem;line-height:1.55}
+  .icon{font-size:2rem}
+  .picker{position:absolute;width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 35%,#fff,#aaa 70%);display:none;pointer-events:none}
+  .month.dropping .picker{display:block;animation:drop 1.2s forwards}
+  @keyframes drop{0%{transform:translateY(-30px);opacity:.9}to{transform:translateY(150px);opacity:0}}
+  footer{font-family:"Courier New",monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase;text-align:center;color:var(--leaf)}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Orchard Almanac<small>Twelve months · Forty fruits</small></h1>
+  <div style="font-family:'Courier New',monospace;letter-spacing:.15em">hand-drawn · unfalsified</div>
+</header>
+<div class="grid" id="grid">
+  <div class="panel" id="panel">
+    <div>
+      <div class="icon">🪴</div>
+      <h2 id="mt">The Almanac</h2>
+      <p id="mb">Choose a month to see what ripens, what is preserved, and what is allowed to rest under straw until spring returns.</p>
+    </div>
+    <div>
+      <div class="icon">🍯</div>
+      <h2 style="font-style:italic">This week's recipes</h2>
+      <p id="recipes">— pick a month to see what's cooking at the kitchen window</p>
+    </div>
+  </div>
+</div>
+<footer>MiniMax M3 · 05 of 100</footer>
+<script>
+  const data=[
+    ['January','❄️','forced rhubarb, kept apples, dried rosehips','Rhubarbaro liqueur · apple & sage pie'],
+    ['February','☁️','citrus, blood oranges, kaffir leaves','Shrivelled-citrus marmalade · tea leaf salad'],
+    ['March','🌱','wild garlic, nettle tops, purple sprouting','Nettle gnudi · wild-garlic butter'],
+    ['April','🌸','rhubarb, asparagus, green almonds','Asparagus pilaf · green-almond salsa'],
+    ['May','🥚','broad beans, peas, strawberries, elderflower','Strawberry mess · elderflower cordial'],
+    ['June','🌹','cherries, gooseberries, red currants, roses','Gooseberry shrub · cherry clafoutis'],
+    ['July','🍑','peaches, apricots, loganberries, basil','Stone-fruit galette · apricot leather'],
+    ['August','🍅','tomatoes, peppers, sweet corn, plums','Tomato-leaf oil · plum kuchen'],
+    ['September','🍐','pears, quinces, damsons, figs','Quince paste · damson cheese'],
+    ['October','🎃','squash, pumpkins, late apples, rosehips','Squash consommé · apple molasses'],
+    ['November','🌰','chestnuts, walnuts, medlars, late pears','Roasted chestnuts · medlar jelly'],
+    ['December','🌲','forced chicory, clementines, bay, sage','Bay-butter biscuits · clementine upside-down cake'],
+  ];
+  const grid=document.getElementById('grid'),panel=document.getElementById('panel'),mt=document.getElementById('mt'),mb=document.getElementById('mb'),recipes=document.getElementById('recipes');
+  data.forEach((d,i)=>{
+    const m=document.createElement('button');m.type='button';m.className='month';
+    m.innerHTML=`<h3>${(i+1).toString().padStart(2,'0')}</h3><div class="harvest">${d[1]}<span style="font-size:.75rem;letter-spacing:.15em;text-transform:uppercase">${d[0]}</span></div>`;
+    m.addEventListener('click',()=>{mt.textContent=d[0]+' · harvest';mb.textContent=`In the larder this month: ${d[2]}.`;recipes.textContent=d[3];mt.scrollIntoView({behavior:'smooth',block:'start'})});
+    grid.insertBefore(m,panel);
+  });
+</script>
+</body>
+</html>

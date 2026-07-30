@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Coral Ledger — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#001a26;color:#cff0f5;font-family:"Inter",sans-serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1.4fr 1fr;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .reef{position:relative;background:linear-gradient(180deg,#01334a,#001a26);border:1px solid #275c70;overflow:hidden;min-height:60vh}
+  canvas{display:block;width:100%;height:100%}
+  .dash{background:rgba(0,0,0,.4);border:1px solid #275c70;padding:1rem;display:flex;flex-direction:column;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  .dash h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#cff0f5}
+  .dash p{font-family:"Inter",sans-serif;font-size:.92rem;line-height:1.5;color:#a9d4dc}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed #275c70;padding:.3rem 0}
+  .row b{color:#7bf0c5}
+  .gauge{display:flex;align-items:flex-end;gap:2px;height:60px;margin-top:.5rem}
+  .gauge i{flex:1;background:#275c70;border-radius:2px}
+  .gauge i.on{background:linear-gradient(180deg,#ffba50,#ff5b94)}
+  .entries{font-family:"Courier New",monospace;font-size:.75rem;line-height:1.6;color:#a9d4dc;max-height:120px;overflow:auto;border-top:1px dashed #275c70;padding-top:.5rem}
+  button{font:inherit;background:transparent;color:#cff0f5;border:1px solid #275c70;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem}
+  button:hover{background:#275c70}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#a9d4dc}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="reef"><canvas id="cv"></canvas></section>
+<aside class="dash">
+  <h1>Coral Ledger</h1>
+  <p>Reef #07 is bleaching. Log every colony, every reading, every quiet death.</p>
+  <div class="row"><span>Health</span><b id="h">68%</b></div>
+  <div class="row"><span>pH</span><b id="ph">8.1</b></div>
+  <div class="row"><span>Temp</span><b id="t">29.4 °C</b></div>
+  <div class="row"><span>Species</span><b id="sp">14</b></div>
+  <div class="gauge" id="g"></div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+    <button id="bleach">Trigger bleach</button>
+    <button id="cool">Cool water</button>
+    <button id="note">Log</button>
+  </div>
+  <div class="entries" id="entries">> colony 04-2 checked. bleaching index 0.4.</div>
+</aside>
+<footer>MiniMax M3 · 28 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  const coral=[];for(let i=0;i<60;i++)coral.push({x:Math.random()*W,y:H*.4+Math.random()*H*.5,r:10+Math.random()*26,phase:Math.random()*Math.PI*2,sway:Math.random()*.04,hue:170+Math.random()*40,health:1});
+  let health=.68,pH=8.1,temp=29.4;
+  function draw(){cx.clearRect(0,0,W,H);coral.forEach(c=>{c.phase+=c.sway;cx.save();cx.translate(c.x+Math.sin(c.phase)*4,c.y);for(let i=0;i<6;i++){cx.fillStyle=`hsl(${c.hue},${40+c.health*40}%,${30+c.health*40}%)`;cx.beginPath();cx.arc(0,-i*6,c.r*(1-i*0.1),0,Math.PI*2);cx.fill()}});cx.restore();requestAnimationFrame(draw)}
+  draw();
+  function updateUI(){document.getElementById('h').textContent=(health*100|0)+'%';document.getElementById('ph').textContent=pH.toFixed(1);document.getElementById('t').textContent=temp.toFixed(1)+' °C';document.getElementById('sp').textContent=coral.length;coral.forEach((c,i)=>c.health=Math.max(0,Math.min(1,health*1.1-Math.random()*.2)));const g=document.getElementById('g');for(let i=0;i<14;i++){let d=g.children[i]||document.createElement('i');if(!g.children[i])g.appendChild(d);d.classList.toggle('on',i<health*14)}}
+  document.getElementById('bleach').addEventListener('click',()=>{health=Math.max(0,health-.15);addEntry('alert: bleaching event. health dropped.')});
+  document.getElementById('cool').addEventListener('click',()=>{temp=Math.max(24,temp-1.4);pH+=0.05;health=Math.min(1,health+.1);addEntry('cool water intervention. temperature reduced.')});
+  document.getElementById('note').addEventListener('click',()=>addEntry('survey pass: '+coral.length+' colonies checked.'));
+  const entries=document.getElementById('entries');function addEntry(t){const ts=new Date().toLocaleTimeString();entries.innerHTML+=`<br>&gt; [${ts}] ${t}`;entries.scrollTop=entries.scrollHeight;updateUI()}
+  updateUI();
+</script>
+</body>
+</html>

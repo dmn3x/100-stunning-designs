@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Blueprint Garden — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0e2a4a;color:#aeb6cf;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 280px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .blueprint{background:linear-gradient(180deg,#0a2240,#0e2a4a);border:1px solid #5872a3;position:relative;min-height:60vh;overflow:hidden}
+  canvas{display:block;width:100%;height:100%}
+  aside{padding:1rem;background:#0a2240;border:1px solid #5872a3}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;letter-spacing:.04em;color:#fff;margin-bottom:.4rem;font-style:italic}
+  aside p{font-size:.9rem;line-height:1.5;margin-bottom:.6rem}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed #5872a3;padding:.3rem 0;font-size:.78rem}
+  .row b{color:#aeb6cf}
+  button{font:inherit;background:transparent;border:1px solid #aeb6cf;color:#aeb6cf;padding:.3rem .6rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#aeb6cf;color:#0a2240}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5872a3;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="blueprint"><canvas id="cv"></canvas></section>
+<aside>
+  <h1>Planter's Blueprint</h1>
+  <p>Drag the cursor across the grid to plant. Each row has its own moisture and sun. Don't plant the same square twice; the garden knows.</p>
+  <div class="row"><span>Plants</span><b id="c">0</b></div>
+  <div class="row"><span>Soil</span><b>sandy loam</b></div>
+  <div class="row"><span>Sun</span><b>S-SW</b></div>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.6rem">
+    <button id="water">Water all</button>
+    <button id="clear">Clear</button>
+    <button id="auto">Auto-plant</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 37 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H,C=20;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  let plants=new Map();
+  function gridXY(x,y){const cw=W/C,ch=H/C;return [Math.floor(x/cw),Math.floor(y/ch)]}
+  function draw(){cx.clearRect(0,0,W,H);for(let i=0;i<=C;i++){cx.strokeStyle='rgba(174,182,207,.18)';cx.beginPath();cx.moveTo(i*W/C,0);cx.lineTo(i*W/C,H);cx.stroke();cx.beginPath();cx.moveTo(0,i*H/C);cx.lineTo(W,i*H/C);cx.stroke()}plants.forEach((p,key)=>{const cx2=p[0]*W/C+W/(2*C),cy2=p[1]*H/C+H/(2*C);const r=Math.min(W,H)/C/3;cx.fillStyle=p.watered?'#9b6db5':'#7ba3c4';cx.beginPath();cx.arc(cx2,cy2,r,0,6.283);cx.fill();for(let i=0;i<5;i++){cx.strokeStyle=p.watered?'#6b3f9b':'#5a6c91';cx.beginPath();cx.moveTo(cx2,cy2);cx.lineTo(cx2+Math.cos(i)*r*1.4,cy2+Math.sin(i)*r*1.4);cx.stroke()}})}
+  draw();
+  cv.addEventListener('pointermove',e=>{if(e.buttons){const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;const c=gridXY(x,y);const key=c.join(',');if(!plants.has(key)){plants.set(key,[c[0],c[1],Date.now(),{watered:false}]);document.getElementById('c').textContent=plants.size;draw()}}});
+  document.getElementById('water').addEventListener('click',()=>{plants.forEach(p=>p[3].watered=true);draw()});
+  document.getElementById('clear').addEventListener('click',()=>{plants.clear();document.getElementById('c').textContent='0';draw()});
+  document.getElementById('auto').addEventListener('click',()=>{plants.clear();for(let i=0;i<C;i++)plants.set([i,Math.floor(Math.random()*C)].join(','),[i,Math.floor(Math.random()*C),Date.now(),{watered:false}]);document.getElementById('c').textContent=plants.size;draw()});
+</script>
+</body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Ribbon Atlas — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f7f1e7;color:#3a2418;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr}
+  header{display:flex;justify-content:space-between;padding-bottom:.4rem;border-bottom:2px solid #3a2418;align-items:flex-end;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.8rem;font-style:italic}
+  header p{font-family:"Courier New",monospace;letter-spacing:.3em;font-size:.7rem;text-transform:uppercase;color:#7d5b22}
+  .pull{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:1.2rem;padding-top:1rem}
+  .ribbon{aspect-ratio:6;border-radius:8px;background:linear-gradient(90deg,#c44569,#f5d56e,#3a7253);position:relative;cursor:pointer;overflow:hidden;border:1px solid #3a2418}
+  .ribbon::before{content:"";position:absolute;left:50%;top:0;bottom:0;width:1px;border-left:2px dotted #3a2418}
+  .ribbon b{position:absolute;top:50%;left:1rem;transform:translateY(-50%);font-family:"Bodoni Moda",serif;font-style:italic;letter-spacing:.04em;color:#fff;text-shadow:0 1px 1px rgba(0,0,0,.3)}
+  .ribbon small{position:absolute;top:50%;right:1rem;transform:translateY(-50%);font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.3em;color:#fff;background:rgba(0,0,0,.3);padding:.2rem .4rem}
+  .ribbon:hover{transform:scale(1.04);z-index:2}
+  footer{margin-top:1rem;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5b22;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Ribbon Atlas</h1>
+  <p>— pull one to find your place —</p>
+  <div style="font-family:'Courier New',monospace;font-size:.7rem;letter-spacing:.2em">42 ribbons · 6 continents</div>
+</header>
+<main class="pull" id="pull"></main>
+<footer>MiniMax M3 · 43 / 100</footer>
+<script>
+  const data=[
+    ['Marseille','42°00′ E','linear-gradient(90deg,#5fa8d3,#f5d56e)'],
+    ['Hokkaido','142°E','linear-gradient(90deg,#c44569,#fff)'],
+    ['Iberian Edge','4°W','linear-gradient(90deg,#c44569,#0d3b66)'],
+    ['Andes','70°W','linear-gradient(90deg,#9b6db5,#3a7253)'],
+    ['Western Cape','18°E','linear-gradient(90deg,#a05c2a,#c44569)'],
+    ['Iceland','21°W','linear-gradient(90deg,#5fa8d3,#fff8e6)'],
+    ['Borneo','113°E','linear-gradient(90deg,#3a7253,#a05c2a)'],
+    ['Madagascar','47°E','linear-gradient(90deg,#d8a8b4,#3a7253)'],
+    ['Cape Horn','67°W','linear-gradient(90deg,#0d3b66,#fff)'],
+    ['Lofoten','13°E','linear-gradient(90deg,#5fa8d3,#c44569)'],
+    ['Baja California','110°W','linear-gradient(90deg,#dba35a,#a05c2a)'],
+    ['Black Sea','35°E','linear-gradient(90deg,#0d3b66,#f5d56e)'],
+    ['Karakoram','76°E','linear-gradient(90deg,#a05c2a,#9b6db5)'],
+    ['Tasmania','147°E','linear-gradient(90deg,#3a7253,#0d3b66)'],
+  ];
+  const pull=document.getElementById('pull');data.forEach(d=>{const r=document.createElement('button');r.type='button';r.className='ribbon';r.style.background=d[2];r.innerHTML=`<b>${d[0]}</b><small>${d[1]}</small>`;pull.appendChild(r)});
+</script>
+</body>
+</html>

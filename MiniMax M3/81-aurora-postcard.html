@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Aurora Postcard — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#0d1521;color:#e6ecf2;font-family:"Times New Roman",serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem}
+  .sky{width:340px;height:220px;background:radial-gradient(ellipse at 50% 100%,#1c2c4a 0%,#0d1521 70%);position:relative;border:8px double #f5d56e;box-shadow:0 30px 60px rgba(0,0,0,.6),0 0 0 8px #fff8e6;overflow:hidden;cursor:crosshair}
+  .sky::after{content:"";position:absolute;inset:8px;border:1px dashed rgba(245,213,110,.3);pointer-events:none}
+  canvas{display:block;width:100%;height:100%}
+  .post{padding:1rem .6rem;font-style:italic;text-align:center;max-width:340px}
+  .palette{display:flex;gap:.3rem;justify-content:center;margin:1rem 0}
+  .palette button{width:30px;height:30px;border-radius:50%;border:2px solid #fff8e6;cursor:pointer;font:inherit}
+  .controls{display:flex;gap:.4rem;flex-wrap:wrap;justify-content:center}
+  button.msg{font:inherit;background:transparent;color:#f5d56e;border:1px solid #f5d56e;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button.msg:hover{background:#f5d56e;color:#0d1521}
+  footer{margin-top:1rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a6c91;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<div class="sky"><canvas id="cv"></canvas></div>
+<p class="post" id="msg">— a postcard from the north — say anything —</p>
+<div class="palette" id="pal"></div>
+<div class="controls">
+  <button class="msg" id="stamp">Stamp & post</button>
+  <button class="msg" id="clear">Erase</button>
+  <button class="msg" id="hi">Say hi</button>
+</div>
+<footer>MiniMax M3 · 81 / 100</footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){W=cv.width=cv.offsetWidth*2;H=cv.height=cv.offsetHeight*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  let hue=160;const pal=document.getElementById('pal');['#76c893','#76bb83','#9b6db5','#a05c2a','#5fa8d3','#7ad6f0'].forEach(c=>{const b=document.createElement('button');b.style.background=c;b.addEventListener('click',()=>hue=c});pal.appendChild(b)});
+  function loop(){cx.fillStyle='rgba(13,21,33,.05)';cx.fillRect(0,0,W,H);for(let i=0;i<5;i++){cx.beginPath();cx.moveTo(0,H*.6+i*8);for(let x=0;x<W;x+=10){cx.lineTo(x,Math.sin(x*.005+i+Date.now()*.001)*14+H*.6+i*8)}cx.lineTo(W,0);cx.lineTo(0,0);cx.fillStyle=`hsla(${hue},80%,${30+i*4}%,.06)`;cx.fill()}requestAnimationFrame(loop)}loop();
+  cv.addEventListener('pointermove',e=>{const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;cx.fillStyle=`hsla(${hue},80%,70%,.7)`;cx.beginPath();cx.arc(x,y,Math.random()*2+1,0,Math.PI*2);cx.fill()});
+  document.getElementById('clear').addEventListener('click',()=>{cx.fillStyle='#0d1521';cx.fillRect(0,0,W,H)});
+  document.getElementById('hi').addEventListener('click',()=>{document.getElementById('msg').textContent=['— the ducks say hello too —','— the river is awake —','— bring warm socks —','— aurora tonight —','— the postmaster is asleep —'][Math.floor(Math.random()*5)]});
+  document.getElementById('stamp').addEventListener('click',()=>{const m=document.getElementById('msg');m.textContent='sent from '+new Date().toLocaleString()+' · to be hand-delivered by starlight.'});
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Public Works — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#f6efe0;color:#1c0a02;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr auto;gap:1rem}
+  header{display:flex;justify-content:space-between;border-bottom:2px solid #1c0a02;padding-bottom:.4rem;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.6rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:#5a2c0e}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:.6rem}
+  .job{background:#fff;border:1px solid #1c0a02;padding:.6rem;font-family:"Courier New",monospace;font-size:.78rem;display:flex;flex-direction:column;gap:.4rem;cursor:pointer}
+  .job .stat{padding:.2rem .4rem;font-size:.7rem;letter-spacing:.2em;text-transform:uppercase;width:fit-content}
+  .job[data-s="ok"] .stat{background:#a4d7a6;color:#1c4a14}
+  .job[data-s="wait"] .stat{background:#f5d56e;color:#5a4a14}
+  .job[data-s="urgent"] .stat{background:#c44569;color:#fff}
+  .job[data-s="done"] .stat{background:#5872a3;color:#fff}
+  .job p{font-family:"Iowan Old Style",serif;font-size:.85rem;line-height:1.4}
+  aside{padding:1rem;background:#1c0a02;color:#fff8e0;display:grid;grid-template-columns:1fr 1fr;gap:.6rem;font-family:"Courier New",monospace;font-size:.85rem}
+  aside b{color:#f5d56e}
+  footer{text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#5a2c0e;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>Public Works</h1>
+  <small>civic maintenance board · today</small>
+  <small><b id="ok">0</b> / <b id="wait">0</b> · <b id="urgent">0</b></small>
+</header>
+<section class="grid" id="board"></section>
+<aside>
+  <div>workers on duty<b>14</b></div>
+  <div>vehicles<b>4</b></div>
+  <div>reports last 24h<b>27</b></div>
+  <div>tomorrow<b>rain</b></div>
+  <div>mailroom<b>closed 13:00</b></div>
+  <div>kettle<b>ready</b></div>
+</aside>
+<footer>MiniMax M3 · 85 / 100</footer>
+<script>
+  const jobs=[['Hydrant flush','urgent','East row from 04:00; flags set.','urgent'],['Bridge inspection','ok','Quarterly. Quiet.','ok'],['Letter-box repair','wait','Letter lodged; awaiting parts.','wait'],['Library gutter','done','Replaced November.','done'],['School gate','urgent','Hinges replaced.','urgent'],['West path weed','ok','Mulched.','ok'],['Storm drain','wait','Slow but flowing.','wait'],['Telephone booth','done','Returned to coat of paint.','done'],['Harbour light','urgent','Lamp ordered.','urgent'],['Park bench','ok','Sanded; one leg loose.','ok'],['Postbox flag','done','Glued with intent.','done'],['Riverbank fence','wait','Re-stringing.','wait']];
+  const board=document.getElementById('board');let ok=0,wait=0,urgent=0,done=0;
+  jobs.forEach(j=>{const a=document.createElement('article');a.className='job';a.dataset.s=j[3];a.innerHTML=`<span class="stat">${j[1]}</span><strong style="font-family:'Bodoni Moda',serif;font-size:1.1rem;font-style:italic">${j[0]}</strong><p>${j[2]}</p>`;a.addEventListener('click',()=>{const states=['ok','wait','urgent','done'];const next=states[(states.indexOf(a.dataset.s)+1)%states.length];a.dataset.s=next;a.querySelector('.stat').textContent=next});board.appendChild(a);if(j[3]==='ok')ok++;else if(j[3]==='wait')wait++;else if(j[3]==='urgent')urgent++;else done++});
+  document.getElementById('ok').textContent=ok;document.getElementById('wait').textContent=wait;document.getElementById('urgent').textContent=urgent;
+</script>
+</body>
+</html>

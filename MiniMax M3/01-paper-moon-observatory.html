@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Paper Moon Observatory — MiniMax M3</title>
+<style>
+  :root{--ink:#1b1422;--paper:#f6efe0;--gold:#c89c4b;--rule:#2d2235;--night:#0a0712;}
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{background:var(--paper);color:var(--ink);font-family:"Iowan Old Style","Charter","Times New Roman",serif;min-height:100%}
+  body{padding:clamp(1rem,4vw,3rem);display:grid;grid-template-rows:auto 1fr auto;gap:1.5rem;min-height:100vh;background-image:radial-gradient(rgba(45,34,53,.07) 1px,transparent 1px);background-size:18px 18px}
+  header{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid var(--rule);padding-bottom:.6rem;flex-wrap:wrap;gap:1rem}
+  .masthead h1{font-size:clamp(1.6rem,4vw,2.6rem);letter-spacing:.02em}
+  .masthead small{font-family:"Courier New",monospace;letter-spacing:.25em;text-transform:uppercase;color:#6b5b76}
+  .dateline{font-family:"Courier New",monospace;font-size:.85rem;text-align:right}
+  main{display:grid;grid-template-columns:1.1fr .9fr;gap:2rem;align-items:start}
+  @media (max-width:880px){main{grid-template-columns:1fr}}
+  article{background:#fbf6e9;border:1px solid var(--rule);padding:1.2rem 1.4rem;position:relative}
+  article h2{font-size:1.4rem;margin-bottom:.4rem}
+  article p{margin:.5rem 0;line-height:1.55;font-size:.98rem}
+  .drop::first-letter{font-family:"Iowan Old Style",serif;font-size:3.2rem;float:left;line-height:.9;padding:.1rem .35rem 0 0;color:var(--gold)}
+  .sky{aspect-ratio:1/1;background:radial-gradient(circle at 50% 55%,#1b1422 0 35%,#0a0712 36% 100%);border:1px solid var(--rule);position:relative;overflow:hidden;cursor:crosshair}
+  .moon{position:absolute;width:34%;aspect-ratio:1;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-55%);background:radial-gradient(circle at 35% 35%,#fff8e0,#e6d3a4 60%,#a08344 100%);box-shadow:0 0 60px rgba(247,231,193,.35)}
+  .moon::before{content:"";position:absolute;inset:8%;border-radius:50%;background:radial-gradient(circle at 70% 70%,transparent 60%,rgba(0,0,0,.18) 70%,transparent 80%)}
+  .star{position:absolute;width:3px;height:3px;border-radius:50%;background:#f6efe0;opacity:.8}
+  .s1{top:12%;left:18%}.s2{top:30%;left:78%}.s3{top:8%;left:62%}.s4{top:62%;left:14%}.s5{top:78%;left:84%}.s6{top:54%;left:48%}.s7{top:20%;left:38%}
+  .sky:hover .star{transform:scale(1.6);transition:transform .3s}
+  .controls{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.6rem}
+  .controls button{font-family:"Courier New",monospace;background:var(--ink);color:var(--paper);border:none;padding:.35rem .7rem;cursor:pointer;letter-spacing:.1em;font-size:.7rem}
+  .controls button:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+  .log{font-family:"Courier New",monospace;font-size:.78rem;white-space:pre-wrap;background:#1b1422;color:#f6efe0;padding:.6rem;margin-top:.6rem;max-height:140px;overflow:auto}
+  footer{font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.2em;text-transform:uppercase;color:#6b5b76;border-top:2px solid var(--rule);padding-top:.6rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+  @media (prefers-reduced-motion: reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="masthead"><h1>Paper Moon Observatory</h1><small>An almanac of nocturnal weather</small></div>
+  <div class="dateline"><div>VOL. III — № 01</div><div id="now"></div></div>
+</header>
+<main>
+  <article>
+    <h2>From the field journal</h2>
+    <p class="drop">T</p>
+    <p>his evening the waxing gibbous moon sits low and gold over the linden grove. Three swallows carved a precise arc above the ridge at 21:14, and the pond is utterly still. Tonight we keep an eye on the dog-star and the colour of the horizon.</p>
+    <p>Move your cursor inside the sky disc to chart a constellation. Each sketch lands in the telegraph log below.</p>
+    <div class="controls">
+      <button type="button" data-act="reset">Clear Sketches</button>
+      <button type="button" data-act="export">Copy Log</button>
+      <button type="button" data-act="phase">Cycle Phase</button>
+    </div>
+    <div class="log" id="log" aria-live="polite">[sky quiet — move the cursor to begin charting]</div>
+  </article>
+  <section aria-label="Sky disc">
+    <div class="sky" id="sky" tabindex="0" aria-label="Interactive sky disc">
+      <div class="moon" id="moon"></div>
+      <div class="star s1"></div><div class="star s2"></div><div class="star s3"></div>
+      <div class="star s4"></div><div class="star s5"></div><div class="star s6"></div><div class="star s7"></div>
+    </div>
+  </section>
+</main>
+<footer>
+  <span>MiniMax M3 · 01 of 100</span>
+  <span>ISSN 2814-MOON</span>
+</footer>
+<script>
+  const sky=document.getElementById('sky'),log=document.getElementById('log'),moon=document.getElementById('moon'),now=document.getElementById('now');
+  const phases=['waxing crescent','first quarter','waxing gibbous','full','waning gibbous','last quarter','waning crescent'];
+  let phaseIdx=2;
+  const updateClock=()=>{const d=new Date();now.textContent=d.toUTCString().replace('GMT','UTC')};
+  updateClock();setInterval(updateClock,30000);
+  sky.addEventListener('pointermove',e=>{const r=sky.getBoundingClientRect(),x=((e.clientX-r.left)/r.width*100).toFixed(0),y=((e.clientY-r.top)/r.height*100).toFixed(0);log.textContent=`chart at (${x}%, ${y}%) — ${phases[phaseIdx]} — ${new Date().toLocaleTimeString()}`});
+  sky.addEventListener('dblclick',e=>{const r=sky.getBoundingClientRect(),d=document.createElement('div');d.style.cssText=`position:absolute;left:${e.clientX-r.left}px;top:${e.clientY-r.top}px;width:4px;height:4px;border-radius:50%;background:#f6efe0;transform:translate(-50%,-50%)`;sky.appendChild(d);log.textContent+='\n★ pinned at '+e.clientX-r.left|0+','+(e.clientY-r.top|0)});
+  document.querySelectorAll('button[data-act]').forEach(b=>b.addEventListener('click',()=>{
+    const a=b.dataset.act;
+    if(a==='reset'){sky.querySelectorAll('div:not(.moon,.star)').forEach(n=>n.remove());log.textContent='[sky quiet — move the cursor to begin charting]'}
+    if(a==='export'){navigator.clipboard.writeText(log.textContent).catch(()=>{})}
+    if(a==='phase'){phaseIdx=(phaseIdx+1)%phases.length;const show=moon.offsetWidth;moon.style.filter=`brightness(${0.7+phaseIdx*0.06})`}
+  }));
+</script>
+</body>
+</html>

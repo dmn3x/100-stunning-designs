@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Locksmith — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1a0e06;color:#f5d56e;font-family:"Courier New",monospace;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .board{background:repeating-linear-gradient(180deg,#3a2310 0 10px,#1a0e06 10px 20px);border:6px ridge #a06d3c;display:flex;align-items:center;justify-content:center;min-height:60vh;position:relative}
+  .lock{position:relative;width:280px;height:280px;border-radius:50%;background:radial-gradient(circle at 30% 30%,#a06d3c,#3a2310 80%);border:14px solid #5a2c0e;box-shadow:0 0 0 8px #1a0e06}
+  .tumbler{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:36px;height:90px;border-radius:6px;background:linear-gradient(180deg,#f5d56e,#5a2c0e);cursor:pointer}
+  .tumbler .num{position:absolute;left:50%;top:-30px;transform:translateX(-50%);font-size:1.2rem;color:#f5d56e}
+  aside{background:#1a0e06;border:1px solid #a06d3c;padding:1rem;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;color:#f5d56e}
+  aside p{font-family:"Iowan Old Style",serif;font-size:.95rem;line-height:1.5}
+  .row{display:flex;justify-content:space-between;border-bottom:1px dashed #a06d3c;padding:.3rem 0;font-size:.85rem}
+  .row b{color:#f5d56e}
+  button{font:inherit;background:transparent;color:#f5d56e;border:1px solid #a06d3c;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  button:hover{background:#a06d3c;color:#1a0e06}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section class="board">
+  <div class="lock" id="lock">
+    <div class="tumbler" data-i="0"><div class="num" id="n0">0</div></div>
+    <div class="tumbler" data-i="1" style="transform:translate(-50%,-50%) rotate(60deg)"><div class="num" id="n1">0</div></div>
+    <div class="tumbler" data-i="2" style="transform:translate(-50%,-50%) rotate(120deg)"><div class="num" id="n2">0</div></div>
+  </div>
+</section>
+<aside>
+  <h1>The Locksmith</h1>
+  <p>Three tumblers, one tumbler, forty combinations. Click each one to advance. The correct code is in the dispatch below.</p>
+  <div class="row"><span>Combination</span><b id="comb">000</b></div>
+  <div class="row"><span>Status</span><b id="status">locked</b></div>
+  <div class="row"><span>Hint</span><b id="hint">—</b></div>
+  <p style="font-size:.85rem;font-style:italic">Today's dispatch: <em>"The locksmith thinks in threes. He always has."</em></p>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.4rem">
+    <button id="guess">Try 0-7-3</button>
+    <button id="hint2">Hint 2</button>
+    <button id="reset">Reset</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 67 / 100</footer>
+<script>
+  const code=[0,7,3];const num=Array.from(document.querySelectorAll('.num'));
+  document.querySelectorAll('.tumbler').forEach(t=>t.addEventListener('click',()=>{const i=+t.dataset.i;num[i].textContent=(+num[i].textContent+1)%10;check()}));
+  function check(){const c=num.map(n=>+n.textContent).join('');document.getElementById('comb').textContent=c;document.getElementById('status').textContent=c===code.join('')?'UNLOCKED':'locked';document.getElementById('status').style.color=c===code.join('')?'#a4d7a6':'#f5d56e'}
+  document.getElementById('guess').addEventListener('click',()=>{num[0].textContent=0;num[1].textContent=7;num[2].textContent=3;check()});
+  document.getElementById('hint2').addEventListener('click',()=>{document.getElementById('hint').textContent='third tumbler prefers odd numbers'});
+  document.getElementById('reset').addEventListener('click',()=>{num.forEach(n=>n.textContent=0);check();document.getElementById('hint').textContent='—'});
+</script>
+</body>
+</html>

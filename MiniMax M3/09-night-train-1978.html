@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Night Train 1978 — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  :root{--paper:#ede2cb;--ink:#1f170d;--blood:#9c2c2c;--grass:#3b572a;--rule:#1f170d}
+  body{background:var(--paper);color:var(--ink);font-family:"Georgia",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-rows:auto 1fr auto;gap:1rem}
+  .top{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:3px double var(--rule);padding-bottom:.5rem;flex-wrap:wrap;gap:1rem}
+  h1{font-family:"Bodoni Moda",serif;font-size:clamp(1.4rem,3.5vw,2rem);letter-spacing:.05em}
+  h1 small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;display:block;color:var(--blood)}
+  .diag{display:grid;grid-template-columns:1.4fr .9fr;gap:1.2rem;align-items:start}
+  @media (max-width:780px){.diag{grid-template-columns:1fr}}
+  .panel{background:#f6ecd5;border:1px solid var(--rule);padding:1rem}
+  h2{font-family:"Courier New",monospace;font-size:.75rem;letter-spacing:.3em;text-transform:uppercase;margin-bottom:.6rem;color:var(--blood);border-bottom:1px solid var(--rule);padding-bottom:.4rem}
+  table{width:100%;border-collapse:collapse;font-size:.85rem}
+  th,td{padding:.35rem .5rem;text-align:left;border-bottom:1px dotted var(--rule)}
+  th{background:var(--ink);color:var(--paper);font-weight:400;letter-spacing:.15em;text-transform:uppercase;font-size:.7rem}
+  tr.now td{background:rgba(156,44,44,.15);font-weight:700}
+  .ticker{height:60px;background:#0d0905;color:#ede2cb;position:relative;overflow:hidden;margin-top:.6rem;border:1px solid var(--rule)}
+  .route{position:absolute;top:50%;left:0;right:0;height:2px;background:#ede2cb;transform:translateY(-50%)}
+  .train{position:absolute;top:50%;transform:translate(-50%,-50%);width:48px;height:18px;background:var(--blood);border-radius:2px;display:flex;align-items:center;justify-content:space-around;box-shadow:0 0 0 2px #ede2cb}
+  .train span{width:6px;height:6px;background:#ede2cb;border-radius:50%}
+  .station{position:absolute;top:calc(50% + 14px);transform:translateX(-50%);font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.2em;text-transform:uppercase;color:#ede2cb}
+  .note{font-family:"Courier New",monospace;font-size:.78rem;line-height:1.6}
+  .note p{margin-bottom:.4rem}
+  .stamp{position:absolute;top:.5rem;right:.5rem;font-family:"Courier New",monospace;font-size:.6rem;letter-spacing:.3em;text-transform:uppercase;color:var(--blood);border:1px solid var(--blood);padding:.2rem .4rem;transform:rotate(-3deg)}
+  footer{display:flex;justify-content:space-between;font-family:"Courier New",monospace;font-size:.72rem;letter-spacing:.25em;text-transform:uppercase;border-top:3px double var(--rule);padding-top:.5rem;flex-wrap:wrap;gap:.4rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <h1>Night Train 1978<small>The 22:14 from Euston · with sleeping cars</small></h1>
+  <div style="font-family:'Courier New',monospace">Thurs · 14 Sept · route 09</div>
+</header>
+<div class="diag">
+  <section class="panel" style="position:relative">
+    <div class="stamp">live signal</div>
+    <h2>Working timetable — southbound</h2>
+    <table id="timetable">
+      <thead><tr><th>Dep</th><th>Station</th><th>Plat.</th><th>Crew</th><th>Notes</th></tr></thead>
+      <tbody id="tbody"></tbody>
+    </table>
+    <div class="ticker" aria-hidden="true">
+      <div class="route"></div>
+      <div class="train" id="train"><span></span><span></span><span></span><span></span></div>
+    </div>
+  </section>
+  <aside class="panel note">
+    <h2>Driver's note</h2>
+    <p>The 22:14 carries mail, parcels, two sleeping cars, and the dining car. We're held for thirteen at Bletchley — a freight train has lost its tail lamp.</p>
+    <p>The line is single between Leighton and Tring. Proceed cautiously. Do not exceed 60 mph until Cheddington.</p>
+    <p>On arrival at Watford, the parcels dispatcher — Mr. Anders — will require your signature for the consignment marked <i>handle with care: glass instruments</i>.</p>
+    <p>You will be relieved at Crewe. Sleep, if you can.</p>
+  </aside>
+</div>
+<footer><span>MiniMax M3 · 09 / 100</span><span>British Rail 1978 · paper timetable №14</span></footer>
+<script>
+  const data=[['22:14','Euston','4','A. Briggs','On time'],['22:46','Watford','2','A. Briggs','Halt for parcels'],['23:21','Bletchley','1','A. Briggs','Held — signal'],['23:31','Bletchley','1','A. Briggs','Proceed'],['00:18','Leighton','—','B. Hollis','Single line'],['00:55','Tring','—','B. Hollis','Single line'],['01:30','Cheddington','—','B. Hollis','Clear'],['02:40','Crewe','3','C. Owen','Crew change']];
+  const tbody=document.getElementById('tbody'),train=document.getElementById('train');
+  data.forEach(d=>{const tr=document.createElement('tr');tr.innerHTML=`<td>${d[0]}</td><td>${d[1]}</td><td>${d[2]}</td><td>${d[3]}</td><td>${d[4]}</td>`;tbody.appendChild(tr)});
+  let i=0;setInterval(()=>{document.querySelectorAll('#tbody tr').forEach(r=>r.classList.remove('now'));const rows=document.querySelectorAll('#tbody tr');if(rows[i])rows[i].classList.add('now');train.style.left=(10+i*(80/(rows.length-1)))+'%';i=(i+1)%rows.length},2200);
+</script>
+</body>
+</html>

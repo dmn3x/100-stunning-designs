@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>The Green Room — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c1006;color:#d8a85a;font-family:"Iowan Old Style",serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 320px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .stage{background:radial-gradient(ellipse at 50% 50%,#3a1a0a,#1c1006);border:6px ridge #4a2a14;position:relative;overflow:hidden;min-height:60vh}
+  .light{position:absolute;width:36px;height:60px;border-radius:50% 50% 30% 30%;box-shadow:0 0 30px currentColor;opacity:.4;cursor:pointer}
+  .light::before{content:"";position:absolute;left:50%;transform:translateX(-50%);top:0;width:24px;height:24px;border-radius:50%;background:currentColor;opacity:.7;filter:blur(2px)}
+  .cue-pad{padding:1rem;background:#0a0602;border:6px ridge #4a2a14;display:flex;flex-direction:column;gap:.6rem}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;padding-bottom:.4rem;border-bottom:1px solid #4a2a14;flex-wrap:wrap;gap:.4rem}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;font-style:italic}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  .cue-row{display:flex;flex-direction:column;gap:.3rem}
+  .cue-row span{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.2em;color:#a06d3c;text-transform:uppercase}
+  .cue-row div{display:flex;gap:.3rem}
+  .cue-row button{flex:1;font:inherit;background:#0a0602;color:#d8a85a;border:1px solid #4a2a14;padding:.3rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem}
+  .cue-row button.on{background:#d8a85a;color:#0a0602}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#a06d3c;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>The Green Room</h1>
+  <small>backstage · theatre · show 02</small>
+  <small>intermission</small>
+</header>
+<section class="stage" id="stage"></section>
+<aside class="cue-pad">
+  <h2 style="font-size:1.1rem">Cue sequence</h2>
+  <div class="cue-row"><span>1 — House</span><div><button data-l="L1">FOH</button><button data-l="L2">Mid</button><button data-l="L3">Balc</button></div></div>
+  <div class="cue-row"><span>2 — Stage</span><div><button data-l="L4">SL</button><button data-l="L5">SR</button><button data-l="L6">Clr</button></div></div>
+  <div class="cue-row"><span>3 — Effect</span><div><button data-l="L7">Frost</button><button data-l="L8">Storm</button><button data-l="L9">Rain</button></div></div>
+  <div class="cue-row"><span>4 — Closing</span><div><button id="allOn">All on</button><button id="allOff">All off</button></div></div>
+  <p style="font-size:.85rem;font-style:italic;line-height:1.4;color:#a06d3c;margin-top:auto">"The green room is not green. It is the colour actors drink when no one is watching."</p>
+</aside>
+<footer>MiniMax M3 · 51 / 100</footer>
+<script>
+  const stage=document.getElementById('stage');const colors={'L1':'#f5d56e','L2':'#d8a85a','L3':'#a06d3c','L4':'#fff8e6','L5':'#f4a04a','L6':'#c44569','L7':'#7ad6f0','L8':'#5fa8d3','L9':'#3a6cb0'};
+  const positions=[{t:10,l:10},{t:14,l:50},{t:18,l:90},{t:50,l:8},{t:60,l:80},{t:30,l:46},{t:36,l:24},{t:42,l:70},{t:8,l:62}];
+  positions.forEach((p,i)=>{const l=document.createElement('button');l.type='button';l.className='light';l.id='L'+(i+1);l.style.top=p.t+'%';l.style.left=p.l+'%';l.style.color=colors['L'+(i+1)];l.style.position='absolute';l.style.opacity=.15;l.addEventListener('click',()=>l.style.opacity=l.style.opacity==='1'?.15:1);stage.appendChild(l)});
+  document.querySelectorAll('[data-l]').forEach(b=>b.addEventListener('click',()=>{const el=document.getElementById(b.dataset.l);el.style.opacity=el.style.opacity==='1'?.15:1;b.classList.toggle('on')}));
+  document.getElementById('allOn').addEventListener('click',()=>{document.querySelectorAll('.light').forEach(l=>{l.style.opacity=1});document.querySelectorAll('[data-l]').forEach(b=>b.classList.add('on'))});
+  document.getElementById('allOff').addEventListener('click',()=>{document.querySelectorAll('.light').forEach(l=>{l.style.opacity=.15});document.querySelectorAll('[data-l]').forEach(b=>b.classList.remove('on'))});
+</script>
+</body>
+</html>

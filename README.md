@@ -21,6 +21,7 @@ No templates. No libraries. No CSS frameworks. Just raw HTML, CSS, and vanilla J
 | Model | Designs | Status |
 |-------|---------|--------|
 | 🐋 [**Deepseek V4 Pro**](./Deepseek%20V4%20Pro/) | 100 | ✅ Complete |
+| 🤖 [**MiniMax M3**](./MiniMax%20M3/) | 100 | ✅ Complete |
 | *More coming...* | — | ⏳ Planned |
 
 ---

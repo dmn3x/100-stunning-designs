@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Color Weather Bureau — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:linear-gradient(180deg,#1c1c2a,#0a0a14);color:#fff;font-family:"Inter","Helvetica Neue",sans-serif;min-height:100vh;padding:1.4rem;display:grid;grid-template-columns:1fr 280px;gap:1rem}
+  @media (max-width:880px){body{grid-template-columns:1fr}}
+  .gradient{position:relative;border-radius:8px;height:60vh;overflow:hidden;border:1px solid #2a2a3a;display:flex;flex-direction:column;align-items:flex-start;justify-content:flex-end;padding:1.4rem}
+  .moods{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:.6rem;margin-top:auto}
+  .mood{aspect-ratio:1;border-radius:6px;cursor:pointer;font-family:"Iowan Old Style",serif;font-style:italic;display:flex;align-items:flex-end;padding:.4rem;color:#1a1a1a;font-size:.85rem}
+  aside{padding:1rem;background:rgba(0,0,0,.4);border-radius:8px;display:flex;flex-direction:column;gap:.6rem}
+  aside h1{font-family:"Bodoni Moda",serif;font-size:1.4rem;font-style:italic}
+  aside p{font-size:.85rem;line-height:1.5}
+  button{font:inherit;background:transparent;color:#fff;border:1px solid #4a4a5e;padding:.4rem .7rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.65rem;font-family:"Courier New",monospace}
+  button:hover{background:#4a4a5e}
+  footer{grid-column:1/-1;text-align:right;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#4a4a5e;text-transform:uppercase}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<section>
+  <div class="gradient" id="grad">
+    <h2 style="font-family:'Bodoni Moda',serif;font-style:italic;font-size:2.4rem" id="title">Sky · afternoon</h2>
+    <p style="font-size:1rem;line-height:1.5;max-width:60%" id="desc">A nearly-honest afternoon. Some clouds, some politics, all weather.</p>
+    <div class="moods" id="moods"></div>
+  </div>
+</section>
+<aside>
+  <h1>Mood → Palette</h1>
+  <p>Select a mood; we will translate it into a sky. We make no promises about accuracy.</p>
+  <p style="font-style:italic;font-size:.85rem;color:#a4b3cf">"Three colours stand in for the entire day."</p>
+  <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+    <button id="live">Live palette</button>
+    <button id="static">Static palette</button>
+    <button id="reset">Reset</button>
+  </div>
+</aside>
+<footer>MiniMax M3 · 98 / 100</footer>
+<script>
+  const moods=['Restless','Quiet','Accusatory','Optimistic','Slightly Wet','Salt','Lemon','Thunderstorm','Cashmere','Sticky, but Romantic','Velvet Twilight','Mid-Sea'];
+  const palettes={Restless:['#1c0a14','#3a1d6e','#c44569'],Quiet:['#1a2410','#3a4a30','#a4b6a4'],Accusatory:['#3a1010','#a33030','#f5d56e'],Optimistic:['#1a3a4a','#5fa8d3','#fce8a4'],'Slightly Wet':['#1a2a3a','#5872a3','#cfe9f6'],Salt:['#0c1c14','#a4b6a4','#fff8e6'],Lemon:['#3a2a14','#e8a02a','#fff5d6'],Thunderstorm:['#0a0a14','#3a1d6e','#9bd7f5'],Cashmere:['#1a1410','#a05c2a','#f5d56e'],'Sticky, but Romantic':['#1c1424','#7a4ea0','#d8a8b4'],'Velvet Twilight':['#0a0618','#3a1d4a','#f5d56e'],'Mid-Sea':['#0a1828','#5fa8d3','#1c3a55']};
+  const moodsEl=document.getElementById('moods'),grad=document.getElementById('grad'),title=document.getElementById('title'),desc=document.getElementById('desc');
+  moods.forEach(m=>{const b=document.createElement('button');b.type='button';b.className='mood';const p=palettes[m];b.style.background=`linear-gradient(135deg, ${p[0]}, ${p[2]})`;b.textContent=m;b.addEventListener('click',()=>{apply(m);b.style.outline='3px solid #fff'});moodsEl.appendChild(b)});
+  function apply(m){const p=palettes[m];grad.style.background=`linear-gradient(180deg, ${p[0]}, ${p[2]})`;title.textContent=m+' · today';desc.textContent='The sky is what we agree to call it.'}
+  document.getElementById('reset').addEventListener('click',()=>{grad.style.background='';title.textContent='Sky · afternoon';desc.textContent='A nearly-honest afternoon.'});
+</script>
+</body>
+</html>

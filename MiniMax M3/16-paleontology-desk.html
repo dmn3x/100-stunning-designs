@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Paleontology Desk — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#e8dcc0;color:#3a2510;font-family:"Times New Roman",serif;min-height:100vh;display:grid;grid-template-rows:auto 1fr auto}
+  header{display:flex;justify-content:space-between;align-items:center;padding:1rem 1.4rem;border-bottom:2px solid #3a2510;background:#d6c8a4;flex-wrap:wrap;gap:.5rem}
+  header h1{font-size:1.4rem;letter-spacing:.04em}
+  header h1 small{display:block;font-family:"Courier New",monospace;font-size:.65rem;letter-spacing:.4em;text-transform:uppercase;color:#6f4c20;margin-top:.2rem}
+  main{display:grid;grid-template-columns:1fr 380px}
+  @media (max-width:880px){main{grid-template-columns:1fr}}
+  .dig{position:relative;background:linear-gradient(180deg,#d4b67c 0,#a48142 30%,#6a4a20 60%,#3a2510 100%);overflow:hidden;min-height:60vh}
+  .dig::before{content:"";position:absolute;inset:0;background-image:radial-gradient(circle at 25% 80%,rgba(255,255,255,.15),transparent 8%),radial-gradient(circle at 60% 92%,rgba(255,255,255,.1),transparent 5%)}
+  canvas{display:block;width:100%;height:100%}
+  .panel{padding:1.4rem;background:#f3e9d0;border-left:1px solid #3a2510;display:flex;flex-direction:column;gap:.8rem;overflow:auto}
+  .panel h2{font-family:"Bodoni Moda",serif;font-size:1.4rem;border-bottom:1px solid #3a2510;padding-bottom:.3rem}
+  .field{font-family:"Courier New",monospace;font-size:.78rem;line-height:1.6;border-bottom:1px dashed #6f4c20;padding-bottom:.6rem}
+  .field b{color:#6f4c20;display:block;margin-bottom:.2rem;text-transform:uppercase;letter-spacing:.3em;font-size:.7rem}
+  .toolbar{display:flex;gap:.4rem;flex-wrap:wrap}
+  .toolbar button{font:inherit;background:#3a2510;color:#f3e9d0;border:none;padding:.4rem .6rem;cursor:pointer;letter-spacing:.2em;text-transform:uppercase;font-size:.7rem;font-family:"Courier New",monospace}
+  .toolbar button:focus-visible{outline:2px solid #c44569;outline-offset:2px}
+  footer{padding:.8rem 1.4rem;border-top:2px solid #3a2510;background:#d6c8a4;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.4rem}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <h1>PALEONTOLOGY DESK<small>field notes · grid reference N12-04</small></h1>
+  <div style="font-family:'Courier New',monospace;letter-spacing:.25em;text-transform:uppercase;font-size:.7rem">Site 06 · Day 14</div>
+</header>
+<main>
+  <section class="dig">
+    <canvas id="cv"></canvas>
+  </section>
+  <aside class="panel">
+    <h2>Specimen ledger</h2>
+    <div id="entries"></div>
+    <div class="toolbar">
+      <button id="brush">Brush</button>
+      <button id="pick">Pick</button>
+      <button id="tag">Tag bone</button>
+      <button id="clear">Clear</button>
+    </div>
+  </aside>
+</main>
+<footer><span>MiniMax M3 · 16 / 100</span><span>Permission: Bureau of Antiquities — for scientific use</span></footer>
+<script>
+  const cv=document.getElementById('cv'),cx=cv.getContext('2d');let W,H;function fit(){const r=cv.parentElement.getBoundingClientRect();W=cv.width=r.width*2;H=cv.height=r.height*2;cx.scale(2,2)}fit();addEventListener('resize',fit);
+  // strata
+  const strata=[{y:.18,c:'#9c7a3a'},{y:.36,c:'#6f4c20'},{y:.5,c:'#3a2510'},{y:.7,c:'#6a4a20'},{y:1,c:'#2a1808'}];
+  function drawStrata(){strata.forEach((s,i)=>{cx.fillStyle=s.c;cx.fillRect(0,H*s.y,W,H*(strata[i+1]?(strata[i+1].y-s.y):(1-s.y)))})}
+  // bones
+  const bones=[];function genBones(n=8){bones.length=0;for(let i=0;i<n;i++)bones.push({x:Math.random()*W,y:H*.25+Math.random()*H*.55,rot:Math.random()*Math.PI,r:80+Math.random()*120,reveal:0,tags:[]})}
+  function bonePath(b){cx.save();cx.translate(b.x,b.y);cx.rotate(b.rot);cx.fillStyle='#f3e9d0';cx.strokeStyle='#7a5530';cx.lineWidth=2;const r=b.r;cx.beginPath();for(let t=-1;t<=1;t+=.02){cx.lineTo(t*r,Math.cos(t*Math.PI)*r*.25)}for(let t=1;t>=-1;t-=.02){cx.lineTo(-t*r,-Math.cos(t*Math.PI)*r*.25)}cx.closePath();cx.globalAlpha=b.reveal;cx.fill();cx.stroke();cx.beginPath();cx.arc(0,0,r*.18,0,6.283);cx.fill();cx.stroke();cx.restore()}
+  function draw(){cx.clearRect(0,0,W,H);drawStrata();bones.forEach(bonePath);bones.forEach(b=>{b.reveal=Math.min(1,b.reveal+.0008);b.tags.forEach(t=>{cx.fillStyle='#c44569';cx.fillRect(t.x-2,t.y-12,4,12);cx.fillStyle='#c44569';cx.fillRect(t.x-12,t.y-2,24,4)})});requestAnimationFrame(draw)}
+  genBones();draw();
+  let tool='brush';document.querySelectorAll('.toolbar button').forEach(b=>b.addEventListener('click',()=>{tool=b.id}));
+  cv.addEventListener('click',e=>{
+    const r=cv.getBoundingClientRect();const x=(e.clientX-r.left)/r.width*W,y=(e.clientY-r.top)/r.height*H;
+    if(tool==='tag'){let hit=null;for(const b of bones){const dx=b.x-x,dy=b.y-y;if(dx*dx+dy*dy<b.r*b.r*.2){hit=b;break}}if(hit){hit.tags.push({x,y});addEntry(`tagged bone at (${(x/W*100).toFixed(0)}, ${(y/H*100).toFixed(0)}). Catalogue #${(Math.floor(Math.random()*9999)+1000)}.`)}}else{bones.forEach(b=>{b.reveal=.85})}
+  });
+  const entries=document.getElementById('entries');function addEntry(t){const d=document.createElement('div');d.className='field';d.innerHTML=`<b>${new Date().toLocaleTimeString()}</b>${t}`;entries.prepend(d)}
+  addEntry('site opened. brush and pick at the ready.');
+</script>
+</body>
+</html>

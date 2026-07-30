@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Small Gods — MiniMax M3</title>
+<style>
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{background:#1c1206;color:#f5d56e;font-family:"Iowan Old Style",serif;min-height:100vh}
+  .frame{position:fixed;inset:1.4rem;border:6px double #5a3a1a;background:radial-gradient(ellipse at 50% 30%,#3a2310,#1c1206 70%)}
+  header{display:flex;justify-content:space-between;align-items:flex-end;padding:1rem 1.4rem;border-bottom:1px solid #5a3a1a}
+  header h1{font-family:"Bodoni Moda",serif;font-size:1.4rem}
+  header small{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase}
+  .altar{padding:1.4rem;display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:.6rem}
+  .god{background:#2a1808;border:1px solid #5a3a1a;padding:.8rem;display:flex;flex-direction:column;align-items:center;cursor:pointer;transition:transform .2s,box-shadow .2s}
+  .god:hover{transform:translateY(-4px);box-shadow:0 4px 0 #5a3a1a}
+  .god .glyph{font-size:2rem;margin-bottom:.4rem;color:#f5d56e}
+  .god b{font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.15em;text-transform:uppercase}
+  .blessing{margin:1rem 1.4rem;border-top:1px dashed #5a3a1a;padding-top:1rem}
+  .blessing h2{font-family:"Bodoni Moda",serif;font-size:1.4rem;color:#f5d56e}
+  .blessing p{font-size:1.05rem;line-height:1.5;margin-top:.4rem}
+  footer{position:fixed;bottom:2.4rem;right:2.4rem;font-family:"Courier New",monospace;font-size:.7rem;letter-spacing:.3em;color:#7d5e22}
+  @media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+<div class="frame">
+<header>
+  <h1>Pocket Mythology Cabinet</h1>
+  <small>— twelve small gods —</small>
+</header>
+<div class="altar" id="altar"></div>
+<aside class="blessing">
+  <h2 id="bn">Click a god to receive a small blessing.</h2>
+  <p id="bt">These gods are tiny. They fit in pockets. They specialise in small inconveniences and modest joys.</p>
+</aside>
+<footer>MiniMax M3 · 36 / 100</footer>
+</div>
+<script>
+  const gods=[
+    ['🐜','Ant','Patron of small patience. Blesses lost buttons.'],
+    ['🪶','Quill','Patron of unfinished letters. Smells faintly of ink.'],
+    ['🕯','Wick','Patron of late-night study. Burns slow, burns true.'],
+    ['🪞','Mirror','Patron of honest reflections. Has been known to lie, in good humour.'],
+    ['📿','Bead','Patron of counting breaths and walking home.'],
+    ['🪡','Needle','Patron of mending. Will mend the mender.'],
+    ['🌿','Herb','Patron of soups. Kitchen-corner saint.'],
+    ['🪨','Pebble','Patron of pockets with holes. Keeps what you drop.'],
+    ['🧭','Compass','Patron of returning home. Especially after detours.'],
+    ['🕊','Dove','Patron of soft news and softer landings.'],
+    ['🐌','Snail','Patron of unhurried arrival.'],
+    ['🍯','Honey','Patron of sweetness sustained.'],
+  ];
+  const altar=document.getElementById('altar');gods.forEach(g=>{const b=document.createElement('button');b.type='button';b.className='god';b.innerHTML=`<div class="glyph">${g[0]}</div><b>${g[1]}</b>`;b.addEventListener('click',()=>{document.getElementById('bn').textContent=g[1]+', small god of '+(g[2].split('.')[0].toLowerCase());document.getElementById('bt').textContent=g[2]});altar.appendChild(b)});
+</script>
+</body>
+</html>
