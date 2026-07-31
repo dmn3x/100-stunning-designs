@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>36 — Violet Vitrine</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0512;--fg:#e8e0f8;--muted:#6a5d9c;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 2rem}
+h1{font-size:clamp(1.6rem,4.4vw,2.6rem);letter-spacing:-.02em}
+h1 span{background:linear-gradient(135deg,var(--violet),var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+p.sub{color:var(--muted);margin-top:.6rem}
+.cat{display:flex;justify-content:center;gap:.6rem;flex-wrap:wrap;margin:1.6rem 0 2rem}
+.cat button{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.3);color:var(--muted);padding:.5rem 1.1rem;border-radius:99px;font:inherit;font-size:.8rem;cursor:pointer;transition:all .2s}
+.cat button:hover{color:var(--fg);border-color:var(--violet)}
+.cat button.active{background:var(--violet);color:#0a0512;border-color:var(--violet)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.4rem;max-width:1080px;margin:0 auto;padding:0 1.5rem 4rem}
+.item{position:relative;border-radius:1.2rem;padding:1.4rem;background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.18);transition:all .3s;cursor:pointer;overflow:hidden}
+.item:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 16px 40px rgba(139,92,246,.18)}
+.item .glyph{font-size:2rem;margin-bottom:.8rem;display:inline-block;transition:transform .3s}
+.item:hover .glyph{transform:scale(1.2) rotate(-6deg)}
+.item h3{font-size:1rem;margin-bottom:.4rem}
+.item .type{font-size:.64rem;letter-spacing:.18em;text-transform:uppercase;color:var(--pink);margin-bottom:.7rem}
+.item p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+.item .price{font-weight:800;font-size:1.1rem;color:var(--gold)}
+.item .tag{position:absolute;top:1rem;right:1rem;font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;padding:.25rem .6rem;border-radius:99px;background:rgba(167,139,250,.15);color:#c4b5fd}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:3rem;font-style:italic}
+</style>
+</head>
+<body>
+<header><h1>Violet <span>Vitrine</span></h1><p class="sub">hand-picked objects from a dream catalogue</p>
+<div class="cat" id="cat">
+  <button class="active" data-c="all">all</button>
+  <button data-c="light">light</button>
+  <button data-c="instrument">instrument</button>
+  <button data-c="keepsake">keepsake</button>
+</div>
+</header>
+<div class="grid" id="grid"></div>
+<script>
+const ITEMS=[
+ {g:'🔮',n:'Crystal Resonator',t:'instrument',p:'₿ 42',d:'A sphere that hums at the frequency of the room it is in.',c:'light'},
+ {g:'🕯️',n:'Ember Candle',t:'light',p:'₿ 18',d:'Burns violet for a full lunar month. Never goes out in wind.',c:'light'},
+ {g:'🎛️',n:'Analog Voltage Knob',t:'instrument',p:'₿ 96',d:'Turns any silence into a gentle electrical murmur.',c:'instrument'},
+ {g:'🌙',n:'Moon in a Jar',t:'keepsake',p:'₿ 240',d:'A captured phase, still waxing. Handle with starlight gloves.',c:'keepsake'},
+ {g:'📡',n:'Signal Lantern',t:'light',p:'₿ 33',d:'Beams a soft SOS in violet for whoever is meant to find you.',c:'light'},
+ {g:'⚗️',n:'Photon Alembic',t:'instrument',p:'₿ 77',d:'Distills light into memory, one drop per eclipse.',c:'instrument'},
+ {g:'🎐',n:'Prism Wind Chime',t:'keepsake',p:'₿ 29',d:'Splits the wind into colors before it reaches your window.',c:'keepsake'},
+ {g:'💡',n:'Thought Bulb',t:'light',p:'₿ 12',d:'Flickers brighter when you are about to remember something.',c:'light'},
+ {g:'🪕',n:'Ion Lute',t:'instrument',p:'₿ 150',d:'Its strings are made of captured lightning, played with care.',c:'instrument'},
+ {g:'🗝️',n:'Key to a Closed Door',t:'keepsake',p:'₿ 1',d:'No one knows what it opens. That is the point.',c:'keepsake'},
+ {g:'🧿',n:'Umbral Compass',t:'keepsake',p:'₿ 63',d:'Points not north, but toward the nearest unread book.',c:'keepsake'},
+ {g:'🌠',n:'Falling Star Net',t:'keepsake',p:'₿ 88',d:'Catch one before it burns out. Share the wish.',c:'keepsake'}
+];
+const grid=document.getElementById('grid');
+let cat='all';
+function render(){
+  const items=ITEMS.filter(i=>cat==='all'||i.c===cat);
+  grid.innerHTML=items.length?items.map(i=>`<div class="item" data-c="${i.c}">
+    <span class="tag">${i.c}</span>
+    <div class="glyph">${i.g}</div>
+    <h3>${i.n}</h3>
+    <div class="type">${i.t}</div>
+    <p>${i.d}</p>
+    <div class="price">${i.p}</div>
+  </div>`).join(''):'<div class="empty">nothing here yet — the dream shop is restocking</div>';
+}
+document.getElementById('cat').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;
+  document.querySelector('#cat button.active')?.classList.remove('active');
+  b.classList.add('active');cat=b.dataset.c;render();
+});
+render();
+</script>
+</body>
+</html>

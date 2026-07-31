@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>83 — Aurora Field</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#040310;--fg:#e0d8f2;--muted:#55508a;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">AURORA <span>FIELD</span></div>
+<div class="ui sub">the polar wind, woven into light</div>
+<div class="ui hint"><b>click</b> — ripple the aurora</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+let t=0,ripple=0;
+addEventListener('click',()=>ripple=1);
+addEventListener('touchstart',()=>ripple=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.012;
+  ctx.fillStyle='rgba(4,3,16,.22)';ctx.fillRect(0,0,W,H);
+  if(ripple>0)ripple-=.008;
+  const bands=5;
+  for(let b=0;b<bands;b++){
+    const baseY=H*.3+b*H*.14;
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=4){
+      const v=Math.sin(x*.006+t*(1+b*.2)+b*2)*40;
+      const v2=Math.sin(x*.013-t*.9+b)*16;
+      const r=ripple*Math.sin(x*.01-t*2)*80*Math.max(0,.5+Math.sin(x*.002));
+      const y=baseY+v+v2+r;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`hsla(${260+b*15},90%,${60+b*4}%,${.3-b*.03})`;
+    ctx.lineWidth=2.5;ctx.stroke();
+    // fill downward
+    ctx.lineTo(W,H);ctx.lineTo(0,H);ctx.closePath();
+    ctx.fillStyle=`hsla(${260+b*15},90%,65%,${.03-b*.003})`;
+    ctx.fill();
+  }
+})(0);
+</script>
+</body>
+</html>

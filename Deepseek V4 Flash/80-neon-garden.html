@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>80 — Neon Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 2rem}
+h1{font-size:clamp(1.5rem,4.2vw,2.4rem);letter-spacing:.02em}
+h1 span{background:linear-gradient(90deg,var(--violet),var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--muted);margin-top:.6rem;font-size:.9rem}
+.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:1.4rem;max-width:1000px;margin:0 auto;padding:0 1.5rem 4rem}
+.plot{position:relative;border-radius:1.2rem;background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.16);padding:1.4rem;text-align:center;cursor:pointer;overflow:hidden;transition:all .3s}
+.plot:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 14px 40px rgba(139,92,246,.18)}
+.plot .flower{width:70px;height:70px;margin:0 auto .9rem;position:relative}
+.plot .stem{position:absolute;left:50%;bottom:0;width:2px;height:30px;background:rgba(167,139,250,.5);transform-origin:bottom center;animation:sway 3.4s ease-in-out infinite}
+@keyframes sway{50%{transform:rotate(7deg)}}
+.plot .head{position:absolute;left:50%;top:0;transform:translateX(-50%);width:44px;height:44px}
+.plot .petal{position:absolute;inset:0;border-radius:50% 50% 50% 0;background:var(--pc);opacity:.8;transform-origin:bottom right;animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.plot h3{font-size:.95rem;margin-bottom:.3rem}
+.plot .sci{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:.6rem}
+.plot p{font-size:.8rem;color:var(--muted);line-height:1.6}
+.plot .status{display:inline-block;margin-top:.8rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:.3rem .8rem;border-radius:99px;background:rgba(167,139,250,.12);color:#c4b5fd;transition:all .3s}
+.plot.watered .status{background:rgba(125,249,255,.15);color:#7df9ff}
+</style>
+</head>
+<body>
+<header><h1>NEON <span>GARDEN</span></h1><p>a greenhouse for flowers that only grow in voltage — click to water</p></header>
+<div class="garden" id="garden"></div>
+<script>
+const PLANTS=[
+ {n:'Volt Tulip',s:'TULIPA VOLTA',c:'#a78bfa',d:'Grows toward power lines. Its petals are small capacitors.',p:6},
+ {n:'Plasma Peony',s:'PAEONIA PLASMA',c:'#f472b6',d:'Blooms once, spectacularly, and leaves a faint glow behind.',p:8},
+ {n:'Aurora Lily',s:'LILIUM AURORA',c:'#7df9ff',d:'Its petals ripple like the northern lights after rain.',p:6},
+ {n:'Crystal Rose',s:'ROSA QUARTZ',c:'#c4b5fd',d:'A rose that grows in silica, slowly turning to glass.',p:7},
+ {n:'Signal Sunflower',s:'HELIANTHUS SIGNA',c:'#fbbf24',d:'Turns toward the nearest antenna, not the sun.',p:9},
+ {n:'Nebula Daisy',s:'BELLIS NEBULA',c:'#818cf8',d:'Each petal is a tiny galaxy spinning slowly.',p:8}
+];
+const garden=document.getElementById('garden');
+garden.innerHTML=PLANTS.map((p,i)=>{
+  let petals='';
+  for(let k=0;k<p.p;k++){
+    petals+=`<div class="petal" style="--pc:${p.c};transform:rotate(${k*360/p.p}deg) translate(10px,-10px);animation-delay:${k*.3}s"></div>`;
+  }
+  return `<div class="plot" data-i="${i}">
+    <div class="flower"><div class="stem"></div><div class="head">${petals}</div></div>
+    <h3>${p.n}</h3>
+    <div class="sci">${p.s}</div>
+    <p>${p.d}</p>
+    <span class="status">needs water</span>
+  </div>`;
+}).join('');
+garden.addEventListener('click',e=>{
+  const plot=e.target.closest('.plot');if(!plot)return;
+  plot.classList.toggle('watered');
+  plot.querySelector('.status').textContent=plot.classList.contains('watered')?'hydrated ✓':'needs water';
+});
+</script>
+</body>
+</html>

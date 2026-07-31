@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>31 — Aurora Studio</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:1080px;margin:0 auto;padding:2rem 1.5rem 3rem}
+header{text-align:center;padding:2rem 0 1.6rem}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.02em}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--muted);margin-top:.6rem;font-size:.82rem}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#04020a;border:1px solid rgba(167,139,250,.25);border-radius:1rem;margin-bottom:1.4rem;cursor:crosshair}
+.controls{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:1.6rem}
+.field{display:flex;flex-direction:column;gap:.4rem;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{accent-color:var(--violet);width:150px}
+input[type=color]{width:44px;height:30px;border:none;background:none;cursor:pointer}
+.buttons{display:flex;gap:.6rem;flex-wrap:wrap;justify-content:center}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.6rem 1.2rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#070312;border-color:var(--violet)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Aurora <em>Studio</em></h1><p>paint with light — your cursor is a brush made of weather</p></header>
+<canvas id="c"></canvas>
+<div class="controls">
+  <div class="field">hue<input type="range" id="hue" min="200" max="320" value="265"></div>
+  <div class="field">speed<input type="range" id="speed" min="1" max="40" value="14"></div>
+  <div class="field">thick<input type="range" id="thick" min="2" max="26" value="8"></div>
+  <div class="field">density<input type="range" id="density" min="1" max="12" value="5"></div>
+</div>
+<div class="buttons">
+  <button data-tool="draw" class="active">✏ draw</button>
+  <button data-tool="wave">∿ wave</button>
+  <button data-tool="spark">✦ spark</button>
+  <button data-tool="wipe">◇ wipe</button>
+  <button id="save">⬇ save</button>
+</div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const DPR=devicePixelRatio||1;
+function resize(){cv.width=cv.offsetWidth*DPR;cv.height=cv.offsetHeight*DPR;ctx.scale(DPR,DPR);ctx.fillStyle='#04020a';ctx.fillRect(0,0,cv.width,cv.height)}
+addEventListener('resize',resize);resize();
+let tool='draw',drawing=false,last=null;
+const hue=document.getElementById('hue'),speed=document.getElementById('speed'),thick=document.getElementById('thick'),density=document.getElementById('density');
+document.querySelectorAll('button[data-tool]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');tool=b.dataset.tool;
+}));
+cv.addEventListener('mousedown',e=>{drawing=true;last=pos(e)});
+addEventListener('mouseup',()=>{drawing=false;last=null});
+cv.addEventListener('mousemove',e=>{if(!drawing)return;const p=pos(e);paint(p,last);last=p});
+cv.addEventListener('touchstart',e=>{drawing=true;last=pos(e.touches[0])});
+cv.addEventListener('touchmove',e=>{if(!drawing)return;const p=pos(e.touches[0]);paint(p,last);last=p});
+function pos(e){
+  const r=cv.getBoundingClientRect();
+  return {x:(e.clientX-r.left)*DPR,y:(e.clientY-r.top)*DPR};
+}
+function paint(p,prev){
+  const h=hue.value,s=speed.value/10,t=thick.value,d=density.value;
+  if(tool==='wipe'){
+    ctx.globalCompositeOperation='destination-out';
+    ctx.fillStyle='rgba(0,0,0,.15)';
+    ctx.beginPath();ctx.arc(p.x,p.y,t*4,0,7);ctx.fill();
+    ctx.globalCompositeOperation='source-over';
+    return;
+  }
+  for(let i=0;i<d;i++){
+    const jitter=(Math.random()-.5)*t;
+    ctx.strokeStyle=`hsla(${h+Math.random()*30},90%,${60+Math.random()*25}%,${.35+Math.random()*.3})`;
+    ctx.lineWidth=Math.random()*t*.7+1;
+    ctx.lineCap='round';
+    ctx.beginPath();
+    if(prev){
+      ctx.moveTo(prev.x+(Math.random()-.5)*10,prev.y+(Math.random()-.5)*10);
+      ctx.quadraticCurveTo(
+        (prev.x+p.x)/2+(Math.random()-.5)*30,(prev.y+p.y)/2+(Math.random()-.5)*30,
+        p.x+jitter,p.y+jitter
+      );
+    }else{
+      ctx.moveTo(p.x,p.y);
+      ctx.lineTo(p.x+(Math.random()-.5)*8,p.y+(Math.random()-.5)*8);
+    }
+    ctx.stroke();
+  }
+  if(tool==='wave'){
+    for(let i=0;i<6;i++){
+      ctx.beginPath();
+      for(let x=-20;x<=20;x+=4){
+        const y=Math.sin(x*.3+performance.now()*.004*s+i)*8;
+        ctx.lineTo(p.x+x,p.y+y);
+      }
+      ctx.strokeStyle=`hsla(${h+i*8},90%,70%,.4)`;
+      ctx.stroke();
+    }
+  }
+  if(tool==='spark'){
+    for(let i=0;i<8;i++){
+      const a=Math.random()*Math.PI*2,d=Math.random()*30;
+      ctx.fillStyle=`hsla(${h+Math.random()*40},100%,85%,.8)`;
+      ctx.beginPath();ctx.arc(p.x+Math.cos(a)*d,p.y+Math.sin(a)*d,1.5,0,7);ctx.fill();
+    }
+  }
+}
+document.getElementById('save').addEventListener('click',()=>{
+  const a=document.createElement('a');
+  a.download='aurora-studio.png';
+  a.href=cv.toDataURL('image/png');
+  a.click();
+});
+</script>
+</body>
+</html>

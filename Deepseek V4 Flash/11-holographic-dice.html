@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>11 — Holographic Dice</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0416;--fg:#e3daf6;--muted:#5f5390;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.scene{width:min(280px,60vw);aspect-ratio:1;perspective:900px;margin-bottom:2rem}
+.dice{width:100%;height:100%;position:relative;transform-style:preserve-3d;transition:transform 1.2s cubic-bezier(.2,.8,.3,1.1)}
+.face{position:absolute;inset:0;border-radius:18px;background:linear-gradient(145deg,rgba(139,92,246,.22),rgba(10,4,22,.9));border:1px solid rgba(167,139,250,.55);box-shadow:inset 0 0 40px rgba(139,92,246,.12),0 0 30px rgba(139,92,246,.15);display:flex;align-items:center;justify-content:center;backface-visibility:hidden}
+.face::after{content:'';position:absolute;inset:14%;border-radius:12px;border:1px dashed rgba(125,249,255,.25)}
+.f1{transform:translateZ(140px)}
+.f2{transform:rotateY(90deg) translateZ(140px)}
+.f3{transform:rotateY(180deg) translateZ(140px)}
+.f4{transform:rotateY(-90deg) translateZ(140px)}
+.f5{transform:rotateX(90deg) translateZ(140px)}
+.f6{transform:rotateX(-90deg) translateZ(140px)}
+.pips{display:grid;grid-template-columns:repeat(3,14px);grid-template-rows:repeat(3,14px);gap:8px}
+.pip{width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);place-self:center}
+h1{font-size:clamp(1rem,2.6vw,1.3rem);letter-spacing:.3em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+h1 b{color:var(--violet)}
+.result{font-size:clamp(3rem,8vw,5rem);font-weight:900;letter-spacing:-.02em;color:#fff;text-shadow:0 0 40px rgba(167,139,250,.8);min-height:1.2em}
+.controls{display:flex;gap:1rem;margin-top:1.6rem}
+button{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.4rem;border-radius:99px;font:inherit;font-size:.8rem;letter-spacing:.14em;text-transform:uppercase;cursor:pointer;transition:all .25s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 20px rgba(167,139,250,.4)}
+.tip{position:fixed;bottom:1.4rem;right:1.4rem;font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:600px){.tip{bottom:.8rem;right:.8rem}}
+</style>
+</head>
+<body>
+<h1><b>HOLO</b>GRAPHIC DICE</h1>
+<div class="scene"><div class="dice" id="dice">
+  <div class="face f1"><div class="pips" data-pips="1"><span class="pip" style="grid-area:2/2"></span></div></div>
+  <div class="face f2"><div class="pips" data-pips="2"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:3/3"></span></div></div>
+  <div class="face f3"><div class="pips" data-pips="3"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:2/2"></span><span class="pip" style="grid-area:3/3"></span></div></div>
+  <div class="face f4"><div class="pips" data-pips="4"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:3/3"></span></div></div>
+  <div class="face f5"><div class="pips" data-pips="5"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:2/2"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:3/3"></span></div></div>
+  <div class="face f6"><div class="pips" data-pips="6"><span class="pip" style="grid-area:1/1"></span><span class="pip" style="grid-area:1/3"></span><span class="pip" style="grid-area:2/1"></span><span class="pip" style="grid-area:2/3"></span><span class="pip" style="grid-area:3/1"></span><span class="pip" style="grid-area:3/3"></span></div></div>
+</div></div>
+<div class="result" id="result">?</div>
+<div class="controls">
+  <button id="roll">⚄ Roll</button>
+  <button id="spin">↻ Tumble</button>
+</div>
+<div class="tip">the die obeys probability — mostly</div>
+<script>
+const dice=document.getElementById('dice'),result=document.getElementById('result');
+const ROT={
+  1:'rotateX(0deg) rotateY(0deg)',
+  2:'rotateY(-90deg)',
+  3:'rotateY(180deg)',
+  4:'rotateY(90deg)',
+  5:'rotateX(-90deg)',
+  6:'rotateX(90deg)'
+};
+function roll(){
+  const n=1+Math.floor(Math.random()*6);
+  const spins=Math.floor(2+Math.random()*4);
+  dice.style.transform=`${ROT[n]} rotateZ(${(Math.random()<.5?-1:1)*spins*360}deg)`;
+  setTimeout(()=>{result.textContent=n;result.style.opacity=1},1100);
+}
+document.getElementById('roll').addEventListener('click',()=>{result.style.opacity=.2;roll()});
+document.getElementById('spin').addEventListener('click',()=>{
+  dice.style.transform=`rotateX(${Math.random()*720}deg) rotateY(${Math.random()*720}deg) rotateZ(${Math.random()*360}deg)`;
+  setTimeout(()=>{result.textContent='✨';result.style.opacity=1},1100);
+});
+</script>
+</body>
+</html>

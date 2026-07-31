@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>27 — Bio-Lumen</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#04100b;--fg:#dcefe8;--muted:#3f6b5c;--green:#34d399;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900}
+.title em{font-style:normal;color:var(--green);text-shadow:0 0 18px rgba(52,211,153,.6)}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">BIO-<em>LUMEN</em></div>
+<div class="ui sub">a reef of living light · move the cursor to feed it</div>
+<div class="ui hint"><b>click</b> — seed polyps · <b>drag</b> — stir the plankton</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const polyps=[],plankton=[];
+for(let i=0;i<70;i++)plankton.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,p:Math.random()*7});
+function seed(x,y){
+  polyps.push({x,y,r:3+Math.random()*3,hue:150+Math.random()*40,t:Math.random()*7,tentacles:4+Math.floor(Math.random()*4)});
+}
+for(let i=0;i<12;i++)seed(Math.random()*W,H*.3+Math.random()*H*.5);
+addEventListener('click',e=>seed(e.clientX,e.clientY));
+let mx=W/2,my=H/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(4,16,11,.25)';ctx.fillRect(0,0,W,H);
+  // plankton
+  for(const p of plankton){
+    p.x+=p.vx+(mx-p.x)*.0003;p.y+=p.vy+(my-p.y)*.0003;
+    p.vx*=.995;p.vy*=.995;
+    if(p.x<0||p.x>W)p.vx*=-1;if(p.y<0||p.y>H)p.vy*=-1;
+    const glow=Math.sin(performance.now()*.002+p.p)*.5+.5;
+    ctx.fillStyle=`rgba(125,249,255,${.15+glow*.3})`;
+    ctx.beginPath();ctx.arc(p.x,p.y,1.4+glow,0,7);ctx.fill();
+  }
+  // polyps
+  for(const po of polyps){
+    po.t+=.03;
+    const reach=Math.hypot(mx-po.x,my-po.y)<80;
+    const sway=reach?10:4;
+    for(let k=0;k<po.tentacles;k++){
+      const a=(k/po.tentacles)*Math.PI*2+Math.sin(po.t+k)*.4;
+      const len=po.r*4+sway*(0.5+0.5*Math.sin(po.t*1.5+k));
+      ctx.strokeStyle=`hsla(${po.hue},80%,70%,.55)`;
+      ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.moveTo(po.x,po.y);
+      ctx.quadraticCurveTo(
+        po.x+Math.cos(a)*len*.5,po.y+Math.sin(a)*len*.5,
+        po.x+Math.cos(a)*len,po.y+Math.sin(a)*len
+      );ctx.stroke();
+      ctx.fillStyle=`hsla(${po.hue+20},90%,82%,.95)`;
+      ctx.beginPath();ctx.arc(po.x+Math.cos(a)*len,po.y+Math.sin(a)*len,1.6,0,7);ctx.fill();
+    }
+    ctx.fillStyle=`hsla(${po.hue},90%,60%,.9)`;
+    ctx.shadowColor=`hsla(${po.hue},90%,55%,.8)`;ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(po.x,po.y,po.r,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

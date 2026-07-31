@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>79 — Violet Crystals</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VIOLET <span>CRYSTALS</span></div>
+<div class="ui sub">a geodesic dream, growing in place</div>
+<div class="ui hint"><b>click</b> — grow a crystal</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const crystals=[];
+function grow(x,y){
+  crystals.push({x,y,r:6,target:20+Math.random()*35,hue:255+Math.random()*50,points:[]});
+}
+for(let i=0;i<4;i++)grow(Math.random()*W,Math.random()*H);
+addEventListener('click',e=>grow(e.clientX,e.clientY));
+addEventListener('touchstart',e=>grow(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,3,14,.2)';ctx.fillRect(0,0,W,H);
+  for(const c of crystals){
+    if(c.r<c.target)c.r+=(c.target-c.r)*.015;
+    const n=6;
+    for(let i=0;i<n;i++){
+      const a=(i/n)*Math.PI*2+performance.now()*.0003;
+      const len=c.r*(0.7+Math.sin(performance.now()*.002+i*2)*.25);
+      const x2=c.x+Math.cos(a)*len,y2=c.y+Math.sin(a)*len;
+      ctx.strokeStyle=`hsla(${c.hue},90%,${65+i*4}%,.5)`;
+      ctx.lineWidth=1.3;
+      ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(x2,y2);ctx.stroke();
+      // facet
+      ctx.fillStyle=`hsla(${c.hue},90%,${55+Math.sin(a)*12}%,.16)`;
+      ctx.beginPath();
+      ctx.moveTo(c.x,c.y);ctx.lineTo(x2,y2);
+      ctx.lineTo(c.x+Math.cos(a+.7)*len*.6,c.y+Math.sin(a+.7)*len*.6);
+      ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle=`hsla(${c.hue},95%,85%,.95)`;
+    ctx.shadowColor=`hsla(${c.hue},95%,70%,1)`;ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(c.x,c.y,2.8,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

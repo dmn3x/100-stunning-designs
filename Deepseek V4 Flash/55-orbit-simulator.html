@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>55 — Orbit Simulator</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#04030e;--fg:#e0d8f2;--muted:#55508a;--violet:#a78bfa;--gold:#fbbf24;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 3rem}
+header{text-align:center;padding:2rem 0 1.4rem}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.5rem;font-size:.8rem}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#070312;border:1px solid rgba(167,139,250,.25);border-radius:1rem;margin-bottom:1.4rem;cursor:crosshair}
+.controls{display:flex;gap:1.2rem;flex-wrap:wrap;align-items:flex-end;justify-content:center;margin-bottom:1.6rem}
+.field{display:flex;flex-direction:column;gap:.4rem;font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{accent-color:var(--violet);width:150px}
+.buttons{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.6rem 1.2rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#04030e;border-color:var(--violet)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>ORBIT <em>SIMULATOR</em></h1><p>drop stars into the void and watch them fall in love</p></header>
+<canvas id="c"></canvas>
+<div class="controls">
+  <div class="field">gravity<input type="range" id="g" min="1" max="100" value="35"></div>
+  <div class="field">speed<input type="range" id="sp" min="1" max="50" value="12"></div>
+</div>
+<div class="buttons">
+  <button id="reset">⟳ reset</button>
+  <button id="clear">✕ clear</button>
+</div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const DPR=devicePixelRatio||1;
+function resize(){cv.width=cv.offsetWidth*DPR;cv.height=cv.offsetHeight*DPR;ctx.scale(DPR,DPR)}
+addEventListener('resize',resize);resize();
+const bodies=[];
+function add(x,y,big){
+  const g=+document.getElementById('g').value*10;
+  bodies.push({x,y,vx:big?0:(Math.random()-.5)*3,vy:big?0:(Math.random()-.5)*3,m:big?400:8,hue:big?45:260+Math.random()*40});
+}
+add(cv.width/2,cv.height/2,true);
+cv.addEventListener('click',e=>{
+  const r=cv.getBoundingClientRect();
+  add((e.clientX-r.left)*DPR,(e.clientY-r.top)*DPR,false);
+});
+document.getElementById('reset').addEventListener('click',()=>{bodies.length=0;add(cv.width/2,cv.height/2,true)});
+document.getElementById('clear').addEventListener('click',()=>{bodies.length=0});
+(function tick(){
+  requestAnimationFrame(tick);
+  const G=+document.getElementById('g').value*10;
+  const SP=document.getElementById('sp').value/10;
+  ctx.fillStyle='rgba(7,3,18,.3)';ctx.fillRect(0,0,cv.width,cv.height);
+  for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){
+    const a=bodies[i],b=bodies[j];
+    const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy+300,d=Math.sqrt(d2);
+    const f=G/d2;
+    const fx=dx/d*f,fy=dy/d*f;
+    a.vx+=fx*SP;a.vy+=fy*SP;
+    b.vx-=fx*SP;b.vy-=fy*SP;
+  }
+  for(const b of bodies){
+    b.x+=b.vx;b.y+=b.vy;
+    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.m>100?26:7);
+    g.addColorStop(0,`hsla(${b.hue},95%,85%,.9)`);
+    g.addColorStop(1,`hsla(${b.hue},95%,60%,0)`);
+    ctx.fillStyle=g;
+    ctx.beginPath();ctx.arc(b.x,b.y,b.m>100?26:7,0,7);ctx.fill();
+  }
+})(0);
+</script>
+</body>
+</html>

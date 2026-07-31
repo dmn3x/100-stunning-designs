@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>07 — Volt Meter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0c0716;--panel:#151027;--fg:#e6def5;--muted:#6c6096;--violet:#a78bfa;--cyan:#7df9ff;--warn:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono','Cascadia Code',Consolas,monospace}
+main{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem;gap:2rem}
+h1{font-size:clamp(1.1rem,2.6vw,1.5rem);letter-spacing:.24em;text-transform:uppercase;color:var(--muted);font-weight:400}
+h1 b{color:var(--violet)}
+.meter{width:min(600px,90vw);aspect-ratio:1;border-radius:50%;background:radial-gradient(circle at 50% 42%,#1c1438,#0d081d 72%);border:3px solid rgba(167,139,250,.35);position:relative;box-shadow:0 0 60px rgba(139,92,246,.18),inset 0 0 80px rgba(0,0,0,.6)}
+.meter::after{content:'';position:absolute;inset:9%;border-radius:50%;border:1px solid rgba(167,139,250,.14)}
+.ticks{position:absolute;inset:4%;border-radius:50%}
+.readout{position:absolute;left:50%;top:56%;transform:translate(-50%,-50%);text-align:center;z-index:3}
+.readout .v{font-size:clamp(2.4rem,7vw,4rem);font-weight:900;letter-spacing:-.03em;color:var(--cyan);text-shadow:0 0 30px rgba(125,249,255,.5)}
+.readout .unit{font-size:.72rem;letter-spacing:.3em;color:var(--muted);text-transform:uppercase}
+.needle{position:absolute;left:50%;top:50%;width:40%;height:2px;transform-origin:0 50%;background:linear-gradient(90deg,var(--violet),var(--cyan));border-radius:2px;z-index:2;box-shadow:0 0 12px rgba(167,139,250,.7)}
+.needle::after{content:'';position:absolute;left:-6px;top:50%;width:12px;height:12px;border-radius:50%;background:#fff;transform:translateY(-50%);box-shadow:0 0 14px var(--violet)}
+.hub{position:absolute;left:50%;top:50%;width:16px;height:16px;border-radius:50%;background:#1c1438;border:2px solid var(--violet);transform:translate(-50%,-50%);z-index:4}
+.bar{width:min(600px,90vw);display:flex;align-items:center;gap:1rem}
+.bar .track{flex:1;height:8px;border-radius:99px;background:#1a1230;overflow:hidden}
+.bar .fill{height:100%;width:0%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .3s}
+.bar span{font-size:.68rem;color:var(--muted);letter-spacing:.1em;width:4.5rem;text-align:right}
+.controls{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center}
+button{background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.3);color:var(--fg);padding:.6rem 1.1rem;border-radius:99px;font:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.2);box-shadow:0 0 16px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#12071f;border-color:var(--violet)}
+.tip{font-size:.66rem;color:var(--muted);letter-spacing:.06em}
+.tip b{color:var(--warn)}
+</style>
+</head>
+<body>
+<main>
+<h1><b>VOLT</b> METER · analog energy console</h1>
+<div class="meter" id="meter">
+  <div class="ticks"></div>
+  <div class="readout"><div class="v" id="val">0.00</div><div class="unit">volts</div></div>
+  <div class="needle" id="needle"></div>
+  <div class="hub"></div>
+</div>
+<div class="bar"><div class="track"><div class="fill" id="fill"></div></div><span id="pct">0%</span></div>
+<div class="controls">
+  <button data-wave="sine" class="active">∿ Sine</button>
+  <button data-wave="square">⊓ Square</button>
+  <button data-wave="saw">⤒ Saw</button>
+  <button data-wave="noise">≋ Noise</button>
+</div>
+<p class="tip">The needle swings with the grid. <b>± 220V</b> live — no touching.</p>
+</main>
+<script>
+const ticks=document.querySelector('.ticks');
+let tickHTML='';
+for(let i=0;i<37;i++){
+  const a=i*10-180;
+  tickHTML+=`<div style="position:absolute;left:50%;top:50%;width:${i%9===0?8:4}px;height:1px;background:rgba(167,139,250,.4);transform:translate(-50%,-50%) rotate(${a}deg) translateX(${46}%)"></div>`;
+}
+ticks.innerHTML=tickHTML;
+const val=document.getElementById('val'),needle=document.getElementById('needle'),fill=document.getElementById('fill'),pct=document.getElementById('pct');
+let wave='sine',t=0,display=0;
+document.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');wave=b.dataset.wave;
+}));
+(function tick(){
+  requestAnimationFrame(tick);t+=.04;
+  let raw=0;
+  if(wave==='sine')raw=Math.sin(t)*220;
+  if(wave==='square')raw=(Math.sin(t)>0?1:-1)*220;
+  if(wave==='saw')raw=(t%(Math.PI*2))/Math.PI*220-220;
+  if(wave==='noise')raw=(Math.random()*2-1)*220;
+  display+=(raw-display)*.08;
+  val.textContent=display.toFixed(2);
+  const angle=(display/220)*90;
+  needle.style.transform=`rotate(${angle}deg)`;
+  const p=Math.abs(display)/220*100;
+  fill.style.width=p+'%';
+  pct.textContent=Math.round(p)+'%';
+  const hot=p>70;
+  needle.style.background=hot?'linear-gradient(90deg,#fbbf24,#f87171)':'linear-gradient(90deg,var(--violet),var(--cyan))';
+})(0);
+</script>
+</body>
+</html>

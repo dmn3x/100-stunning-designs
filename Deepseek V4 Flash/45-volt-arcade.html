@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>45 — Volt Arcade</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0416;--fg:#e4dcf5;--muted:#5d5390;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 2rem}
+h1{font-size:clamp(1.6rem,4.4vw,2.6rem);letter-spacing:-.02em}
+h1 span{color:var(--violet);text-shadow:0 0 24px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.6rem;font-size:.92rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.4rem;max-width:1040px;margin:0 auto;padding:0 1.5rem 4rem}
+.game{position:relative;border-radius:1.2rem;padding:1.6rem;background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.18);transition:all .3s;cursor:pointer;overflow:hidden}
+.game:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 16px 40px rgba(139,92,246,.2)}
+.game::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--violet),var(--pink));opacity:.6}
+.game .icon{font-size:2rem;margin-bottom:.8rem}
+.game h3{font-size:1.05rem;margin-bottom:.5rem}
+.game p{font-size:.82rem;color:var(--muted);line-height:1.6;margin-bottom:1rem}
+.game .meta{display:flex;justify-content:space-between;align-items:center;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.game .plays{color:var(--gold)}
+.game .score{font-weight:800;color:var(--cyan)}
+.game.hot{border-color:var(--pink)}
+.game.hot::before{background:linear-gradient(90deg,var(--pink),var(--gold))}
+</style>
+</head>
+<body>
+<header><h1>VOLT <span>ARCADE</span></h1><p>six micro-games in one glowing cabinet</p></header>
+<div class="grid" id="grid"></div>
+<script>
+const GAMES=[
+ {i:'⚡',n:'Voltage Runner',d:'Dodge the surges, collect the charge. Arrow keys to move, avoid the red bolts.',plays:'2.1k'},
+ {i:'🔮',n:'Orb Catcher',d:'Catch the falling orbs before they hit the floor. Click or tap to move the cup.',plays:'1.8k'},
+ {i:'🧠',n:'Memory Flux',d:'Flip the cards, match the pairs, beat the clock. The grid glows with every match.',plays:'960'},
+ {i:'🎯',n:'Target Pulse',d:'Aim the reticle, click the targets as they bloom. Time matters.',plays:'1.4k'},
+ {i:'🌀',n:'Spin Sort',d:'Sort the spinning shapes into the right vortex. Fast and confusing, like life.',plays:'740'},
+ {i:'⭐',n:'Star Dash',d:'Tap the star as it moves across the screen. Reaction speed is everything.',plays:'2.9k'}
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=GAMES.map((g,i)=>`<div class="game ${i===4?'hot':''}">
+  <div class="icon">${g.i}</div>
+  <h3>${g.n}</h3>
+  <p>${g.d}</p>
+  <div class="meta"><span class="plays">▶ ${g.plays}</span><span class="score">HIGH 0</span></div>
+</div>`).join('');
+grid.addEventListener('click',e=>{
+  const g=e.target.closest('.game');if(!g)return;
+  const t=g.querySelector('.score');
+  t.textContent='HIGH '+(Math.floor(Math.random()*9000+1000));
+  g.style.transform='scale(.98)';
+  setTimeout(()=>g.style.transform='',150);
+});
+</script>
+</body>
+</html>

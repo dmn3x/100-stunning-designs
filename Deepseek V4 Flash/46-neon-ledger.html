@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>46 — Neon Ledger</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e2dcf5;--muted:#5a5090;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--green:#34d399}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:860px;margin:0 auto;padding:2rem 1.5rem 3rem}
+header{text-align:center;padding:2rem 0 1.6rem}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.5rem;font-size:.8rem}
+.toolbar{display:flex;gap:.8rem;flex-wrap:wrap;justify-content:center;margin-bottom:1.6rem}
+input[type=text]{background:rgba(139,92,246,.08);border:1px solid rgba(167,139,250,.3);color:var(--fg);padding:.6rem 1rem;border-radius:99px;font:inherit;font-size:.8rem;outline:none;transition:all .2s}
+input[type=text]:focus{border-color:var(--violet);box-shadow:0 0 14px rgba(167,139,250,.25)}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.6rem 1.3rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.add{background:var(--violet);color:#070312;border-color:var(--violet)}
+.board{background:rgba(139,92,246,.04);border:1px solid rgba(167,139,250,.18);border-radius:1.2rem;padding:1.4rem;margin-bottom:1.6rem}
+.row{display:flex;align-items:center;gap:1rem;padding:.8rem 0;border-bottom:1px solid rgba(167,139,250,.08)}
+.row:last-child{border-bottom:none}
+.row .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.row .task{flex:1;font-size:.86rem}
+.row .task.done{text-decoration:line-through;color:var(--muted)}
+.row .time{font-size:.66rem;color:var(--muted);letter-spacing:.08em}
+.row .del{background:none;border:none;color:var(--pink);font-size:1.1rem;cursor:pointer;padding:.2rem .4rem;line-height:1}
+.row .del:hover{text-shadow:0 0 10px var(--pink)}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1rem}
+.total{background:rgba(139,92,246,.06);border:1px solid rgba(167,139,250,.18);border-radius:1rem;padding:1rem;text-align:center}
+.total .n{font-size:1.5rem;font-weight:900}
+.total .l{font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+.total.g .n{color:var(--green)}.total.c .n{color:var(--cyan)}.total.p .n{color:var(--pink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>NEON <em>LEDGER</em></h1><p>a to-do list that glows when you win</p></header>
+<div class="toolbar">
+  <input type="text" id="task" placeholder="add a task…" maxlength="60">
+  <button class="add" id="add">+ Add</button>
+</div>
+<div class="board" id="board"></div>
+<div class="totals">
+  <div class="total g"><div class="n" id="done">0</div><div class="l">done</div></div>
+  <div class="total c"><div class="n" id="open">0</div><div class="l">open</div></div>
+  <div class="total p"><div class="n" id="streak">0</div><div class="l">streak</div></div>
+</div>
+</div>
+<script>
+const board=document.getElementById('board');
+const input=document.getElementById('task');
+let tasks=JSON.parse(localStorage.getItem('neon-ledger')||'[]');
+function save(){localStorage.setItem('neon-ledger',JSON.stringify(tasks))}
+function render(){
+  board.innerHTML='';
+  tasks.forEach((t,i)=>{
+    const row=document.createElement('div');
+    row.className='row';
+    row.innerHTML=`
+      <span class="dot" style="background:${t.done?'var(--green)':'var(--violet)'};box-shadow:0 0 8px ${t.done?'var(--green)':'var(--violet)'}"></span>
+      <span class="task ${t.done?'done':''}">${t.text}</span>
+      <span class="time">${t.time}</span>
+      <button class="del" title="remove">×</button>
+    `;
+    row.querySelector('.dot').addEventListener('click',()=>{t.done=!t.done;save();render()});
+    row.querySelector('.del').addEventListener('click',()=>{tasks.splice(i,1);save();render()});
+    board.appendChild(row);
+  });
+  if(!tasks.length)board.innerHTML='<div style="text-align:center;color:var(--muted);padding:1.4rem">the ledger is empty — the night awaits your first task</div>';
+  const done=tasks.filter(t=>t.done).length;
+  document.getElementById('done').textContent=done;
+  document.getElementById('open').textContent=tasks.length-done;
+  let streak=0;
+  for(const t of tasks){if(t.done)streak++;else break}
+  document.getElementById('streak').textContent=streak;
+}
+function add(){
+  const text=input.value.trim();
+  if(!text)return;
+  const now=new Date();
+  tasks.unshift({text,done:false,time:now.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})});
+  input.value='';save();render();
+}
+document.getElementById('add').addEventListener('click',add);
+input.addEventListener('keydown',e=>{if(e.key==='Enter')add()});
+render();
+</script>
+</body>
+</html>

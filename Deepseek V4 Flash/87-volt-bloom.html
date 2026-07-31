@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>87 — Volt Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 2rem}
+h1{font-size:clamp(1.5rem,4.2vw,2.4rem);letter-spacing:.02em}
+h1 span{color:var(--violet);text-shadow:0 0 22px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.6rem;font-size:.9rem}
+.garden{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:1.4rem;max-width:980px;margin:0 auto;padding:0 1.5rem 4rem}
+.flower{position:relative;aspect-ratio:1;border-radius:1.2rem;background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.16);display:flex;align-items:center;justify-content:center;cursor:pointer;overflow:hidden;transition:all .3s}
+.flower:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 14px 40px rgba(139,92,246,.18)}
+.flower canvas{position:absolute;inset:0;width:100%;height:100%}
+.flower .tag{position:absolute;bottom:.6rem;left:50%;transform:translateX(-50%);font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+.flower:hover .tag{color:var(--gold)}
+</style>
+</head>
+<body>
+<header><h1>VOLT <span>BLOOM</span></h1><p>eight electric flowers — hover to charge, click to bloom</p></header>
+<div class="garden" id="garden"></div>
+<script>
+const FLOWERS=[
+ {h:265,p:6,n:'Violet Arc'},{h:290,p:7,n:'Plasma Ring'},{h:195,p:5,n:'Cyan Coil'},
+ {h:320,p:8,n:'Pink Surge'},{h:255,p:6,n:'Indigo Spike'},{h:40,p:7,n:'Amber Bolt'},
+ {h:275,p:9,n:'Ultra Crown'},{h:215,p:5,n:'Ice Discharge'}
+];
+const garden=document.getElementById('garden');
+FLOWERS.forEach((f,i)=>{
+  const d=document.createElement('div');
+  d.className='flower';
+  d.innerHTML=`<canvas width="200" height="200"></canvas><span class="tag">${f.n}</span>`;
+  garden.appendChild(d);
+  const cv=d.querySelector('canvas'),ctx=cv.getContext('2d');
+  let charge=0;
+  function draw(){
+    ctx.clearRect(0,0,200,200);
+    const cx=100,cy=100;
+    charge=Math.max(0,Math.min(1,charge));
+    for(let p=0;p<f.p;p++){
+      const a=(p/f.p)*Math.PI*2+performance.now()*.0006;
+      const len=charge*(20+Math.sin(performance.now()*.002+p)*8);
+      ctx.save();ctx.translate(cx,cy);ctx.rotate(a);
+      ctx.strokeStyle=`hsla(${f.h},90%,75%,${.3+charge*.5})`;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(0,0);
+      ctx.quadraticCurveTo(len*.5,-8,len,0);
+      ctx.stroke();
+      ctx.fillStyle=`hsla(${f.h},90%,75%,${charge*.7})`;
+      ctx.shadowColor=`hsla(${f.h},95%,60%,.9)`;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.arc(len,0,2.5+charge*2,0,7);ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle=`hsla(${(f.h+30)%360},95%,85%,${.4+charge*.6})`;
+    ctx.shadowColor='#fff';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(cx,cy,4+charge*5,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  d.addEventListener('mouseenter',()=>charge+=.2);
+  d.addEventListener('mouseleave',()=>charge-=.1);
+  d.addEventListener('click',()=>{charge=1;setTimeout(()=>charge=.2,600)});
+  (function loop(){requestAnimationFrame(loop);draw()})();
+});
+</script>
+</body>
+</html>

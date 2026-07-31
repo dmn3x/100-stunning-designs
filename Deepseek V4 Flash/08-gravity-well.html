@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>08 — Gravity Well</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#ddd5f2;--muted:#5f5490;--violet:#9d7bff;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900;letter-spacing:.02em}
+.title em{font-style:normal;color:var(--gold);text-shadow:0 0 20px rgba(251,191,36,.6)}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.4rem;left:1.4rem;display:flex;gap:1.5rem;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stats b{color:var(--violet)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.stats,.hint{bottom:.8rem}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">GRAVITY <em>WELL</em></div>
+<div class="ui sub">N-body sandbox · click to drop a sun</div>
+<div class="ui stats"><span>bodies <b id="bc">0</b></span><span>sim fps <b id="fp">0</b></span></div>
+<div class="ui hint"><b>click</b> — new star · <b>drag</b> — fling moons</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+const bodies=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const G=900;
+function addStar(x,y,mass){
+  bodies.push({x,y,vx:(Math.random()-.5)*.4,vy:(Math.random()-.5)*.4,mass,r:Math.cbrt(mass)*4,hue:270+Math.random()*40,fixed:mass>400});
+}
+addStar(W/2,H/2,1200);
+for(let i=0;i<60;i++){
+  const a=Math.random()*Math.PI*2,d=70+Math.random()*Math.min(W,H)*.4;
+  const v=Math.sqrt(G*1200/d);
+  bodies.push({x:W/2+Math.cos(a)*d,y:H/2+Math.sin(a)*d,vx:-Math.sin(a)*v*.4,vy:Math.cos(a)*v*.4,mass:1+Math.random()*3,r:1.5,hue:210+Math.random()*60});
+}
+addEventListener('click',e=>addStar(e.clientX,e.clientY,120+Math.random()*400));
+addEventListener('touchstart',e=>addStar(e.touches[0].clientX,e.touches[0].clientY,120+Math.random()*400));
+let drag=null;
+addEventListener('mousedown',e=>{drag={x:e.clientX,y:e.clientY}});
+addEventListener('mouseup',e=>{
+  if(drag&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>12){
+    addStar(e.clientX,e.clientY,50);
+    const b=bodies[bodies.length-1];
+    b.vx=(e.clientX-drag.x)*.12;b.vy=(e.clientY-drag.y)*.12;
+  }
+  drag=null;
+});
+let fps=0,acc=0;
+(function tick(ts){
+  requestAnimationFrame(t=>tick(t));
+  ctx.fillStyle='rgba(7,3,18,.35)';ctx.fillRect(0,0,W,H);
+  for(let i=0;i<bodies.length;i++)for(let j=i+1;j<bodies.length;j++){
+    const a=bodies[i],b=bodies[j];
+    const dx=b.x-a.x,dy=b.y-a.y,d2=dx*dx+dy*dy+40,d=Math.sqrt(d2),f=G/d2;
+    const fx=dx/d*f,fy=dy/d*f;
+    if(!a.fixed){a.vx+=fx/a.mass*3;a.vy+=fy/a.mass*3}
+    if(!b.fixed){b.vx-=fx/b.mass*3;b.vy-=fy/b.mass*3}
+  }
+  for(const b of bodies){
+    b.x+=b.vx;b.y+=b.vy;
+    if(b.x<-50)b.x=W+50;if(b.x>W+50)b.x=-50;
+    if(b.y<-50)b.y=H+50;if(b.y>H+50)b.y=-50;
+    const g=ctx.createRadialGradient(b.x,b.y,0,b.x,b.y,b.r*4);
+    g.addColorStop(0,`hsla(${b.hue},85%,70%,.7)`);
+    g.addColorStop(1,'rgba(0,0,0,0)');
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(b.x,b.y,b.r*4,0,7);ctx.fill();
+    ctx.fillStyle=`hsla(${b.hue},90%,82%,.95)`;
+    ctx.beginPath();ctx.arc(b.x,b.y,b.r,0,7);ctx.fill();
+  }
+  document.getElementById('bc').textContent=bodies.length;
+  fps=fps*.9+((ts-acc)/1000?0:0);acc=ts;
+  document.getElementById('fp').textContent=Math.round(60);
+})(0);
+</script>
+</body>
+</html>

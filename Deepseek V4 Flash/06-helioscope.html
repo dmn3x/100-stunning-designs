@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>06 — Helioscope</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0b0516;--fg:#e4dcf7;--muted:#655a94;--violet:#a78bfa;--gold:#fcd34d}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Gill Sans',system-ui,sans-serif;overflow:hidden}
+#stage{position:fixed;inset:0}
+.ring{position:absolute;border-radius:50%;transform:translate(-50%,-50%);border:1px solid rgba(167,139,250,.2);transition:border-color .4s}
+.ring:hover{border-color:rgba(252,211,77,.55)}
+.r1{width:46vmin;height:46vmin;left:50%;top:50%}
+.r2{width:72vmin;height:72vmin;left:50%;top:50%}
+.r3{width:98vmin;height:98vmin;left:50%;top:50%}
+.r4{width:124vmin;height:124vmin;left:50%;top:50%}
+.dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--gold);box-shadow:0 0 14px var(--gold);transform:translate(-50%,-50%)}
+.cap{position:absolute;transform:translate(-50%,-50%);color:var(--muted);font-size:.6rem;letter-spacing:.2em;text-transform:uppercase}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1.3rem,3.4vw,2rem);font-weight:900;letter-spacing:-.01em}
+.title span{color:var(--violet);text-shadow:0 0 22px rgba(167,139,250,.65)}
+.sub{top:3.4rem;left:1.5rem;font-size:.68rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.5rem;right:1.5rem;font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.8rem;left:.9rem}.hint{bottom:.9rem;right:.9rem}}
+</style>
+</head>
+<body>
+<div id="stage">
+  <div class="ring r1"><span class="cap" style="top:-6px;left:50%">equator</span><span class="dot" id="d1"></span></div>
+  <div class="ring r2"><span class="cap" style="top:50%;right:-14px">tropic</span><span class="dot" id="d2"></span></div>
+  <div class="ring r3"><span class="cap" style="bottom:-6px;left:50%">meridian</span><span class="dot" id="d3"></span></div>
+  <div class="ring r4"><span class="cap" style="top:50%;left:-14px">horizon</span><span class="dot" id="d4"></span></div>
+</div>
+<div class="ui title">HELIO<span>SCOPE</span></div>
+<div class="ui sub">celestial instrument · drag a ring to tilt the world</div>
+<div class="ui hint">the sun rides the rings — <b>drag</b> to steer it</div>
+<script>
+const dots={d1:document.getElementById('d1'),d2:document.getElementById('d2'),d3:document.getElementById('d3'),d4:document.getElementById('d4')};
+const rings=[document.querySelector('.r1'),document.querySelector('.r2'),document.querySelector('.r3'),document.querySelector('.r4')];
+let t=0,angles=[0,.5,1.2,1.9];
+rings.forEach((r,i)=>{
+  r.addEventListener('pointerdown',()=>{
+    const move=e=>{
+      const cx=innerWidth/2,cy=innerHeight/2;
+      angles[i]=Math.atan2(e.clientY-cy,e.clientX-cx);
+    };
+    const up=()=>{removeEventListener('pointermove',move);removeEventListener('pointerup',up)};
+    addEventListener('pointermove',move);addEventListener('pointerup',up);
+  });
+});
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.01;
+  rings.forEach((r,i)=>{
+    const a=angles[i]+t*(.05+i*.02);
+    const dot=dots['d'+(i+1)];
+    dot.style.left=(50+38*Math.cos(a))+'%';
+    dot.style.top=(50+38*Math.sin(a)*.62)+'%';
+    r.style.borderColor=`rgba(${167-i*10},${139-i*8},${250-i*20},${.18+i*.09})`;
+  });
+})(0);
+</script>
+</body>
+</html>

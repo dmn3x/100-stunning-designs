@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>54 — Voltage Rain</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VOLTAGE <span>RAIN</span></div>
+<div class="ui sub">the storm falls in code · click to make it pour</div>
+<div class="ui hint"><b>click</b> — heavy rain · <b>drag</b> — push the drops</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const drops=[];
+const CHARS='01アイウエオカキクケコ';
+function spawn(n){
+  for(let i=0;i<n;i++){
+    drops.push({
+      x:Math.random()*W,
+      y:Math.random()*H,
+      v:3+Math.random()*7,
+      len:6+Math.random()*14,
+      hue:250+Math.random()*50,
+      ch:CHARS[Math.floor(Math.random()*CHARS.length)]
+    });
+  }
+}
+spawn(90);
+let mx=W/2,heavy=0;
+addEventListener('mousemove',e=>{mx=e.clientX});
+addEventListener('click',()=>{heavy=1});
+addEventListener('touchstart',()=>{heavy=1});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(6,3,18,.3)';ctx.fillRect(0,0,W,H);
+  if(heavy>0)heavy-=.004;
+  const target=90+heavy*260;
+  while(drops.length<target)spawn(1);
+  for(let i=drops.length-1;i>=0;i--){
+    const d=drops[i];
+    d.y+=d.v;
+    d.x+=(mx-d.x)*.0015;
+    if(d.y>H+30){drops.splice(i,1);continue}
+    ctx.fillStyle=`hsla(${d.hue},90%,75%,.9)`;
+    ctx.font=`${d.len}px monospace`;
+    ctx.fillText(d.ch,d.x,d.y);
+    ctx.fillStyle=`hsla(${d.hue},90%,85%,.5)`;
+    ctx.font=`${d.len*.6}px monospace`;
+    ctx.fillText(d.ch,d.x+4,d.y-d.len*.8);
+  }
+})(0);
+</script>
+</body>
+</html>

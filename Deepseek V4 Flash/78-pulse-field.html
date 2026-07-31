@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>78 — Pulse Field</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PULSE <span>FIELD</span></div>
+<div class="ui sub">a grid that breathes with you</div>
+<div class="ui hint"><b>click</b> — send a pulse</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const COLS=Math.floor(W/30),ROWS=Math.floor(H/30);
+const cells=[];
+for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+  cells.push({r,c,x:c*30+15,y:r*30+15,pulse:0,ph:Math.random()*7});
+}
+let t=0;
+addEventListener('click',e=>{
+  const r=Math.floor(e.clientY/30),c=Math.floor(e.clientX/30);
+  if(cells[r*COLS+c])cells[r*COLS+c].pulse=1;
+});
+addEventListener('touchstart',e=>{
+  const r=Math.floor(e.touches[0].clientY/30),c=Math.floor(e.touches[0].clientX/30);
+  if(cells[r*COLS+c])cells[r*COLS+c].pulse=1;
+});
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  ctx.fillStyle='rgba(6,3,18,.25)';ctx.fillRect(0,0,W,H);
+  // propagate
+  const copy=cells.map(c=>({...c}));
+  for(const c of cells){
+    if(c.pulse>0){
+      c.pulse-=.02;
+      if(c.pulse>0){
+        [[-1,0],[1,0],[0,-1],[0,1]].forEach(([dr,dc])=>{
+          const nr=c.r+dr,nc=c.c+dc;
+          if(nr>=0&&nr<ROWS&&nc>=0&&nc<COLS){
+            const nb=cells[nr*COLS+nc];
+            if(nb.pulse<c.pulse*.7)nb.pulse=Math.max(nb.pulse,c.pulse*.7);
+          }
+        });
+      }
+    }
+  }
+  for(const c of cells){
+    const base=Math.sin(t+c.ph)*.12;
+    const bright=base+c.pulse*.85;
+    ctx.fillStyle=`hsla(${260+c.pulse*40},90%,${55+bright*30}%,${Math.max(.1,bright)})`;
+    ctx.fillRect(c.x-8,c.y-8,16,16);
+  }
+})(0);
+</script>
+</body>
+</html>

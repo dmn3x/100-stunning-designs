@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>100 — Electric Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.6rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{background:linear-gradient(90deg,var(--violet),var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;text-shadow:none}
+.sub{top:3.2rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">ELECTRIC <span>BLOOM</span></div>
+<div class="ui sub">the hundredth flower · a celebration of voltage</div>
+<div class="ui hint"><b>click</b> — ignite the finale</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const cx=()=>W/2,cy=()=>H/2;
+let t=0,ignite=0,sparks=[];
+addEventListener('click',()=>ignite=1);
+addEventListener('touchstart',()=>ignite=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.015;
+  ctx.fillStyle='rgba(6,3,18,.22)';ctx.fillRect(0,0,W,H);
+  if(ignite>0){
+    ignite-=.003;
+    if(Math.random()<.4){
+      const a=Math.random()*Math.PI*2,d=Math.random()*160;
+      sparks.push({x:cx()+Math.cos(a)*d,y:cy()+Math.sin(a)*d,vx:(Math.random()-.5)*2,vy:(Math.random()-.5)*2,life:1,hue:Math.random()*60+240});
+    }
+  }
+  for(let i=sparks.length-1;i>=0;i--){
+    const s=sparks[i];
+    s.x+=s.vx;s.y+=s.vy;s.life-=.015;
+    if(s.life<=0){sparks.splice(i,1);continue}
+    ctx.fillStyle=`hsla(${s.hue},95%,80%,${s.life})`;
+    ctx.beginPath();ctx.arc(s.x,s.y,1.8,0,7);ctx.fill();
+  }
+  const x=cx(),y=cy();
+  // grand bloom — 12 petals, multi-hue
+  const petals=12;
+  for(let p=0;p<petals;p++){
+    const a=(p/petals)*Math.PI*2+t*.2;
+    const len=(34+ignite*70)*(1+Math.sin(t*1.6+p)*.18);
+    const hue=255+p*12;
+    ctx.save();ctx.translate(x,y);ctx.rotate(a);
+    ctx.strokeStyle=`hsla(${hue},90%,72%,.6)`;
+    ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(len*.45,-12,len,0);
+    ctx.stroke();
+    ctx.fillStyle=`hsla(${hue},90%,72%,${.45+ignite*.4})`;
+    ctx.beginPath();ctx.ellipse(len*.82,0,len*.34,len*.2,0,0,7);ctx.fill();
+    ctx.restore();
+  }
+  // orbiting sparks ring
+  for(let i=0;i<16;i++){
+    const a=t*(1.4)+i*.4;
+    const r=30+ignite*40+Math.sin(t+i)*3;
+    ctx.fillStyle=`hsla(${270+i*6},95%,85%,.8)`;
+    ctx.beginPath();ctx.arc(x+Math.cos(a)*r,y+Math.sin(a)*r*.72,1.8,0,7);ctx.fill();
+  }
+  // core
+  ctx.fillStyle='rgba(255,255,255,.98)';
+  ctx.shadowColor='#fff';ctx.shadowBlur=22;
+  ctx.beginPath();ctx.arc(x,y,7+ignite*5,0,7);ctx.fill();
+  ctx.shadowBlur=0;
+})(0);
+</script>
+</body>
+</html>

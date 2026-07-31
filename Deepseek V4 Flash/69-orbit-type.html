@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>69 — Orbit Type</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:760px;margin:0 auto;padding:2.4rem 1.5rem 3rem;text-align:center}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em;margin-bottom:1.8rem}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+.orbit{position:relative;height:340px;margin-bottom:1.8rem}
+.orbit .core{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#c4b5fd 40%,#7c3aed 80%);box-shadow:0 0 60px rgba(167,139,250,.7);display:flex;align-items:center;justify-content:center;z-index:3}
+.orbit .core .letter{font-size:2.2rem;font-weight:900;color:#fff;text-shadow:0 0 20px rgba(0,0,0,.5)}
+.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);border-radius:50%;border:1px solid rgba(167,139,250,.25)}
+.ring.r1{width:200px;height:200px}
+.ring.r2{width:290px;height:290px}
+.ring.r3{width:380px;height:380px}
+.sat{position:absolute;display:flex;align-items:center;gap:.4rem}
+.sat .dot{width:12px;height:12px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan)}
+.sat .txt{font-size:.78rem;color:var(--muted);letter-spacing:.08em}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.6rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.85rem;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+.readout{color:var(--muted);font-size:.8rem;min-height:2em}
+.readout b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>ORBIT <em>TYPE</em></h1>
+<div class="orbit" id="orbit">
+  <div class="ring r1"></div><div class="ring r2"></div><div class="ring r3"></div>
+  <div class="core"><span class="letter" id="core">V</span></div>
+  <div class="sat" id="s1"><span class="dot"></span><span class="txt">VOLTAGE</span></div>
+  <div class="sat" id="s2"><span class="dot"></span><span class="txt">PLASMA</span></div>
+  <div class="sat" id="s3"><span class="dot"></span><span class="txt">AURORA</span></div>
+  <div class="sat" id="s4"><span class="dot"></span><span class="txt">NEBULA</span></div>
+  <div class="sat" id="s5"><span class="dot"></span><span class="txt">CRYSTAL</span></div>
+  <div class="sat" id="s6"><span class="dot"></span><span class="txt">SIGNAL</span></div>
+</div>
+<div class="controls">
+  <button data-w="voltage">⚡ voltage</button>
+  <button data-w="plasma">🔮 plasma</button>
+  <button data-w="aurora">🌌 aurora</button>
+  <button data-w="nebula">🌫 nebula</button>
+</div>
+<div class="readout">current: <b id="word">VOLTAGE</b></div>
+</div>
+<script>
+const orbit=document.getElementById('orbit');
+const WORD={
+ voltage:{c:'V',s:['VOLTAGE','PLASMA','AURORA','NEBULA','CRYSTAL','SIGNAL'],hue:265},
+ plasma:{c:'P',s:['PLASMA','ORBIT','PULSE','FIELD','BEAM','CORE'],hue:300},
+ aurora:{c:'A',s:['AURORA','WIND','LIGHT','POLAR','VEIL','DANCE'],hue:190},
+ nebula:{c:'N',s:['NEBULA','DUST','STAR','GAS','BIRTH','GLOW'],hue:280}
+};
+let w='voltage',t=0;
+const sats=[1,2,3,4,5,6].map(i=>document.getElementById('s'+i));
+const core=document.getElementById('core'),word=document.getElementById('word');
+document.querySelectorAll('button[data-w]').forEach(b=>b.addEventListener('click',()=>{
+  w=b.dataset.w;
+  const W=WORD[w];
+  core.textContent=W.c;
+  word.textContent=W.s[0];
+  sats.forEach((s,i)=>{
+    s.querySelector('.txt').textContent=W.s[i];
+    s.querySelector('.dot').style.background=`hsl(${W.hue+i*12},90%,70%)`;
+  });
+}));
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.008;
+  const W=WORD[w];
+  const rings=[200,290,380];
+  sats.forEach((s,i)=>{
+    const r=rings[i%3];
+    const speed=i%2===0?t:-t*1.2;
+    const a=speed+(i*.9);
+    const x=50+Math.cos(a)*r/2,y=50+Math.sin(a)*r/2*.62;
+    s.style.left=x+'%';s.style.top=y+'%';
+    s.style.transform='translate(-50%,-50%)';
+  });
+  core.style.boxShadow=`0 0 60px hsla(${W.hue},90%,65%,.7)`;
+})(0);
+</script>
+</body>
+</html>

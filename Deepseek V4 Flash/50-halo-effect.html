@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>50 — Halo Effect</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0416;--fg:#e6def7;--muted:#5f5490;--violet:#a78bfa;--gold:#fbbf24;--pink:#f472b6}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:15px/1.6 Georgia,serif;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+.card{max-width:640px;width:100%;background:rgba(139,92,246,.04);border:1px solid rgba(167,139,250,.22);border-radius:2rem;padding:clamp(2rem,6vw,3.4rem);position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;inset:-40%;background:radial-gradient(circle at 50% 0%,rgba(167,139,250,.14),transparent 60%);pointer-events:none}
+.halo{width:120px;height:120px;border-radius:50%;margin:0 auto 1.8rem;position:relative}
+.halo .ring{position:absolute;inset:0;border-radius:50%;border:2px solid rgba(167,139,250,.4);animation:pulse 3s ease-in-out infinite}
+.halo .ring.r2{inset:-14px;border-color:rgba(167,139,250,.2);animation-delay:.6s}
+.halo .ring.r3{inset:-28px;border-color:rgba(251,191,36,.25);animation-delay:1.2s}
+@keyframes pulse{50%{transform:scale(1.08);opacity:.6}}
+.halo .core{position:absolute;inset:22%;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff,#c4b5fd 40%,#7c3aed 80%);box-shadow:0 0 44px rgba(167,139,250,.7)}
+h1{text-align:center;font-size:clamp(1.5rem,4.4vw,2.2rem);letter-spacing:.03em;margin-bottom:1.2rem}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.6)}
+.desc{text-align:center;color:var(--muted);font-style:italic;margin-bottom:2rem;font-size:.95rem}
+.quote{font-size:clamp(1.1rem,3vw,1.5rem);line-height:1.8;min-height:4.6em;text-align:center;margin-bottom:2rem;transition:opacity .4s}
+.quote.fade{opacity:0}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap}
+button{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.35);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.88rem;letter-spacing:.03em;cursor:pointer;transition:all .25s}
+button:hover{background:rgba(167,139,250,.22);box-shadow:0 0 20px rgba(167,139,250,.3)}
+.source{text-align:center;margin-top:1.8rem;font-size:.74rem;color:var(--muted);letter-spacing:.12em}
+.source b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="halo">
+    <div class="ring"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="core"></div>
+  </div>
+  <h1>Halo <em>Effect</em></h1>
+  <p class="desc">one radiant quote, chosen by the light</p>
+  <div class="quote" id="quote">The light is patient. It has waited for you since before you had a name.</div>
+  <div class="controls">
+    <button id="next">⟳ New radiance</button>
+  </div>
+  <div class="source">halo <b>v.2</b></div>
+</div>
+<script>
+const QUOTES=[
+ 'The light is patient. It has waited for you since before you had a name.',
+ 'You do not need to be bright all the time. Even the moon takes nights off.',
+ 'Somewhere, a lamp you lit last year is still burning for someone else.',
+ 'Glow is not a competition. It is a meeting between you and the dark.',
+ 'The best halos are drawn by people who never claimed to be angels.',
+ 'Radiance is remembering who you were before the world told you to dim.',
+ 'A halo is just a candle that refused to apologize for its flame.',
+ 'The violet hour forgives everything, if you let it.'
+];
+const quote=document.getElementById('quote');
+function show(){
+  quote.classList.add('fade');
+  setTimeout(()=>{
+    quote.textContent=QUOTES[Math.floor(Math.random()*QUOTES.length)];
+    quote.classList.remove('fade');
+  },350);
+}
+document.getElementById('next').addEventListener('click',show);
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>13 — Lightning Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0512;--fg:#e8e0f8;--muted:#635690;--violet:#a78bfa;--pink:#f0abfc;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900;letter-spacing:.02em}
+.title em{font-style:normal;color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.7)}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">LIGHTNING <em>GARDEN</em></div>
+<div class="ui sub">electric flora · click to plant a storm-bloom</div>
+<div class="ui hint"><b>click</b> — seed a flower · <b>drag</b> — bend its stem</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+const plants=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+function grow(x){
+  const stem=[{x,y:H}];
+  const len=H*.3+Math.random()*H*.3;
+  const seg=Math.floor(len/6);
+  let angle=-Math.PI/2+(Math.random()-.5)*.6;
+  let px=x,py=H;
+  for(let i=0;i<seg;i++){
+    angle+=(Math.random()-.5)*.55;
+    px+=Math.cos(angle)*6;py+=Math.sin(angle)*6;
+    stem.push({x:px,y:py});
+  }
+  plants.push({stem,hue:255+Math.random()*50,blooms:0,flowers:[],grow:0});
+}
+addEventListener('click',e=>grow(e.clientX));
+addEventListener('touchstart',e=>grow(e.touches[0].clientX));
+let mx=W/2,mDown=false;
+addEventListener('mousemove',e=>{mx=e.clientX});
+addEventListener('mousedown',()=>mDown=true);
+addEventListener('mouseup',()=>mDown=false);
+for(let i=0;i<3;i++)grow(Math.random()*W);
+function bloom(plant){
+  const tip=plant.stem[plant.stem.length-1];
+  const n=3+Math.floor(Math.random()*4);
+  for(let i=0;i<n;i++){
+    const a=(i/n)*Math.PI*2+Math.random()*.6;
+    plant.flowers.push({a,dist:14+Math.random()*18,size:2.5+Math.random()*4,t:Math.random()*Math.PI*2,petals:4+Math.floor(Math.random()*4)});
+  }
+  plant.blooms++;
+}
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(10,5,18,.22)';ctx.fillRect(0,0,W,H);
+  const wind=Math.sin(performance.now()*.0008)*10+(mDown?mx*.05:0);
+  for(const p of plants){
+    if(p.grow<1)p.grow+=.006;
+    ctx.lineWidth=2;
+    for(let i=1;i<p.stem.length;i++){
+      const a=p.stem[i-1],b=p.stem[i];
+      const sway=Math.sin(performance.now()*.003+i*.25)*4*(i/p.stem.length);
+      const bend=Math.max(0,i/p.stem.length-0.4)*(mDown?Math.sign(mx-a.x)*30:0);
+      ctx.strokeStyle=`hsla(${p.hue},85%,${55+i*.3}%,${p.grow})`;
+      ctx.beginPath();ctx.moveTo(a.x+sway*.5+bend*.5,a.y);
+      ctx.lineTo(b.x+sway+bend,b.y);ctx.stroke();
+    }
+    if(p.grow>=1&&Math.random()<.015&&p.blooms<9)bloom(p);
+    for(const f of p.flowers){
+      const tip=p.stem[p.stem.length-1];
+      const fx=tip.x+Math.cos(f.a)*f.dist+Math.sin(performance.now()*.002+f.t)*2;
+      const fy=tip.y+Math.sin(f.a)*f.dist*.5;
+      ctx.save();ctx.translate(fx,fy);ctx.rotate(performance.now()*.001+f.t);
+      ctx.fillStyle=`hsla(${(p.hue+40)%360},90%,72%,.9)`;
+      ctx.shadowColor=`hsla(${p.hue},90%,60%,1)`;ctx.shadowBlur=12;
+      for(let k=0;k<f.petals;k++){
+        ctx.rotate(Math.PI*2/f.petals);
+        ctx.beginPath();ctx.ellipse(f.size*.4,0,f.size*.28,f.size*.7,0,0,7);ctx.fill();
+      }
+      ctx.restore();
+    }
+    if(p.grow>=1&&Math.random()<.004){
+      const tip=p.stem[p.stem.length-1];
+      sparkle(tip.x,tip.y,p.hue);
+    }
+  }
+  ctx.shadowBlur=0;
+})();
+function sparkle(x,y,hue){
+  for(let i=0;i<6;i++){
+    const a=Math.random()*Math.PI*2,d=Math.random()*16;
+    ctx.fillStyle=`hsla(${hue},95%,80%,.7)`;
+    ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,1.2,0,7);ctx.fill();
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>39 — Plasma Sign</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08030f;--fg:#e6def5;--muted:#5d5290;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'SF Mono',Consolas,monospace;overflow:hidden;display:flex;align-items:center;justify-content:center}
+.sign{font-size:clamp(2.2rem,10vw,7rem);font-weight:900;letter-spacing:.14em;user-select:none;position:relative;white-space:nowrap;cursor:pointer}
+.sign span{position:relative;display:inline-block;animation:flicker 4s infinite}
+.sign span:nth-child(odd){animation-delay:.3s}
+.sign span:nth-child(3n){animation-delay:.8s}
+@keyframes flicker{0%,100%{opacity:1}92%{opacity:1}93%{opacity:.4}94%{opacity:1}97%{opacity:.7}98%{opacity:1}}
+.sign .glow{position:absolute;inset:0;color:transparent;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan),var(--violet));background-size:300% 100%;-webkit-background-clip:text;background-clip:text;animation:shift 6s linear infinite;filter:drop-shadow(0 0 26px rgba(167,139,250,.8)) drop-shadow(0 0 60px rgba(244,114,182,.4));z-index:0}
+.sign .glass{position:absolute;inset:0;z-index:2;background:repeating-linear-gradient(90deg,transparent 0 3px,rgba(255,255,255,.04) 3px 4px);pointer-events:none;mix-blend-mode:overlay}
+@keyframes shift{to{background-position:300% 0}}
+.hum{position:fixed;top:1.4rem;left:1.4rem;font-size:.64rem;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+.hum b{color:var(--pink);animation:blink 1.4s steps(1) infinite}
+@keyframes blink{50%{opacity:.2}}
+.tip{position:fixed;bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.18em;text-transform:uppercase;color:var(--muted);pointer-events:none}
+@media (max-width:600px){.hum{top:.9rem;left:.9rem}.tip{display:none}}
+</style>
+</head>
+<body>
+<div class="hum">⚡ neon filament · <b>HOT</b></div>
+<div class="tip">click to re-strike the tube</div>
+<div class="sign" id="sign">
+  <div class="glow" id="glow"></div>
+  <div class="glass"></div>
+</div>
+<script>
+const sign=document.getElementById('sign'),glow=document.getElementById('glow');
+const WORD='VIOLET';
+glow.textContent=WORD;
+let restart=false;
+function rebuild(){
+  sign.innerHTML='';
+  const g=document.createElement('div');g.className='glow';g.textContent=WORD;
+  const gl=document.createElement('div');gl.className='glass';
+  sign.appendChild(g);sign.appendChild(gl);
+}
+sign.addEventListener('click',()=>{
+  sign.style.animation='none';void sign.offsetWidth;
+  sign.style.animation='restr 1.2s ease-out';
+});
+const st=document.createElement('style');
+st.textContent=`@keyframes restr{0%{opacity:0;transform:scale(.96) }30%{opacity:1}40%{opacity:.2}50%{opacity:1}55%{opacity:.5}60%{opacity:1}}`;
+document.head.appendChild(st);
+rebuild();
+</script>
+</body>
+</html>

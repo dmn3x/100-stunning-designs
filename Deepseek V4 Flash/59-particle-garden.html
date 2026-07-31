@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>59 — Particle Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--gold);text-shadow:0 0 16px rgba(251,191,36,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PARTICLE <span>GARDEN</span></div>
+<div class="ui sub">every seed becomes a constellation of dust</div>
+<div class="ui hint"><b>click</b> — plant a particle · <b>drag</b> — scatter the seeds</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const parts=[];
+function seed(x,y,burst){
+  const n=burst?40:8;
+  for(let i=0;i<n;i++){
+    const a=Math.random()*Math.PI*2,v=burst?Math.random()*5:Math.random()*1.4;
+    parts.push({
+      x,y,
+      vx:Math.cos(a)*v,
+      vy:Math.sin(a)*v-1,
+      life:1,
+      hue:burst?250+Math.random()*60:35+Math.random()*30,
+      s:Math.random()*2+1,
+      grav:burst?0.02:0.06
+    });
+  }
+}
+for(let i=0;i<4;i++)seed(Math.random()*W,Math.random()*H,false);
+addEventListener('click',e=>seed(e.clientX,e.clientY,true));
+addEventListener('touchstart',e=>seed(e.touches[0].clientX,e.touches[0].clientY,true));
+addEventListener('mousemove',e=>{if(Math.random()<.2)seed(e.clientX,e.clientY,false)});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(6,3,18,.25)';ctx.fillRect(0,0,W,H);
+  for(let i=parts.length-1;i>=0;i--){
+    const p=parts[i];
+    p.vy+=p.grav;
+    p.vx*=.99;
+    p.x+=p.vx;p.y+=p.vy;
+    p.life-=.008;
+    if(p.life<=0||p.y>H+30){parts.splice(i,1);continue}
+    ctx.fillStyle=`hsla(${p.hue},90%,${60+p.life*30}%,${p.life*.8})`;
+    ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.fill();
+  }
+})(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>56 — Neon Circuit</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">NEON <span>CIRCUIT</span></div>
+<div class="ui sub">chips wake where you click</div>
+<div class="ui hint"><b>click</b> — place a chip · <b>drag</b> — trace a trace</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const chips=[],traces=[],pulses=[];
+function addChip(x,y){
+  chips.push({x,y,hue:260+Math.random()*50,t:Math.random()*7});
+  if(chips.length>1){
+    const a=chips[chips.length-2],b=chips[chips.length-1];
+    traces.push([a,b]);
+    pulses.push({from:a,to:b,t:0});
+  }
+}
+addEventListener('click',e=>addChip(e.clientX,e.clientY));
+addEventListener('touchstart',e=>addChip(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(7,3,18,.3)';ctx.fillRect(0,0,W,H);
+  for(const [a,b] of traces){
+    ctx.strokeStyle='rgba(167,139,250,.25)';
+    ctx.lineWidth=1.5;
+    ctx.beginPath();ctx.moveTo(a.x,a.y);
+    ctx.lineTo((a.x+b.x)/2,a.y);
+    ctx.lineTo((a.x+b.x)/2,b.y);
+    ctx.lineTo(b.x,b.y);
+    ctx.stroke();
+  }
+  for(const p of pulses){
+    p.t+=.02;
+    const a=p.from,b=p.to;
+    const x=(a.x+b.x)/2,y=a.y;
+    const x2=x,y2=b.y;
+    let px,py;
+    const total=1;
+    const leg1=.45,leg2=.9;
+    if(p.t<leg1){const f=p.t/leg1;px=a.x+(x-a.x)*f;py=a.y}
+    else if(p.t<leg2){const f=(p.t-leg1)/(leg2-leg1);px=x;py=y+(y2-y)*f}
+    else{const f=(p.t-leg2)/(total-leg2);px=x+(b.x-x)*f;py=y2}
+    ctx.fillStyle='rgba(244,114,182,.95)';
+    ctx.shadowColor='#f472b6';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(px,py,3,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  pulses.forEach(p=>{if(p.t>=1){p.t=0}});
+  for(const c of chips){
+    c.t+=.02;
+    const g=ctx.createRadialGradient(c.x,c.y,0,c.x,c.y,18);
+    g.addColorStop(0,`hsla(${c.hue},95%,85%,.9)`);
+    g.addColorStop(1,`hsla(${c.hue},95%,60%,0)`);
+    ctx.fillStyle=g;
+    ctx.fillRect(c.x-18,c.y-18,36,36);
+    ctx.strokeStyle=`hsla(${c.hue},90%,75%,.7)`;
+    ctx.lineWidth=1;
+    ctx.strokeRect(c.x-7,c.y-7,14,14);
+    ctx.fillStyle=`hsla(${c.hue},95%,90%,.95)`;
+    ctx.beginPath();ctx.arc(c.x,c.y,2.5,0,7);ctx.fill();
+  }
+})(0);
+</script>
+</body>
+</html>

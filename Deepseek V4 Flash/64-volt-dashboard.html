@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>64 — Volt Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+header{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1.3rem 1.8rem;border-bottom:1px solid rgba(167,139,250,.15)}
+.brand{font-size:1.05rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+.brand span{color:var(--violet)}
+.brand small{display:block;font-size:.56rem;letter-spacing:.3em;color:var(--muted);font-weight:400;margin-top:.3rem}
+.clock{font-size:.78rem;color:var(--muted);letter-spacing:.1em}
+.clock b{color:var(--gold)}
+main{max-width:1100px;margin:0 auto;padding:1.6rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1.2rem}
+.panel{background:rgba(139,92,246,.04);border:1px solid rgba(167,139,250,.16);border-radius:1rem;padding:1.2rem}
+.panel h3{font-size:.66rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.kpi{display:grid;grid-template-columns:repeat(2,1fr);gap:.8rem}
+.kpi .v{font-size:1.5rem;font-weight:900}
+.kpi .l{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+.kpi .c{color:var(--cyan)}.kpi .p{color:var(--pink)}.kpi .g{color:var(--gold)}
+.chart{height:140px;display:flex;align-items:flex-end;gap:4px}
+.bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,var(--violet),var(--cyan));opacity:.8;transition:height .5s}
+.spark{height:60px;margin-top:.8rem;position:relative;background:rgba(0,0,0,.25);border-radius:.5rem;overflow:hidden}
+.spark canvas{display:block;width:100%;height:100%}
+.list{list-style:none}
+.list li{display:flex;justify-content:space-between;padding:.5rem 0;border-bottom:1px solid rgba(167,139,250,.08);font-size:.8rem}
+.list li:last-child{border-bottom:none}
+.list .s{color:var(--muted)}.list .ok{color:var(--cyan)}.list .warn{color:var(--gold)}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">VOLT <span>OPS</span><small>energy intelligence</small></div>
+  <div class="clock"><b id="clock">--:--:--</b> · uptime 99.98%</div>
+</header>
+<main>
+  <div class="panel"><h3>Generation</h3><div class="kpi">
+    <div><div class="v c" id="gen">0</div><div class="l">MW</div></div>
+    <div><div class="v g" id="cap">0%</div><div class="l">capacity</div></div>
+  </div><div class="chart" id="chart"></div></div>
+  <div class="panel"><h3>Grid health</h3><div class="kpi">
+    <div><div class="v" id="freq">0</div><div class="l">Hz</div></div>
+    <div><div class="v p" id="loss">0</div><div class="l">loss %</div></div>
+  </div><div class="spark"><canvas id="spark"></canvas></div></div>
+  <div class="panel"><h3>Alerts</h3><ul class="list" id="alerts"></ul></div>
+</main>
+<script>
+const chart=document.getElementById('chart'),bars=[];
+for(let i=0;i<20;i++){const b=document.createElement('div');b.className='bar';b.style.height='20%';chart.appendChild(b);bars.push(b)}
+const gen=document.getElementById('gen'),cap=document.getElementById('cap');
+const freq=document.getElementById('freq'),loss=document.getElementById('loss'),alerts=document.getElementById('alerts');
+const clock=document.getElementById('clock');
+const spark=document.getElementById('spark'),sctx=spark.getContext('2d');
+spark.width=spark.offsetWidth;spark.height=spark.offsetHeight;
+let sdata=[];
+setInterval(()=>{
+  const g=280+Math.random()*60;
+  gen.textContent=g.toFixed(1);
+  cap.textContent=Math.round(30+Math.random()*65)+'%';
+  freq.textContent=(50+Math.random()*.1).toFixed(3);
+  loss.textContent=(Math.random()*1.5).toFixed(2);
+  const first=bars.shift();first.style.height=(15+Math.random()*85)+'%';bars.push(first);
+  sdata.push(Math.random());if(sdata.length>60)sdata.shift();
+  sctx.clearRect(0,0,spark.width,spark.height);
+  sctx.beginPath();
+  sdata.forEach((v,i)=>{const x=i/spark.width*60*spark.width/60;const y=spark.height-v*spark.height;const xx=i/60*spark.width;i===0?sctx.moveTo(xx,y):sctx.lineTo(xx,y)});
+  sctx.strokeStyle='#7df9ff';sctx.lineWidth=1.5;sctx.stroke();
+  clock.textContent=new Date().toLocaleTimeString('en-GB');
+  if(Math.random()<.3){
+    const msg=Math.random()<.5?'node sync <span class="ok">✓</span>':'voltage dip <span class="warn">⚠</span>';
+    const li=document.createElement('li');
+    li.innerHTML=`<span class="s">${new Date().toLocaleTimeString('en-GB')}</span><span>${msg}</span>`;
+    alerts.prepend(li);
+    while(alerts.children.length>5)alerts.removeChild(alerts.lastChild);
+  }
+},800);
+</script>
+</body>
+</html>

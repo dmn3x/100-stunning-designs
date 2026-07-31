@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>63 — Nebula Type</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:15px/1.7 Georgia,serif}
+.wrap{max-width:720px;margin:0 auto;padding:3rem 1.5rem 4rem;text-align:center}
+h1{font-size:clamp(1.6rem,4.4vw,2.5rem);letter-spacing:.03em;margin-bottom:1.6rem}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 22px rgba(167,139,250,.7)}
+.story{font-size:clamp(1.05rem,2.8vw,1.3rem);line-height:2.1;min-height:14em;text-align:left;max-width:540px;margin:0 auto 2.4rem}
+.story .word{opacity:0;transition:opacity .3s}
+.story .word.show{opacity:1}
+.story .word.hot{color:var(--pink);text-shadow:0 0 12px rgba(244,114,182,.6)}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.8rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.85rem;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#05030e;border-color:var(--violet)}
+.meta{color:var(--muted);font-size:.74rem;letter-spacing:.1em}
+.meta b{color:var(--gold,#fbbf24)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Nebula <em>Type</em></h1>
+<div class="story" id="story"></div>
+<div class="controls">
+  <button data-m="drift" class="active">drift</button>
+  <button data-m="ignite">ignite</button>
+  <button data-m="rain">rain</button>
+</div>
+<div class="meta">mode: <b id="meta">drift</b></div>
+</div>
+<script>
+const STORY='The nebula does not know it is beautiful. It is simply gas, remembering the shape of the star that used to be there. We are the same: atoms with a memory of light, drifting toward whatever warmth we can find in the dark.';
+const story=document.getElementById('story'),meta=document.getElementById('meta');
+let mode='drift',timer=null;
+const MODES={
+ drift:40,
+ ignite:10,
+ rain:90
+};
+function build(){
+  clearTimeout(timer);
+  story.innerHTML='';
+  const words=STORY.split(' ');
+  words.forEach((w,i)=>{
+    const el=document.createElement('span');
+    el.className='word';
+    el.textContent=w+' ';
+    if(mode==='ignite'&&i%7===3)el.classList.add('hot');
+    story.appendChild(el);
+  });
+  const els=story.querySelectorAll('.word');
+  let i=0;
+  function step(){
+    if(i<els.length){
+      els[i].classList.add('show');
+      i++;
+      timer=setTimeout(step,MODES[mode]*(Math.random()<.12?5:1));
+    }
+  }
+  step();
+}
+document.querySelectorAll('button[data-m]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');mode=b.dataset.m;meta.textContent=b.textContent;build();
+}));
+build();
+</script>
+</body>
+</html>

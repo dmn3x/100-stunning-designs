@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>74 — Signal Waves</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">SIGNAL <span>WAVES</span></div>
+<div class="ui sub">the transmitter hums in violet</div>
+<div class="ui hint"><b>click</b> — boost the signal</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+let t=0,boost=0;
+addEventListener('click',()=>boost=1);
+addEventListener('touchstart',()=>boost=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  ctx.fillStyle='rgba(6,3,18,.28)';ctx.fillRect(0,0,W,H);
+  if(boost>0)boost-=.006;
+  const x=W/2,y=H/2;
+  // concentric waves
+  for(let i=0;i<8;i++){
+    const r=((t*40+i*47)%(Math.max(W,H)*.8));
+    const alpha=Math.max(0,1-r/(Math.max(W,H)*.8));
+    ctx.strokeStyle=`hsla(${260+i*6},90%,${60+i*3}%,${alpha*(.3+boost)})`;
+    ctx.lineWidth=1.5+boost*2;
+    ctx.beginPath();ctx.arc(x,y,r,0,7);ctx.stroke();
+  }
+  // signal spikes
+  for(let i=0;i<12;i++){
+    const a=(i/12)*Math.PI*2;
+    const len=40+Math.sin(t*2+i*2)*12+boost*50;
+    ctx.strokeStyle=`hsla(${280+i*5},90%,70%,.5)`;
+    ctx.lineWidth=1.4;
+    ctx.beginPath();ctx.moveTo(x+Math.cos(a)*20,y+Math.sin(a)*20);
+    ctx.lineTo(x+Math.cos(a)*len,y+Math.sin(a)*len);
+    ctx.stroke();
+  }
+  // core
+  const g=ctx.createRadialGradient(x,y,0,x,y,40+boost*40);
+  g.addColorStop(0,'rgba(255,255,255,.95)');
+  g.addColorStop(.3,`rgba(167,139,250,${.7+boost*.3})`);
+  g.addColorStop(1,'rgba(167,139,250,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(x,y,40+boost*40,0,7);ctx.fill();
+})(0);
+</script>
+</body>
+</html>

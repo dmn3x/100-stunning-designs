@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>51 — Volt Pulse</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0513;--fg:#e6def7;--muted:#5f5490;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+.app{width:min(420px,94vw);background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.22);border-radius:1.6rem;padding:2.2rem;text-align:center}
+h1{font-size:clamp(1.2rem,3.4vw,1.6rem);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem}
+h1 span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:2rem}
+.meter{width:100%;height:12px;border-radius:99px;background:rgba(0,0,0,.35);overflow:hidden;position:relative;border:1px solid rgba(167,139,250,.2);margin-bottom:1.8rem}
+.meter .fill{height:100%;width:0%;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .2s;border-radius:99px}
+.pulse{font-size:clamp(3rem,9vw,4.4rem);font-weight:900;letter-spacing:-.03em;color:#fff;text-shadow:0 0 40px rgba(167,139,250,.8);margin-bottom:.5rem}
+.zone{font-size:.72rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:2rem}
+.zone b{padding:.25rem .7rem;border-radius:99px}
+.zone .calm{color:var(--cyan);background:rgba(125,249,255,.1)}
+.zone .focus{color:var(--gold);background:rgba(251,191,36,.1)}
+.zone .hot{color:#f472b6;background:rgba(244,114,182,.1)}
+.controls{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.3rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#0a0513;border-color:var(--violet)}
+.foot{margin-top:2rem;font-size:.62rem;color:var(--muted);letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="app">
+<h1>VOLT <span>PULSE</span></h1>
+<div class="sub">tune your current</div>
+<div class="meter"><div class="fill" id="fill"></div></div>
+<div class="pulse" id="pulse">50</div>
+<div class="zone" id="zone"><b class="calm">steady</b></div>
+<div class="controls">
+  <button data-z="calm">🌙 calm</button>
+  <button data-z="focus" class="active">🎯 focus</button>
+  <button data-z="hot">🔥 hot</button>
+  <button data-z="chaos">🌀 chaos</button>
+</div>
+<div class="foot">your battery is a mood ring</div>
+</div>
+<script>
+const fill=document.getElementById('fill'),pulse=document.getElementById('pulse'),zone=document.getElementById('zone');
+const ZONES={calm:{t:35,v:2},focus:{t:60,v:5},hot:{t:85,v:9},chaos:{t:50,v:18}};
+let z='focus',cur=50;
+document.querySelectorAll('button[data-z]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');z=b.dataset.z;
+}));
+(function tick(){
+  requestAnimationFrame(tick);
+  const a=ZONES[z];
+  cur+=(a.t-cur)*.02+(Math.random()-.5)*a.v;
+  cur=Math.max(0,Math.min(100,cur));
+  pulse.textContent=Math.round(cur);
+  fill.style.width=cur+'%';
+  let label,cls;
+  if(cur<45){label='steady';cls='calm'}
+  else if(cur<75){label='focused';cls='focus'}
+  else{label='overdrive';cls='hot'}
+  zone.innerHTML=`<b class="${cls}">${label}</b>`;
+})(0);
+</script>
+</body>
+</html>

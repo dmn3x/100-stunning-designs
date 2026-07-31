@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>29 — Constellations</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#030208;--fg:#dcd4f2;--muted:#4b4278;--violet:#a78bfa;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">CONSTEL<span>LATIONS</span></div>
+<div class="ui sub">the sky remembers what you draw</div>
+<div class="ui hint"><b>click</b> — place a star · <b>drag</b> — draw a figure</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;drawStars()}
+addEventListener('resize',resize);resize();
+const stars=[],lines=[],user=[];
+for(let i=0;i<180;i++){
+  stars.push({x:Math.random()*W,y:Math.random()*H,r:Math.random()*1.4+.4,ph:Math.random()*7,sp:Math.random()*.02+.005});
+}
+function drawStars(){
+  ctx.clearRect(0,0,W,H);
+  ctx.fillStyle='rgba(220,212,242,.8)';
+  for(const s of stars){
+    const tw=Math.sin(performance.now()*.002*s.sp+s.ph)*.5+.5;
+    ctx.globalAlpha=.3+tw*.7;
+    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+}
+let drawing=false,px=null,py=null;
+addEventListener('mousedown',e=>{drawing=true;user.push({x:e.clientX,y:e.clientY});if(user.length===1)lines.push(user[0])});
+addEventListener('mousemove',e=>{
+  if(!drawing)return;
+  const last=user[user.length-1];
+  if(last&&Math.hypot(e.clientX-last.x,e.clientY-last.y)>24){
+    user.push({x:e.clientX,y:e.clientY});
+  }
+  px=e.clientX;py=e.clientY;
+});
+addEventListener('mouseup',()=>{drawing=false;lines.length=0;user.forEach(u=>lines.push(u));user.length=0});
+addEventListener('dblclick',()=>{lines.length=0;user.length=0});
+(function tick(){
+  requestAnimationFrame(tick);
+  drawStars();
+  if(drawing&&px!==null){
+    ctx.strokeStyle='rgba(251,191,36,.9)';
+    ctx.lineWidth=1.5;ctx.setLineDash([4,6]);
+    ctx.beginPath();
+    const last=user[user.length-1];
+    ctx.moveTo(last.x,last.y);ctx.lineTo(px,py);ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.strokeStyle='rgba(167,139,250,.7)';
+  ctx.lineWidth=1.2;
+  for(let i=1;i<lines.length;i++){
+    ctx.beginPath();ctx.moveTo(lines[i-1].x,lines[i-1].y);ctx.lineTo(lines[i].x,lines[i].y);ctx.stroke();
+  }
+  for(const l of lines){
+    ctx.fillStyle='rgba(251,191,36,.95)';
+    ctx.shadowColor='#fbbf24';ctx.shadowBlur=10;
+    ctx.beginPath();ctx.arc(l.x,l.y,3.4,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

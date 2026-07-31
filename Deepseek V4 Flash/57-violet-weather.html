@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>57 — Violet Weather</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:640px;margin:0 auto;padding:2.4rem 1.5rem 3rem;text-align:center}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em;margin-bottom:.4rem}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+.sub{color:var(--muted);margin-bottom:2rem;font-size:.8rem}
+.sky{height:200px;border-radius:1.2rem;background:linear-gradient(to bottom,#0d0720,#1e1240 60%,#3b0764);border:1px solid rgba(167,139,250,.2);margin-bottom:1.6rem;position:relative;overflow:hidden}
+.sky .rain{position:absolute;top:0;left:0;right:0;bottom:0;background:repeating-linear-gradient(115deg,transparent 0 8px,rgba(125,249,255,.35) 8px 9px);opacity:0;transition:opacity .5s}
+.sky .stars{position:absolute;inset:0;background:radial-gradient(1px 1px at 20% 30%,#fff,transparent),radial-gradient(1px 1px at 60% 20%,#fff,transparent),radial-gradient(1px 1px at 80% 50%,#fff,transparent),radial-gradient(1px 1px at 40% 70%,#fff,transparent),radial-gradient(1px 1px at 10% 80%,#fff,transparent);opacity:1;transition:opacity .5s}
+.sky .cloud{position:absolute;left:50%;top:36%;transform:translateX(-50%);font-size:4rem;opacity:.9;filter:drop-shadow(0 0 20px rgba(167,139,250,.5));animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateX(-50%) translateY(-6px)}}
+.readout{font-size:clamp(2rem,6vw,3rem);font-weight:900;margin-bottom:.3rem}
+.cond{font-size:.8rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:2rem}
+.cond b{color:var(--gold)}
+.controls{display:flex;gap:.6rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.4rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.3rem;border-radius:99px;font:inherit;font-size:.78rem;letter-spacing:.08em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#070312;border-color:var(--violet)}
+.forecast{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+.day{background:rgba(139,92,246,.06);border:1px solid rgba(167,139,250,.16);border-radius:1rem;padding:.9rem 1.1rem;min-width:76px}
+.day .d{font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:.4rem}
+.day .i{font-size:1.4rem;margin-bottom:.3rem}
+.day .t{font-size:.9rem;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>VIOLET <em>WEATHER</em></h1>
+<p class="sub">the forecast, spoken in ultraviolet</p>
+<div class="sky" id="sky">
+  <div class="stars" id="stars"></div>
+  <div class="cloud" id="cloud">☁️</div>
+  <div class="rain" id="rain"></div>
+</div>
+<div class="readout" id="temp">17°</div>
+<div class="cond"><b id="cond">clear</b> · violet humidity 62%</div>
+<div class="controls">
+  <button data-w="clear" class="active">☀ clear</button>
+  <button data-w="clouds">☁ clouds</button>
+  <button data-w="rain">🌧 rain</button>
+  <button data-w="storm">⛈ storm</button>
+</div>
+<div class="forecast" id="forecast"></div>
+</div>
+<script>
+const sky=document.getElementById('sky'),cloud=document.getElementById('cloud'),rain=document.getElementById('rain'),stars=document.getElementById('stars');
+const temp=document.getElementById('temp'),cond=document.getElementById('cond');
+const WEATHER={
+ clear:{t:22,cloud:'☀️',rain:0,stars:1},
+ clouds:{t:17,cloud:'☁️',rain:0,stars:.5},
+ rain:{t:13,cloud:'🌧️',rain:1,stars:.15},
+ storm:{t:9,cloud:'⛈️',rain:1,stars:0}
+};
+let w='clear';
+function apply(){
+  const W=WEATHER[w];
+  cloud.textContent=W.cloud;
+  rain.style.opacity=W.rain;
+  stars.style.opacity=W.stars;
+  temp.textContent=W.t+'°';
+  const names={clear:'clear',clouds:'cloudy',rain:'rain',storm:'storm'};
+  cond.innerHTML=`<b>${names[w]}</b> · violet humidity ${Math.round(40+Math.random()*40)}%`;
+  sky.style.background=w==='storm'?'linear-gradient(to bottom,#0d0720,#1e1240 40%,#2e1065)':sky.style.background;
+}
+document.querySelectorAll('button[data-w]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');w=b.dataset.w;apply();
+}));
+const DAYS=[{d:'mon',i:'☀️',t:'21°'},{d:'tue',i:'☁️',t:'18°'},{d:'wed',i:'🌧️',t:'12°'},{d:'thu',i:'⛈️',t:'9°'},{d:'fri',i:'🌤️',t:'19°'}];
+document.getElementById('forecast').innerHTML=DAYS.map(d=>`<div class="day"><div class="d">${d.d}</div><div class="i">${d.i}</div><div class="t">${d.t}</div></div>`).join('');
+apply();
+</script>
+</body>
+</html>

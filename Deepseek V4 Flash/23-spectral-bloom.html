@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>23 — Spectral Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e6def7;--muted:#5d5290;--violet:#a78bfa;--pink:#f0abfc;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900}
+.title em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">Spectral <em>Bloom</em></div>
+<div class="ui sub">flowers of pure color · click to seed new petals</div>
+<div class="ui hint"><b>click</b> — grow a flower · <b>drag</b> — pollinate with color</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const flowers=[];
+function seed(x,y){
+  flowers.push({
+    x,y,r:4, target:60+Math.random()*80,
+    hue:250+Math.random()*70,
+    petals:5+Math.floor(Math.random()*5),
+    t:Math.random()*Math.PI*2,
+    seeds:0
+  });
+}
+for(let i=0;i<5;i++)seed(Math.random()*W,Math.random()*H);
+addEventListener('click',e=>seed(e.clientX,e.clientY));
+let px=null,py=null;
+addEventListener('mousemove',e=>{px=e.clientX;py=e.clientY});
+addEventListener('touchmove',e=>{px=e.touches[0].clientX;py=e.touches[0].clientY});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(7,3,18,.18)';ctx.fillRect(0,0,W,H);
+  // pollen trail from cursor
+  if(px!==null){
+    ctx.fillStyle=`hsla(${280+Math.random()*40},90%,80%,.5)`;
+    ctx.beginPath();ctx.arc(px+(Math.random()-.5)*16,py+(Math.random()-.5)*16,1.6,0,7);ctx.fill();
+  }
+  for(const f of flowers){
+    if(f.r<f.target)f.r+=(f.target-f.r)*.02;
+    f.t+=.01;
+    const wobble=Math.sin(f.t*2)*4;
+    for(let p=0;p<f.petals;p++){
+      const a=(p/f.petals)*Math.PI*2+f.t*.4;
+      ctx.save();ctx.translate(f.x,f.y);ctx.rotate(a);
+      ctx.fillStyle=`hsla(${f.hue},90%,72%,.6)`;
+      ctx.shadowColor=`hsla(${f.hue},90%,60%,.8)`;ctx.shadowBlur=18;
+      ctx.beginPath();
+      ctx.ellipse(f.r*.45,0,f.r*.3,f.r*.55,0,0,7);
+      ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle=`hsla(${(f.hue+30)%360},95%,85%,.95)`;
+    ctx.shadowColor='#fff';ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(f.x+Math.cos(f.t)*3,f.y+Math.sin(f.t*.8)*3,f.r*.14,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+    // pollen dots around
+    if(Math.random()<.05){
+      const a=Math.random()*Math.PI*2,d=f.r*.7+Math.random()*30;
+      ctx.fillStyle=`hsla(${f.hue},90%,80%,.4)`;
+      ctx.beginPath();ctx.arc(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d,1.2,0,7);ctx.fill();
+    }
+  }
+  ctx.shadowBlur=0;
+})(0);
+</script>
+</body>
+</html>

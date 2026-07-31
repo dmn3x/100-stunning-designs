@@ -92,6 +92,7 @@ a { color:inherit; text-decoration:none }
 <button class="tab" data-model="deepseek"><span class="dot" style="background:#10b981"></span>🌀 Deepseek V4 Pro<span class="badge">100</span></button>
 <button class="tab" data-model="minimax"><span class="dot" style="background:#ec4899"></span>🎭 MiniMax M3<span class="badge">100</span></button>
 <button class="tab" data-model="laguna"><span class="dot" style="background:#06b6d4"></span>🌊 Laguna S 2.1<span class="badge">70</span></button>
+<button class="tab" data-model="deepseekflash"><span class="dot" style="background:#d946ef"></span>⚡ Deepseek V4 Flash<span class="badge">100</span></button>
 </div>
 
 <section class="collections" id="collections">
@@ -100,6 +101,7 @@ a { color:inherit; text-decoration:none }
 <div class="panel" id="panel-deepseek"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌀 100 generative UI design experiments — from glitch terminals to fractal landscapes. Pure HTML/CSS/JS.<br><a href="./Deepseek%20V4%20Pro/index.html" style="display:inline-block;margin-top:6px;color:#10b981;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
 <div class="panel" id="panel-minimax"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🎭 100 design concepts — generative art, interactive tools, and avant-garde UI experiments.<br><a href="./MiniMax%20M3/index.html" style="display:inline-block;margin-top:6px;color:#ec4899;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
 <div class="panel" id="panel-laguna"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">🌊 70 fluid, organic, and generative design pieces — aurora borealis, crystal caverns, and ethereal motion.<br><a href="./Laguna%20S%202.1/index.html" style="display:inline-block;margin-top:6px;color:#06b6d4;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
+<div class="panel" id="panel-deepseekflash"><p style="margin-bottom:1rem;color:#666;font-size:.9rem">⚡ 100 high-voltage generative experiments — lightning veins, plasma orbs, electric gardens, neon skies — the Violet Voltage collection.<br><a href="./Deepseek%20V4%20Flash/index.html" style="display:inline-block;margin-top:6px;color:#d946ef;font-weight:600;font-size:.85rem">Browse full gallery →</a></p></div>
 </section>
 
 <footer class="footer">
@@ -594,12 +596,116 @@ const designsLaguna = [
 ];
 
 // ── Colors per model ──
+const designsDeepseekflash = [
+  {num:"01",title:"Voltage Veins",desc:"Voltage Veins — a generative design exploration.",tags:["Voltage", "Veins"],href:"Deepseek V4 Flash/01-voltage-veins.html"},
+  {num:"02",title:"Violet Typewriter",desc:"Violet Typewriter — a generative design exploration.",tags:["Violet", "Typewriter"],href:"Deepseek V4 Flash/02-violet-typewriter.html"},
+  {num:"03",title:"Plasma Orbs",desc:"Plasma Orbs — a generative design exploration.",tags:["Plasma", "Orbs"],href:"Deepseek V4 Flash/03-plasma-orbs.html"},
+  {num:"04",title:"Neon Circuit Board",desc:"Neon Circuit Board — a generative design exploration.",tags:["Neon", "Circuit", "Board"],href:"Deepseek V4 Flash/04-neon-circuit-board.html"},
+  {num:"05",title:"Ion Storm",desc:"Ion Storm — a generative design exploration.",tags:["Ion", "Storm"],href:"Deepseek V4 Flash/05-ion-storm.html"},
+  {num:"06",title:"Helioscope",desc:"Helioscope — a generative design exploration.",tags:["Helioscope"],href:"Deepseek V4 Flash/06-helioscope.html"},
+  {num:"07",title:"Volt Meter",desc:"Volt Meter — a generative design exploration.",tags:["Volt", "Meter"],href:"Deepseek V4 Flash/07-volt-meter.html"},
+  {num:"08",title:"Gravity Well",desc:"Gravity Well — a generative design exploration.",tags:["Gravity", "Well"],href:"Deepseek V4 Flash/08-gravity-well.html"},
+  {num:"09",title:"Auroral Curtain",desc:"Auroral Curtain — a generative design exploration.",tags:["Auroral", "Curtain"],href:"Deepseek V4 Flash/09-auroral-curtain.html"},
+  {num:"10",title:"Synthwave Sunset",desc:"Synthwave Sunset — a generative design exploration.",tags:["Synthwave", "Sunset"],href:"Deepseek V4 Flash/10-synthwave-sunset.html"},
+  {num:"11",title:"Holographic Dice",desc:"Holographic Dice — a generative design exploration.",tags:["Holographic", "Dice"],href:"Deepseek V4 Flash/11-holographic-dice.html"},
+  {num:"12",title:"Vocabulary Nebula",desc:"Vocabulary Nebula — a generative design exploration.",tags:["Vocabulary", "Nebula"],href:"Deepseek V4 Flash/12-vocabulary-nebula.html"},
+  {num:"13",title:"Lightning Garden",desc:"Lightning Garden — a generative design exploration.",tags:["Lightning", "Garden"],href:"Deepseek V4 Flash/13-lightning-garden.html"},
+  {num:"14",title:"Pulsar Beacon",desc:"Pulsar Beacon — a generative design exploration.",tags:["Pulsar", "Beacon"],href:"Deepseek V4 Flash/14-pulsar-beacon.html"},
+  {num:"15",title:"Prism Cards",desc:"Prism Cards — a generative design exploration.",tags:["Prism", "Cards"],href:"Deepseek V4 Flash/15-prism-cards.html"},
+  {num:"16",title:"Aurora Ripple Pool",desc:"Aurora Ripple Pool — a generative design exploration.",tags:["Aurora", "Ripple", "Pool"],href:"Deepseek V4 Flash/16-aurora-ripple-pool.html"},
+  {num:"17",title:"Violet Arcade",desc:"Violet Arcade — a generative design exploration.",tags:["Violet", "Arcade"],href:"Deepseek V4 Flash/17-violet-arcade.html"},
+  {num:"18",title:"Grid Sentinels",desc:"Grid Sentinels — a generative design exploration.",tags:["Grid", "Sentinels"],href:"Deepseek V4 Flash/18-grid-sentinels.html"},
+  {num:"19",title:"Night Botanist",desc:"Night Botanist — a generative design exploration.",tags:["Night", "Botanist"],href:"Deepseek V4 Flash/19-night-botanist.html"},
+  {num:"20",title:"Frequency Garden",desc:"Frequency Garden — a generative design exploration.",tags:["Frequency", "Garden"],href:"Deepseek V4 Flash/20-frequency-garden.html"},
+  {num:"21",title:"Violet Clockwork",desc:"Violet Clockwork — a generative design exploration.",tags:["Violet", "Clockwork"],href:"Deepseek V4 Flash/21-violet-clockwork.html"},
+  {num:"22",title:"Photo Loom",desc:"Photo Loom — a generative design exploration.",tags:["Photo", "Loom"],href:"Deepseek V4 Flash/22-photo-loom.html"},
+  {num:"23",title:"Spectral Bloom",desc:"Spectral Bloom — a generative design exploration.",tags:["Spectral", "Bloom"],href:"Deepseek V4 Flash/23-spectral-bloom.html"},
+  {num:"24",title:"Neon Oracle",desc:"Neon Oracle — a generative design exploration.",tags:["Neon", "Oracle"],href:"Deepseek V4 Flash/24-neon-oracle.html"},
+  {num:"25",title:"Cascade Dashboard",desc:"Cascade Dashboard — a generative design exploration.",tags:["Cascade", "Dashboard"],href:"Deepseek V4 Flash/25-cascade-dashboard.html"},
+  {num:"26",title:"Orbital Type",desc:"Orbital Type — a generative design exploration.",tags:["Orbital", "Type"],href:"Deepseek V4 Flash/26-orbital-type.html"},
+  {num:"27",title:"Bio-Lumen",desc:"Bio-Lumen — a generative design exploration.",tags:["Bio", "Lumen"],href:"Deepseek V4 Flash/27-bio-lumen.html"},
+  {num:"28",title:"Runway Finale",desc:"Runway Finale — a generative design exploration.",tags:["Runway", "Finale"],href:"Deepseek V4 Flash/28-runway-finale.html"},
+  {num:"29",title:"Constellations",desc:"Constellations — a generative design exploration.",tags:["Constellations"],href:"Deepseek V4 Flash/29-constellations.html"},
+  {num:"30",title:"Kinetic Typography",desc:"Kinetic Typography — a generative design exploration.",tags:["Kinetic", "Typography"],href:"Deepseek V4 Flash/30-kinetic-typography.html"},
+  {num:"31",title:"Aurora Studio",desc:"Aurora Studio — a generative design exploration.",tags:["Aurora", "Studio"],href:"Deepseek V4 Flash/31-aurora-studio.html"},
+  {num:"32",title:"Pulse Check",desc:"Pulse Check — a generative design exploration.",tags:["Pulse", "Check"],href:"Deepseek V4 Flash/32-pulse-check.html"},
+  {num:"33",title:"Volt Board",desc:"Volt Board — a generative design exploration.",tags:["Volt", "Board"],href:"Deepseek V4 Flash/33-volt-board.html"},
+  {num:"34",title:"Comet Trail",desc:"Comet Trail — a generative design exploration.",tags:["Comet", "Trail"],href:"Deepseek V4 Flash/34-comet-trail.html"},
+  {num:"35",title:"Lunar Phases",desc:"Lunar Phases — a generative design exploration.",tags:["Lunar", "Phases"],href:"Deepseek V4 Flash/35-lunar-phases.html"},
+  {num:"36",title:"Violet Vitrine",desc:"Violet Vitrine — a generative design exploration.",tags:["Violet", "Vitrine"],href:"Deepseek V4 Flash/36-violet-vitrine.html"},
+  {num:"37",title:"Solar Flare",desc:"Solar Flare — a generative design exploration.",tags:["Solar", "Flare"],href:"Deepseek V4 Flash/37-solar-flare.html"},
+  {num:"38",title:"Neon Dice Arena",desc:"Neon Dice Arena — a generative design exploration.",tags:["Neon", "Dice", "Arena"],href:"Deepseek V4 Flash/38-neon-dice-arena.html"},
+  {num:"39",title:"Plasma Sign",desc:"Plasma Sign — a generative design exploration.",tags:["Plasma", "Sign"],href:"Deepseek V4 Flash/39-plasma-sign.html"},
+  {num:"40",title:"Nebula Garden",desc:"Nebula Garden — a generative design exploration.",tags:["Nebula", "Garden"],href:"Deepseek V4 Flash/40-nebula-garden.html"},
+  {num:"41",title:"Aurora Dice",desc:"Aurora Dice — a generative design exploration.",tags:["Aurora", "Dice"],href:"Deepseek V4 Flash/41-aurora-dice.html"},
+  {num:"42",title:"Vector Field",desc:"Vector Field — a generative design exploration.",tags:["Vector", "Field"],href:"Deepseek V4 Flash/42-vector-field.html"},
+  {num:"43",title:"Starlight Vows",desc:"Starlight Vows — a generative design exploration.",tags:["Starlight", "Vows"],href:"Deepseek V4 Flash/43-starlight-vows.html"},
+  {num:"44",title:"Kinetic Beams",desc:"Kinetic Beams — a generative design exploration.",tags:["Kinetic", "Beams"],href:"Deepseek V4 Flash/44-kinetic-beams.html"},
+  {num:"45",title:"Volt Arcade",desc:"Volt Arcade — a generative design exploration.",tags:["Volt", "Arcade"],href:"Deepseek V4 Flash/45-volt-arcade.html"},
+  {num:"46",title:"Neon Ledger",desc:"Neon Ledger — a generative design exploration.",tags:["Neon", "Ledger"],href:"Deepseek V4 Flash/46-neon-ledger.html"},
+  {num:"47",title:"Laser Labyrinth",desc:"Laser Labyrinth — a generative design exploration.",tags:["Laser", "Labyrinth"],href:"Deepseek V4 Flash/47-laser-labyrinth.html"},
+  {num:"48",title:"Prism Fractals",desc:"Prism Fractals — a generative design exploration.",tags:["Prism", "Fractals"],href:"Deepseek V4 Flash/48-prism-fractals.html"},
+  {num:"49",title:"Ion Bath",desc:"Ion Bath — a generative design exploration.",tags:["Ion", "Bath"],href:"Deepseek V4 Flash/49-ion-bath.html"},
+  {num:"50",title:"Halo Effect",desc:"Halo Effect — a generative design exploration.",tags:["Halo", "Effect"],href:"Deepseek V4 Flash/50-halo-effect.html"},
+  {num:"51",title:"Volt Pulse",desc:"Volt Pulse — a generative design exploration.",tags:["Volt", "Pulse"],href:"Deepseek V4 Flash/51-volt-pulse.html"},
+  {num:"52",title:"Aurora Type",desc:"Aurora Type — a generative design exploration.",tags:["Aurora", "Type"],href:"Deepseek V4 Flash/52-aurora-type.html"},
+  {num:"53",title:"Crystal Bloom",desc:"Crystal Bloom — a generative design exploration.",tags:["Crystal", "Bloom"],href:"Deepseek V4 Flash/53-crystal-bloom.html"},
+  {num:"54",title:"Voltage Rain",desc:"Voltage Rain — a generative design exploration.",tags:["Voltage", "Rain"],href:"Deepseek V4 Flash/54-voltage-rain.html"},
+  {num:"55",title:"Orbit Simulator",desc:"Orbit Simulator — a generative design exploration.",tags:["Orbit", "Simulator"],href:"Deepseek V4 Flash/55-orbit-simulator.html"},
+  {num:"56",title:"Neon Circuit",desc:"Neon Circuit — a generative design exploration.",tags:["Neon", "Circuit"],href:"Deepseek V4 Flash/56-neon-circuit.html"},
+  {num:"57",title:"Violet Weather",desc:"Violet Weather — a generative design exploration.",tags:["Violet", "Weather"],href:"Deepseek V4 Flash/57-violet-weather.html"},
+  {num:"58",title:"Crystal Synth",desc:"Crystal Synth — a generative design exploration.",tags:["Crystal", "Synth"],href:"Deepseek V4 Flash/58-crystal-synth.html"},
+  {num:"59",title:"Particle Garden",desc:"Particle Garden — a generative design exploration.",tags:["Particle", "Garden"],href:"Deepseek V4 Flash/59-particle-garden.html"},
+  {num:"60",title:"Neon Gallery",desc:"Neon Gallery — a generative design exploration.",tags:["Neon", "Gallery"],href:"Deepseek V4 Flash/60-neon-gallery.html"},
+  {num:"61",title:"Volt Runner",desc:"Volt Runner — a generative design exploration.",tags:["Volt", "Runner"],href:"Deepseek V4 Flash/61-volt-runner.html"},
+  {num:"62",title:"Plasma Fountain",desc:"Plasma Fountain — a generative design exploration.",tags:["Plasma", "Fountain"],href:"Deepseek V4 Flash/62-plasma-fountain.html"},
+  {num:"63",title:"Nebula Type",desc:"Nebula Type — a generative design exploration.",tags:["Nebula", "Type"],href:"Deepseek V4 Flash/63-nebula-type.html"},
+  {num:"64",title:"Volt Dashboard",desc:"Volt Dashboard — a generative design exploration.",tags:["Volt", "Dashboard"],href:"Deepseek V4 Flash/64-volt-dashboard.html"},
+  {num:"65",title:"Neon Skyline",desc:"Neon Skyline — a generative design exploration.",tags:["Neon", "Skyline"],href:"Deepseek V4 Flash/65-neon-skyline.html"},
+  {num:"66",title:"Crystal Garden",desc:"Crystal Garden — a generative design exploration.",tags:["Crystal", "Garden"],href:"Deepseek V4 Flash/66-crystal-garden.html"},
+  {num:"67",title:"Pulse Meter",desc:"Pulse Meter — a generative design exploration.",tags:["Pulse", "Meter"],href:"Deepseek V4 Flash/67-pulse-meter.html"},
+  {num:"68",title:"Violet Skyline",desc:"Violet Skyline — a generative design exploration.",tags:["Violet", "Skyline"],href:"Deepseek V4 Flash/68-violet-skyline.html"},
+  {num:"69",title:"Orbit Type",desc:"Orbit Type — a generative design exploration.",tags:["Orbit", "Type"],href:"Deepseek V4 Flash/69-orbit-type.html"},
+  {num:"70",title:"Neon Bloom",desc:"Neon Bloom — a generative design exploration.",tags:["Neon", "Bloom"],href:"Deepseek V4 Flash/70-neon-bloom.html"},
+  {num:"71",title:"Plasma Field",desc:"Plasma Field — a generative design exploration.",tags:["Plasma", "Field"],href:"Deepseek V4 Flash/71-plasma-field.html"},
+  {num:"72",title:"Crystal Type",desc:"Crystal Type — a generative design exploration.",tags:["Crystal", "Type"],href:"Deepseek V4 Flash/72-crystal-type.html"},
+  {num:"73",title:"Volt Race",desc:"Volt Race — a generative design exploration.",tags:["Volt", "Race"],href:"Deepseek V4 Flash/73-volt-race.html"},
+  {num:"74",title:"Signal Waves",desc:"Signal Waves — a generative design exploration.",tags:["Signal", "Waves"],href:"Deepseek V4 Flash/74-signal-waves.html"},
+  {num:"75",title:"Orbit Cards",desc:"Orbit Cards — a generative design exploration.",tags:["Orbit", "Cards"],href:"Deepseek V4 Flash/75-orbit-cards.html"},
+  {num:"76",title:"Neon Orbits",desc:"Neon Orbits — a generative design exploration.",tags:["Neon", "Orbits"],href:"Deepseek V4 Flash/76-neon-orbits.html"},
+  {num:"77",title:"Voltage Bloom",desc:"Voltage Bloom — a generative design exploration.",tags:["Voltage", "Bloom"],href:"Deepseek V4 Flash/77-voltage-bloom.html"},
+  {num:"78",title:"Pulse Field",desc:"Pulse Field — a generative design exploration.",tags:["Pulse", "Field"],href:"Deepseek V4 Flash/78-pulse-field.html"},
+  {num:"79",title:"Violet Crystals",desc:"Violet Crystals — a generative design exploration.",tags:["Violet", "Crystals"],href:"Deepseek V4 Flash/79-violet-crystals.html"},
+  {num:"80",title:"Neon Garden",desc:"Neon Garden — a generative design exploration.",tags:["Neon", "Garden"],href:"Deepseek V4 Flash/80-neon-garden.html"},
+  {num:"81",title:"Volt Waves",desc:"Volt Waves — a generative design exploration.",tags:["Volt", "Waves"],href:"Deepseek V4 Flash/81-volt-waves.html"},
+  {num:"82",title:"Crystal Pulse",desc:"Crystal Pulse — a generative design exploration.",tags:["Crystal", "Pulse"],href:"Deepseek V4 Flash/82-crystal-pulse.html"},
+  {num:"83",title:"Aurora Field",desc:"Aurora Field — a generative design exploration.",tags:["Aurora", "Field"],href:"Deepseek V4 Flash/83-aurora-field.html"},
+  {num:"84",title:"Orbit Bloom",desc:"Orbit Bloom — a generative design exploration.",tags:["Orbit", "Bloom"],href:"Deepseek V4 Flash/84-orbit-bloom.html"},
+  {num:"85",title:"Neon Clock",desc:"Neon Clock — a generative design exploration.",tags:["Neon", "Clock"],href:"Deepseek V4 Flash/85-neon-clock.html"},
+  {num:"86",title:"Plasma Bloom",desc:"Plasma Bloom — a generative design exploration.",tags:["Plasma", "Bloom"],href:"Deepseek V4 Flash/86-plasma-bloom.html"},
+  {num:"87",title:"Volt Bloom",desc:"Volt Bloom — a generative design exploration.",tags:["Volt", "Bloom"],href:"Deepseek V4 Flash/87-volt-bloom.html"},
+  {num:"88",title:"Neon Bloom Field",desc:"Neon Bloom Field — a generative design exploration.",tags:["Neon", "Bloom", "Field"],href:"Deepseek V4 Flash/88-neon-bloom-field.html"},
+  {num:"89",title:"Pulse Bloom",desc:"Pulse Bloom — a generative design exploration.",tags:["Pulse", "Bloom"],href:"Deepseek V4 Flash/89-pulse-bloom.html"},
+  {num:"90",title:"Crystal Bloom Field",desc:"Crystal Bloom Field — a generative design exploration.",tags:["Crystal", "Bloom", "Field"],href:"Deepseek V4 Flash/90-crystal-bloom-field.html"},
+  {num:"91",title:"Volt Bloom Field",desc:"Volt Bloom Field — a generative design exploration.",tags:["Volt", "Bloom", "Field"],href:"Deepseek V4 Flash/91-volt-bloom-field.html"},
+  {num:"92",title:"Orbit Bloom Field",desc:"Orbit Bloom Field — a generative design exploration.",tags:["Orbit", "Bloom", "Field"],href:"Deepseek V4 Flash/92-orbit-bloom-field.html"},
+  {num:"93",title:"Nebula Bloom Field",desc:"Nebula Bloom Field — a generative design exploration.",tags:["Nebula", "Bloom", "Field"],href:"Deepseek V4 Flash/93-nebula-bloom-field.html"},
+  {num:"94",title:"Aurora Bloom Field",desc:"Aurora Bloom Field — a generative design exploration.",tags:["Aurora", "Bloom", "Field"],href:"Deepseek V4 Flash/94-aurora-bloom-field.html"},
+  {num:"95",title:"Violet Bloom Field",desc:"Violet Bloom Field — a generative design exploration.",tags:["Violet", "Bloom", "Field"],href:"Deepseek V4 Flash/95-violet-bloom-field.html"},
+  {num:"96",title:"Crystal Field",desc:"Crystal Field — a generative design exploration.",tags:["Crystal", "Field"],href:"Deepseek V4 Flash/96-crystal-field.html"},
+  {num:"97",title:"Plasma Garden",desc:"Plasma Garden — a generative design exploration.",tags:["Plasma", "Garden"],href:"Deepseek V4 Flash/97-plasma-garden.html"},
+  {num:"98",title:"Neon Bloom Grid",desc:"Neon Bloom Grid — a generative design exploration.",tags:["Neon", "Bloom", "Grid"],href:"Deepseek V4 Flash/98-neon-bloom-grid.html"},
+  {num:"99",title:"Volt Garden",desc:"Volt Garden — a generative design exploration.",tags:["Volt", "Garden"],href:"Deepseek V4 Flash/99-volt-garden.html"},
+  {num:"100",title:"Electric Bloom",desc:"Electric Bloom — a generative design exploration.",tags:["Electric", "Bloom"],href:"Deepseek V4 Flash/100-electric-bloom.html"}
+];
+
 const MODEL_COLORS = {
   "mimo": "#8b5cf6",
   "nemotron": "#f59e0b",
   "deepseek": "#10b981",
   "minimax": "#ec4899",
-  "laguna": "#06b6d4"
+  "laguna": "#06b6d4",
+  "deepseekflash": "#d946ef"
 };
 
 // ── State ──
@@ -690,7 +796,7 @@ document.addEventListener('DOMContentLoaded', function() {
   document.querySelectorAll('.tab').forEach(function(tab) {
     tab.addEventListener('click', function() { switchTab(this.dataset.model); });
   });
-  ['mimo','nemotron','deepseek','minimax','laguna'].forEach(function(m) { renderGrid(m); });
+  ['mimo','nemotron','deepseek','minimax','laguna','deepseekflash'].forEach(function(m) { renderGrid(m); });
   switchTab('mimo');
 });
 </script>

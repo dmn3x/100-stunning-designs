@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>37 — Solar Flare</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e6def7;--muted:#5d5290;--violet:#a78bfa;--gold:#fbbf24;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900}
+.title em{font-style:normal;color:var(--gold);text-shadow:0 0 20px rgba(251,191,36,.6)}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">SOLAR <em>FLARE</em></div>
+<div class="ui sub">a star in its loudest mood</div>
+<div class="ui hint"><b>click</b> — trigger a flare · <b>drag</b> — twist the corona</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+let t=0,flare=0;
+const cx=()=>W/2,cy=()=>H/2;
+addEventListener('click',()=>{flare=1});
+addEventListener('touchstart',()=>{flare=1});
+let dragX=0;
+addEventListener('mousemove',e=>{dragX=e.clientX-W/2});
+addEventListener('touchmove',e=>{dragX=e.touches[0].clientX-W/2});
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  ctx.fillStyle='rgba(7,3,18,.3)';ctx.fillRect(0,0,W,H);
+  const x=cx(),y=cy();
+  // corona layers
+  for(let layer=0;layer<6;layer++){
+    const R=60+layer*34+Math.sin(t*.5+layer)*8+dragX*.03;
+    ctx.beginPath();
+    for(let a=0;a<Math.PI*2;a+=.05){
+      const wob=Math.sin(a*4+t*1.5+layer*2)*(14+layer*4)+Math.sin(a*7-t*.8)*8;
+      const r=R+wob;
+      const px=x+Math.cos(a)*r,py=y+Math.sin(a)*r*.85;
+      a===0?ctx.moveTo(px,py):ctx.lineTo(px,py);
+    }
+    ctx.closePath();
+    ctx.fillStyle=`hsla(${35+layer*8},95%,${60+layer*3}%,${.05+layer*.02})`;
+    ctx.fill();
+  }
+  // flare bursts
+  if(flare>0){
+    flare-=.008;
+    for(let i=0;i<26;i++){
+      const a=Math.random()*Math.PI*2;
+      const d=90+Math.random()*150*flare;
+      ctx.fillStyle=`hsla(${20+Math.random()*40},100%,${70+Math.random()*20}%,${flare*.8})`;
+      ctx.beginPath();ctx.arc(x+Math.cos(a)*d,y+Math.sin(a)*d,2+Math.random()*4,0,7);ctx.fill();
+    }
+  }
+  // core
+  const core=ctx.createRadialGradient(x,y,0,x,y,80);
+  core.addColorStop(0,'#fff');
+  core.addColorStop(.3,'#fde68a');
+  core.addColorStop(.7,'rgba(251,146,60,.8)');
+  core.addColorStop(1,'rgba(239,68,68,0)');
+  ctx.fillStyle=core;
+  ctx.beginPath();ctx.arc(x,y,80,0,7);ctx.fill();
+  // sunspots
+  ctx.fillStyle='rgba(120,53,15,.35)';
+  ctx.beginPath();ctx.arc(x-26+Math.sin(t*.3)*6,y-14,12,0,7);ctx.fill();
+  ctx.beginPath();ctx.arc(x+20+Math.cos(t*.4)*8,y+22,8,0,7);ctx.fill();
+})(0);
+</script>
+</body>
+</html>

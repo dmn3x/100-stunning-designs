@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 — Voltage Veins</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0512;--fg:#e9e4f5;--muted:#7a6fa8;--violet:#8b5cf6;--glow:rgba(139,92,246,.55)}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'Courier New',monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:10;pointer-events:none}
+.title{top:1.5rem;left:1.5rem;font-size:clamp(1.1rem,2.5vw,1.5rem);font-weight:700;letter-spacing:.1em}
+.title span{color:var(--violet);text-shadow:0 0 18px var(--glow)}
+.sub{top:3.2rem;left:1.5rem;font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.5rem;right:1.5rem;font-size:.6rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:1rem;left:1rem}.sub{top:2.6rem;left:1rem}.hint{bottom:1rem;right:1rem}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VOLTAGE <span>VEINS</span></div>
+<div class="ui sub">generative lightning · fractal conduction</div>
+<div class="ui hint">click anywhere to <b>strike</b><br>move cursor to bend the arc</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H,mx=-999,my=-999;
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',size);size();
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+function strike(x,y,targetX,targetY){
+  const pts=[{x,y}],seg=Math.max(8,Math.hypot(targetX-x,targetY-y)/10);
+  for(let i=0;i<seg;i++){
+    const p=pts[pts.length-1];
+    pts.push({x:p.x+(Math.random()-.5)*70,y:p.y+(Math.random()-.5)*70+(i===seg-1?0:18)});
+  }
+  pts.push({x:targetX,y:targetY});
+  return pts;
+}
+function drawBolt(pts,alpha){
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.strokeStyle='rgba(255,255,255,'+(alpha*.25)+')';ctx.lineWidth=5;ctx.stroke();
+  ctx.beginPath();ctx.moveTo(pts[0].x,pts[0].y);
+  for(let i=1;i<pts.length;i++)ctx.lineTo(pts[i].x,pts[i].y);
+  ctx.strokeStyle='rgba(139,92,246,'+alpha+')';ctx.lineWidth=2;ctx.stroke();
+}
+let bolts=[],last=0;
+addEventListener('click',e=>{
+  const t=Math.random()*W;
+  bolts.push({pts:strike(e.clientX,e.clientY,t,0),life:1});
+  bolts.push({pts:strike(e.clientX,e.clientY,t,H),life:1});
+});
+(function tick(t){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(10,5,18,.25)';ctx.fillRect(0,0,W,H);
+  if(t-last>160){
+    last=t;
+    const x=Math.random()*W,y=Math.random()*H*.4;
+    bolts.push({pts:strike(x,y,mx>-500?mx:Math.random()*W,my>-500?my:H*.8),life:1});
+  }
+  bolts=bolts.filter(b=>b.life>0);
+  bolts.forEach(b=>{drawBolt(b.pts,b.life);b.life-=.02});
+})(0);
+</script>
+</body>
+</html>

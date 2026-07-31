@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>96 — Crystal Field</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">CRYSTAL <span>FIELD</span></div>
+<div class="ui sub">a field of growing gems</div>
+<div class="ui hint"><b>click</b> — grow a crystal</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const crystals=[];
+function grow(x,y){
+  crystals.push({x,y,r:5,target:18+Math.random()*30,hue:255+Math.random()*50});
+}
+for(let i=0;i<7;i++)grow(Math.random()*W,Math.random()*H);
+addEventListener('click',e=>grow(e.clientX,e.clientY));
+addEventListener('touchstart',e=>grow(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,3,14,.18)';ctx.fillRect(0,0,W,H);
+  for(const c of crystals){
+    if(c.r<c.target)c.r+=(c.target-c.r)*.02;
+    const arms=6;
+    for(let i=0;i<arms;i++){
+      const a=(i/arms)*Math.PI*2+performance.now()*.0004;
+      const len=c.r*(0.8+Math.sin(performance.now()*.003+i)*.2);
+      const x2=c.x+Math.cos(a)*len,y2=c.y+Math.sin(a)*len;
+      ctx.strokeStyle=`hsla(${c.hue},90%,${60+i*5}%,.5)`;
+      ctx.lineWidth=1.3;
+      ctx.beginPath();ctx.moveTo(c.x,c.y);ctx.lineTo(x2,y2);ctx.stroke();
+      ctx.fillStyle=`hsla(${c.hue},90%,${55+Math.sin(a)*10}%,.15)`;
+      ctx.beginPath();
+      ctx.moveTo(c.x,c.y);ctx.lineTo(x2,y2);
+      ctx.lineTo(c.x+Math.cos(a+.6)*len*.6,c.y+Math.sin(a+.6)*len*.6);
+      ctx.closePath();ctx.fill();
+    }
+    ctx.fillStyle=`hsla(${c.hue},95%,85%,.95)`;
+    ctx.shadowColor=`hsla(${c.hue},95%,70%,1)`;ctx.shadowBlur=11;
+    ctx.beginPath();ctx.arc(c.x,c.y,2.6,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

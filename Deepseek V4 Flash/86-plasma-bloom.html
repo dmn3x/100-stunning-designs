@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>86 — Plasma Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PLASMA <span>BLOOM</span></div>
+<div class="ui sub">a flower of charged particles</div>
+<div class="ui hint"><b>click</b> — feed it voltage</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const cx=()=>W/2,cy=()=>H/2;
+let t=0,charge=0;
+addEventListener('click',()=>charge=1);
+addEventListener('touchstart',()=>charge=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.015;
+  ctx.fillStyle='rgba(6,3,18,.25)';ctx.fillRect(0,0,W,H);
+  if(charge>0)charge-=.004;
+  const x=cx(),y=cy();
+  // petals
+  const petals=8;
+  for(let p=0;p<petals;p++){
+    const a=(p/petals)*Math.PI*2+t*.2;
+    const len=(40+charge*40)*(1+Math.sin(t*1.5+p)*.2);
+    ctx.save();ctx.translate(x,y);ctx.rotate(a);
+    ctx.strokeStyle=`hsla(${280+p*8},90%,70%,.55)`;
+    ctx.lineWidth=1.6;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(len*.4,-14*charge,len,0);
+    ctx.stroke();
+    ctx.fillStyle=`hsla(${280+p*8},90%,72%,${.4+charge*.3})`;
+    ctx.beginPath();ctx.ellipse(len*.8,0,len*.32,len*.2,0,0,7);ctx.fill();
+    ctx.restore();
+  }
+  // orbiting sparks
+  for(let i=0;i<12;i++){
+    const a=t*(1+i*.06)+i*.5;
+    const r=26+charge*30+Math.sin(t+i)*4;
+    ctx.fillStyle=`hsla(${300+i*5},95%,85%,.7)`;
+    ctx.beginPath();ctx.arc(x+Math.cos(a)*r,y+Math.sin(a)*r*.7,1.6,0,7);ctx.fill();
+  }
+  // core
+  ctx.fillStyle='rgba(255,255,255,.95)';
+  ctx.shadowColor='#fff';ctx.shadowBlur=16;
+  ctx.beginPath();ctx.arc(x,y,5+charge*4,0,7);ctx.fill();
+  ctx.shadowBlur=0;
+})(0);
+</script>
+</body>
+</html>

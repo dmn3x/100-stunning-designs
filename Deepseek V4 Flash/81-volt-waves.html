@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>81 — Volt Waves</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VOLT <span>WAVES</span></div>
+<div class="ui sub">the oscilloscope dreams in color</div>
+<div class="ui hint"><b>click</b> — change the wave</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+let t=0,wave=0;
+const WAVES=[(x)=>{return Math.sin(x)*.8},(x)=>{return Math.sign(Math.sin(x))*.7},(x)=>{return ((x/Math.PI)%2-1)*.7},(x)=>{return Math.sin(x)*.5+Math.sin(x*2.7)*.3}];
+addEventListener('click',()=>wave=(wave+1)%WAVES.length);
+addEventListener('touchstart',()=>wave=(wave+1)%WAVES.length);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  ctx.fillStyle='rgba(6,3,18,.25)';ctx.fillRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='rgba(167,139,250,.1)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=50){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  for(let y=0;y<H;y+=50){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke()}
+  // waves
+  const layers=4;
+  for(let l=0;l<layers;l++){
+    ctx.beginPath();
+    for(let x=0;x<=W;x+=3){
+      const f=x*.012+t*(.6+l*.3);
+      const v=WAVES[wave](f);
+      const y=H/2+v*(60+l*22)+Math.sin(x*.004+l)*8;
+      x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+    }
+    ctx.strokeStyle=`hsla(${260+l*15},90%,${65+l*4}%,${.35-l*.05})`;
+    ctx.lineWidth=2;ctx.stroke();
+  }
+})(0);
+</script>
+</body>
+</html>

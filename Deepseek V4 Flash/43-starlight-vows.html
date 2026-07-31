@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>43 — Starlight Vows</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e8e0f8;--muted:#5f5490;--violet:#a78bfa;--gold:#fbbf24;--pink:#f472b6}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:16px/1.7 Georgia,serif}
+.wrap{max-width:760px;margin:0 auto;padding:3rem 1.5rem 4rem;text-align:center}
+.orn{font-size:.8rem;letter-spacing:.5em;color:var(--violet);margin-bottom:2rem}
+h1{font-size:clamp(1.8rem,5vw,2.8rem);letter-spacing:.04em;margin-bottom:1.6rem}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--gold));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.vows{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1.4rem;margin-bottom:2.4rem}
+.vow{background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.2);border-radius:1.2rem;padding:1.6rem 1.2rem;cursor:pointer;transition:all .3s}
+.vow:hover{border-color:var(--violet);transform:translateY(-3px);box-shadow:0 12px 36px rgba(139,92,246,.14)}
+.vow .star{font-size:1.6rem;margin-bottom:.7rem}
+.vow h3{font-size:1rem;margin-bottom:.5rem}
+.vow p{font-size:.82rem;color:var(--muted);line-height:1.6;font-style:italic}
+.vow.taken{opacity:.4;border-color:rgba(167,139,250,.1)}
+.vow.taken p{text-decoration:line-through}
+.counter{font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1.6rem}
+.counter b{color:var(--gold)}
+.prompt{font-size:.92rem;color:var(--muted);font-style:italic;min-height:2.4em}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.8rem 2rem;border-radius:99px;font:inherit;font-size:.9rem;letter-spacing:.04em;cursor:pointer;transition:all .25s;margin-top:.6rem}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 20px rgba(167,139,250,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<div class="orn">✦ ✦ ✦</div>
+<h1>Starlight <em>Vows</em></h1>
+<p class="prompt" id="prompt">Under this sky, choose what you promise the night.</p>
+<div class="vows" id="vows"></div>
+<div class="counter">vows kept: <b id="count">0</b> / 8</div>
+<button id="reset">⟳ Renew the sky</button>
+</div>
+<script>
+const VOWS=[
+ {s:'🌠',n:'Watch One More Star',d:'I will look up at least once a night, even when the sky is full of clouds.'},
+ {s:'🕯️',n:'Keep a Small Light',d:'I will leave one lamp on for whoever is still walking home.'},
+ {s:'📖',n:'Read Before Sleep',d:'I will trade ten minutes of scrolling for ten pages of a book.'},
+ {s:'💌',n:'Write a Real Letter',d:'I will say the whole thing to someone, on paper, before the season turns.'},
+ {s:'🌱',n:'Grow Something',d:'I will keep one plant alive, or one idea, or one kindness.'},
+ {s:'🎵',n:'Sing Without Reason',d:'I will make a joyful noise with no audience at all.'},
+ {s:'🪞',n:'Be Gentle in the Mirror',d:'I will speak to myself the way I speak to my best friend.'},
+ {s:'🌊',n:'Learn the Tide',d:'I will study one thing deeply — the ocean, a codebase, a song, a language.'}
+];
+const vows=document.getElementById('vows'),count=document.getElementById('count'),prompt=document.getElementById('prompt');
+let taken=new Set();
+function render(){
+  vows.innerHTML=VOWS.map((v,i)=>`<div class="vow ${taken.has(i)?'taken':''}" data-i="${i}">
+    <div class="star">${v.s}</div>
+    <h3>${v.n}</h3>
+    <p>${v.d}</p>
+  </div>`).join('');
+  count.textContent=taken.size;
+}
+vows.addEventListener('click',e=>{
+  const v=e.target.closest('.vow');if(!v)return;
+  const i=+v.dataset.i;
+  if(taken.has(i)){
+    taken.delete(i);
+    prompt.textContent='A vow un-made is a star unclaimed.';
+  }else{
+    taken.add(i);
+    prompt.textContent='✦ '+(VOWS[i].n)+' — noted under this sky.';
+  }
+  if(taken.size===VOWS.length)prompt.textContent='All vows kept. The night is proud of you. ✦';
+  render();
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  taken.clear();
+  prompt.textContent='Under this sky, choose what you promise the night.';
+  render();
+});
+render();
+</script>
+</body>
+</html>

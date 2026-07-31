@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>19 — Night Botanist</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070510;--fg:#e2dbf5;--muted:#57508a;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 Georgia,serif}
+.wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{display:flex;align-items:baseline;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:2.5rem 0 1.4rem;border-bottom:1px solid rgba(167,139,250,.2)}
+h1{font-size:clamp(1.6rem,4.4vw,2.5rem);font-weight:700}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.5)}
+header .date{color:var(--muted);font-size:.9rem;font-style:italic}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:1.2rem;padding-top:1.6rem}
+.specimen{background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.18);border-radius:1rem;padding:1.3rem;cursor:pointer;transition:all .3s;position:relative;overflow:hidden}
+.specimen:hover{border-color:var(--violet);transform:translateY(-3px);box-shadow:0 12px 36px rgba(139,92,246,.15)}
+.specimen .no{position:absolute;top:.9rem;right:1rem;font-size:.64rem;letter-spacing:.16em;color:var(--muted)}
+.specimen h3{font-size:1.05rem;margin-bottom:.35rem}
+.specimen .lat{font-size:.72rem;letter-spacing:.18em;text-transform:uppercase;color:var(--cyan);margin-bottom:.8rem}
+.specimen p{font-size:.85rem;color:var(--muted);line-height:1.6}
+.specimen .glyph{font-size:1.6rem;margin-bottom:.6rem;opacity:.85}
+.detail{display:none;margin-top:1rem;padding-top:.9rem;border-top:1px dashed rgba(167,139,250,.25);font-size:.82rem;color:var(--fg);line-height:1.7}
+.specimen.open .detail{display:block}
+footer{text-align:center;margin-top:3rem;color:var(--muted);font-size:.8rem;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <h1>Night <em>Botanist</em></h1>
+  <div class="date">Field journal · vol. IV · after dark</div>
+</header>
+<div class="grid" id="grid"></div>
+<footer>click a specimen to open its notes — the garden reads back</footer>
+</div>
+<script>
+const SPEC=[
+ {g:'🌿',n:'Lunaria Perpetua',lat:'LUNARIS · EVERBLOOM',d:'Blooms only in the violet hour when the moon is a sliver. Its petals close at first touch of true darkness, as if guarding a secret from the night itself.',note:'Fragrance: cold metal and honey.'},
+ {g:'⚡',n:'Voltaria Striata',lat:'ELECTRIC · STREAKED',d:'A grass that hums near power lines. Its blades align to the local magnetic field at dusk, pointing north like a thousand tiny compasses.',note:'Do not touch while raining.'},
+ {g:'🌑',n:'Umbralis Silex',lat:'SHADOW · FLINT',d:'Grows in the negative space of other plants — between, beneath, beside. Botanists argue whether it is a plant at all or a habit the garden acquired.',note:'Roots: none found.'},
+ {g:'🍄',n:'Mycelium Phos',lat:'FUNGAL · LIGHT',d:'A luminous fungus that feeds on abandoned lightning. The caps glow for weeks after a storm, slowly dimming like dying embers of weather.',note:'Glow peaks at 2 a.m.'},
+ {g:'🌙',n:'Noctiluca Frond',lat:'NIGHTLIGHT · FROND',d:'Its leaves unfurl in darkness and fold at dawn, which makes it technically the only plant that sleeps during the day. Prefers moonlit windowsills.',note:'Water sparingly, by starlight only.'},
+ {g:'🔮',n:'Crystal Vine',lat:'QUARTZ · CLIMBER',d:'A climbing vine that deposits silica along its stem, slowly turning into a living crystal trellis. Grows an inch a year, glows a lifetime.',note:'Harvest: never. Admire: always.'},
+ {g:'🌫️',n:'Nebula Moss',lat:'MIST · CUSHION',d:'Spongy moss that holds dew like a cloud holds weather. When squeezed, releases a tiny puff of violet mist that smells of ozone after rain.',note:'Habitat: north-facing stones.'},
+ {g:'🕯️',n:'Candella Umbra',lat:'CANDLE · SHADE',d:'A flower that burns softly, not with fire but with slow phosphorescence. Pollinated by moths that mistake it for a distant window.',note:'Do not extinguish.'}
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=SPEC.map((s,i)=>`<div class="specimen">
+  <span class="no">№ ${String(i+1).padStart(2,'0')}</span>
+  <div class="glyph">${s.g}</div>
+  <h3>${s.n}</h3>
+  <div class="lat">${s.lat}</div>
+  <p>${s.d}</p>
+  <div class="detail">${s.note}</div>
+</div>`).join('');
+document.querySelectorAll('.specimen').forEach(el=>el.addEventListener('click',()=>el.classList.toggle('open')));
+</script>
+</body>
+</html>

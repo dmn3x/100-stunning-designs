@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>47 — Laser Labyrinth</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden;display:flex;align-items:center;justify-content:center}
+canvas{display:block;border-radius:1.2rem;border:1px solid rgba(167,139,250,.25);box-shadow:0 0 60px rgba(139,92,246,.12)}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c" width="700" height="460"></canvas>
+<div class="ui title">LASER <span>LABYRINTH</span></div>
+<div class="ui sub">move the orb through the maze of light</div>
+<div class="ui hint"><b>arrows</b> move · <b>R</b> restart</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=700,H=460;
+const COLS=14,ROWS=9;
+const cw=W/COLS,ch=H/ROWS;
+let maze,player,goal,dead=false,win=false;
+function build(){
+  maze=[];
+  for(let r=0;r<ROWS;r++){
+    maze.push([]);
+    for(let c=0;c<COLS;c++)maze[r].push({top:true,bottom:true,left:true,right:true,vis:false});
+  }
+  const stack=[[0,0]];
+  maze[0][0].vis=true;
+  while(stack.length){
+    const [r,c]=stack[stack.length-1];
+    const nbs=[];
+    if(r>0&&!maze[r-1][c].vis)nbs.push([r-1,c,'top']);
+    if(r<ROWS-1&&!maze[r+1][c].vis)nbs.push([r+1,c,'bottom']);
+    if(c>0&&!maze[r][c-1].vis)nbs.push([r,c-1,'left']);
+    if(c<COLS-1&&!maze[r][c+1].vis)nbs.push([r,c+1,'right']);
+    if(!nbs.length){stack.pop();continue}
+    const [nr,nc,dir]=nbs[Math.floor(Math.random()*nbs.length)];
+    if(dir==='top'){maze[r][c].top=false;maze[nr][nc].bottom=false}
+    if(dir==='bottom'){maze[r][c].bottom=false;maze[nr][nc].top=false}
+    if(dir==='left'){maze[r][c].left=false;maze[nr][nc].right=false}
+    if(dir==='right'){maze[r][c].right=false;maze[nr][nc].left=false}
+    maze[nr][nc].vis=true;stack.push([nr,nc]);
+  }
+  player={r:0,c:0};
+  goal={r:ROWS-1,c:COLS-1};
+  dead=false;win=false;
+}
+function draw(){
+  ctx.fillStyle='#060312';ctx.fillRect(0,0,W,H);
+  // grid cells
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const x=c*cw,y=r*ch,cell=maze[r][c];
+    ctx.strokeStyle='rgba(167,139,250,.35)';ctx.lineWidth=2;
+    if(cell.top){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+cw,y);ctx.stroke()}
+    if(cell.left){ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x,y+ch);ctx.stroke()}
+    if(cell.bottom&&r===ROWS-1){ctx.beginPath();ctx.moveTo(x,y+ch);ctx.lineTo(x+cw,y+ch);ctx.stroke()}
+    if(cell.right&&c===COLS-1){ctx.beginPath();ctx.moveTo(x+cw,y);ctx.lineTo(x+cw,y+ch);ctx.stroke()}
+  }
+  // goal
+  ctx.fillStyle='rgba(125,249,255,.25)';
+  ctx.fillRect(goal.c*cw+4,goal.r*ch+4,cw-8,ch-8);
+  ctx.fillStyle='#7df9ff';
+  ctx.font='16px monospace';ctx.textAlign='center';ctx.textBaseline='middle';
+  ctx.fillText('◆',goal.c*cw+cw/2,goal.r*ch+ch/2);
+  // player
+  const px=player.c*cw+cw/2,py=player.r*ch+ch/2;
+  const g=ctx.createRadialGradient(px,py,0,px,py,26);
+  g.addColorStop(0,'rgba(255,255,255,.95)');
+  g.addColorStop(.4,'rgba(167,139,250,.9)');
+  g.addColorStop(1,'rgba(167,139,250,0)');
+  ctx.fillStyle=g;
+  ctx.beginPath();ctx.arc(px,py,26,0,7);ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath();ctx.arc(px,py,7,0,7);ctx.fill();
+  ctx.textAlign='left';
+  if(dead){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,H/2-28,W,56);
+    ctx.fillStyle='#f472b6';ctx.font='18px monospace';ctx.textAlign='center';
+    ctx.fillText('✕ COLLIDED — press R',W/2,H/2+6);ctx.textAlign='left';
+  }
+  if(win){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,H/2-28,W,56);
+    ctx.fillStyle='#7df9ff';ctx.font='18px monospace';ctx.textAlign='center';
+    ctx.fillText('✦ ESCAPED THE LABYRINTH ✦',W/2,H/2+6);ctx.textAlign='left';
+  }
+}
+addEventListener('keydown',e=>{
+  if(e.key==='r'||e.key==='R'){build();draw();return}
+  if(dead||win)return;
+  const {r,c}=player;
+  if(e.key==='ArrowUp'&&!maze[r][c].top)player.r--;
+  if(e.key==='ArrowDown'&&!maze[r][c].bottom)player.r++;
+  if(e.key==='ArrowLeft'&&!maze[r][c].left)player.c--;
+  if(e.key==='ArrowRight'&&!maze[r][c].right)player.c++;
+  if(player.r===goal.r&&player.c===goal.c)win=true;
+  draw();
+});
+build();draw();
+</script>
+</body>
+</html>

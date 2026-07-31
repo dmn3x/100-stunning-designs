@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>40 — Nebula Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e2dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 Georgia,serif}
+.wrap{max-width:900px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{text-align:center;padding:2.6rem 0 2rem}
+h1{font-size:clamp(1.6rem,4.4vw,2.5rem);letter-spacing:.02em}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--muted);margin-top:.7rem;font-size:.92rem;font-style:italic}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.4rem}
+.flower{background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.16);border-radius:1.4rem;padding:1.6rem;text-align:center;transition:all .35s;cursor:default}
+.flower:hover{transform:translateY(-5px);border-color:var(--violet);box-shadow:0 16px 44px rgba(139,92,246,.16)}
+.flower .bloom{width:74px;height:74px;margin:0 auto 1rem;position:relative;animation:sway 4s ease-in-out infinite}
+.flower .petal{position:absolute;inset:0;border-radius:50% 50% 50% 0;background:linear-gradient(135deg,var(--pc1),var(--pc2));opacity:.85}
+@keyframes sway{50%{transform:rotate(8deg)}}
+.flower h3{font-size:1rem;margin-bottom:.35rem}
+.flower .sci{font-size:.64rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:.8rem}
+.flower p{font-size:.84rem;color:var(--muted);line-height:1.65}
+.flower .origin{display:inline-block;margin-top:.9rem;font-size:.62rem;letter-spacing:.14em;text-transform:uppercase;padding:.3rem .8rem;border-radius:99px;background:rgba(167,139,250,.12);color:#c4b5fd}
+footer{text-align:center;margin-top:3rem;color:var(--muted);font-size:.78rem;font-style:italic}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Nebula <em>Garden</em></h1><p>flowers that grow where stars die — catalogue of the astro-botanical</p></header>
+<div class="grid" id="grid"></div>
+<footer>all specimens observed at arm's length · pollination by comet</footer>
+</div>
+<script>
+const FLOWERS=[
+ {n:'Helianthus Stella',s:'STAR SUNFLOWER',c1:'#fbbf24',c2:'#a78bfa',p:8,d:'Turns to face the nearest black hole instead of the sun. Nobody knows why.'},
+ {n:'Nebula Rose',s:'COSMIC ROSA',c1:'#f472b6',c2:'#7c3aed',p:7,d:'Blooms in the debris of supernovae. Its scent is the smell of heavy elements forming.'},
+ {n:'Quasar Lily',s:'CORE LILIUM',c1:'#7df9ff',c2:'#818cf8',p:6,d:'Each petal emits a collimated beam of light. Watering it requires a radiation suit.'},
+ {n:'Dark Matter Bloom',s:'UMBRA FLOS',c1:'#a78bfa',c2:'#1e1b4b',p:9,d:'Invisible except by the way it bends light around it. A garden ornament for physicists.'},
+ {n:'Supernova Daisy',s:'NOVA BELLIS',c1:'#fde68a',c2:'#f472b6',p:12,d:'Lives for one spectacular second, then scatters its seeds as gamma rays.'},
+ {n:'Event Horizon Tulip',s:'HORIZON TULIPA',c1:'#c4b5fd',c2:'#0f172a',p:5,d:'Anything that falls into its center never comes back. Keep it away from your keys.'},
+ {n:'Comet Vine',s:'CAUDA VITIS',c1:'#67e8f9',c2:'#a78bfa',p:7,d:'Grows along the orbits of passing comets, hitching rides between stars.'},
+ {n:'Gravitational Peony',s:'MASSA PAEONIA',c1:'#f0abfc',c2:'#6d28d9',p:8,d:'Its petals warp spacetime so gently that lovers' letters slide toward it.'}
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=FLOWERS.map(f=>{
+  let petals='';
+  for(let i=0;i<f.p;i++){
+    petals+=`<div class="petal" style="transform:rotate(${i*360/f.p}deg) translateY(-12px);--pc1:${f.c1};--pc2:${f.c2}"></div>`;
+  }
+  return `<div class="flower">
+    <div class="bloom">${petals}<div style="position:absolute;inset:34%;border-radius:50%;background:${f.c2};opacity:.9"></div></div>
+    <h3>${f.n}</h3>
+    <div class="sci">${f.s}</div>
+    <p>${f.d}</p>
+    <span class="origin">${f.p} petals</span>
+  </div>`;
+}).join('');
+</script>
+</body>
+</html>

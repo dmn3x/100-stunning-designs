@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>97 — Plasma Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PLASMA <span>GARDEN</span></div>
+<div class="ui sub">charged flora, tended by clicks</div>
+<div class="ui hint"><b>click</b> — grow plasma bloom</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const blooms=[];
+function grow(x,y){
+  blooms.push({x,y,t:0,hue:270+Math.random()*50,petals:5+Math.floor(Math.random()*4)});
+}
+for(let i=0;i<6;i++)grow(Math.random()*W,Math.random()*H);
+addEventListener('click',e=>grow(e.clientX,e.clientY));
+addEventListener('touchstart',e=>grow(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(6,3,18,.2)';ctx.fillRect(0,0,W,H);
+  for(const b of blooms){
+    b.t+=.02;
+    const open=Math.min(1,b.t*.7);
+    for(let p=0;p<b.petals;p++){
+      const a=(p/b.petals)*Math.PI*2+Math.sin(b.t*.5+p)*.3;
+      const len=open*(14+Math.sin(b.t*1.4+p)*4);
+      const px=b.x+Math.cos(a)*len,py=b.y+Math.sin(a)*len*.85;
+      ctx.strokeStyle=`hsla(${b.hue},90%,75%,${.55*open})`;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(b.x,b.y);ctx.quadraticCurveTo((b.x+px)/2,(b.y+py)/2-6,px,py);ctx.stroke();
+      ctx.fillStyle=`hsla(${b.hue},90%,72%,${.55*open})`;
+      ctx.shadowColor=`hsla(${b.hue},95%,60%,.8)`;ctx.shadowBlur=9;
+      ctx.beginPath();ctx.ellipse(px,py,len*.3,len*.18,a,0,7);ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle=`hsla(${(b.hue+30)%360},95%,86%,.95)`;
+    ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

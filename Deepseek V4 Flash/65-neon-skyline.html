@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>65 — Neon Skyline</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">NEON <span>SKYLINE</span></div>
+<div class="ui sub">a city that never sleeps, rendered in light</div>
+<div class="ui hint"><b>click</b> — toggle the lights of the city</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const buildings=[];
+function build(){
+  buildings.length=0;
+  let x=0;
+  while(x<W){
+    const w=40+Math.random()*80;
+    const h=H*.2+Math.random()*H*.5;
+    buildings.push({x,y:H-h,w,h,lights:[],hue:250+Math.random()*50,on:true});
+    x+=w+4;
+  }
+  for(const b of buildings){
+    for(let i=0;i<Math.floor(b.w/14);i++)for(let j=0;j<Math.floor(b.h/18);j++){
+      if(Math.random()<.5)b.lights.push({x:b.x+8+i*14,y:b.y+8+j*18,on:Math.random()<.5,hue:b.hue+Math.random()*30});
+    }
+  }
+}
+addEventListener('resize',build);build();
+let on=true;
+addEventListener('click',()=>{on=!on});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(7,3,18,.4)';ctx.fillRect(0,0,W,H);
+  // stars
+  ctx.fillStyle='rgba(220,216,242,.6)';
+  for(let i=0;i<50;i++){
+    const sx=(Math.sin(i*99.1)*43758.5453%1)*W;
+    const sy=(Math.sin(i*77.7)*24621.13%1)*H*.6;
+    ctx.fillRect(sx,sy,1.5,1.5);
+  }
+  // moon
+  ctx.fillStyle='rgba(224,216,242,.8)';
+  ctx.beginPath();ctx.arc(W*.82,H*.14,26,0,7);ctx.fill();
+  ctx.fillStyle='rgba(7,3,18,.9)';
+  ctx.beginPath();ctx.arc(W*.82+12,H*.14-6,20,0,7);ctx.fill();
+  for(const b of buildings){
+    ctx.fillStyle='rgba(20,12,40,.95)';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    ctx.strokeStyle='rgba(167,139,250,.25)';
+    ctx.strokeRect(b.x,b.y,b.w,b.h);
+    // antenna
+    ctx.strokeStyle='rgba(244,114,182,.5)';
+    ctx.beginPath();ctx.moveTo(b.x+b.w/2,b.y);ctx.lineTo(b.x+b.w/2,b.y-18);ctx.stroke();
+    ctx.fillStyle='#f472b6';
+    ctx.beginPath();ctx.arc(b.x+b.w/2,b.y-20,2.5,0,7);ctx.fill();
+    for(const l of b.lights){
+      if(!on)continue;
+      const flicker=Math.random()<.02?0:1;
+      if(!flicker)continue;
+      ctx.fillStyle=`hsla(${l.hue},90%,${l.on?75:25}%,${l.on?.85:.3})`;
+      ctx.fillRect(l.x,l.y,4,5);
+    }
+  }
+})(0);
+</script>
+</body>
+</html>

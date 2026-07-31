@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>44 — Kinetic Beams</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05020d;--fg:#e0d8f2;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">KINETIC <span>BEAMS</span></div>
+<div class="ui sub">light learns to dance · cursor conducts the orchestra</div>
+<div class="ui hint"><b>click</b> — split a beam · <b>drag</b> — bend the rays</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const beams=[];
+function seed(){
+  const fromLeft=Math.random()<.5;
+  beams.push({
+    x:fromLeft?-20:W+20,
+    y:Math.random()*H,
+    vx:fromLeft?1:-1,
+    vy:(Math.random()-.5)*.5,
+    hue:fromLeft?275:330,
+    len:50+Math.random()*60,
+    w:Math.random()<.2?6:2,
+    wob:Math.random()*7
+  });
+}
+for(let i=0;i<9;i++)seed();
+addEventListener('click',e=>{
+  const near=beams.reduce((a,b)=>Math.hypot(b.x-e.clientX,b.y-e.clientY)<Math.hypot(a.x-e.clientX,a.y-e.clientY)?b:a,beams[0]);
+  const n={...near};
+  n.vx*=-1;n.hue+=40;n.len*=1.4;n.y+=40;
+  beams.push(n);
+});
+let mx=W/2,my=H/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,2,13,.3)';ctx.fillRect(0,0,W,H);
+  for(const b of beams){
+    b.x+=b.vx*3;b.y+=b.vy*3+Math.sin(performance.now()*.002+b.wob)*.4;
+    const tip=b.x+b.vx*b.len;
+    const dist=Math.hypot(mx-b.x,my-b.y);
+    const bend=dist<140?(mx-b.x)*.06:0;
+    const hue=b.hue+Math.sin(performance.now()*.003+b.wob)*12;
+    const grad=ctx.createLinearGradient(b.x,b.y,tip,b.y+bend);
+    grad.addColorStop(0,`hsla(${hue},95%,65%,0)`);
+    grad.addColorStop(1,`hsla(${hue},95%,75%,.9)`);
+    ctx.strokeStyle=grad;
+    ctx.lineWidth=b.w;
+    ctx.lineCap='round';
+    ctx.beginPath();ctx.moveTo(b.x,b.y);
+    ctx.quadraticCurveTo(b.x+b.vx*b.len*.5,b.y+bend*.6,tip,b.y+bend);
+    ctx.stroke();
+    ctx.fillStyle=`hsla(${hue},100%,88%,.95)`;
+    ctx.shadowColor=`hsla(${hue},95%,70%,1)`;ctx.shadowBlur=16;
+    ctx.beginPath();ctx.arc(tip,b.y+bend,2.4,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+  if(beams.length>26)beams.splice(0,beams.length-26);
+})(0);
+</script>
+</body>
+</html>

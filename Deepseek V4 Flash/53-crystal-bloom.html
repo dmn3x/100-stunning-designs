@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>53 — Crystal Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">CRYSTAL <span>BLOOM</span></div>
+<div class="ui sub">mineral gardens grow where you click</div>
+<div class="ui hint"><b>click</b> — grow a crystal · <b>drag</b> — bend the lattice</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const crystals=[];
+function seed(x,y){
+  crystals.push({x,y,size:8,hue:260+Math.random()*40,rot:Math.random()*Math.PI,arms:4+Math.floor(Math.random()*3),t:Math.random()*7});
+}
+for(let i=0;i<6;i++)seed(Math.random()*W,Math.random()*H*.7);
+addEventListener('click',e=>seed(e.clientX,e.clientY));
+addEventListener('touchstart',e=>seed(e.touches[0].clientX,e.touches[0].clientY));
+let mx=W/2;
+addEventListener('mousemove',e=>{mx=e.clientX});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,3,14,.18)';ctx.fillRect(0,0,W,H);
+  for(const c of crystals){
+    if(c.size<80)c.size+=(80-c.size)*.01;
+    c.t+=.02;
+    const sway=(mx-c.x)*.004;
+    for(let a=0;a<c.arms;a++){
+      const base=c.rot+a*Math.PI*2/c.arms+Math.sin(c.t*.3+a)*.06;
+      ctx.save();ctx.translate(c.x,c.y);ctx.rotate(base);
+      ctx.strokeStyle=`hsla(${c.hue},90%,70%,.7)`;
+      ctx.lineWidth=1.4;
+      ctx.beginPath();ctx.moveTo(0,0);
+      ctx.lineTo(c.size*(1+Math.sin(c.t+a)*.08),0);
+      ctx.stroke();
+      // branch crystals
+      ctx.strokeStyle=`hsla(${c.hue+20},90%,75%,.5)`;
+      for(let b=1;b<4;b++){
+        const bx=c.size*b/4;
+        ctx.beginPath();
+        ctx.moveTo(bx,0);
+        ctx.lineTo(bx+(Math.sin(c.t*.5+b)*6+sway),-8-b*2);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.moveTo(bx,0);
+        ctx.lineTo(bx+(Math.cos(c.t*.4+b)*6+sway),8+b*2);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+    // core
+    ctx.fillStyle=`hsla(${c.hue},95%,85%,.95)`;
+    ctx.shadowColor=`hsla(${c.hue},95%,70%,1)`;ctx.shadowBlur=14;
+    ctx.beginPath();ctx.arc(c.x,c.y,3.5,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+    // falling shards
+    if(Math.random()<.02){
+      ctx.fillStyle=`hsla(${c.hue},95%,80%,.6)`;
+      ctx.beginPath();ctx.arc(c.x+(Math.random()-.5)*c.size,c.y+(Math.random()-.5)*c.size,1.6,0,7);ctx.fill();
+    }
+  }
+})(0);
+</script>
+</body>
+</html>

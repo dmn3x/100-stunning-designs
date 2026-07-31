@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>94 — Aurora Bloom Field</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#040310;--fg:#e0d8f2;--muted:#55508a;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">AURORA <span>BLOOM FIELD</span></div>
+<div class="ui sub">the polar light, flowering</div>
+<div class="ui hint"><b>click</b> — seed aurora bloom</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const blooms=[];
+function seed(x,y){
+  blooms.push({x,y,t:0,hue:190+Math.random()*60,petals:5+Math.floor(Math.random()*4)});
+}
+for(let i=0;i<6;i++)seed(Math.random()*W,Math.random()*H*.7);
+addEventListener('click',e=>seed(e.clientX,e.clientY));
+addEventListener('touchstart',e=>seed(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(4,3,16,.18)';ctx.fillRect(0,0,W,H);
+  for(const b of blooms){
+    b.t+=.02;
+    const open=Math.min(1,b.t*.6);
+    for(let p=0;p<b.petals;p++){
+      const a=(p/b.petals)*Math.PI*2+Math.sin(b.t*.5+p)*.4;
+      const len=open*(16+Math.sin(b.t*1.5+p)*4);
+      const px=b.x+Math.cos(a)*len,py=b.y+Math.sin(a)*len*.8;
+      ctx.fillStyle=`hsla(${b.hue},90%,72%,${.5*open})`;
+      ctx.shadowColor=`hsla(${b.hue},95%,60%,.8)`;ctx.shadowBlur=9;
+      ctx.beginPath();ctx.ellipse(px,py,len*.3,len*.18,a,0,7);ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle=`hsla(${(b.hue+30)%360},95%,88%,.95)`;
+    ctx.beginPath();ctx.arc(b.x,b.y,4,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+  }
+})(0);
+</script>
+</body>
+</html>

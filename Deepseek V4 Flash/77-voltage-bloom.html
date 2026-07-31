@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>77 — Voltage Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--pink);text-shadow:0 0 16px rgba(244,114,182,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--gold)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VOLTAGE <span>BLOOM</span></div>
+<div class="ui sub">electric flowers, one click apart</div>
+<div class="ui hint"><b>click</b> — grow a bloom</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const blooms=[];
+function grow(x,y){
+  blooms.push({x,y,t:0,petals:5+Math.floor(Math.random()*4),hue:250+Math.random()*50,size:20+Math.random()*30});
+}
+for(let i=0;i<5;i++)grow(Math.random()*W,Math.random()*H);
+addEventListener('click',e=>grow(e.clientX,e.clientY));
+addEventListener('touchstart',e=>grow(e.touches[0].clientX,e.touches[0].clientY));
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(7,3,18,.2)';ctx.fillRect(0,0,W,H);
+  for(const b of blooms){
+    b.t+=.02;
+    const open=Math.min(1,b.t);
+    for(let p=0;p<b.petals;p++){
+      const a=(p/b.petals)*Math.PI*2+Math.sin(b.t*.5)*.2;
+      const len=b.size*open;
+      ctx.save();ctx.translate(b.x,b.y);ctx.rotate(a);
+      ctx.strokeStyle=`hsla(${b.hue},90%,75%,.6)`;
+      ctx.lineWidth=1.5;
+      ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(len*.5,-8,len,0);ctx.stroke();
+      ctx.fillStyle=`hsla(${b.hue},90%,72%,${.5*open})`;
+      ctx.shadowColor=`hsla(${b.hue},95%,60%,.9)`;ctx.shadowBlur=10;
+      ctx.beginPath();ctx.ellipse(len*.8,0,len*.35,len*.22,0,0,7);ctx.fill();
+      ctx.restore();
+    }
+    ctx.fillStyle=`hsla(${(b.hue+30)%360},95%,88%,.95)`;
+    ctx.shadowColor='#fff';ctx.shadowBlur=12;
+    ctx.beginPath();ctx.arc(b.x,b.y,5,0,7);ctx.fill();
+    ctx.shadowBlur=0;
+    // sparks
+    if(Math.random()<.03){
+      const a=Math.random()*Math.PI*2,d=Math.random()*b.size;
+      ctx.fillStyle=`hsla(${b.hue},95%,85%,.7)`;
+      ctx.beginPath();ctx.arc(b.x+Math.cos(a)*d,b.y+Math.sin(a)*d,1.5,0,7);ctx.fill();
+    }
+  }
+})(0);
+</script>
+</body>
+</html>

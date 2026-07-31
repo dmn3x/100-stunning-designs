@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>61 — Volt Runner</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0416;--fg:#e4dcf5;--muted:#5d5390;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+.game{width:min(640px,94vw);background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.22);border-radius:1.4rem;padding:1.6rem}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.top b{color:var(--gold)}
+canvas{display:block;width:100%;aspect-ratio:16/9;background:#070312;border:1px solid rgba(167,139,250,.25);border-radius:.8rem;margin-bottom:1rem}
+.controls{display:flex;justify-content:center;gap:.8rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.4rem;border-radius:99px;font:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+.hint{text-align:center;margin-top:.9rem;font-size:.66rem;color:var(--muted);letter-spacing:.08em}
+.hint b{color:var(--pink)}
+</style>
+</head>
+<body>
+<div class="game">
+<div class="top"><span>VOLT RUNNER</span><span>score <b id="score">0</b></span><span>hi <b id="hi">0</b></span></div>
+<canvas id="c" width="640" height="360"></canvas>
+<div class="controls"><button id="start">▶ START</button></div>
+<div class="hint"><b>SPACE</b> jump · avoid the bolts · grab the orbs</div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const W=640,H=360;
+const player={x:80,y:H-60,w:26,h:30,vy:0,jumping:false};
+const obstacles=[],orbs=[],particles=[];
+let score=0,hi=+localStorage.getItem('volt-runner-hi')||0,running=false,groundY=H-40,spawn=0,gameOver=false;
+document.getElementById('hi').textContent=hi;
+function reset(){
+  score=0;obstacles.length=0;orbs.length=0;particles.length=0;
+  player.y=groundY;player.vy=0;player.jumping=false;
+  gameOver=false;running=true;spawn=0;
+}
+function jump(){
+  if(!running||gameOver)return;
+  if(player.jumping)return;
+  player.jumping=true;player.vy=-11;
+}
+addEventListener('keydown',e=>{if(e.code==='Space'){e.preventDefault();if(!running){reset()}else jump()}});
+document.getElementById('start').addEventListener('click',()=>{reset()});
+function spawnObs(){
+  const r=Math.random();
+  if(r<.5)obstacles.push({x:W+40,w:18,h:28+Math.random()*30,type:'bolt'});
+  else obstacles.push({x:W+40,w:12,h:12,type:'orb'});
+}
+(function loop(){
+  requestAnimationFrame(loop);
+  ctx.fillStyle='#070312';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(167,139,250,.2)';ctx.lineWidth=1;
+  for(let x=0;x<W;x+=40){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,H);ctx.stroke()}
+  ctx.strokeStyle='rgba(125,249,255,.3)';ctx.beginPath();ctx.moveTo(0,groundY);ctx.lineTo(W,groundY);ctx.stroke();
+  if(!running)return;
+  if(!gameOver){
+    if(spawn++>34){spawnObs();spawn=0}
+    if(player.jumping){
+      player.vy+=.55;player.y+=player.vy;
+      if(player.y>=groundY){player.y=groundY;player.jumping=false;player.vy=0}
+    }
+    for(let i=obstacles.length-1;i>=0;i--){
+      const o=obstacles[i];
+      o.x-=4.5;
+      if(o.x<-30){obstacles.splice(i,1);continue}
+      if(o.type==='orb'){
+        if(Math.abs(o.x-player.x)<24&&Math.abs(o.y-player.y)<26){
+          obstacles.splice(i,1);score+=50;burst(o.x,o.y,'#fbbf24');
+          continue;
+        }
+      }else{
+        if(o.x<player.x+player.w&&o.x+o.w>player.x&&o.y+o.h>player.y){
+          gameOver=true;running=false;burst(player.x,player.y,'#f472b6');
+          if(score>hi){hi=score;localStorage.setItem('volt-runner-hi',hi)}
+          document.getElementById('hi').textContent=hi;
+        }
+      }
+    }
+    score+=.2;
+    if(Math.random()<.05)orbs.push({x:Math.random()*W,y:Math.random()*H,t:Math.random()*7});
+    orbs.forEach(o=>{o.t+=.05;o.y+=Math.sin(o.t)*.5});
+  }
+  // obstacles
+  for(const o of obstacles){
+    if(o.type==='orb'){
+      ctx.fillStyle='#fbbf24';ctx.shadowColor='#fbbf24';ctx.shadowBlur=12;
+      ctx.beginPath();ctx.arc(o.x+6,o.y+6,6,0,7);ctx.fill();ctx.shadowBlur=0;
+    }else{
+      ctx.fillStyle='#f472b6';ctx.shadowColor='#f472b6';ctx.shadowBlur=10;
+      ctx.fillRect(o.x,o.y,o.w,o.h);ctx.shadowBlur=0;
+      ctx.fillStyle='#fff';
+      ctx.fillRect(o.x+o.w/2-2,o.y-8,4,8);
+    }
+  }
+  // orbs
+  for(const o of orbs){ctx.fillStyle='rgba(167,139,250,.4)';ctx.beginPath();ctx.arc(o.x,o.y,3,0,7);ctx.fill()}
+  // player
+  ctx.fillStyle='#7df9ff';ctx.shadowColor='#7df9ff';ctx.shadowBlur=14;
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+  ctx.shadowBlur=0;
+  ctx.fillStyle='#a78bfa';
+  ctx.beginPath();ctx.moveTo(player.x+13,player.y-12);ctx.lineTo(player.x+3,player.y);ctx.lineTo(player.x+23,player.y);ctx.closePath();ctx.fill();
+  // particles
+  for(const p of particles){p.x+=p.vx;p.y+=p.vy;p.life-=.03;ctx.fillStyle=`hsla(${p.hue},90%,75%,${p.life})`;ctx.beginPath();ctx.arc(p.x,p.y,p.s,0,7);ctx.fill()}
+  particles=particles.filter(p=>p.life>0);
+  document.getElementById('score').textContent=Math.floor(score);
+  if(gameOver){
+    ctx.fillStyle='rgba(0,0,0,.55)';ctx.fillRect(0,H/2-24,W,48);
+    ctx.fillStyle='#f472b6';ctx.font='16px monospace';ctx.textAlign='center';
+    ctx.fillText('GAME OVER — SPACE to retry',W/2,H/2+6);ctx.textAlign='left';
+  }
+})();
+function burst(x,y,hue){
+  for(let i=0;i<14;i++){
+    const a=Math.random()*Math.PI*2,v=Math.random()*4;
+    particles.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v,life:1,hue,s:1.5+Math.random()*2});
+  }
+}
+</script>
+</body>
+</html>

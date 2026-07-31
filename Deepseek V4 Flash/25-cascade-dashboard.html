@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>25 — Cascade Dashboard</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0612;--panel:#120b22;--fg:#e6def7;--muted:#6b5e9c;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono','Cascadia Code',Consolas,monospace}
+.top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;padding:1.4rem 1.8rem;border-bottom:1px solid rgba(167,139,250,.15)}
+.brand{font-size:1.05rem;letter-spacing:.18em;text-transform:uppercase;font-weight:700}
+.brand span{color:var(--violet)}
+.brand small{display:block;font-size:.58rem;letter-spacing:.3em;color:var(--muted);font-weight:400;margin-top:.3rem}
+.status{display:flex;align-items:center;gap:.6rem;font-size:.68rem;letter-spacing:.12em;color:var(--muted);text-transform:uppercase}
+.status .dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:pulse 1.8s ease-in-out infinite}
+@keyframes pulse{50%{opacity:.3}}
+main{max-width:1200px;margin:0 auto;padding:1.8rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.2rem}
+.panel{background:var(--panel);border:1px solid rgba(167,139,250,.16);border-radius:1rem;padding:1.2rem}
+.panel h3{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--muted);margin-bottom:1rem}
+.kpi{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem}
+.kpi .v{font-size:1.6rem;font-weight:900;color:var(--fg)}
+.kpi .l{font-size:.6rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+.kpi .up{color:var(--cyan)}.kpi .down{color:var(--pink)}
+.chart{height:160px;display:flex;align-items:flex-end;gap:4px}
+.bar{flex:1;border-radius:3px 3px 0 0;background:linear-gradient(to top,var(--violet),var(--cyan));opacity:.85;transition:height .5s}
+.bar:hover{opacity:1;filter:brightness(1.2)}
+.gauge{text-align:center}
+.gauge .ring{width:130px;height:130px;border-radius:50%;margin:0 auto .8rem;background:conic-gradient(var(--violet) 0%,var(--cyan) var(--pct,40%),#1a1230 var(--pct,40%));display:flex;align-items:center;justify-content:center;position:relative}
+.gauge .ring::before{content:'';position:absolute;inset:12px;border-radius:50%;background:var(--panel)}
+.gauge .ring .num{position:relative;font-size:1.5rem;font-weight:900}
+.trail{list-style:none}
+.trail li{display:flex;justify-content:space-between;gap:1rem;padding:.55rem 0;border-bottom:1px solid rgba(167,139,250,.08);font-size:.82rem}
+.trail li:last-child{border-bottom:none}
+.trail .t{color:var(--muted)}
+.trail .n{color:var(--gold)}
+.log{font-size:.72rem;line-height:2;color:var(--muted)}
+.log b{color:var(--violet)}
+.log .ok{color:var(--cyan)}
+footer{text-align:center;padding:2rem;color:var(--muted);font-size:.68rem;letter-spacing:.1em}
+footer b{color:var(--violet)}
+</style>
+</head>
+<body>
+<div class="top">
+  <div class="brand">CASCADE <span>OPS</span><small>real-time mission control</small></div>
+  <div class="status"><span class="dot"></span>all systems nominal</div>
+</div>
+<main>
+  <div class="panel"><h3>Throughput</h3><div class="kpi">
+    <div><div class="v" id="req">0</div><div class="l">req/s</div></div>
+    <div><div class="v up" id="lat">0ms</div><div class="l">latency</div></div>
+    <div><div class="v down" id="err">0</div><div class="l">errors</div></div>
+  </div></div>
+  <div class="panel"><h3>Live load</h3><div class="chart" id="chart"></div></div>
+  <div class="panel"><h3>Capacity</h3><div class="gauge"><div class="ring" id="ring"><div class="num" id="cap">0%</div></div><div class="kpi" style="grid-template-columns:1fr 1fr">
+    <div><div class="v" style="font-size:1rem" id="nodes">0</div><div class="l">nodes</div></div>
+    <div><div class="v" style="font-size:1rem" id="queue">0</div><div class="l">queued</div></div>
+  </div></div></div>
+  <div class="panel"><h3>Event trail</h3><ul class="trail">
+    <li><span class="t">deploy 4.2.1</span><span class="n">12s ago</span></li>
+    <li><span class="t">cache warm</span><span class="n">3m ago</span></li>
+    <li><span class="t">failover test</span><span class="n">17m ago</span></li>
+    <li><span class="t">auth spike</span><span class="n">41m ago</span></li>
+  </ul></div>
+  <div class="panel" style="grid-column:1/-1"><h3>Stream log</h3><div class="log" id="log">awaiting telemetry…</div></div>
+</main>
+<footer>CASCADE <b>OPS</b> · telemetry is theater, but it is beautiful theater</footer>
+<script>
+const chart=document.getElementById('chart');
+const bars=[];
+for(let i=0;i<24;i++){
+  const b=document.createElement('div');
+  b.className='bar';
+  b.style.height='20%';
+  chart.appendChild(b);bars.push(b);
+}
+const req=document.getElementById('req'),lat=document.getElementById('lat'),err=document.getElementById('err');
+const ring=document.getElementById('ring'),cap=document.getElementById('cap');
+const nodes=document.getElementById('nodes'),queue=document.getElementById('queue'),log=document.getElementById('log');
+const WORDS=['heartbeat','cache.hit','route.emit','auth.ok','queue.drain','node.join','packet.ack','violet.sync'];
+setInterval(()=>{
+  const r=300+Math.random()*400;
+  const l=(12+Math.random()*40).toFixed(0);
+  const e=Math.random()<.06?1:0;
+  req.textContent=r.toFixed(0);lat.textContent=l+'ms';err.textContent=e;
+  const p=20+Math.random()*65;
+  ring.style.setProperty('--pct',p+'%');cap.textContent=Math.round(p)+'%';
+  nodes.textContent=6+Math.floor(Math.random()*7);
+  queue.textContent=Math.floor(Math.random()*40);
+  const first=bars.shift();first.style.height=(15+Math.random()*85)+'%';
+  bars.push(first);
+  const line=WORDS[Math.floor(Math.random()*WORDS.length)]+' <b class="ok">✓</b> '+new Date().toLocaleTimeString('en-GB');
+  const entry=document.createElement('div');
+  entry.innerHTML=line;
+  log.prepend(entry);
+  while(log.children.length>7)log.removeChild(log.lastChild);
+},900);
+</script>
+</body>
+</html>

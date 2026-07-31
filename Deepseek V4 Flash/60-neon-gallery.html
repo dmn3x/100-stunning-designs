@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>60 — Neon Gallery</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08040f;--fg:#e6def7;--muted:#5f5490;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.6 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 1.4rem}
+h1{font-size:clamp(1.5rem,4.2vw,2.4rem);letter-spacing:.02em}
+h1 span{background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--muted);margin-top:.5rem;font-size:.9rem}
+.marquee{overflow:hidden;padding:1rem 0;border-top:1px solid rgba(167,139,250,.12);border-bottom:1px solid rgba(167,139,250,.12);margin-bottom:2.4rem}
+.marquee .track{display:flex;gap:2.4rem;white-space:nowrap;animation:scroll 22s linear infinite}
+@keyframes scroll{to{transform:translateX(-50%)}}
+.marquee span{color:var(--muted);font-size:.8rem;letter-spacing:.2em;text-transform:uppercase}
+.gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:1.4rem;max-width:1040px;margin:0 auto;padding:0 1.5rem 4rem}
+.frame{position:relative;border-radius:1.1rem;overflow:hidden;aspect-ratio:4/3;background:#0d0720;border:1px solid rgba(167,139,250,.2);cursor:pointer;transition:all .3s}
+.frame:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 14px 40px rgba(139,92,246,.2)}
+.frame .art{position:absolute;inset:0;transition:transform .5s}
+.frame:hover .art{transform:scale(1.06)}
+.frame .label{position:absolute;left:0;right:0;bottom:0;padding:.7rem 1rem;background:linear-gradient(to top,rgba(8,4,15,.95),transparent);font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:#c4b5fd}
+.frame .num{position:absolute;top:.7rem;right:.9rem;font-size:.62rem;color:var(--muted)}
+</style>
+</head>
+<body>
+<header><h1>NEON <span>GALLERY</span></h1><p>six generative works, no two alike</p></header>
+<div class="marquee"><div class="track" id="track"></div></div>
+<div class="gallery" id="gallery"></div>
+<script>
+// artwork generators — each frame is a tiny generative canvas
+const ARTS=[
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);for(let i=0;i<40;i++){c.strokeStyle=`hsla(${260+Math.random()*50},90%,70%,.3)`;c.beginPath();c.moveTo(Math.random()*400,Math.random()*300);c.lineTo(Math.random()*400,Math.random()*300);c.stroke()}},
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);for(let i=0;i<30;i++){c.fillStyle=`hsla(${280+Math.random()*40},95%,75%,.4)`;c.beginPath();c.arc(Math.random()*400,Math.random()*300,2+Math.random()*20,0,7);c.fill()}},
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);c.strokeStyle='rgba(167,139,250,.5)';for(let i=0;i<14;i++){c.beginPath();c.moveTo(0,Math.random()*300);c.quadraticCurveTo(200,Math.random()*300,400,Math.random()*300);c.stroke()}},
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);for(let i=0;i<200;i++){c.fillStyle=`hsla(${250+Math.random()*60},90%,${50+Math.random()*40}%,${Math.random()*.5})`;c.fillRect(Math.random()*400,Math.random()*300,1.5,1.5)}},
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);for(let i=0;i<8;i++){c.strokeStyle=`hsla(${270+i*12},90%,70%,.5)`;c.lineWidth=2;c.beginPath();c.arc(200,150,20+i*22,0,7);c.stroke()}},
+ function(c){c.fillStyle='#0d0720';c.fillRect(0,0,400,300);for(let i=0;i<60;i++){c.fillStyle=`hsla(${240+Math.random()*80},90%,75%,.5)`;c.beginPath();c.arc(Math.random()*400,Math.random()*300,Math.random()*4,0,7);c.fill()}}
+];
+const NAMES=['Waves','Dust','Currents','Field','Rings','Bloom'];
+const gallery=document.getElementById('gallery');
+ARTS.forEach((fn,i)=>{
+  const frame=document.createElement('div');
+  frame.className='frame';
+  frame.innerHTML=`<canvas width="400" height="300" class="art"></canvas><span class="num">№${String(i+1).padStart(2,'0')}</span><span class="label">${NAMES[i]}</span>`;
+  fn(frame.querySelector('canvas').getContext('2d'));
+  frame.addEventListener('click',()=>{
+    const c=frame.querySelector('canvas').getContext('2d');
+    fn(c);
+  });
+  gallery.appendChild(frame);
+});
+const track=document.getElementById('track');
+const words=['violet','voltage','nebula','plasma','aurora','crystal','signal','pulse','orbit','lumen'];
+const seq=[...words,...words];
+track.innerHTML=seq.map(w=>`<span>✦ ${w}</span>`).join('');
+</script>
+</body>
+</html>

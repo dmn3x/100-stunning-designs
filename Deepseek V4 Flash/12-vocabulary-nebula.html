@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>12 — Vocabulary Nebula</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08030f;--fg:#e6def5;--muted:#5d5290;--violet:#a78bfa;--pink:#e879f9;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:15px/1.6 Georgia,serif}
+.wrap{max-width:860px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{text-align:center;padding:3rem 0 2rem}
+h1{font-size:clamp(1.8rem,5vw,3rem);letter-spacing:.02em}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+header p{color:var(--muted);margin-top:.8rem;font-size:.95rem;font-style:italic}
+.word{font-size:clamp(1.4rem,4vw,2.2rem);font-weight:700;text-align:center;padding:2.4rem 1rem;min-height:3em;background:rgba(139,92,246,.06);border:1px solid rgba(167,139,250,.2);border-radius:1.4rem;margin-bottom:1.6rem;line-height:1.5}
+.word b{color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.6)}
+.defs{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:1rem;margin-bottom:1.8rem}
+.def{background:#120a24;border:1px solid rgba(167,139,250,.18);border-radius:1rem;padding:1.1rem 1.2rem;cursor:pointer;transition:all .25s}
+.def:hover{border-color:var(--violet);transform:translateY(-2px);box-shadow:0 10px 30px rgba(139,92,246,.15)}
+.def .pos{font-size:.68rem;letter-spacing:.2em;text-transform:uppercase;color:var(--pink);margin-bottom:.4rem}
+.def .text{font-size:.95rem;color:var(--fg);line-height:1.5}
+.def.correct{border-color:var(--cyan);background:rgba(125,249,255,.08);box-shadow:0 0 24px rgba(125,249,255,.2)}
+.def.wrong{border-color:#f87171;background:rgba(248,113,113,.07);animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+.feedback{text-align:center;font-size:1rem;min-height:2em;margin-bottom:1rem}
+.feedback.good{color:var(--cyan)}.feedback.bad{color:#f87171}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap}
+button{background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.35);color:var(--fg);padding:.65rem 1.3rem;border-radius:99px;font:inherit;font-size:.85rem;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.22)}
+.score{text-align:center;color:var(--muted);font-size:.8rem;margin-top:1.6rem;letter-spacing:.08em}
+.score b{color:var(--violet)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Vocabulary <em>Nebula</em></h1><p>five definitions orbit one word — find the true one</p></header>
+<div class="word" id="word">…</div>
+<div class="defs" id="defs"></div>
+<div class="feedback" id="fb"></div>
+<div class="controls"><button id="next">⟳ Next word</button></div>
+<div class="score">score <b id="sc">0</b> · streak <b id="st">0</b></div>
+</div>
+<script>
+const QS=[
+ {w:'Luminous',d:[{p:'adj.',t:'Emitting or reflecting light; glowing, radiant.'},{p:'adj.',t:'Heavy and slow-moving, like a dense cloud.'},{p:'adj.',t:'Relating to the study of ancient languages.'},{p:'adj.',t:'Tiny, almost invisible to the naked eye.'},{p:'adj.',t:'Having a sharp, sour taste.'}],c:0},
+ {w:'Quiescent',d:[{p:'adj.',t:'In a state of rest; inactive, still, dormant.'},{p:'adj.',t:'Extremely loud and piercing.'},{p:'adj.',t:'Flowing quickly and turbulently.'},{p:'adj.',t:'Covered in small bright dots.'},{p:'adj.',t:'Easily broken or fragile.'}],c:0},
+ {w:'Iridescent',d:[{p:'adj.',t:'Showing luminous colors that seem to change when seen from different angles.'},{p:'adj.',t:'Completely transparent and colorless.'},{p:'adj.',t:'Dull, flat, without sheen.'},{p:'adj.',t:'Rough and uneven in texture.'},{p:'adj.',t:'Bitter in taste or temper.'}],c:0},
+ {w:'Tenebrous',d:[{p:'adj.',t:'Dark, shadowy, or obscure; gloomy.'},{p:'adj.',t:'Brightly illuminated, radiant.'},{p:'adj.',t:'Swift and agile in motion.'},{p:'adj.',t:'Thin and delicate, easily torn.'},{p:'adj.',t:'Round and spherical in shape.'}],c:0},
+ {w:'Sempiternal',d:[{p:'adj.',t:'Eternal and everlasting; having no beginning or end.'},{p:'adj.',t:'Lasting only a single moment.'},{p:'adj.',t:'Occurring every other week.'},{p:'adj.',t:'Hidden or kept secret.'},{p:'adj.',t:'Wandering without a fixed home.'}],c:0},
+ {w:'Ephemeral',d:[{p:'adj.',t:'Lasting for a very short time; fleeting.'},{p:'adj.',t:'Permanent and unchanging.'},{p:'adj.',t:'Solid and heavy, immovable.'},{p:'adj.',t:'Widely known and celebrated.'},{p:'adj.',t:'Deeply philosophical and thoughtful.'}],c:0},
+ {w:'Luminescence',d:[{p:'n.',t:'Light produced by chemical, electrical, or physiological means without heat.'},{p:'n.',t:'Complete darkness.'},{p:'n.',t:'A sudden loud noise.'},{p:'n.',t:'A small enclosed space.'},{p:'n.',t:'A formal written agreement.'}],c:0},
+ {w:'Umbrage',d:[{p:'n.',t:'Offense or annoyance; a shadow or shade.'},{p:'n.',t:'Great happiness and joy.'},{p:'n.',t:'A large gathering of birds.'},{p:'n.',t:'A type of mineral crystal.'},{p:'n.',t:'A swift current of water.'}],c:0},
+ {w:'Nebulous',d:[{p:'adj.',t:'In the form of a cloud or haze; vague, indistinct.'},{p:'adj.',t:'Crystal clear and obvious.'},{p:'adj.',t:'Extremely heavy, weighing much.'},{p:'adj.',t:'Loud, noisy, clamorous.'},{p:'adj.',t:'Small, tiny, miniature.'}],c:0},
+ {w:'Evanescent',d:[{p:'adj.',t:'Soon passing out of sight, memory, or existence; fleeting.'},{p:'adj.',t:'Fixed, permanent, long-lasting.'},{p:'adj.',t:'Broad and spacious.'},{p:'adj.',t:'Rough and rugged.'},{p:'adj.',t:'Warm and comforting.'}],c:0}
+];
+const word=document.getElementById('word'),defs=document.getElementById('defs'),fb=document.getElementById('fb');
+let idx=0,score=0,streak=0,answered=false;
+function render(){
+  answered=false;fb.textContent='';fb.className='feedback';
+  const q=QS[idx];
+  word.innerHTML='<b>'+q.w+'</b>';
+  const shuffled=q.d.map((d,i)=>({...d,orig:i})).sort(()=>Math.random()-.5);
+  defs.innerHTML=shuffled.map((d,i)=>`<div class="def" data-i="${i}" data-orig="${d.orig}"><div class="pos">${d.pos}</div><div class="text">${d.t}</div></div>`).join('');
+  document.querySelectorAll('.def').forEach(el=>el.addEventListener('click',()=>pick(el)));
+}
+function pick(el){
+  if(answered)return;answered=true;
+  const orig=+el.dataset.orig;
+  if(orig===0){
+    el.classList.add('correct');fb.textContent='✦ Correct! The word chose you.';fb.className='feedback good';
+    score++;streak++;
+  }else{
+    el.classList.add('wrong');fb.textContent='✧ Not quite — look closer.';fb.className='feedback bad';streak=0;
+    document.querySelector(`.def[data-orig="0"]`).classList.add('correct');
+  }
+  document.getElementById('sc').textContent=score;
+  document.getElementById('st').textContent=streak;
+}
+document.getElementById('next').addEventListener('click',()=>{idx=(idx+1)%QS.length;render()});
+render();
+</script>
+</body>
+</html>

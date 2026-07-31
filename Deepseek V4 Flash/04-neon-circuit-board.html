@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 — Neon Circuit Board</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#07030f;--fg:#dcd4f2;--muted:#584b85;--violet:#a78bfa;--pink:#e879f9;--cyan:#67e8f9}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono','Cascadia Code',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.3rem;left:1.3rem;font-size:clamp(1rem,2.6vw,1.4rem);font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.title small{display:block;font-size:.6rem;letter-spacing:.3em;color:var(--muted);font-weight:400;margin-top:.3rem}
+.status{bottom:1.3rem;left:1.3rem;font-size:.68rem;letter-spacing:.14em;color:var(--muted);display:flex;gap:1.4rem;text-transform:uppercase}
+.status b{color:var(--pink)}
+.hint{bottom:1.3rem;right:1.3rem;font-size:.62rem;color:var(--muted);text-align:right;line-height:1.8}
+.hint i{color:var(--cyan);font-style:normal}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.status{bottom:.8rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">NEON CIRCUIT<small>current flows where you look</small></div>
+<div class="ui status"><span>pulses: <b id="pn">0</b></span><span>junctions: <b id="jn">0</b></span></div>
+<div class="ui hint">move cursor — routes light up<br><i>click</i> — inject a pulse</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+const nodes=[],traces=[],pulses=[];
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;build()}
+function build(){
+  nodes.length=0;traces.length=0;pulses.length=0;
+  const nx=Math.max(6,Math.floor(W/110)),ny=Math.max(4,Math.floor(H/110));
+  for(let y=0;y<ny;y++)for(let x=0;x<nx;x++)nodes.push({x:(x+.5)*W/nx,y:(y+.5)*H/ny});
+  for(const n of nodes){
+    const cand=nodes.filter(o=>o!==n&&Math.hypot(o.x-n.x,o.y-n.y)<Math.max(W,H)/4);
+    for(const o of cand){if(Math.random()<.28)traces.push([n,o])}
+  }
+  document.getElementById('jn').textContent=nodes.length;
+}
+addEventListener('resize',resize);resize();
+let mx=W/2,my=H/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+addEventListener('click',e=>inject(e.clientX,e.clientY));
+function inject(x,y){
+  const near=nodes.reduce((a,b)=>Math.hypot(b.x-x,b.y-y)<Math.hypot(a.x-x,a.y-y)?b:a,nodes[0]);
+  pulses.push({n:near,t:0,id:Date.now()+Math.random()});
+}
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(7,3,15,.5)';ctx.fillRect(0,0,W,H);
+  ctx.lineWidth=1;
+  for(const [a,b] of traces){
+    const d=Math.hypot(mx-a.x,my-a.y)+Math.hypot(mx-b.x,my-b.y);
+    const lit=d<Math.max(W,H)*.55;
+    ctx.strokeStyle=lit?'rgba(167,139,250,.28)':'rgba(88,75,133,.14)';
+    ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+  }
+  for(const n of nodes){
+    ctx.fillStyle='rgba(103,232,249,.8)';
+    ctx.beginPath();ctx.arc(n.x,n.y,2,0,7);ctx.fill();
+  }
+  pulses.forEach(p=>{
+    p.t+=.015;
+    const from=p.n;
+    const next=traces.filter(([a,b])=>a===from||b===from).map(([a,b])=>a===from?b:a);
+    ctx.fillStyle=`hsla(${280+p.t*600%60},90%,72%,.9)`;
+    ctx.shadowColor='#e879f9';ctx.shadowBlur=14;
+    for(const to of next){
+      const x=from.x+(to.x-from.x)*p.t,y=from.y+(to.y-from.y)*p.t;
+      ctx.beginPath();ctx.arc(x,y,3.4,0,7);ctx.fill();
+    }
+    ctx.shadowBlur=0;
+  });
+  pulses=pulses.filter(p=>p.t<1);
+  document.getElementById('pn').textContent=pulses.length;
+})(0);
+</script>
+</body>
+</html>

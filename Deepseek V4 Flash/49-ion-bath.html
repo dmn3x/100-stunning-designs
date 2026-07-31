@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>49 — Ion Bath</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#040310;--fg:#e0d8f2;--muted:#55508a;--violet:#a78bfa;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--cyan);text-shadow:0 0 16px rgba(125,249,255,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--violet)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">ION <span>BATH</span></div>
+<div class="ui sub">soak in particles · the cursor is a magnet</div>
+<div class="ui hint"><b>click</b> — heat the bath</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;init()}
+addEventListener('resize',resize);resize();
+let ions=[];
+function init(){
+  ions=[];
+  const n=Math.min(200,Math.floor(W*H/5000));
+  for(let i=0;i<n;i++){
+    ions.push({x:Math.random()*W,y:Math.random()*H,vx:(Math.random()-.5)*.3,vy:(Math.random()-.5)*.3,hue:250+Math.random()*50,s:Math.random()});
+  }
+}
+let heat=0,mx=W/2,my=H/2;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+addEventListener('click',()=>heat=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(4,3,16,.25)';ctx.fillRect(0,0,W,H);
+  if(heat>0)heat-=.004;
+  for(const p of ions){
+    const dx=mx-p.x,dy=my-p.y,d=Math.hypot(dx,dy)+1;
+    p.vx+=(dx/d)*.12;p.vy+=(dy/d)*.12;
+    p.vx+=(Math.random()-.5)*heat*2;
+    p.vy+=(Math.random()-.5)*heat*2;
+    p.vx*=.97;p.vy*=.97;
+    p.x+=p.vx;p.y+=p.vy;
+    if(p.x<0||p.x>W)p.vx*=-1;
+    if(p.y<0||p.y>H)p.vy*=-1;
+    const a=.3+p.s*.5;
+    ctx.fillStyle=`hsla(${p.hue},85%,70%,${a})`;
+    ctx.beginPath();ctx.arc(p.x,p.y,1+p.s*1.6,0,7);ctx.fill();
+  }
+  // bond lines
+  ctx.lineWidth=.6;
+  for(let i=0;i<ions.length;i+=3){
+    const a=ions[i],b=ions[(i+1)%ions.length];
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    if(d<80){
+      ctx.strokeStyle=`rgba(167,139,250,${(1-d/80)*.25})`;
+      ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();
+    }
+  }
+})(0);
+</script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>52 — Aurora Type</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:15px/1.7 Georgia,serif}
+.wrap{max-width:720px;margin:0 auto;padding:3rem 1.5rem 4rem;text-align:center}
+h1{font-size:clamp(1.6rem,4.4vw,2.5rem);letter-spacing:.03em;margin-bottom:.5rem}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--muted);margin-bottom:2.4rem;font-size:.9rem;font-style:italic}
+.poem{font-size:clamp(1.1rem,3vw,1.4rem);line-height:2.2;min-height:16em;text-align:left;max-width:520px;margin:0 auto 2.4rem;white-space:pre-wrap}
+.poem span{opacity:0;animation:appear .01s forwards}
+@keyframes appear{to{opacity:1}}
+.poem .space{display:inline}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap;margin-bottom:1.8rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.85rem;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#060312;border-color:var(--violet)}
+.meta{color:var(--muted);font-size:.74rem;letter-spacing:.1em}
+.meta b{color:var(--cyan)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Aurora <em>Type</em></h1>
+<p class="sub">a poem types itself, word by word, like weather</p>
+<div class="poem" id="poem"></div>
+<div class="controls">
+  <button data-sp="slow">slow</button>
+  <button data-sp="med" class="active">medium</button>
+  <button data-sp="fast">fast</button>
+  <button data-sp="burst">burst</button>
+</div>
+<div class="meta">current: <b id="meta">medium</b></div>
+</div>
+<script>
+const POEMS=[
+ 'the night folds itself\naround the streetlights\nlike a letter\nthat never needed\nto be sent',
+ 'violet hums\nin the wires\nof the sleeping city\nand the city dreams\nin voltage',
+ 'lightning is\nthe sky remembering\nit is alive\nand then forgetting\nall over again',
+ 'somewhere a lamp\nis trying to spell\nyour name\nin morse\nwith its flicker',
+ 'the aurora leans\ntoward the poles\nthe way a question\nleans toward\nan answer'
+];
+const poem=document.getElementById('poem'),meta=document.getElementById('meta');
+const SPEED={slow:90,med:40,fast:14,burst:5};
+let sp='med',timer=null;
+document.querySelectorAll('button[data-sp]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');sp=b.dataset.sp;meta.textContent=b.textContent;
+}));
+function type(){
+  clearTimeout(timer);
+  const text=POEMS[Math.floor(Math.random()*POEMS.length)];
+  poem.innerHTML='';
+  let i=0;
+  function step(){
+    if(i<text.length){
+      const c=text[i];
+      const el=document.createElement('span');
+      el.textContent=c==='\n'?'':c;
+      if(c==='\n')el.innerHTML='<br>';
+      el.style.animation=`appear .01s ${Math.random()*.2}s forwards`;
+      poem.appendChild(el);
+      i++;
+      timer=setTimeout(step,SPEED[sp]*(Math.random()<.15?6:1));
+    }
+  }
+  step();
+}
+type();
+</script>
+</body>
+</html>

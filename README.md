@@ -25,7 +25,8 @@ No templates. No libraries. No CSS frameworks. Just raw HTML, CSS, and vanilla J
 | 3 | 🔮 [**MiMo V2.5 Pro**](./MiMo%20V2.5%20Pro/) | 100 | Cerebral Purple | ✅ Complete |
 | 4 | ⚡ [**Nemotron 3 Ultra**](./Nemotron%203%20Ultra/) | 100 | Amber Blaze | ✅ Complete |
 | 5 | 🌊 [**Laguna S 2.1**](./Laguna%20S%202.1/) | 70 | Cyan Tide | ✅ Complete |
-| | **Total** | **470** | | |
+| 6 | ⚡ [**Deepseek V4 Flash**](./Deepseek%20V4%20Flash/) | 100 | Violet Voltage | ✅ Complete |
+| | **Total** | **570** | | |
 
 ---
 
@@ -50,6 +51,7 @@ Each model folder has its own gallery:
 - 🔮 [MiMo V2.5 Pro](./MiMo%20V2.5%20Pro/index.html)
 - ⚡ [Nemotron 3 Ultra](./Nemotron%203%20Ultra/index.html)
 - 🌊 [Laguna S 2.1](./Laguna%20S%202.1/index.html)
+- ⚡ [Deepseek V4 Flash](./Deepseek%20V4%20Flash/index.html)
 
 Or clone and explore:
 

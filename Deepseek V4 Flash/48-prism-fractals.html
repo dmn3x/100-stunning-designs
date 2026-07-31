@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>48 — Prism Fractals</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e2dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PRISM <span>FRACTALS</span></div>
+<div class="ui sub">recursion in violet · scroll to zoom the crystal</div>
+<div class="ui hint"><b>click</b> — new seed · <b>scroll</b> — depth</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+let seed={x:0,y:0},depth=5,hue=265;
+function setSeed(e){
+  const x=e.clientX||W/2,y=e.clientY||H/2;
+  seed={x:x-W/2,y:y-H/2};
+}
+addEventListener('click',e=>{setSeed(e);hue=250+Math.random()*60});
+addEventListener('touchstart',e=>{setSeed(e.touches[0]);hue=250+Math.random()*60});
+addEventListener('wheel',e=>{depth=Math.max(2,Math.min(9,depth+Math.sign(e.deltaY)));e.preventDefault()},{passive:false});
+function crystal(cx,cy,size,rot,level,ph){
+  if(level<=0||size<1.5)return;
+  const sides=6;
+  ctx.beginPath();
+  for(let i=0;i<sides;i++){
+    const a=rot+i*Math.PI*2/sides;
+    const x=cx+Math.cos(a)*size,y=cy+Math.sin(a)*size;
+    i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.closePath();
+  ctx.fillStyle=`hsla(${hue+ph},90%,${55+level*6}%,${.05+level*.02})`;
+  ctx.strokeStyle=`hsla(${hue+ph},90%,75%,${.1+level*.03})`;
+  ctx.lineWidth=Math.max(.5,level*.5);
+  ctx.fill();ctx.stroke();
+  const ns=size*.42;
+  for(let i=0;i<sides;i++){
+    const a=rot+i*Math.PI*2/sides;
+    crystal(cx+Math.cos(a)*size*1.1,cy+Math.sin(a)*size*1.1,ns,rot+a*.5,level-1,ph+14);
+  }
+}
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,3,14,.16)';ctx.fillRect(0,0,W,H);
+  ctx.save();
+  ctx.translate(W/2,H/2);
+  ctx.rotate(performance.now()*.0002);
+  crystal(seed.x,seed.y,Math.min(W,H)*.22,performance.now()*.00015,depth,0);
+  ctx.restore();
+})(0);
+</script>
+</body>
+</html>

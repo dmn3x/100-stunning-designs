@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>58 — Crystal Synth</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:760px;margin:0 auto;padding:2.4rem 1.5rem 3rem;text-align:center}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em;margin-bottom:.4rem}
+h1 em{font-style:normal;background:linear-gradient(90deg,var(--violet),var(--pink),var(--cyan));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sub{color:var(--muted);margin-bottom:2rem;font-size:.8rem}
+.keys{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-bottom:1.8rem;perspective:600px}
+.key{width:52px;height:150px;border-radius:10px;background:linear-gradient(to bottom,rgba(167,139,250,.25),rgba(20,10,40,.9));border:1px solid rgba(167,139,250,.5);cursor:pointer;transition:all .08s;position:relative;box-shadow:0 6px 0 rgba(0,0,0,.4)}
+.key:hover{background:linear-gradient(to bottom,rgba(167,139,250,.4),rgba(30,15,55,.9))}
+.key:active,.key.lit{transform:translateY(5px);box-shadow:0 1px 0 rgba(0,0,0,.4);background:linear-gradient(to bottom,var(--cyan),rgba(20,10,40,.9));border-color:var(--cyan)}
+.key .note{position:absolute;bottom:.5rem;left:50%;transform:translateX(-50%);font-size:.66rem;color:var(--muted)}
+.controls{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.6rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.6rem 1.2rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#070312;border-color:var(--violet)}
+.waveform{height:90px;background:rgba(0,0,0,.3);border:1px solid rgba(167,139,250,.2);border-radius:.8rem;margin-bottom:1.2rem;position:relative;overflow:hidden}
+.waveform canvas{display:block;width:100%;height:100%}
+.foot{font-size:.66rem;color:var(--muted);letter-spacing:.1em}
+.foot b{color:var(--pink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>CRYSTAL <em>SYNTH</em></h1>
+<p class="sub">play the glass keyboard — click or press A–L</p>
+<div class="keys" id="keys"></div>
+<div class="controls">
+  <button data-wav="sine" class="active">∿ sine</button>
+  <button data-wav="triangle">△ triangle</button>
+  <button data-wav="square">⊓ square</button>
+  <button data-wav="saw">⤒ saw</button>
+</div>
+<div class="waveform"><canvas id="wf"></canvas></div>
+<div class="foot">WebAudio · no samples, just <b>voltage</b></div>
+</div>
+<script>
+const NOTES=['C4','D4','E4','F4','G4','A4','B4','C5'];
+const FREQ={C4:261.63,D4:293.66,E4:329.63,F4:349.23,G4:392,A4:440,B4:493.88,C5:523.25};
+const keysEl=document.getElementById('keys');
+let waveType='sine';
+let actx=null;
+function ac(){
+  if(!actx)actx=new (window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==='suspended')actx.resume();
+  return actx;
+}
+function play(note){
+  const a=ac();
+  const t=a.currentTime;
+  const o=a.createOscillator();
+  const g=a.createGain();
+  o.type=waveType;
+  o.frequency.value=FREQ[note];
+  g.gain.setValueAtTime(0.001,t);
+  g.gain.exponentialRampToValueAtTime(.18,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+1.4);
+  o.connect(g);g.connect(a.destination);
+  o.start(t);o.stop(t+1.5);
+  const k=keysEl.querySelector(`[data-note="${note}"]`);
+  if(k){k.classList.add('lit');setTimeout(()=>k.classList.remove('lit'),120)}
+}
+keysEl.innerHTML=NOTES.map(n=>`<div class="key" data-note="${n}" tabindex="0"><span class="note">${n.replace('4','')}</span></div>`).join('');
+keysEl.addEventListener('mousedown',e=>{const k=e.target.closest('.key');if(k)play(k.dataset.note)});
+keysEl.addEventListener('keydown',e=>{const k=e.target.closest('.key');if(k&&(e.key==='Enter'||e.key===' '))play(k.dataset.note)});
+addEventListener('keydown',e=>{
+  const map={KeyA:'C4',KeyS:'D4',KeyD:'E4',KeyF:'F4',KeyG:'G4',KeyH:'A4',KeyJ:'B4',KeyK:'C5'};
+  if(map[e.code])play(map[e.code]);
+});
+document.querySelectorAll('button[data-wav]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');waveType=b.dataset.wav;
+}));
+// waveform viz
+const wf=document.getElementById('wf'),wctx=wf.getContext('2d');
+const DPR=devicePixelRatio||1;
+wf.width=wf.offsetWidth*DPR;wf.height=wf.offsetHeight*DPR;wctx.scale(DPR,DPR);
+(function tick(){
+  requestAnimationFrame(tick);
+  const W=wf.width,H=wf.height;
+  wctx.fillStyle='rgba(0,0,0,.25)';wctx.fillRect(0,0,W,H);
+  wctx.beginPath();
+  for(let x=0;x<W;x+=3){
+    const f=x/W*Math.PI*2*4;
+    let y=H/2;
+    if(waveType==='sine')y=H/2+Math.sin(f+performance.now()*.004)*H*.3;
+    if(waveType==='triangle')y=H/2+((f%(Math.PI*2))/Math.PI*2-1)*H*.3;
+    if(waveType==='square')y=H/2+Math.sign(Math.sin(f))*H*.3;
+    if(waveType==='saw')y=H/2+(((f+performance.now()*.004)%(Math.PI*2))/Math.PI*2-1)*H*.3;
+    x===0?wctx.moveTo(x,y):wctx.lineTo(x,y);
+  }
+  wctx.strokeStyle='rgba(167,139,250,.8)';wctx.lineWidth=2;wctx.stroke();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>20 — Frequency Garden</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf7;--muted:#5f5490;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:980px;margin:0 auto;padding:2rem 1.5rem 4rem}
+header{text-align:center;padding:2.4rem 0 1.8rem}
+h1{font-size:clamp(1.5rem,4vw,2.3rem);letter-spacing:.04em}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.6rem;font-size:.85rem}
+canvas{display:block;width:100%;height:300px;background:#0b0618;border:1px solid rgba(167,139,250,.25);border-radius:1rem;margin-bottom:1.4rem}
+.controls{display:flex;gap:1rem;flex-wrap:wrap;align-items:center;justify-content:center;margin-bottom:1.8rem}
+label{font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+input[type=range]{accent-color:var(--violet);width:160px}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.6rem 1.2rem;border-radius:99px;font:inherit;font-size:.78rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#0b0618;border-color:var(--violet)}
+.preset{display:flex;gap:.5rem;flex-wrap:wrap;justify-content:center}
+.readout{text-align:center;color:var(--muted);font-size:.8rem}
+.readout b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>Frequency <em>Garden</em></h1><p>each note grows a waveform — turn the dials and watch it bloom</p></header>
+<canvas id="c"></canvas>
+<div class="controls">
+  <label>freq <input type="range" id="freq" min="1" max="30" value="8"></label>
+  <label>amp <input type="range" id="amp" min="5" max="120" value="60"></label>
+  <label>warp <input type="range" id="warp" min="0" max="6" value="2" step=".1"></label>
+</div>
+<div class="preset">
+  <button data-p="sine" class="active">∿ sine</button>
+  <button data-p="square">⊓ square</button>
+  <button data-p="saw">⤒ saw</button>
+  <button data-p="noise">≋ noise</button>
+  <button data-p="pulse">◷ pulse</button>
+</div>
+<div class="readout">frequency <b id="fr">8.0 Hz</b> · harmonic <b id="ha">1</b></div>
+</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+const DPR=devicePixelRatio||1;
+const W=cv.offsetWidth,H=cv.offsetHeight;
+cv.width=W*DPR;cv.height=H*DPR;ctx.scale(DPR,DPR);
+const freq=document.getElementById('freq'),amp=document.getElementById('amp'),warp=document.getElementById('warp');
+let preset='sine';
+document.querySelectorAll('button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');preset=b.dataset.p;
+}));
+function wave(x,t,ph){
+  const f=freq.value/10;
+  const w=warp.value;
+  if(preset==='sine')return Math.sin(x*f+ph);
+  if(preset==='square')return Math.sign(Math.sin(x*f+ph));
+  if(preset==='saw')return (x*f+ph)%1*2-1;
+  if(preset==='noise')return (Math.random()*2-1)*.6;
+  if(preset==='pulse')return Math.sin(x*f+ph)>Math.cos(x*f*.5+ph)?1:-1;
+}
+(function tick(t){
+  requestAnimationFrame(tick);
+  const h=amp.value;
+  ctx.fillStyle='#0b0618';ctx.fillRect(0,0,W,H);
+  ctx.strokeStyle='rgba(167,139,250,.12)';ctx.lineWidth=1;
+  for(let i=1;i<5;i++){ctx.beginPath();ctx.moveTo(0,H*i/5);ctx.lineTo(W,H*i/5);ctx.stroke()}
+  ctx.beginPath();
+  const ph=t*.002;
+  for(let x=0;x<=W;x+=2){
+    const y=H/2-wave(x*.08,0,ph)*h;
+    x===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle='#a78bfa';ctx.lineWidth=2;
+  ctx.shadowColor='#a78bfa';ctx.shadowBlur=12;
+  ctx.stroke();ctx.shadowBlur=0;
+  // bloom particles along the wave
+  for(let i=0;i<8;i++){
+    const x=((t*.08+i*37)%W);
+    const y=H/2-wave(x*.08,0,ph)*h;
+    ctx.fillStyle=`hsla(${270+i*12},90%,75%,.7)`;
+    ctx.beginPath();ctx.arc(x,y+Math.sin(t*.01+i)*4,2.5,0,7);ctx.fill();
+  }
+  document.getElementById('fr').textContent=(freq.value/10).toFixed(1)+' Hz';
+  document.getElementById('ha').textContent=(1+Math.floor(warp.value)).toString();
+})(0);
+</script>
+</body>
+</html>

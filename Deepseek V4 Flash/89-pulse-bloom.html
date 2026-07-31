@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>89 — Pulse Bloom</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--gold);text-shadow:0 0 16px rgba(251,191,36,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">PULSE <span>BLOOM</span></div>
+<div class="ui sub">every heartbeat opens a flower</div>
+<div class="ui hint"><b>click</b> — send a pulse</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const cx=()=>W/2,cy=()=>H/2;
+let t=0,pulse=0;
+addEventListener('click',()=>pulse=1);
+addEventListener('touchstart',()=>pulse=1);
+(function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  ctx.fillStyle='rgba(5,3,14,.25)';ctx.fillRect(0,0,W,H);
+  if(pulse>0)pulse-=.01;
+  const x=cx(),y=cy();
+  // pulse rings
+  if(pulse>0){
+    ctx.strokeStyle=`rgba(251,191,36,${pulse*.6})`;
+    ctx.lineWidth=2;
+    ctx.beginPath();ctx.arc(x,y,(1-pulse)*160,0,7);ctx.stroke();
+    ctx.beginPath();ctx.arc(x,y,(1-pulse)*220,0,7);ctx.stroke();
+  }
+  // petals
+  const petals=7;
+  for(let p=0;p<petals;p++){
+    const a=(p/petals)*Math.PI*2+t*.15;
+    const len=(30+pulse*60)*(1+Math.sin(t*2+p)*.15);
+    ctx.save();ctx.translate(x,y);ctx.rotate(a);
+    ctx.strokeStyle=`hsla(${270+p*10},90%,70%,.6)`;
+    ctx.lineWidth=1.8;
+    ctx.beginPath();ctx.moveTo(0,0);
+    ctx.quadraticCurveTo(len*.45,-10,len,0);
+    ctx.stroke();
+    ctx.fillStyle=`hsla(${270+p*10},90%,72%,${.4+pulse*.4})`;
+    ctx.beginPath();ctx.ellipse(len*.8,0,len*.3,len*.18,0,0,7);ctx.fill();
+    ctx.restore();
+  }
+  // heart core
+  const beat=Math.abs(Math.sin(t*3))*3;
+  ctx.fillStyle='rgba(255,255,255,.95)';
+  ctx.shadowColor='#fbbf24';ctx.shadowBlur=16;
+  ctx.beginPath();ctx.arc(x,y,6+beat+pulse*4,0,7);ctx.fill();
+  ctx.shadowBlur=0;
+})(0);
+</script>
+</body>
+</html>

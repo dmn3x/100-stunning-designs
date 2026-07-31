@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 — Violet Typewriter</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#12071f;--paper:#1a0d2e;--ink:#e9e0ff;--violet:#a78bfa;--faint:#5b4b85}
+html,body{height:100%;background:var(--bg);color:var(--ink);font-family:Georgia,'Times New Roman',serif}
+main{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+.paper{background:var(--paper);max-width:720px;width:100%;padding:clamp(2rem,6vw,4rem);border-radius:4px;box-shadow:0 0 60px rgba(139,92,246,.25),0 30px 60px rgba(0,0,0,.6);position:relative}
+.paper::before{content:'';position:absolute;inset:0;border-radius:4px;background:repeating-linear-gradient(transparent 0 27px,rgba(167,139,250,.07) 27px 28px);pointer-events:none}
+h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:400;margin-bottom:1.6rem;min-height:1.2em;color:var(--violet);text-shadow:0 0 22px rgba(139,92,246,.5)}
+p{font-size:1.05rem;line-height:2;color:var(--ink);min-height:8em}
+.caret{display:inline-block;width:8px;height:1.1em;background:var(--violet);vertical-align:text-bottom;animation:blink 1s steps(1) infinite;box-shadow:0 0 12px var(--violet)}
+@keyframes blink{50%{opacity:0}}
+.actions{display:flex;gap:1rem;margin-top:2.5rem}
+button{background:transparent;border:1px solid var(--faint);color:var(--violet);padding:.6rem 1.2rem;border-radius:99px;font-family:inherit;font-size:.85rem;letter-spacing:.08em;cursor:pointer;transition:all .25s}
+button:hover{background:rgba(139,92,246,.15);border-color:var(--violet);box-shadow:0 0 18px rgba(139,92,246,.4)}
+.note{margin-top:1.6rem;font-size:.75rem;color:var(--faint);letter-spacing:.05em}
+@media (prefers-reduced-motion:reduce){.caret{animation:none}}
+</style>
+</head>
+<body>
+<main>
+  <div class="paper">
+    <h1 id="head"></h1>
+    <p id="body"></p>
+    <div class="actions">
+      <button id="again">↺ Re-type</button>
+      <button id="skip">⏩ Reveal</button>
+    </div>
+    <div class="note">Violet Typewriter · every page types itself into being</div>
+  </div>
+</main>
+<script>
+const LINES=[
+  ["A Letter to the Dark","My dearest dark, you are not empty; you are only patient. Beneath your velvet surface the current waits, coiled like a sleeping serpent, humming in violet undertones. Strike the page and the night answers with light."],
+  ["On the Nature of Lightning","Each bolt is a question asked too quickly. It does not travel; it leaps, and in the leaping forgets the way home. So it is with us — brilliant, brief, and beautifully lost between one thought and the next."],
+  ["Field Notes, After Rain","The sky bruised to purple at the horizon. Every drop that fell carried a charge, and the ground drank lightning all night. By morning, the wires sang. I stood barefoot and listened to the voltage hum through the wet grass."]
+];
+const head=document.getElementById('head'),body=document.getElementById('body');
+let run=false;
+function typeInto(el,text,speed,cb){
+  el.textContent='';let i=0;
+  (function step(){
+    if(i<=text.length){
+      el.textContent=text.slice(0,i)+'<span class="caret"></span>';
+      i++;setTimeout(step, speed);
+    } else if(cb){cb()}
+  })();
+}
+function reveal(){
+  const [h,b]=LINES[Math.floor(Math.random()*LINES.length)];
+  run=true;
+  typeInto(head,h,90,()=>typeInto(body,b,18));
+}
+document.getElementById('again').addEventListener('click',()=>{if(!run)reveal()});
+document.getElementById('skip').addEventListener('click',()=>{
+  run=false;
+  const [h,b]=LINES[Math.floor(Math.random()*LINES.length)];
+  head.textContent=h;body.textContent=b;
+});
+reveal();
+</script>
+</body>
+</html>

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>68 — Violet Skyline</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--gold);text-shadow:0 0 16px rgba(251,191,36,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--pink)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VIOLET <span>SKYLINE</span></div>
+<div class="ui sub">dusk falls on the digital city</div>
+<div class="ui hint"><b>click</b> — toggle lights</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;build()}
+addEventListener('resize',resize);resize();
+let buildings=[],on=true;
+function build(){
+  buildings=[];
+  let x=0;
+  while(x<W){
+    const w=46+Math.random()*90;
+    const h=H*.25+Math.random()*H*.5;
+    const b={x,y:H-h,w,h,win:[]};
+    for(let i=0;i<Math.floor(w/13);i++)for(let j=0;j<Math.floor(h/16);j++){
+      if(Math.random()<.55)b.win.push({x:b.x+6+i*13,y:b.y+6+j*16,on:Math.random()<.45,hue:260+Math.random()*40});
+    }
+    buildings.push(b);x+=w+5;
+  }
+}
+addEventListener('click',()=>on=!on);
+(function tick(){
+  requestAnimationFrame(tick);
+  // dusk gradient
+  const g=ctx.createLinearGradient(0,0,0,H);
+  g.addColorStop(0,'#0d0720');
+  g.addColorStop(.45,'#3b0764');
+  g.addColorStop(.75,'#7c3aed');
+  g.addColorStop(1,'#f472b6');
+  ctx.fillStyle=g;ctx.fillRect(0,0,W,H);
+  // stars
+  ctx.fillStyle='rgba(255,255,255,.5)';
+  for(let i=0;i<40;i++){
+    ctx.fillRect((Math.sin(i*77.1)*43758.5453%1)*W,(Math.sin(i*31.7)*24621.13%1)*H*.5,1.4,1.4);
+  }
+  for(const b of buildings){
+    ctx.fillStyle='rgba(13,7,32,.92)';
+    ctx.fillRect(b.x,b.y,b.w,b.h);
+    for(const w of b.win){
+      if(!on)continue;
+      ctx.fillStyle=`hsla(${w.hue},90%,${w.on?72:20}%,${w.on?.85:.3})`;
+      ctx.fillRect(w.x,w.y,3.5,5);
+    }
+  }
+})(0);
+</script>
+</body>
+</html>

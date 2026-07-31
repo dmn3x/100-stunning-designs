@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>33 — Volt Board</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#080510;--fg:#e2dcf5;--muted:#5c5290;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24;--green:#34d399}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:960px;margin:0 auto;padding:2rem 1.5rem 3rem}
+header{text-align:center;padding:2rem 0 1.6rem}
+h1{font-size:clamp(1.4rem,3.8vw,2.2rem);letter-spacing:.04em}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.5rem;font-size:.8rem}
+.board{background:rgba(139,92,246,.04);border:1px solid rgba(167,139,250,.2);border-radius:1.2rem;padding:1.6rem;margin-bottom:1.6rem}
+.line{display:flex;align-items:center;gap:1rem;margin-bottom:1.2rem;flex-wrap:wrap}
+.line:last-child{margin-bottom:0}
+label{font-size:.68rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);min-width:110px}
+.track{flex:1;min-width:200px;height:16px;background:rgba(0,0,0,.35);border-radius:99px;position:relative;overflow:hidden;border:1px solid rgba(167,139,250,.15)}
+.fill{height:100%;border-radius:99px;background:linear-gradient(90deg,var(--violet),var(--cyan));transition:width .4s;position:relative}
+.fill::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;background:#fff;opacity:.6;animation:edge 1s ease-in-out infinite}
+@keyframes edge{50%{opacity:1}}
+.val{min-width:56px;text-align:right;font-size:.78rem;color:var(--cyan)}
+.led{width:14px;height:14px;border-radius:50%;background:#1a1230;border:1px solid rgba(167,139,250,.3);flex-shrink:0;transition:all .3s}
+.led.on{background:var(--green);box-shadow:0 0 12px var(--green)}
+.totals{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:1rem;margin-bottom:1.6rem}
+.total{background:rgba(139,92,246,.06);border:1px solid rgba(167,139,250,.18);border-radius:1rem;padding:1.1rem;text-align:center}
+.total .n{font-size:1.7rem;font-weight:900}
+.total .l{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-top:.3rem}
+.total.gold .n{color:var(--gold)}.total.green .n{color:var(--green)}.total.pink .n{color:#f472b6}
+.actions{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.65rem 1.3rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.danger{border-color:rgba(244,114,182,.5)}
+button.danger:hover{background:rgba(244,114,182,.2);box-shadow:0 0 14px rgba(244,114,182,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header><h1>VOLT <em>BOARD</em></h1><p>a living power grid — every breaker has a mood</p></header>
+<div class="board" id="board"></div>
+<div class="totals">
+  <div class="total"><div class="n" id="t-load">0%</div><div class="l">total load</div></div>
+  <div class="total gold"><div class="n" id="t-out">0</div><div class="l">channels</div></div>
+  <div class="total green"><div class="n" id="t-on">0</div><div class="l">energized</div></div>
+  <div class="total pink"><div class="n" id="t-flux">0</div><div class="l">flux</div></div>
+</div>
+<div class="actions">
+  <button id="rand">⚡ randomize</button>
+  <button id="surge">🌊 surge</button>
+  <button id="reset">↺ reset</button>
+</div>
+</div>
+<script>
+const board=document.getElementById('board');
+const NAMES=['core','edge','cache','relay','beacon','synth','quantum','echo','pulse','orbit'];
+const channels=[];
+for(let i=0;i<10;i++){
+  channels.push({name:NAMES[i],load:20+Math.random()*70,on:Math.random()<.7});
+}
+function render(){
+  board.innerHTML='';
+  channels.forEach((c,i)=>{
+    const row=document.createElement('div');
+    row.className='line';
+    row.innerHTML=`
+      <span class="led ${c.on?'on':''}"></span>
+      <label>${c.name}</label>
+      <div class="track"><div class="fill" style="width:${c.load}%"></div></div>
+      <div class="val">${Math.round(c.load)}%</div>
+    `;
+    row.querySelector('.track').addEventListener('click',()=>{
+      c.on=!c.on;render();
+    });
+    board.appendChild(row);
+  });
+  const on=channels.filter(c=>c.on);
+  document.getElementById('t-load').textContent=Math.round(on.reduce((s,c)=>s+c.load,0)/Math.max(1,on.length))+'%';
+  document.getElementById('t-out').textContent=channels.length;
+  document.getElementById('t-on').textContent=on.length;
+  document.getElementById('t-flux').textContent=(Math.random()*99+1).toFixed(0);
+}
+document.getElementById('rand').addEventListener('click',()=>{
+  channels.forEach(c=>{c.load=Math.random()*100;c.on=Math.random()<.7});
+  render();
+});
+document.getElementById('surge').addEventListener('click',()=>{
+  channels.forEach((c,i)=>{c.load=Math.min(100,c.load+(Math.random()<.4?25:-8));c.on=Math.random()<.9});
+  render();
+});
+document.getElementById('reset').addEventListener('click',()=>{
+  channels.forEach(c=>{c.load=20+Math.random()*70;c.on=Math.random()<.7});
+  render();
+});
+render();
+</script>
+</body>
+</html>

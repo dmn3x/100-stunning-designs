@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>42 — Vector Field</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#060312;--fg:#e0d8f2;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.1rem,2.8vw,1.5rem);font-weight:700;letter-spacing:.16em;text-transform:uppercase}
+.title span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{top:3.1rem;left:1.4rem;font-size:.64rem;letter-spacing:.3em;text-transform:uppercase;color:var(--muted)}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+.hint b{color:var(--cyan)}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.6rem;left:.9rem}.hint{display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title">VECTOR <span>FIELD</span></div>
+<div class="ui sub">the wind of the invisible · cursor bends the flow</div>
+<div class="ui hint"><b>click</b> — toggle vortices · <b>drag</b> — stir the field</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+const STEP=34;
+const vortices=[];
+let mx=W/2,my=H/2,stir=false;
+addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
+addEventListener('mousedown',()=>stir=true);
+addEventListener('mouseup',()=>stir=false);
+addEventListener('click',e=>vortices.push({x:e.clientX,y:e.clientY,strength:(Math.random()<.5?1:-1)*2.2}));
+addEventListener('touchmove',e=>{mx=e.touches[0].clientX;my=e.touches[0].clientY});
+addEventListener('touchstart',e=>vortices.push({x:e.touches[0].clientX,y:e.touches[0].clientY,strength:(Math.random()<.5?1:-1)*2.2}));
+function field(x,y){
+  let vx=Math.sin(y*.006)*1.2,vy=Math.cos(x*.006)*1.2;
+  const dx=mx-x,dy=my-y,d=Math.hypot(dx,dy)+1;
+  if(stir){vx+=dx/d*2.5;vy+=dy/d*2.5}
+  for(const v of vortices){
+    const vx2=x-v.x,vy2=y-v.y,d2=Math.hypot(vx2,vy2)+1;
+    const f=v.strength*18/(d2*d2);
+    vx+=-vy2/d2*f;
+    vy+=vx2/d2*f;
+  }
+  return {vx,vy};
+}
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(6,3,18,.42)';ctx.fillRect(0,0,W,H);
+  ctx.lineWidth=1.6;
+  ctx.lineCap='round';
+  for(let x=STEP/2;x<W;x+=STEP){
+    for(let y=STEP/2;y<H;y+=STEP){
+      const f=field(x,y);
+      const len=Math.hypot(f.vx,f.vy);
+      const hue=265+Math.atan2(f.vy,f.vx)/Math.PI*40;
+      ctx.strokeStyle=`hsla(${hue},85%,65%,.6)`;
+      ctx.beginPath();
+      ctx.moveTo(x,y);
+      ctx.lineTo(x+f.vx*4,y+f.vy*4);
+      ctx.stroke();
+    }
+  }
+  for(const v of vortices){
+    ctx.strokeStyle=v.strength>0?'rgba(125,249,255,.5)':'rgba(244,114,182,.5)';
+    ctx.lineWidth=1;
+    ctx.beginPath();ctx.arc(v.x,v.y,22,0,7);ctx.stroke();
+    ctx.fillStyle=ctx.strokeStyle;
+    ctx.beginPath();ctx.arc(v.x,v.y,3.5,0,7);ctx.fill();
+  }
+  // particles riding the field
+  ctx.fillStyle='rgba(255,255,255,.7)';
+  for(let i=0;i<14;i++){
+    const x=((performance.now()*.03+i*97)%W);
+    const y=((performance.now()*.02+i*61)%H);
+    const f=field(x,y);
+    ctx.beginPath();ctx.arc(x+f.vx*6,y+f.vy*6,1.4,0,7);ctx.fill();
+  }
+})(0);
+</script>
+</body>
+</html>

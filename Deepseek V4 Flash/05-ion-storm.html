@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>05 — Ion Storm</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05020d;--fg:#ded6f5;--muted:#554a86;--violet:#9d7bff;--cyan:#7df9ff}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'Avenir Next',system-ui,sans-serif;overflow:hidden}
+canvas{display:block;position:fixed;inset:0}
+.ui{position:fixed;z-index:5;pointer-events:none}
+.title{top:1.4rem;left:1.4rem;font-size:clamp(1.2rem,3vw,1.7rem);font-weight:900;letter-spacing:-.02em}
+.title .ion{color:var(--cyan);text-shadow:0 0 20px rgba(125,249,255,.7)}
+.title .storm{color:var(--violet);text-shadow:0 0 20px rgba(157,123,255,.8)}
+.sub{top:3.2rem;left:1.4rem;font-size:.66rem;letter-spacing:.32em;text-transform:uppercase;color:var(--muted)}
+.stats{bottom:1.4rem;left:1.4rem;display:flex;gap:1.6rem;font-size:.66rem;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+.stats b{color:var(--violet);font-size:.85rem}
+.hint{bottom:1.4rem;right:1.4rem;font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);text-align:right}
+@media (max-width:600px){.title{top:.9rem;left:.9rem}.sub{top:2.7rem;left:.9rem}.stats{bottom:.8rem;left:.9rem}.hint{bottom:.8rem;right:.9rem;display:none}}
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="ui title"><span class="ion">ION</span> <span class="storm">STORM</span></div>
+<div class="ui sub">charged particle squall · drag to steer the wind</div>
+<div class="ui stats"><span>ions <b id="ic">0</b></span><span>wind x <b id="wx">0</b></span></div>
+<div class="ui hint">click to detonate a shockwave</div>
+<script>
+const cv=document.getElementById('c'),ctx=cv.getContext('2d');
+let W,H;
+const P=[];
+const DEPTH=90;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight}
+addEventListener('resize',resize);resize();
+function init(){
+  P.length=0;
+  for(let i=0;i<Math.min(340,Math.floor(W*H/4200));i++){
+    P.push({x:Math.random()*W,y:Math.random()*H,z:Math.random()*DEPTH,
+      vx:0,vy:0,hue:255+Math.random()*45,s:Math.random()});
+  }
+}
+init();
+let mx=W/2,my=H/2,px=mx,py=my,wind=0,shock=null;
+addEventListener('mousemove',e=>{px=mx;py=my;mx=e.clientX;my=e.clientY});
+addEventListener('touchmove',e=>{px=mx;py=my;mx=e.touches[0].clientX;my=e.touches[0].clientY});
+addEventListener('click',e=>shock={x:e.clientX,y:e.clientY,r:0,t:1});
+(function tick(){
+  requestAnimationFrame(tick);
+  ctx.fillStyle='rgba(5,2,13,.32)';ctx.fillRect(0,0,W,H);
+  wind=wind*.9+(mx-px)*.06;
+  for(const p of P){
+    const near=Math.hypot(mx-p.x,my-p.y)<90;
+    p.vx+=(Math.random()-.5)*1.4+(near?(mx-p.x)*.004:wind*.008)+Math.sin(p.z+p.x*.01)*.05;
+    p.vy+=(Math.random()-.5)*1.4+(near?(my-p.y)*.004:0)+Math.cos(p.z+p.y*.01)*.05;
+    p.vx*=.86;p.vy*=.86;
+    p.x+=p.vx;p.y+=p.vy;
+    const scale=1+p.z/DEPTH*2.2;
+    if(shock){const d=Math.hypot(shock.x-p.x,shock.y-p.y);if(d<shock.r+40&&shock.t>0){p.vx+=(p.x-shock.x)/Math.max(d,1)*4;p.vy+=(p.y-shock.y)/Math.max(d,1)*4}}
+    if(p.x<-20)p.x=W+20;if(p.x>W+20)p.x=-20;
+    if(p.y<-20)p.y=H+20;if(p.y>H+20)p.y=-20;
+    const a=.25+.55*p.z/DEPTH;
+    ctx.fillStyle=`hsla(${p.hue},90%,${55+p.s*30}%,${a})`;
+    ctx.beginPath();ctx.arc(p.x,p.y,1.2+scale*.9,0,7);ctx.fill();
+  }
+  if(shock){
+    shock.r+=9;shock.t-=.018;
+    ctx.strokeStyle=`rgba(125,249,255,${Math.max(shock.t,0)*.5})`;
+    ctx.lineWidth=2;ctx.beginPath();ctx.arc(shock.x,shock.y,shock.r,0,7);ctx.stroke();
+    if(shock.t<=0)shock=null;
+  }
+  document.getElementById('ic').textContent=P.length;
+  document.getElementById('wx').textContent=(wind*40|0);
+})(0);
+</script>
+</body>
+</html>

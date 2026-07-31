@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>72 — Crystal Type</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#05030e;--fg:#e4dcf5;--muted:#5a5090;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:15px/1.7 Georgia,serif}
+.wrap{max-width:680px;margin:0 auto;padding:3rem 1.5rem 4rem;text-align:center}
+h1{font-size:clamp(1.6rem,4.4vw,2.5rem);letter-spacing:.03em;margin-bottom:.5rem}
+h1 em{font-style:normal;color:var(--violet);text-shadow:0 0 22px rgba(167,139,250,.7)}
+.sub{color:var(--muted);margin-bottom:2.4rem;font-size:.9rem;font-style:italic}
+.lines{font-size:clamp(1.15rem,3vw,1.45rem);line-height:2.2;min-height:14em;text-align:left;max-width:520px;margin:0 auto 2.4rem}
+.lines .ln{opacity:0;transform:translateY(10px);transition:all .5s}
+.lines .ln.show{opacity:1;transform:none}
+.lines .ln.hot{color:var(--pink)}
+.controls{display:flex;justify-content:center;gap:.8rem;flex-wrap:wrap}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.85rem;letter-spacing:.04em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>Crystal <em>Type</em></h1>
+<p class="sub">lines crystallize one by one</p>
+<div class="lines" id="lines"></div>
+<div class="controls"><button id="again">⟳ Recrystallize</button></div>
+</div>
+<script>
+const POEMS=[
+ ['The crystal does not rush.','It adds one plane at a time,','until the light has somewhere','to land and call it home.'],
+ ['Each facet is a decision','made slowly, under pressure,','until the whole stone','becomes a mirror for the sun.'],
+ ['I am building myself','the way minerals build:','patient, faceted,','and full of borrowed light.'],
+ ['The garden grows in silence.','The crystals answer','only to the dark','and to the hands that wait.']
+];
+const lines=document.getElementById('lines');
+function build(){
+  lines.innerHTML='';
+  const poem=POEMS[Math.floor(Math.random()*POEMS.length)];
+  poem.forEach((l,i)=>{
+    const el=document.createElement('div');
+    el.className='ln'+(i===1?' hot':'');
+    el.textContent=l;
+    lines.appendChild(el);
+    setTimeout(()=>el.classList.add('show'),i*700);
+  });
+}
+document.getElementById('again').addEventListener('click',build);
+build();
+</script>
+</body>
+</html>

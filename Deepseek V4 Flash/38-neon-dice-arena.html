@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>38 — Neon Dice Arena</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0416;--fg:#e4dcf5;--muted:#5d5390;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace}
+.wrap{max-width:760px;margin:0 auto;padding:2.4rem 1.5rem 3rem;text-align:center}
+h1{font-size:clamp(1.4rem,3.8vw,2.1rem);letter-spacing:.06em;margin-bottom:.5rem}
+h1 span{color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+.sub{color:var(--muted);font-size:.82rem;margin-bottom:2rem}
+.dice{display:flex;justify-content:center;gap:1.4rem;margin-bottom:1.6rem}
+.die{width:88px;height:88px;border-radius:16px;background:linear-gradient(145deg,rgba(139,92,246,.3),rgba(10,4,22,.9));border:1px solid rgba(167,139,250,.5);display:flex;align-items:center;justify-content:center;font-size:2.2rem;font-weight:900;color:#fff;text-shadow:0 0 20px rgba(167,139,250,.8);box-shadow:0 0 30px rgba(139,92,246,.15);transition:all .3s}
+.die.rolling{animation:roll .6s ease-in-out}
+@keyframes roll{0%,100%{transform:rotate(0)}25%{transform:rotate(12deg) translateY(-6px)}75%{transform:rotate(-12deg) translateY(-4px)}}
+.die.win{border-color:var(--cyan);box-shadow:0 0 34px rgba(125,249,255,.4)}
+.result{font-size:clamp(1.6rem,5vw,2.6rem);font-weight:900;min-height:1.6em;margin-bottom:1.2rem}
+.result .total{background:linear-gradient(90deg,var(--violet),var(--pink));-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.history{display:flex;justify-content:center;gap:.4rem;flex-wrap:wrap;margin-bottom:1.8rem;min-height:2em}
+.history .h{font-size:.72rem;padding:.3rem .6rem;border-radius:99px;background:rgba(167,139,250,.1);border:1px solid rgba(167,139,250,.25);color:var(--muted)}
+.history .h.hot{color:var(--cyan);border-color:var(--cyan)}
+.controls{display:flex;gap:.8rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.4rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.5rem;border-radius:99px;font:inherit;font-size:.8rem;letter-spacing:.08em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 16px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#0a0416;border-color:var(--violet)}
+.stats{display:flex;justify-content:center;gap:2rem;color:var(--muted);font-size:.72rem}
+.stats b{color:var(--gold)}
+.foot{margin-top:2.4rem;font-size:.64rem;color:var(--muted);letter-spacing:.12em}
+</style>
+</head>
+<body>
+<div class="wrap">
+<h1>NEON <span>DICE ARENA</span></h1>
+<div class="sub">roll the cubes of fate</div>
+<div class="dice" id="dice">
+  <div class="die" id="d1">6</div>
+  <div class="die" id="d2">6</div>
+</div>
+<div class="result">total <span class="total" id="total">12</span></div>
+<div class="history" id="history"></div>
+<div class="controls">
+  <button id="roll" class="active">⚄ Roll</button>
+  <button data-mode="lucky">🍀 lucky</button>
+  <button data-mode="double">⿻ double</button>
+  <button data-mode="chaos">🌀 chaos</button>
+</div>
+<div class="stats"><span>rolls <b id="rc">0</b></span><span>sevens <b id="sc">0</b></span><span>best <b id="bc">0</b></span></div>
+<div class="foot">the dice remember everything</div>
+</div>
+<script>
+const d1=document.getElementById('d1'),d2=document.getElementById('d2'),total=document.getElementById('total');
+const history=document.getElementById('history');
+let mode='lucky',rolls=0,sevens=0,best=0;
+document.querySelectorAll('button[data-mode]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');mode=b.dataset.mode;
+}));
+function roll(){
+  const d1El=document.getElementById('d1'),d2El=document.getElementById('d2');
+  d1El.classList.remove('rolling');d2El.classList.remove('rolling');
+  void d1El.offsetWidth;void d2El.offsetWidth;
+  d1El.classList.add('rolling');d2El.classList.add('rolling');
+  let a,b;
+  if(mode==='lucky'){a=4+Math.floor(Math.random()*3);b=4+Math.floor(Math.random()*3)}
+  else if(mode==='double'){a=Math.floor(Math.random()*6)+1;b=a}
+  else if(mode==='chaos'){a=Math.floor(Math.random()*6)+1;b=Math.floor(Math.random()*6)+1}
+  else{a=Math.floor(Math.random()*6)+1;b=Math.floor(Math.random()*6)+1}
+  setTimeout(()=>{
+    d1El.textContent=a;d2El.textContent=b;
+    const t=a+b;
+    total.textContent=t;
+    d1El.classList.toggle('win',t===7);d2El.classList.toggle('win',t===7);
+    rolls++;if(t===7)sevens++;best=Math.max(best,t);
+    document.getElementById('rc').textContent=rolls;
+    document.getElementById('sc').textContent=sevens;
+    document.getElementById('bc').textContent=best;
+    const h=document.createElement('span');
+    h.className='h'+(t===7?' hot':'');
+    h.textContent=t;
+    history.prepend(h);
+    while(history.children.length>10)history.removeChild(history.lastChild);
+  },550);
+}
+document.getElementById('roll').addEventListener('click',roll);
+</script>
+</body>
+</html>

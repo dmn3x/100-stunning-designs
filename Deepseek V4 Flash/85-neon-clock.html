@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>85 — Neon Clock</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e4dcf5;--muted:#5d5290;--violet:#a78bfa;--cyan:#7df9ff;--pink:#f472b6}
+html,body{height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;overflow:hidden;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2rem}
+.clock{display:flex;align-items:center;gap:.4rem;font-weight:900;letter-spacing:.02em;user-select:none}
+.seg{position:relative;width:min(110px,24vw);aspect-ratio:7/9;background:rgba(20,10,40,.5);border-radius:.6rem;box-shadow:inset 0 0 20px rgba(0,0,0,.5);overflow:hidden}
+.colon{font-size:clamp(2rem,8vw,4rem);color:var(--violet);text-shadow:0 0 20px rgba(167,139,250,.7);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:.2}}
+.seg .lit{position:absolute;background:var(--cyan);box-shadow:0 0 16px var(--cyan),0 0 40px rgba(125,249,255,.4);opacity:1}
+.seg .lit.dim{opacity:.08;box-shadow:none;background:rgba(125,249,255,.25)}
+.bar{position:absolute;left:50%;transform:translateX(-50%)}
+.bar.h{top:6%;width:70%;height:10%;border-radius:3px}
+.bar.hl{top:6%;left:8%;width:34%;height:10%;border-radius:3px}
+.bar.hr{top:6%;right:8%;width:34%;height:10%;border-radius:3px}
+.bar.v{width:10%;height:38%}
+.bar.v.tl{left:8%;top:18%}
+.bar.v.tr{right:8%;top:18%}
+.bar.v.bl{left:8%;bottom:18%}
+.bar.v.br{right:8%;bottom:18%}
+.bar.b{bottom:6%;width:70%;height:10%;border-radius:3px}
+.title{font-size:clamp(1.1rem,3vw,1.5rem);letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}
+.title b{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.date{font-size:.7rem;letter-spacing:.24em;text-transform:uppercase;color:var(--muted)}
+@media (max-width:600px){.clock{gap:.2rem}}
+</style>
+</head>
+<body>
+<div class="title">NEON <b>CLOCK</b></div>
+<div class="clock" id="clock"></div>
+<div class="date" id="date">—</div>
+<script>
+const clock=document.getElementById('clock');
+const SEGS={
+ 0:['h','hl','hr','tl','tr','bl','br','b'],
+ 1:['hr','br'],
+ 2:['h','hr','b','bl','tl'],
+ 3:['h','hr','b','br','tr'],
+ 4:['hl','hr','b','tr'],
+ 5:['h','tl','b','br','tr'],
+ 6:['h','tl','b','bl','br','tr'],
+ 7:['h','hr','br'],
+ 8:['h','hl','hr','tl','tr','bl','br','b'],
+ 9:['h','hl','hr','tr','br','b']
+};
+function seg(n,cls){
+  return `<div class="seg">${['h','hl','hr','tl','tr','bl','br','b'].map(s=>`<div class="bar ${s} ${SEGS[n].includes(s)?cls:'dim'}"></div>`).join('')}</div>`;
+}
+function render(){
+  const now=new Date();
+  const h=String(now.getHours()).padStart(2,'0');
+  const m=String(now.getMinutes()).padStart(2,'0');
+  const s=String(now.getSeconds()).padStart(2,'0');
+  clock.innerHTML=seg(+h[0],'lit')+seg(+h[1],'lit')+'<div class="colon">:</div>'+seg(+m[0],'lit')+seg(+m[1],'lit')+'<div class="colon">:</div>'+seg(+s[0],'lit')+seg(+s[1],'lit');
+  document.getElementById('date').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long'});
+}
+setInterval(render,1000);render();
+</script>
+</body>
+</html>

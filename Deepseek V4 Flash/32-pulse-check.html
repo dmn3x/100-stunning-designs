@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>32 — Pulse Check</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#0a0513;--fg:#e6def7;--muted:#5f5490;--violet:#a78bfa;--pink:#f472b6;--cyan:#7df9ff}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:13px/1.5 'SF Mono',Consolas,monospace;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+.app{width:min(480px,94vw);background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.22);border-radius:1.6rem;padding:2.2rem;text-align:center}
+h1{font-size:clamp(1.2rem,3.4vw,1.6rem);letter-spacing:.12em;text-transform:uppercase;margin-bottom:.4rem}
+h1 span{color:var(--violet);text-shadow:0 0 16px rgba(167,139,250,.6)}
+.sub{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin-bottom:1.8rem}
+.wave{height:120px;margin-bottom:1.4rem;position:relative;overflow:hidden;border-radius:.8rem;background:rgba(0,0,0,.3)}
+.wave canvas{display:block;width:100%;height:100%}
+.readout{display:flex;align-items:baseline;justify-content:center;gap:.6rem;margin-bottom:.4rem}
+.readout .bpm{font-size:clamp(2.6rem,8vw,3.8rem);font-weight:900;color:var(--fg)}
+.readout .unit{font-size:.7rem;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.status{font-size:.72rem;letter-spacing:.1em;color:var(--muted);margin-bottom:1.6rem}
+.status b{padding:.2rem .6rem;border-radius:99px}
+.status .ok{color:var(--cyan);background:rgba(125,249,255,.1)}
+.status .warn{color:var(--gold,#fbbf24);background:rgba(251,191,36,.1)}
+.status .bad{color:var(--pink);background:rgba(244,114,182,.1)}
+.controls{display:flex;gap:.8rem;justify-content:center;margin-bottom:1.4rem}
+button{background:rgba(167,139,250,.12);border:1px solid rgba(167,139,250,.4);color:var(--fg);padding:.7rem 1.4rem;border-radius:99px;font:inherit;font-size:.76rem;letter-spacing:.1em;cursor:pointer;transition:all .2s}
+button:hover{background:rgba(167,139,250,.25);box-shadow:0 0 14px rgba(167,139,250,.35)}
+button.active{background:var(--violet);color:#0a0513;border-color:var(--violet)}
+.foot{font-size:.66rem;color:var(--muted);letter-spacing:.06em}
+.foot b{color:var(--pink)}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>PULSE <span>CHECK</span></h1>
+  <div class="sub">feel the rhythm of your day</div>
+  <div class="wave"><canvas id="w"></canvas></div>
+  <div class="readout"><div class="bpm" id="bpm">--</div><div class="unit">bpm</div></div>
+  <div class="status"><b id="state" class="ok">calm</b></div>
+  <div class="controls">
+    <button data-a="rest" class="active">🌙 rest</button>
+    <button data-a="focus">🎯 focus</button>
+    <button data-a="run">🏃 run</button>
+    <button data-a="panic">😱 panic</button>
+  </div>
+  <div class="foot">simulated · <b>not</b> medical advice</div>
+</div>
+<script>
+const cv=document.getElementById('w'),ctx=cv.getContext('2d');
+const DPR=devicePixelRatio||1;
+const W=cv.offsetWidth,H=cv.offsetHeight;
+cv.width=W*DPR;cv.height=H*DPR;ctx.scale(DPR,DPR);
+const bpmEl=document.getElementById('bpm'),state=document.getElementById('state');
+const ACTIVITY={rest:{bpm:58,v:2},focus:{bpm:78,v:5},run:{bpm:132,v:10},panic:{bpm:168,v:16}};
+let act='rest',t=0,cur=58,hist=[];
+document.querySelectorAll('button[data-a]').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelector('button.active')?.classList.remove('active');
+  b.classList.add('active');act=b.dataset.a;
+}));
+function tick(){
+  requestAnimationFrame(tick);
+  t+=.02;
+  const a=ACTIVITY[act];
+  cur+=(a.bpm-cur)*.01;
+  const beat=Math.sin(t*(cur/60)*Math.PI*2);
+  const noise=(Math.random()-.5)*a.v;
+  const val=beat*22+noise;
+  hist.push(val);
+  if(hist.length>W)hist.shift();
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='rgba(167,139,250,.25)';ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,H/2);ctx.lineTo(W,H/2);ctx.stroke();
+  ctx.beginPath();
+  hist.forEach((v,i)=>{const x=i;const y=H/2+v*(H/3)/22;i===0?ctx.moveTo(x,y):ctx.lineTo(x,y)});
+  ctx.strokeStyle=cur>120?'#f472b6':cur>90?'#fbbf24':'#7df9ff';
+  ctx.lineWidth=2.5;ctx.shadowColor=ctx.strokeStyle;ctx.shadowBlur=10;ctx.stroke();ctx.shadowBlur=0;
+  bpmEl.textContent=Math.round(cur);
+  const s=cur>140?'bad':cur>95?'warn':'ok';
+  state.className=s;
+  state.textContent=cur>140?'overdrive':cur>95?'elevated':'calm';
+}
+tick();
+</script>
+</body>
+</html>

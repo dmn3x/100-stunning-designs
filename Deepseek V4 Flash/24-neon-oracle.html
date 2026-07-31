@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>24 — Neon Oracle</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#08040f;--fg:#e6ddf5;--muted:#5d5290;--violet:#a78bfa;--pink:#f472b6;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:16px/1.7 Georgia,serif;display:flex;align-items:center;justify-content:center;padding:1.4rem}
+.card{max-width:560px;width:100%;background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.25);border-radius:1.6rem;padding:clamp(1.8rem,5vw,3rem);text-align:center;position:relative;overflow:hidden;box-shadow:0 0 60px rgba(139,92,246,.12)}
+.card::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% -10%,rgba(167,139,250,.18),transparent 60%);pointer-events:none}
+.orb{width:74px;height:74px;border-radius:50%;margin:0 auto 1.6rem;background:radial-gradient(circle at 35% 30%,#fff,#c4b5fd 35%,#7c3aed 70%,#2e1065);box-shadow:0 0 50px rgba(139,92,246,.6),inset 0 0 24px rgba(0,0,0,.4);animation:float 4s ease-in-out infinite}
+@keyframes float{50%{transform:translateY(-8px)}}
+h1{font-size:clamp(1.3rem,3.4vw,1.8rem);letter-spacing:.06em;margin-bottom:1.6rem}
+h1 span{color:var(--violet);text-shadow:0 0 18px rgba(167,139,250,.6)}
+.answer{font-size:clamp(1.1rem,2.8vw,1.4rem);font-style:italic;line-height:1.7;min-height:6em;color:var(--fg);margin-bottom:1.6rem;transition:opacity .4s}
+.answer.fade{opacity:0}
+.tags{display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap;margin-bottom:1.8rem}
+.tag{font-size:.66rem;letter-spacing:.14em;text-transform:uppercase;padding:.35rem .8rem;border-radius:99px;background:rgba(167,139,250,.12);color:#c4b5fd;border:1px solid rgba(167,139,250,.3);cursor:pointer;transition:all .2s}
+.tag:hover{background:rgba(167,139,250,.25);transform:translateY(-1px)}
+.tag.active{background:var(--violet);color:#08040f;border-color:var(--violet)}
+button{background:linear-gradient(135deg,rgba(167,139,250,.2),rgba(244,114,182,.2));border:1px solid rgba(167,139,250,.5);color:var(--fg);padding:.8rem 2rem;border-radius:99px;font:inherit;font-size:.95rem;letter-spacing:.04em;cursor:pointer;transition:all .25s}
+button:hover{box-shadow:0 0 24px rgba(167,139,250,.4);transform:translateY(-2px)}
+.foot{margin-top:1.8rem;font-size:.72rem;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.foot b{color:var(--gold)}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="orb"></div>
+  <h1>NEON <span>ORACLE</span></h1>
+  <div class="answer" id="answer">Ask the glass a question, then press the sigil.</div>
+  <div class="tags" id="tags">
+    <span class="tag" data-t="love">love</span>
+    <span class="tag" data-t="work">work</span>
+    <span class="tag" data-t="fortune">fortune</span>
+    <span class="tag" data-t="mystery">mystery</span>
+  </div>
+  <button id="ask">⟡ Consult the orb</button>
+  <div class="foot">the oracle speaks in <b>violet</b></div>
+</div>
+<script>
+const ORACLE={
+ love:['The heart you seek already knows your name; it is only waiting for you to speak first.','Love is not found; it is recognized, like a melody you have always hummed.','What you call loneliness is the space where someone is about to stand.'],
+ work:['The work you are avoiding is the work you were built for. Turn toward it.','A door will open this week — walk through it before the light fades.','Your focus is a currency; spend it only on what compounds.'],
+ fortune:['A small coin of luck arrives disguised as an inconvenience. Do not refuse it.','The stars are not aligned, but they are paying attention.','Fortune favors the specific: name what you want, and it will begin to happen.'],
+ mystery:['What you seek in the dark is also seeking you, with a lantern.','The pattern you cannot see is the pattern holding everything together.','There is a message in your last dream that you have not yet unfolded.']
+};
+const answer=document.getElementById('answer'),tags=document.getElementById('tags');
+let topic='mystery';
+tags.querySelectorAll('.tag').forEach(t=>t.addEventListener('click',()=>{
+  tags.querySelector('.tag.active')?.classList.remove('active');
+  t.classList.add('active');topic=t.dataset.t;
+}));
+document.getElementById('ask').addEventListener('click',()=>{
+  answer.classList.add('fade');
+  setTimeout(()=>{
+    const pool=ORACLE[topic];
+    answer.textContent=pool[Math.floor(Math.random()*pool.length)];
+    answer.classList.remove('fade');
+  },420);
+});
+</script>
+</body>
+</html>

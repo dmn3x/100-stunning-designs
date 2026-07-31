@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>75 — Orbit Cards</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#070312;--fg:#e2dcf5;--muted:#58508d;--violet:#a78bfa;--cyan:#7df9ff;--gold:#fbbf24}
+html,body{min-height:100%;background:var(--bg);color:var(--fg);font:14px/1.5 system-ui,-apple-system,sans-serif}
+header{text-align:center;padding:3rem 1rem 2rem}
+h1{font-size:clamp(1.5rem,4.2vw,2.4rem);letter-spacing:-.02em}
+h1 span{color:var(--violet);text-shadow:0 0 22px rgba(167,139,250,.6)}
+header p{color:var(--muted);margin-top:.6rem;font-size:.9rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:1.4rem;max-width:1000px;margin:0 auto;padding:0 1.5rem 4rem}
+.card{background:rgba(139,92,246,.05);border:1px solid rgba(167,139,250,.16);border-radius:1.2rem;padding:1.5rem;position:relative;overflow:hidden;cursor:pointer;transition:all .3s}
+.card::before{content:'';position:absolute;top:-40%;left:50%;width:120%;height:80%;background:radial-gradient(ellipse at 50% 50%,rgba(167,139,250,.25),transparent 70%);opacity:0;transition:opacity .4s;pointer-events:none}
+.card:hover::before{opacity:1}
+.card:hover{transform:translateY(-4px);border-color:var(--violet);box-shadow:0 16px 40px rgba(139,92,246,.18)}
+.card .num{position:absolute;top:.8rem;right:1rem;font-size:.62rem;letter-spacing:.14em;color:var(--muted)}
+.card .orb{width:52px;height:52px;border-radius:50%;margin-bottom:.9rem;position:relative;background:radial-gradient(circle at 35% 30%,var(--c1),var(--c2));box-shadow:0 0 22px var(--glow)}
+.card .orb::after{content:'';position:absolute;inset:-8px;border-radius:50%;border:1px dashed rgba(167,139,250,.3);animation:orbit 8s linear infinite}
+@keyframes orbit{to{transform:rotate(360deg)}}
+.card h3{font-size:1.05rem;margin-bottom:.4rem}
+.card .type{font-size:.62rem;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);margin-bottom:.7rem}
+.card p{font-size:.84rem;color:var(--muted);line-height:1.6}
+</style>
+</head>
+<body>
+<header><h1>ORBIT <span>CARDS</span></h1><p>planets of possibility, in your hand</p></header>
+<div class="grid" id="grid"></div>
+<script>
+const CARDS=[
+ {n:'Mercury Drift',t:'inner world',d:'Fast orbits, bright intentions. The closest to the fire, the fastest to forget.',c1:'#a78bfa',c2:'#4c1d95',glow:'rgba(167,139,250,.5)'},
+ {n:'Venus Veil',t:'mirror world',d:'Reflects everything you give it. Beautiful, and unreadable from outside.',c1:'#f472b6',c2:'#701a75',glow:'rgba(244,114,182,.5)'},
+ {n:'Earth Bloom',t:'home world',d:'The only one with gardens. Everyone wants to go back, but nobody can.',c1:'#34d399',c2:'#065f46',glow:'rgba(52,211,153,.5)'},
+ {n:'Mars Signal',t:'red world',d:'A message that arrives after decades, still legible, still worth reading.',c1:'#fbbf24',c2:'#92400e',glow:'rgba(251,191,36,.5)'},
+ {n:'Jupiter Storm',t:'giant world',d:'Holds a storm older than every civilization that ever looked up.',c1:'#f97316',c2:'#7c2d12',glow:'rgba(249,115,22,.5)'},
+ {n:'Saturn Ring',t:'ringed world',d:'Wears its gravity like jewelry. Beauty and mass in one orbit.',c1:'#fde68a',c2:'#a16207',glow:'rgba(253,230,138,.5)'},
+ {n:'Uranus Tilt',t:'sideways world',d:'Rolls around the sun on its side, as if the cosmos made a joke only it understands.',c1:'#7df9ff',c2:'#155e75',glow:'rgba(125,249,255,.5)'},
+ {n:'Neptune Wind',t:'far world',d:'The fastest winds in the dark, where nobody is watching to photograph them.',c1:'#818cf8',c2:'#1e1b4b',glow:'rgba(129,140,248,.5)'}
+];
+const grid=document.getElementById('grid');
+grid.innerHTML=CARDS.map((c,i)=>`<div class="card">
+  <span class="num">№${String(i+1).padStart(2,'0')}</span>
+  <div class="orb" style="--c1:${c.c1};--c2:${c.c2};--glow:${c.glow}"></div>
+  <h3>${c.n}</h3>
+  <div class="type">${c.t}</div>
+  <p>${c.d}</p>
+</div>`).join('');
+</script>
+</body>
+</html>
